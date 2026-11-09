@@ -21,8 +21,12 @@
 # AI 绘图 / 验收截图的中间产物（体积大；成品图已上传到 /data/uploads）
 # 仓库只保留生成脚本与 json 清单，clone 后仍可复现流程
 /scripts/_cq/gen/
+/scripts/_cq/gen2/
 /scripts/_cq/out/
+/scripts/_cq/out2/
 /scripts/_cq/base/
+/scripts/_cq/__pycache__/
+*.pyc
 /scripts/_ui/shots/
 /docs/artwork/
 /scripts/fm_patch.tgz
