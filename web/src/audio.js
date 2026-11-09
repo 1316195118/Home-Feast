@@ -159,3 +159,59 @@ export function playSafe() {
   tone(783.99, t, 0.2, { type: 'sine', gain: 0.12 })
   tone(1046.5, t + 0.11, 0.28, { type: 'sine', gain: 0.11 })
 }
+
+/* ---------- 通用界面反馈音 ----------
+   音量刻意比 PK 音效小一档，避免日常点菜太吵；全部同样由 Web Audio 实时合成，
+   受 fm.sound 静音开关与首次手势解锁统一管理。 */
+let lastTapAt = 0
+
+// 任意按钮点击：极短的一「嗒」，带节流防止连点糊成一团
+export function playTap() {
+  if (!ready()) return
+  const now = Date.now()
+  if (now - lastTapAt < 70) return
+  lastTapAt = now
+  const t = ctx.currentTime + 0.005
+  tone(880, t, 0.045, { type: 'sine', gain: 0.045, attack: 0.003 })
+  knock(t, { freq: 2600, gain: 0.025, dur: 0.022, q: 2.2 })
+}
+
+// 点菜成功：轻快上行两音
+export function playAdd() {
+  if (!ready()) return
+  const t = ctx.currentTime + 0.01
+  tone(659.25, t, 0.13, { type: 'sine', gain: 0.13 })
+  tone(987.77, t + 0.09, 0.2, { type: 'sine', gain: 0.12 })
+}
+
+// 收藏：清脆的一声铃
+export function playFav() {
+  if (!ready()) return
+  const t = ctx.currentTime + 0.01
+  tone(1318.5, t, 0.22, { type: 'sine', gain: 0.1 })
+  tone(1975.5, t + 0.02, 0.16, { type: 'sine', gain: 0.045 })
+}
+
+// 保存成功：柔和的确认和声
+export function playSave() {
+  if (!ready()) return
+  const t = ctx.currentTime + 0.01
+  tone(523.25, t, 0.16, { type: 'sine', gain: 0.1 })
+  tone(783.99, t + 0.07, 0.2, { type: 'sine', gain: 0.09 })
+}
+
+// 撤掉 / 删除：短促下行
+export function playRemove() {
+  if (!ready()) return
+  const t = ctx.currentTime + 0.01
+  tone(523.25, t, 0.12, { type: 'sine', gain: 0.09 })
+  tone(392, t + 0.08, 0.18, { type: 'sine', gain: 0.08 })
+}
+
+// 操作失败：低沉两音（配合 toast 抖动）
+export function playError() {
+  if (!ready()) return
+  const t = ctx.currentTime + 0.01
+  tone(311.13, t, 0.16, { type: 'triangle', gain: 0.1 })
+  tone(233.08, t + 0.12, 0.24, { type: 'triangle', gain: 0.09 })
+}

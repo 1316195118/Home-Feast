@@ -1,7 +1,7 @@
 # 家里吃点啥 · 家庭点菜系统 — 任务交接（Handoff）
 
 > **一句话接管提示（直接发给下一个 AI）：**
-> 请接管「家里吃点啥」（项目根 `C:/Users/Administrator/WorkBuddy AI/家庭点菜系统`，**Go 标准库零依赖 + Vue 3 + Vite**，数据纯 JSON 存 `/data`，单二进制 embed 前端，已部署在 PVE docker-LXC `10.10.10.251:8090`）。A–E 与两个额外需求**已全部完成并上线**，本地 git 仓库也已建好；**唯一剩余待办是把代码推到 `github.com/1316195118/Home-Feast`**（远程仓库尚不存在、且本机无 GitHub 凭据，见第三节）。注意版权硬约束与部署约定。
+> 请接管「家里吃点啥」（项目根 `C:/Users/Administrator/WorkBuddy AI/家庭点菜系统`，**Go 标准库零依赖 + Vue 3 + Vite**，数据纯 JSON 存 `/data`，单二进制 embed 前端）。代码已发布到 **https://github.com/1316195118/Home-Feast**（中文名「家里吃点啥」），并部署在 PVE docker-LXC `10.10.10.251:8090`。A–E + 16 菜系专属插画 + 交互反馈**全部完成**；**下一批 10 项新需求**（购物清单、每周排班、避雷标签、SSE、PWA、智能推荐、Excel 导出、深色主题、多家庭隔离、定时备份）已按批次列在第三节，**需确认优先级后开工**。注意版权硬约束与部署约定。
 
 ---
 
@@ -47,19 +47,43 @@
 - 已 `git init -b main`，两个提交（`9a6564b`、`283c22d`），104 个文件 / 8.8MB patch。
 - `.gitignore` 排除 `data/`、`web/node_modules`、`web/dist`、`webapp/dist`、AI 绘图中间产物、`.workbuddy/`，以及**含 PVE 密码的 `scripts/_deploy.py`** 和抓取的原始素材（版权与体积考虑）。公开仓库无凭据、无第三方素材。
 
-**上线验收**：`go vet` / `go test` / `vite build` 通过；`api-test` 14/14；CDP 双视口（1280/390）截图无布局问题；三个新弹窗（详情图/图标面板/头像面板）双视口实测通过；部署后线上 JS/CSS hash 与本地一致，含 `--dur-base`、`AudioContext`、`fm.sound`、`createBufferSource`，健康检查 `{"ok":true}`，数据备份在 `/opt/family-menu/data-backup-20261110-003526`。
+**16 个菜系专属插画**：原来只有 10 张图、6 个菜系在复用别人的图。补生成 7 张同风格水彩插画（`chongqing/soup/staple/cold/breakfast/dessert/western.jpg`，1024×1024 JPEG，原始 PNG 留档 `docs/artwork/cuisine-*.png`），`internal/store/model.go` 的 16 个 `Cuisines` 现在一一对应；`NOTICE.md` 与 README 同步。
+
+**交互反馈、音效与布局（本轮新增）**
+- `web/src/audio.js` 新增 6 个通用合成音：`playTap`（轻点击）、`playAdd`（点菜）、`playFav`（收藏）、`playSave`（保存）、`playRemove`（删除）、`playError`（失败），音量比 PK 音效小一档，统一受 `fm.sound` 静音开关与首次手势解锁管理。
+- `App.vue` 用 `withSound()` 在写操作成功后播对应音；`toast(type==='error')` 播失败音（配合已有的 toast 抖动）。
+- `ripple.js` 一次点击给四件事：轻音、涟漪、从落点扩散的**指向环** `.ripple-pointer`、目标 `.is-tapped` 短暂高亮；`base.css` 补 `pointer-ring` keyframes、统一 `:focus-visible` 焦点环。`prefers-reduced-motion: reduce` 下**只保留声音、跳过视觉扩散**（CDP 实测验证）。
+- 布局：手机端 `.btn` / `.icon-btn` 点击区统一 40px、编辑图标不再被挤扁，`.setting-actions` 换行、弹窗标题字号收敛。
+- 实测：真实指针事件下 `pointer/ripple/is-tapped` 全为 true；轻点击产生 1 oscillator + 1 bufferSource + 3 gain，点菜后再 +2 oscillator；双视口无 JS 报错。
+
+**上线验收**：`go vet` / `go test` / `vite build` 通过；`api-test` 14/14；CDP 双视口（1280/390）截图无布局问题；三个新弹窗（详情图/图标面板/头像面板）双视口实测通过；16 张插画 HTTP 200；部署后线上 JS/CSS hash 与本地一致，含 `--dur-base`、`AudioContext`、`fm.sound`、`createBufferSource`，健康检查 `{"ok":true}`，数据备份在 `/opt/family-menu/data-backup-20261110-003526`。
 
 ---
 
 ## 三、剩余待办
 
-### 1. 推送到 GitHub（唯一硬阻塞，需用户操作）
-- `git push -u origin main` 返回 **`remote: Repository not found`**：`https://github.com/1316195118/Home-Feast` 目前不存在（`api.github.com` 返回 404），且 `gh auth status` 显示未登录、无 `GH_TOKEN`。
-- **下一步**：请用户在 GitHub 网页创建**空仓库** `Home-Feast`（不要勾选 README/LICENSE/.gitignore，避免冲突），然后回来让 AI 执行 `GIT_TERMINAL_PROMPT=0 git push -u origin main`；若 GCM 无缓存凭据，还需用户提供 PAT 或完成一次 `gh auth login`。
-- 仓库就绪后可直接推送，本地 `origin` 已配好、分支 `main`、提交齐全。
+### 0. 已完成：GitHub 发布
+- 用本机缓存的 GitHub 凭据（`git credential fill`，身份 `1316195118`）通过 API 创建了**公开仓库** `1316195118/Home-Feast`，描述「家里吃点啥 · 家庭点菜系统：Go 标准库 + Vue 3，零依赖单二进制，纯 JSON 数据，Docker 一键部署」，`main` 分支已推送。
+- `.gitignore` 排除了 `data/`、构建产物、AI 绘图中间产物、`.workbuddy/`，以及**含 PVE root 密码的 `scripts/_deploy.py`** 和抓取的原始素材；公开仓库无凭据、无第三方素材。
+- README 顶部有中文名 + 优点速览表 +「30 秒部署」一条命令 + **完整可复制的 `docker-compose.yml`**；仓库根自带 compose 与 Dockerfile。
 
-### 2. 可选：真机试听音效
-- 结果音（win/lose/safe）只验证了合成路径与代码分支，尚未在真实设备上试听音量与听感；部署后让家人摇一局确认即可。
+### 1. PVE 从线上重新拉取（本轮收尾）
+- PVE 宿主 `10.10.10.252` 与 CT 100 **都直连不通 GitHub**（curl 返回 000、`git ls-remote` 超时），CT 内没法直接 `git pull`。
+- 采用等价方式：本机从 GitHub `git clone` 最新 `main` → `git archive` 导出 → 上传 PVE → 替换 `/opt/family-menu` → compose 重建。源码确实来自线上仓库而非本地工作副本。
+- 若以后要 CT 内直接 `git pull`，需给 LXC 配代理 / 镜像加速。
+
+### 2. 下一批 10 项新需求（用户 2026-11-10 提出，待确认优先级）
+
+| 批次 | 需求 | 说明 / 风险 |
+| --- | --- | --- |
+| **一（低风险，不动架构）** | 深色主题、PWA 离线可用、Excel 导出、家庭口味避雷标签、购物清单 | 深色主题只需扩展 `tokens.css` 变量 + 切换持久化；PWA 需 manifest + service worker（注意 embed 静态资源的缓存版本）；Excel 在零依赖下可用 CSV（Excel 可直接打开）或自写最小 xlsx（zip + XML）；避雷标签是 `Dish` 新字段 + 筛选；购物清单由今日订单的 `ingredients` 聚合 |
+| **二（新增数据模型）** | 每周掌勺排班与轮换提醒、按季节 / 冰箱食材智能推荐 | 需要新的 `roster.json` / `pantry.json` 与设置 UI；推荐建议用本地规则（季节 + 现有食材 + 辣度 / 耗时），不接外部 LLM 更稳妥 |
+| **三（架构级，需先定方案）** | 多人实时同步 SSE、多家庭 / 多账簿隔离、自动化定时备份到 NAS 另一目录 | SSE 要后端事件流 + 前端 EventSource + 写冲突策略；多家庭隔离要引入租户 / 登录与数据分仓，**与当前「单家庭纯 JSON」模型冲突**，需先确认是否真的需要；定时备份属于部署侧 cron + 备份路径与保留策略，不进应用代码 |
+
+**建议**：先做第一批（不破坏现有数据），再评估第二批；第三批逐项出方案确认后再动手。不要一次性全上，避免把已经稳定的单文件架构改坏。
+
+### 3. 可选：真机试听音效
+- 结果音（win/lose/safe）只验证了合成路径与代码分支，尚未在真实设备上试听音量与听感；让家人摇一局确认即可。
 
 ---
 
@@ -79,3 +103,4 @@
 3. `git add -A && git commit ...` → `git archive --format=tar.gz -o scripts/fm_patch.tgz HEAD`
 4. `MSYS_NO_PATHCONV=1 python scripts/_deploy.py`（自动备份 data → 解压 → compose build → 健康检查）
 5. 线上核对：`/api/ping`、首页 JS/CSS hash 与本地一致、抽查 `/uploads/*.webp` 200、`/api/bootstrap` 的带图菜品数
+6. **从线上重新拉取并换掉 PVE 旧目录**：本机 `git clone https://github.com/1316195118/Home-Feast.git <临时目录>` → 从该 clone `git archive` 导出 `main` → 上传 PVE → 在 CT 100 里 `docker compose down`、备份并移出 `data/`、删除旧 `/opt/family-menu`、解压线上源码、把 `data/` 移回、`docker compose up -d --build`、健康检查。CT / PVE 宿主直连 GitHub 不通，因此用这个等价路径；数据目录全程不动（只移出再移回）。

@@ -9,6 +9,7 @@ import SettingsView from './components/SettingsView.vue'
 import ConfirmDialog from './components/ConfirmDialog.vue'
 import { useModalBehavior } from './modal'
 import { currentMeal } from './utils'
+import { playAdd, playFav, playSave, playRemove, playError } from './audio'
 
 const tabs = [
   { key: 'today', label: '今天', icon: '🍚' },
@@ -85,6 +86,7 @@ let toastSeq = 0
 // type: success / error / warn / info。带 id 便于连续弹同类提示时重播动画。
 function toast(message, type = 'info') {
   state.toast = { id: ++toastSeq, text: message, type }
+  if (type === 'error') playError() // 失败提示配合抖动动画与低沉两音
   clearTimeout(toastTimer)
   toastTimer = setTimeout(() => { state.toast = null }, type === 'error' ? 3400 : 2600)
 }
@@ -181,20 +183,26 @@ function dutyName(id) {
   return state.members.find((m) => m.id === id)?.name || '家里人'
 }
 
+// 业务动作的音效：只在写操作真的成功后播一次，失败由 toast('error') 播 playError。
+// 统一用 async 包一层 guard，避免把音效塞进每个组件的模板里。
+function withSound(guardPromise, sound) {
+  return guardPromise.then((ok) => { if (ok) sound(); return ok })
+}
+
 const actions = {
   toast,
   refresh: () => guard(() => Promise.resolve(), ''),
   addDish: (dish) => guard(() => api.addDish(dish), '菜品已加入菜谱', 'dish'),
   updateDish: (id, patch) => guard(() => api.updateDish(id, patch), '已保存', 'dish'),
-  deleteDish: (id) => guard(() => api.deleteDish(id), '菜品已移除', 'dish'),
-  toggleFavorite: (dish) => guard(
+  deleteDish: (id) => withSound(guard(() => api.deleteDish(id), '菜品已移除', 'dish'), playRemove),
+  toggleFavorite: (dish) => withSound(guard(
     () => api.updateDish(dish.id, { favorite: !dish.favorite }),
     dish.favorite ? '已取消收藏' : '⭐ 收藏好啦', `fav:${dish.id}`,
-  ),
+  ), playFav),
 
-  addMember: (member) => guard(() => api.addMember(member), '家里多了一位成员', 'member'),
-  updateMember: (id, patch) => guard(() => api.updateMember(id, patch), '已保存', 'member'),
-  deleteMember: (id) => guard(() => api.deleteMember(id), '已移除成员', 'member'),
+  addMember: (member) => withSound(guard(() => api.addMember(member), '家里多了一位成员', 'member'), playAdd),
+  updateMember: (id, patch) => withSound(guard(() => api.updateMember(id, patch), '已保存', 'member'), playSave),
+  deleteMember: (id) => withSound(guard(() => api.deleteMember(id), '已移除成员', 'member'), playRemove),
 
   setChef: (chefId) => guard(() => api.setPlan(state.today, { chefId }), `今天由 ${dutyName(chefId)} 掌勺 👨‍🍳`, 'duty'),
   clearChef: () => guard(() => api.setPlan(state.today, { chefId: '' }), '', 'duty'),
@@ -220,17 +228,17 @@ const actions = {
   setNote: (note) => guard(() => api.setPlan(state.today, { note }), '', 'note'),
   // 手动选的餐别放在全局 state：今天页、菜谱卡片、菜品详情弹窗三个入口归到同一餐。
   setMealPick: (key) => { state.mealPick = key || '' },
-  order: (dishId, note = '', meal = '') => guard(
+  order: (dishId, note = '', meal = '') => withSound(guard(
     () => api.addOrder(state.today, {
       dishId, userId: state.currentUserId, note,
       meal: meal || state.mealPick || state.meal,
     }),
     '点好啦，等开饭 🍚', `order:${dishId}`,
-  ),
+  ), playAdd),
   toggleOrder: (orderId) => guard(() => api.toggleOrder(state.today, orderId), '', `toggle:${orderId}`),
-  removeOrder: (orderId) => guard(() => api.removeOrder(state.today, orderId), '已撤掉这道菜', `remove:${orderId}`),
+  removeOrder: (orderId) => withSound(guard(() => api.removeOrder(state.today, orderId), '已撤掉这道菜', `remove:${orderId}`), playRemove),
 
-  saveSettings: (patch) => guard(() => api.saveSettings(patch), '设置已保存', 'settings'),
+  saveSettings: (patch) => withSound(guard(() => api.saveSettings(patch), '设置已保存', 'settings'), playSave),
   setHiddenCuisines: (hidden) => guard(
     () => api.saveSettings({ familyName: state.settings.familyName, hiddenCuisines: hidden }),
     '', 'cuisines',

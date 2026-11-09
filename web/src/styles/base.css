@@ -247,6 +247,27 @@ a { color: var(--brand); }
   transform: scale(0);
   animation: ripple-spread 0.55s var(--ease) forwards;
 }
+/* 点击指向：一圈从落点扩散的细环，配合目标短暂高亮；涟漪负责「扩散」，它负责「指哪」 */
+.ripple-pointer {
+  position: absolute; width: 14px; height: 14px;
+  margin: -7px 0 0 -7px;
+  border: 2px solid currentColor; border-radius: 50%;
+  opacity: 0; transform: scale(0.4);
+  animation: pointer-ring 0.44s var(--ease-out) forwards;
+}
+@keyframes pointer-ring {
+  0% { opacity: 0.8; transform: scale(0.4); }
+  100% { opacity: 0; transform: scale(3.4); }
+}
+:is(.btn, .icon-btn, .chip, .tab, .chef-choice, .wash-choice, .user-pick-item).is-tapped {
+  box-shadow: 0 0 0 2px var(--brand-soft), 0 0 0 4px rgba(192, 90, 60, 0.16);
+  transition: box-shadow 0.18s var(--ease-out);
+}
+/* 键盘可达性：焦点环同样是「指向」反馈的一种 */
+:where(.btn, .icon-btn, .chip, .tab, .chef-choice, .wash-choice, .input, .select, .avatar-picker button):focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
 
 /* ---------- 忙碌指示 ---------- */
 .busy-bar {

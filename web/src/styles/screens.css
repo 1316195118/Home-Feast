@@ -712,8 +712,12 @@
   .recipe-steps li { font-size: 0.88rem; }
 
   /* 触摸目标不小于 38px */
-  .btn { min-height: 38px; }
-  .icon-btn { width: 38px; height: 38px; }
+  /* 手指点击区统一到 40px，编辑等小图标不再被「＋点这道」挤扁 */
+  .btn { min-height: 40px; }
+  .icon-btn { width: 40px; height: 40px; flex: none; }
+  .dish-foot .btn { min-height: 38px; }
+  .setting-actions { flex-wrap: wrap; }
+  .modal-head h2 { font-size: 1.05rem; }
   .chip { min-height: 36px; padding: 7px 13px; }
   .toast { bottom: calc(78px + env(safe-area-inset-bottom)); }
 }
