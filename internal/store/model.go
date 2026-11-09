@@ -103,8 +103,10 @@ type Cuisine struct {
 // Cuisines 是全部内置分类，顺序即界面上的展示顺序。
 // 默认都展示；用户可在「设置 → 菜系显示」里逐个关掉不想要的（存进 Settings.HiddenCuisines）。
 var Cuisines = []Cuisine{
-	{"chongqing", "重庆菜", "🌶️", "/dishes/chongqing.jpg", "麻辣鲜香，山城江湖味", "#f3d9cd"},
-	{"sichuan", "川菜", "🌶️", "/dishes/sichuan.jpg", "麻辣鲜香，一菜一格", "#f3d9cd"},
+	// 重庆菜已并入川渝菜：52 道原重庆菜在 dishes.json 里统一用 sichuan，
+	// 不再单独设分类，避免家人点菜时在两个几乎一样的菜系间来回翻。
+	{"sichuan", "川渝菜", "🌶️", "/dishes/sichuan.jpg", "麻辣鲜香，巴蜀一锅", "#f3d9cd"},
+	{"xinjiang", "新疆菜", "🍢", "/dishes/xinjiang.jpg", "豪迈香辣，西域风味", "#e8d5b8"},
 	{"cantonese", "粤菜", "🥢", "/dishes/cantonese.jpg", "清鲜精致，讲究火候", "#dce9dd"},
 	{"shandong", "鲁菜", "🐟", "/dishes/shandong.jpg", "咸鲜醇厚，擅用高汤", "#f0e2c8"},
 	{"jiangsu", "苏菜", "🍶", "/dishes/jiangsu.jpg", "清雅细腻，刀工见长", "#e3e0f0"},

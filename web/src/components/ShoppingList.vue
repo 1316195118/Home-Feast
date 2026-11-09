@@ -33,6 +33,20 @@ function toggle(text) {
   checked.value = next
   persist()
 }
+// 按「食材 / 佐料」一键全选；已全选时再点即整组取消
+function toggleGroup(items) {
+  const next = new Set(checked.value)
+  const allChecked = items.every((x) => next.has(x.text))
+  for (const x of items) {
+    if (allChecked) next.delete(x.text)
+    else next.add(x.text)
+  }
+  checked.value = next
+  persist()
+}
+function groupAllChecked(items) {
+  return items.length > 0 && items.every((x) => checked.value.has(x.text))
+}
 function clearChecked() {
   checked.value = new Set()
   persist()
@@ -73,8 +87,14 @@ function roundRect(ctx, x, y, w, h, r) {
 }
 
 function buildImage() {
-  const shown = groups.value.filter((g) => g.items.length)
-  if (!shown.length) return
+  // 清单图只画已勾选的项：没勾的就是不打算买的，不进图片
+  const shown = groups.value
+    .map((g) => ({ ...g, items: g.items.filter((x) => checked.value.has(x.text)) }))
+    .filter((g) => g.items.length)
+  if (!shown.length) {
+    actions.toast('先勾选要买的东西，再生成清单图', 'warn')
+    return
+  }
   const W = 720
   const PAD = 40
   const ROW = 46
@@ -198,6 +218,11 @@ async function saveToAlbum() {
           <template v-if="g.items.length">
             <div class="shopping-group-title">
               {{ g.icon }} {{ g.key }} <span class="tiny muted">{{ g.items.length }} 项</span>
+              <button
+                class="btn btn-ghost btn-sm shopping-select-all" type="button"
+                :aria-label="`${groupAllChecked(g.items) ? '取消全选' : '全选'}${g.key}`"
+                @click="toggleGroup(g.items)"
+              >{{ groupAllChecked(g.items) ? '取消全选' : '全选' }}</button>
             </div>
             <label
               v-for="item in g.items" :key="item.text" class="shopping-item"

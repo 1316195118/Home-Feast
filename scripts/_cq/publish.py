@@ -5,6 +5,7 @@
 """
 import json, os, io, glob, sys, time, urllib.request, urllib.error
 from PIL import Image
+from normalize import normalize_dish
 
 BASE = 'http://10.10.10.251:8090'
 ROOT = 'C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/'
@@ -37,19 +38,11 @@ def multipart(path, filename):
 
 
 def prepare(idx):
-    """裁掉底部 9% 水印并转 WebP，返回输出路径。"""
+    """统一构图：主体居中、四周等距留边、桌面色调统一，输出 4:3 WebP。"""
     fs = glob.glob(GEN + '%02d/*.png' % idx)
     if not fs:
         return None
-    im = Image.open(fs[0]).convert('RGB')
-    w, h = im.size
-    im = im.crop((0, 0, w, int(h * 0.91)))   # 水印固定在右下角，落在被裁掉的窄条内
-    # 再居中裁成 4:3，与卡片比例一致，避免前端 object-fit:cover 二次裁切跑偏
-    nh = im.height
-    nw = int(nh * 4 / 3)
-    x0 = (im.width - nw) // 2
-    im = im.crop((x0, 0, x0 + nw, nh))
-    im.thumbnail((1280, 1280), Image.LANCZOS)
+    im = normalize_dish(fs[0])
     os.makedirs(OUT, exist_ok=True)
     dst = OUT + '%02d.webp' % idx
     im.save(dst, 'WEBP', quality=86, method=5)

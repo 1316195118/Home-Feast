@@ -18,6 +18,24 @@ const cuisine = computed(() => cuisineName(props.dish.cuisine, state.cuisines))
 const recipe = computed(() => getRecipe(props.dish))
 const ordering = computed(() => pending(`order:${props.dish.id}`))
 
+// 下厨小贴士：按这道菜的辣度、耗时与主料给出可操作的补充要点，
+// 让「做法」不只是步骤清单，也解释了火候和为什么这么做。
+const tips = computed(() => {
+  const d = props.dish
+  const out = []
+  out.push((d.spicy || 0) >= 2
+    ? '豆瓣酱、干辣椒下锅后转小火慢慢炒出红油，再下主料，辣味才香而不呛。'
+    : '起锅前先尝咸淡再补盐，家常菜宁可淡一点，上桌还能按口味蘸酱。')
+  out.push((d.minutes || 20) <= 15
+    ? '这道菜讲究大火快炒：锅先烧热、食材沥干水分，分批下锅才不容易出水。'
+    : '炖煮类先大火烧开再转小火，锅盖留一条缝，汤汁会更浓亮。')
+  const ing = [...(d.ingredients || []), ...recipe.value.ingredients].join(' ')
+  out.push(/肉|鸡|牛|排骨|鱼|虾|翅|肝/.test(ing)
+    ? '肉类提前用少许盐、料酒和淀粉抓匀腌 10 分钟，下锅更嫩不柴。'
+    : '蔬菜临出锅再放蒜末或葱花，香气更足、颜色也更亮。')
+  return out
+})
+
 async function order() {
   const ok = await actions.order(props.dish.id)
   if (ok) emit('close')
@@ -77,6 +95,12 @@ async function order() {
         <p class="recipe-note">
           {{ recipe.custom ? '这是你们家自己记下的做法' : '家常做法参考，可按自家口味在「改做法」里调整' }}
         </p>
+        <section class="recipe-tips">
+          <h3 class="recipe-title">🧑‍🍳 下厨小贴士</h3>
+          <ul>
+            <li v-for="(t, i) in tips" :key="i">{{ t }}</li>
+          </ul>
+        </section>
       </template>
       <div v-else class="recipe-empty">
         <span class="empty-icon">📝</span>
