@@ -1,0 +1,81 @@
+package api
+
+import (
+	"net/http"
+	"strings"
+
+	"familymenu/internal/store"
+)
+
+func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		FamilyName     *string           `json:"familyName"`
+		HiddenCuisines *[]string         `json:"hiddenCuisines"`
+		Meals          *[]store.MealSlot `json:"meals"`
+		AccessCode     *string           `json:"accessCode"` // 空串 = 关闭口令
+	}
+	if err := decodeBody(w, r, &in); err != nil {
+		jsonErr(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	v := s.st.GetSettings()
+	if in.FamilyName != nil {
+		name := trimmed(*in.FamilyName, 24)
+		if name == "" {
+			jsonErr(w, http.StatusBadRequest, "家的名字不能为空")
+			return
+		}
+		v.FamilyName = name
+	}
+	if in.HiddenCuisines != nil {
+		// 去重并只保留确实存在的菜系 key，避免前端手滑写进脏数据。
+		known := map[string]bool{}
+		for _, c := range store.Cuisines {
+			known[c.Key] = true
+		}
+		seen := map[string]bool{}
+		clean := make([]string, 0, len(*in.HiddenCuisines))
+		for _, k := range *in.HiddenCuisines {
+			if known[k] && !seen[k] {
+				seen[k] = true
+				clean = append(clean, k)
+			}
+		}
+		v.HiddenCuisines = clean
+	}
+	if in.Meals != nil {
+		// 用户自定义餐别：名字、图标、结束时刻都在这里校验，脏数据不落盘。
+		normalized, err := store.NormalizeMeals(*in.Meals)
+		if err != nil {
+			jsonErr(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		v.Meals = normalized
+	}
+	// 访问口令：先校验（失败不产生任何改动），设置保存成功后再写独立文件。
+	var newCode *string
+	if in.AccessCode != nil {
+		if s.envCode != "" {
+			jsonErr(w, http.StatusBadRequest, "访问口令由服务端环境变量 MENU_ACCESS_CODE 控制，请在 docker-compose.yml 里修改")
+			return
+		}
+		c := strings.TrimSpace(*in.AccessCode)
+		if len([]rune(c)) > 64 {
+			jsonErr(w, http.StatusBadRequest, "访问口令最多 64 个字符")
+			return
+		}
+		newCode = &c
+	}
+	saved, err := s.st.SaveSettings(v)
+	if err != nil {
+		jsonErr(w, http.StatusInternalServerError, "保存设置失败")
+		return
+	}
+	if newCode != nil {
+		if err := s.st.SetAccessCode(*newCode); err != nil {
+			jsonErr(w, http.StatusInternalServerError, "保存访问口令失败")
+			return
+		}
+	}
+	jsonOK(w, saved)
+}

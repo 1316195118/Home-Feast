@@ -1,0 +1,522 @@
+[
+  {
+    "id": "d495df08625a139da",
+    "name": "麻婆豆腐",
+    "oldImage": "/uploads/imgefb5bdc6fc03d996fb8ce022.webp",
+    "vessel": "黑釉粗陶深钵，哑光黑褐陶，手工粗边，浅口深腹",
+    "base": "scripts/_cq/base/imgefb5bdc6fc03d996fb8ce022.png",
+    "idx": 1,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/01",
+    "skip": true
+  },
+  {
+    "id": "d7f8deff2ec7d642f",
+    "name": "毛血旺",
+    "oldImage": "/uploads/img8ac38002e0e57905f9c05a14.webp",
+    "vessel": "黑釉大汤盆，乌黑亮釉，宽口厚沿",
+    "base": "scripts/_cq/base/img8ac38002e0e57905f9c05a14.png",
+    "idx": 2,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/02",
+    "skip": false
+  },
+  {
+    "id": "d3d06b61ecb6ebf83",
+    "name": "家常豆腐",
+    "oldImage": "/uploads/img395da93bfea91c8b7fda287c.webp",
+    "vessel": "米黄釉陶盘，暖黄细釉，圆口浅腹",
+    "base": "scripts/_cq/base/img395da93bfea91c8b7fda287c.png",
+    "idx": 3,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/03",
+    "skip": false
+  },
+  {
+    "id": "d0c36967b03bb2197",
+    "name": "口水鸡",
+    "oldImage": "/uploads/imgec48ca992fb04e46e256e057.webp",
+    "vessel": "青花大浅盘，白底青花缠枝莲，宽沿平底",
+    "base": "scripts/_cq/base/imgec48ca992fb04e46e256e057.png",
+    "idx": 4,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/04",
+    "skip": false
+  },
+  {
+    "id": "d58159f65fa2a0a51",
+    "name": "麻辣香锅",
+    "oldImage": "/uploads/img357fce518e5123ff657e5365.webp",
+    "vessel": "黑陶干锅带原木托，粗黑陶浅锅，下垫厚木托",
+    "base": "scripts/_cq/base/img357fce518e5123ff657e5365.png",
+    "idx": 5,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/05",
+    "skip": false
+  },
+  {
+    "id": "db7ae0dea52d48abd",
+    "name": "凉拌皮蛋",
+    "oldImage": "/uploads/img5caf053cd29fb4859094b7d0.webp",
+    "vessel": "青花六角小碟，白釉靛蓝折枝花，六方浅盘",
+    "base": "scripts/_cq/base/img5caf053cd29fb4859094b7d0.png",
+    "idx": 6,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/06",
+    "skip": false
+  },
+  {
+    "id": "d610debe48cbe2799",
+    "name": "泡椒魔芋",
+    "oldImage": "/uploads/imgdb8f1316862010af9a44ff08.webp",
+    "vessel": "黑陶浅盘，哑光墨黑，盘沿不规则手作感",
+    "base": "scripts/_cq/base/imgdb8f1316862010af9a44ff08.png",
+    "idx": 7,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/07",
+    "skip": false
+  },
+  {
+    "id": "d5324ba07ae758a64",
+    "name": "烤肉",
+    "oldImage": "/uploads/img9ea5857f63470157d9187433.webp",
+    "vessel": "铸铁烤盘带原木托，黑色铸铁长方盘，木托隔热",
+    "base": "scripts/_cq/base/img9ea5857f63470157d9187433.png",
+    "idx": 8,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/08",
+    "skip": false
+  },
+  {
+    "id": "dc2270f40734d810c",
+    "name": "火锅",
+    "oldImage": "/uploads/img9987acb0012999bf6b9cea97.webp",
+    "vessel": "传统红铜九宫格火锅，铜质锤纹，九格分隔，锅沿铜耳",
+    "base": "scripts/_cq/base/img9987acb0012999bf6b9cea97.png",
+    "idx": 9,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/09",
+    "skip": false
+  },
+  {
+    "id": "d04b66bb6ca2717c9",
+    "name": "钵钵鸡",
+    "oldImage": "/uploads/img3917c35d46e2d4667ef2727b.webp",
+    "vessel": "粗陶深罐，酱褐粗陶带环形凸纹，串签斜插其中",
+    "base": "scripts/_cq/base/img3917c35d46e2d4667ef2727b.png",
+    "idx": 10,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/10",
+    "skip": false
+  },
+  {
+    "id": "d3fa3bab5a97c1480",
+    "name": "冷吃翅尖",
+    "oldImage": "/uploads/img02c573b2da6118bb6f7af774.webp",
+    "vessel": "竹编方盘，竹篾方编浅盘，四角收紧",
+    "base": "scripts/_cq/base/img02c573b2da6118bb6f7af774.png",
+    "idx": 11,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/11",
+    "skip": false
+  },
+  {
+    "id": "de42e4280bc126b1e",
+    "name": "泡椒牛肉",
+    "oldImage": "/uploads/img7ba55df1ca096f1457fa5ab8.webp",
+    "vessel": "黑釉圆盘，黑亮釉带细金砂点",
+    "base": "scripts/_cq/base/img7ba55df1ca096f1457fa5ab8.png",
+    "idx": 12,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/12",
+    "skip": false
+  },
+  {
+    "id": "ddc7fe7a1d5aba6f2",
+    "name": "爆炒花甲",
+    "oldImage": "/uploads/imgdc29b5c0362e983ebff77e78.webp",
+    "vessel": "黑陶深盘，墨黑粗陶，深腹收口",
+    "base": "scripts/_cq/base/imgdc29b5c0362e983ebff77e78.png",
+    "idx": 13,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/13",
+    "skip": false
+  },
+  {
+    "id": "d2d75a2513002b79e",
+    "name": "蒜香鸡翅",
+    "oldImage": "/uploads/imgdb0855531e175069e0be2776.webp",
+    "vessel": "铸铁平底锅，黑色铸铁圆锅带短柄",
+    "base": "scripts/_cq/base/imgdb0855531e175069e0be2776.png",
+    "idx": 14,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/14",
+    "skip": false
+  },
+  {
+    "id": "d2c159445ca6b47b8",
+    "name": "凉拌藕片",
+    "oldImage": "/uploads/imgc657ac5c3d6310da7a7ce1d2.webp",
+    "vessel": "青花小碟，白瓷细蓝边，内壁绘简单水草纹",
+    "base": "scripts/_cq/base/imgc657ac5c3d6310da7a7ce1d2.png",
+    "idx": 15,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/15",
+    "skip": false
+  },
+  {
+    "id": "dd28f7585b17f361e",
+    "name": "泡椒滑肉",
+    "oldImage": "/uploads/img987956bcdf9f76ff4309d580.webp",
+    "vessel": "白瓷深汤碗，象牙白釉，碗口一道细青边",
+    "base": "scripts/_cq/base/img987956bcdf9f76ff4309d580.png",
+    "idx": 16,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/16",
+    "skip": false
+  },
+  {
+    "id": "d596060a24c59f698",
+    "name": "干煸炒面",
+    "oldImage": "/uploads/imgc06586128a8bb9c690104c83.webp",
+    "vessel": "黑铁炒盘，中式熟铁浅锅，带短木柄",
+    "base": "scripts/_cq/base/imgc06586128a8bb9c690104c83.png",
+    "idx": 17,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/17",
+    "skip": false
+  },
+  {
+    "id": "dace95759497bd5ef",
+    "name": "藤椒鱼",
+    "oldImage": "/uploads/img105d36a705a0eb16259c5e86.webp",
+    "vessel": "青灰釉大汤盆，灰青色开片釉，宽口深腹",
+    "base": "scripts/_cq/base/img105d36a705a0eb16259c5e86.png",
+    "idx": 18,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/18",
+    "skip": false
+  },
+  {
+    "id": "d6a111708c8a33881",
+    "name": "酸菜鱼",
+    "oldImage": "/uploads/img5c2d85b0ac054e6db0a6003e.webp",
+    "vessel": "米白陶大汤盆，乳白釉带浅褐口沿，宽沿深腹",
+    "base": "scripts/_cq/base/img5c2d85b0ac054e6db0a6003e.png",
+    "idx": 19,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/19",
+    "skip": false
+  },
+  {
+    "id": "de22ffa5e5f0b98b9",
+    "name": "麻辣鱼",
+    "oldImage": "/uploads/img5889fbb04a0f0a053f2bba82.webp",
+    "vessel": "黑釉深口大盆，墨黑亮釉，盆沿厚重",
+    "base": "scripts/_cq/base/img5889fbb04a0f0a053f2bba82.png",
+    "idx": 20,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/20",
+    "skip": false
+  },
+  {
+    "id": "d5e9421b92db26455",
+    "name": "清炒荷兰豆",
+    "oldImage": "/uploads/img74be19258453a1434c033369.webp",
+    "vessel": "白瓷浅盘，纯白釉，盘沿一道浅浅的波浪压纹",
+    "base": "scripts/_cq/base/img74be19258453a1434c033369.png",
+    "idx": 21,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/21",
+    "skip": false
+  },
+  {
+    "id": "d19fa7a6e84e6ee6d",
+    "name": "虎皮茄子",
+    "oldImage": "/uploads/imgdf8dc55086032e4939b4c166.webp",
+    "vessel": "米黄釉陶盘，蜂蜜色陶釉带褐色斑点",
+    "base": "scripts/_cq/base/imgdf8dc55086032e4939b4c166.png",
+    "idx": 22,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/22",
+    "skip": false
+  },
+  {
+    "id": "d64c426805753c441",
+    "name": "香辣鸡爪",
+    "oldImage": "/uploads/imge338955a0c4cbc0a091805cc.webp",
+    "vessel": "竹编小篮，细竹篾圆篮，篮沿收口",
+    "base": "scripts/_cq/base/imge338955a0c4cbc0a091805cc.png",
+    "idx": 23,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/23",
+    "skip": false
+  },
+  {
+    "id": "da2f763cace1642f5",
+    "name": "炸蘑菇",
+    "oldImage": "/uploads/imgc0ff41c8dfbdf10c353299b5.webp",
+    "vessel": "竹编圆篮，浅黄竹篾手编，内垫一张米色吸油纸",
+    "base": "scripts/_cq/base/imgc0ff41c8dfbdf10c353299b5.png",
+    "idx": 24,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/24",
+    "skip": false
+  },
+  {
+    "id": "d864f6ffe3cfe30cb",
+    "name": "清炒菜心",
+    "oldImage": "/uploads/img1e9c698025e3e22969ecdee5.webp",
+    "vessel": "青瓷圆盘，豆青釉，盘心光滑无纹",
+    "base": "scripts/_cq/base/img1e9c698025e3e22969ecdee5.png",
+    "idx": 25,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/25",
+    "skip": false
+  },
+  {
+    "id": "dcb5611679aa4b149",
+    "name": "柠檬鸡爪",
+    "oldImage": "/uploads/img45050cc31b9c6c70c9afeb41.webp",
+    "vessel": "白瓷宽口浅碗，纯白釉带一圈浮雕莲瓣",
+    "base": "scripts/_cq/base/img45050cc31b9c6c70c9afeb41.png",
+    "idx": 26,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/26",
+    "skip": false
+  },
+  {
+    "id": "ddd4276f5348e5c55",
+    "name": "鸡爪鸡翅煲",
+    "oldImage": "/uploads/imgc94c3e76d2fd80f711c12460.webp",
+    "vessel": "赤陶带盖砂煲，赭红无釉陶土，盖钮圆润",
+    "base": "scripts/_cq/base/imgc94c3e76d2fd80f711c12460.png",
+    "idx": 27,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/27",
+    "skip": false
+  },
+  {
+    "id": "d3b9d73576e8e89df",
+    "name": "炝炒西葫芦",
+    "oldImage": "/uploads/img6cf6e36a4c70e29e10bf764d.webp",
+    "vessel": "白瓷盘，象牙白釉带细密开片",
+    "base": "scripts/_cq/base/img6cf6e36a4c70e29e10bf764d.png",
+    "idx": 28,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/28",
+    "skip": false
+  },
+  {
+    "id": "d125ebdca78aed48a",
+    "name": "香辣鸡翅",
+    "oldImage": "/uploads/img54c24d3e2f3cd64188d4fa7a.webp",
+    "vessel": "铁板带木托，黑色椭圆铁板，下垫木托",
+    "base": "scripts/_cq/base/img54c24d3e2f3cd64188d4fa7a.png",
+    "idx": 29,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/29",
+    "skip": false
+  },
+  {
+    "id": "d4451ec81fca8ac7f",
+    "name": "土豆炖牛腩",
+    "oldImage": "/uploads/imgf25d4e983a22c05a5cf7d1d4.webp",
+    "vessel": "米白粗陶炖煲，奶白粗釉带细小铁点，配原木隔热托",
+    "base": "scripts/_cq/base/imgf25d4e983a22c05a5cf7d1d4.png",
+    "idx": 30,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/30",
+    "skip": false
+  },
+  {
+    "id": "d0024242322ef594f",
+    "name": "凉拌黄瓜",
+    "oldImage": "/uploads/img298ef3ca240d393cdce50123.webp",
+    "vessel": "青花瓷浅碟，白底手绘靛蓝缠枝纹，圆形浅口带细蓝边",
+    "base": "scripts/_cq/base/img298ef3ca240d393cdce50123.png",
+    "idx": 31,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/31",
+    "skip": true
+  },
+  {
+    "id": "d6ceffb92d567fdfa",
+    "name": "香辣土豆片",
+    "oldImage": "/uploads/img841b3198961c88540eacee41.webp",
+    "vessel": "黑釉浅钵，乌金釉，口沿一圈露胎",
+    "base": "scripts/_cq/base/img841b3198961c88540eacee41.png",
+    "idx": 32,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/32",
+    "skip": false
+  },
+  {
+    "id": "d40f46af733f32906",
+    "name": "干煸鱿鱼须",
+    "oldImage": "/uploads/img822d2e0c3d81b7482f899b56.webp",
+    "vessel": "圆形铁板，黑铁圆盘，边缘微微上翘",
+    "base": "scripts/_cq/base/img822d2e0c3d81b7482f899b56.png",
+    "idx": 33,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/33",
+    "skip": false
+  },
+  {
+    "id": "dfaee79aecce1d234",
+    "name": "炝炒包包菜",
+    "oldImage": "/uploads/img4dd366e4586304b5b31b5477.webp",
+    "vessel": "白瓷浅盘，白釉带浅浮雕菊瓣",
+    "base": "scripts/_cq/base/img4dd366e4586304b5b31b5477.png",
+    "idx": 34,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/34",
+    "skip": false
+  },
+  {
+    "id": "d43cd0dbb6378c9c2",
+    "name": "蒜蓉炒大虾",
+    "oldImage": "/uploads/img90a5a85a0fdc9adf44572ff4.webp",
+    "vessel": "白瓷椭圆长盘，纯白釉长盘，两端微翘",
+    "base": "scripts/_cq/base/img90a5a85a0fdc9adf44572ff4.png",
+    "idx": 35,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/35",
+    "skip": false
+  },
+  {
+    "id": "d585a2227ff474254",
+    "name": "手撕茄子",
+    "oldImage": "/uploads/img43681907ee7962b1c8e2281e.webp",
+    "vessel": "青瓷小碟，龙泉粉青釉，冰裂纹，圆口浅腹",
+    "base": "scripts/_cq/base/img43681907ee7962b1c8e2281e.png",
+    "idx": 36,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/36",
+    "skip": false
+  },
+  {
+    "id": "db3f95c80e90b800a",
+    "name": "红烧茄子",
+    "oldImage": "/uploads/img215f0936cc54cc4f7e7a92a8.webp",
+    "vessel": "赤陶浅盘，赭红无釉陶土，质朴粗边",
+    "base": "scripts/_cq/base/img215f0936cc54cc4f7e7a92a8.png",
+    "idx": 37,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/37",
+    "skip": false
+  },
+  {
+    "id": "d2ad5121a9eaec907",
+    "name": "炒花菜",
+    "oldImage": "/uploads/imgfed17bab82752cb5569cb0a5.webp",
+    "vessel": "米黄釉陶盘，暖米黄粗釉，盘沿手捏起伏",
+    "base": "scripts/_cq/base/imgfed17bab82752cb5569cb0a5.png",
+    "idx": 38,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/38",
+    "skip": false
+  },
+  {
+    "id": "d53046ce0b2336c67",
+    "name": "炝炒小白菜",
+    "oldImage": "/uploads/img1c2cfc8335ad86c95f1ecfc4.webp",
+    "vessel": "青瓷浅盘，灰青釉，浅腹宽沿",
+    "base": "scripts/_cq/base/img1c2cfc8335ad86c95f1ecfc4.png",
+    "idx": 39,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/39",
+    "skip": false
+  },
+  {
+    "id": "d7986ea4109eb8e0c",
+    "name": "干煸四季豆",
+    "oldImage": "/uploads/img9d0c16f301031fcf2bb67cad.webp",
+    "vessel": "黑陶盘，炭黑哑光，盘面细密拉坯纹",
+    "base": "scripts/_cq/base/img9d0c16f301031fcf2bb67cad.png",
+    "idx": 40,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/40",
+    "skip": false
+  },
+  {
+    "id": "d15f689ed22e16f56",
+    "name": "青椒炒肉丝",
+    "oldImage": "/uploads/imgeac7fd565b06b2fd46d2e812.webp",
+    "vessel": "白瓷盘，白釉带一圈浅灰口沿",
+    "base": "scripts/_cq/base/imgeac7fd565b06b2fd46d2e812.png",
+    "idx": 41,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/41",
+    "skip": false
+  },
+  {
+    "id": "d5a979427d6e5cbc4",
+    "name": "米饭",
+    "oldImage": "/uploads/img1998a8c035e120dc69f57008.webp",
+    "vessel": "青花小饭碗，白釉靛蓝山水纹，圆腹圈足",
+    "base": "scripts/_cq/base/img1998a8c035e120dc69f57008.png",
+    "idx": 42,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/42",
+    "skip": false
+  },
+  {
+    "id": "d072e7e11f03b77dc",
+    "name": "炒鸡",
+    "oldImage": "/uploads/imgc01dec2357372eedc7ad1b50.webp",
+    "vessel": "黑陶深盘，深褐黑陶，厚沿深腹",
+    "base": "scripts/_cq/base/imgc01dec2357372eedc7ad1b50.png",
+    "idx": 43,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/43",
+    "skip": false
+  },
+  {
+    "id": "d83087fd3eb9891f4",
+    "name": "蒜香排骨",
+    "oldImage": "/uploads/imgb97cec0504eb5a8750b2684c.webp",
+    "vessel": "竹编长盘，长条竹编浅盘，内垫竹叶",
+    "base": "scripts/_cq/base/imgb97cec0504eb5a8750b2684c.png",
+    "idx": 44,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/44",
+    "skip": false
+  },
+  {
+    "id": "d636fb1f689c162fb",
+    "name": "爆炒龙虾尾",
+    "oldImage": "/uploads/img056755a68e51e7545cb62527.webp",
+    "vessel": "黑釉大碗，墨黑亮釉，碗身矮而宽",
+    "base": "scripts/_cq/base/img056755a68e51e7545cb62527.png",
+    "idx": 45,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/45",
+    "skip": false
+  },
+  {
+    "id": "d21cd15e515cee6a1",
+    "name": "爆炒小龙虾",
+    "oldImage": "/uploads/imgad5ef385159eaa06fc5225aa.webp",
+    "vessel": "黑陶盆，粗黑陶大盆，敞口",
+    "base": "scripts/_cq/base/imgad5ef385159eaa06fc5225aa.png",
+    "idx": 46,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/46",
+    "skip": false
+  },
+  {
+    "id": "d27096a7497ed1cdf",
+    "name": "玉米炖排骨",
+    "oldImage": "/uploads/img5e5184c4aa29e8ebe90c8283.webp",
+    "vessel": "双耳粗陶砂锅，陶土原色带粗釉，圆形深腹带两只侧耳",
+    "base": "scripts/_cq/base/img5e5184c4aa29e8ebe90c8283.png",
+    "idx": 47,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/47",
+    "skip": true
+  },
+  {
+    "id": "ddaba9c9414f7e009",
+    "name": "萝卜炖排骨",
+    "oldImage": "/uploads/imga17a59727985b7656a92b009.webp",
+    "vessel": "黑釉双耳砂锅，乌亮黑釉带手工旋纹，锅盖半掀在一侧",
+    "base": "scripts/_cq/base/imga17a59727985b7656a92b009.png",
+    "idx": 48,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/48",
+    "skip": false
+  },
+  {
+    "id": "dc3dbf12028c0cad4",
+    "name": "酸辣土豆丝",
+    "oldImage": "/uploads/imgb8fb65656c21fec2d3ee7cda.webp",
+    "vessel": "白瓷盘，亮白釉，圆盘平底",
+    "base": "scripts/_cq/base/imgb8fb65656c21fec2d3ee7cda.png",
+    "idx": 49,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/49",
+    "skip": false
+  },
+  {
+    "id": "d8957f248a6d92092",
+    "name": "炝炒油麦菜",
+    "oldImage": "/uploads/img0f58dc4d0e81b4b403c2dbab.webp",
+    "vessel": "白瓷长盘，纯白釉椭圆长盘，线条利落",
+    "base": "scripts/_cq/base/img0f58dc4d0e81b4b403c2dbab.png",
+    "idx": 50,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/50",
+    "skip": false
+  },
+  {
+    "id": "dc8eeac8299f225df",
+    "name": "蒜苔炒肉丝",
+    "oldImage": "/uploads/img68409755537ee132fdcf349e.webp",
+    "vessel": "米黄釉陶盘，浅杏色陶釉，圆形浅盘",
+    "base": "scripts/_cq/base/img68409755537ee132fdcf349e.png",
+    "idx": 51,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/51",
+    "skip": false
+  },
+  {
+    "id": "dc6741a2566cb789f",
+    "name": "西红柿炒鸡蛋",
+    "oldImage": "/uploads/imgbb6f62b6b5dfc73155d89c90.webp",
+    "vessel": "白瓷浅盘，乳白釉，盘沿细金线一圈",
+    "base": "scripts/_cq/base/imgbb6f62b6b5dfc73155d89c90.png",
+    "idx": 52,
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/52",
+    "skip": false
+  }
+]

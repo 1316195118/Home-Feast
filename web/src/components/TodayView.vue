@@ -1,0 +1,310 @@
+<script setup>
+import { inject, computed, ref, watch, onUnmounted } from 'vue'
+import { friendlyDate, memberOf, dishImage, cuisineName, pickRandom, artStyle, isCuisineHidden, normalizeMeals, isMealExpired } from '../utils'
+import DishDetail from './DishDetail.vue'
+import DicePK from './DicePK.vue'
+
+const { state, actions, pending } = inject('app')
+const detailId = ref(null)
+const detailDish = computed(() => state.dishes.find((d) => d.id === detailId.value) || null)
+const pkOpen = ref(false)
+
+const orders = computed(() => state.plan.orders || [])
+// 餐别完全来自后端下发：名字、图标、结束时刻都能在设置里改，这里不写死。
+const meals = computed(() => normalizeMeals(state.meals))
+// 默认自动跟随当前时段；用户手动选过之后全局生效（菜谱页/详情弹窗点菜也归这一餐）。
+const activeMeal = computed(() => state.mealPick || state.meal)
+function selectMeal(key) {
+  // 再点一次已选中的餐别 = 取消手动指定，回到跟随时间
+  actions.setMealPick(state.mealPick === key ? '' : key)
+}
+// 当前餐别排最前，其余按配置里的结束时刻顺序，「其他」永远垫底；
+// 已过饭点且没菜的组在模板里折叠成紧凑一行，避免把当前餐挤到屏幕外。
+const mealGroups = computed(() => {
+  const all = [...meals.value, { key: 'other', label: '其他', icon: '🍽️' }]
+  const idx = new Map(meals.value.map((m, i) => [m.key, i]))
+  const rank = (m) => m.key === 'other' ? 1000 : m.key === state.meal ? -1 : (idx.get(m.key) ?? 0) + 1
+  return all.slice().sort((a, b) => rank(a) - rank(b))
+})
+const grouped = computed(() => {
+  const g = { other: [] }
+  for (const m of meals.value) g[m.key] = []
+  for (const o of orders.value) {
+    if (o.meal && g[o.meal]) g[o.meal].push(o)
+    else g.other.push(o)
+  }
+  return g
+})
+const chef = computed(() => memberOf(state.plan.chefId, state.members))
+const washer = computed(() => memberOf(state.plan.dishwasherId, state.members))
+const samePerson = computed(() =>
+  !!(state.plan.chefId && state.plan.dishwasherId === state.plan.chefId)
+)
+const noteText = ref(state.plan.note || '')
+const noteSaved = ref(false)
+const noteDirty = computed(() => noteText.value !== (state.plan.note || ''))
+const noteBtnClass = computed(() =>
+  noteSaved.value ? 'btn-green' : noteDirty.value ? 'btn-primary' : 'btn-soft'
+)
+let noteTimer = null
+onUnmounted(() => clearTimeout(noteTimer))
+const suggestions = ref([])
+
+watch(() => state.plan.note, (v) => { noteText.value = v || '' })
+watch(() => state.today, shuffle, { immediate: true })
+
+function shuffle() {
+  // 只从「当前已显示」的菜系里随机（隐藏的菜系不参与推荐）
+  const visible = state.dishes.filter((d) => !isCuisineHidden(d.cuisine, state.hiddenCuisines))
+  suggestions.value = pickRandom(visible.length ? visible : state.dishes, 3)
+}
+
+function chooseChef(member) {
+  if (state.plan.chefId === member.id) actions.clearChef()
+  else actions.setChef(member.id)
+}
+
+function chooseWasher(member) {
+  if (state.plan.dishwasherId === member.id) actions.clearDishwasher()
+  else actions.setDishwasher(member.id)
+}
+
+// 骰子 PK：全员掷骰，点大的掌勺、点小的洗碗
+function openPK() {
+  if (state.members.length < 2) {
+    actions.toast('至少需要两位家人才能 PK', 'warn')
+    return
+  }
+  pkOpen.value = true
+}
+async function applyPK({ chefId, dishwasherId }) {
+  const ok = await actions.setDuties(chefId, dishwasherId)
+  if (ok) pkOpen.value = false
+}
+
+async function saveNote() {
+  if (!noteDirty.value) return
+  const ok = await actions.setNote(noteText.value)
+  if (ok) {
+    actions.toast('今天的话记下啦 ✓', 'success')
+    noteSaved.value = true
+    clearTimeout(noteTimer)
+    noteTimer = setTimeout(() => { noteSaved.value = false }, 2200)
+  }
+}
+
+function isPicked(dish) {
+  return orders.value.some((o) => o.dishId === dish.id)
+}
+
+// 点完菜保留当前这三张卡片，只标记「已点」，避免图片突然换掉让人以为点错了
+function quickOrder(dish) {
+  if (isPicked(dish)) {
+    actions.toast('这道已经在今日菜单啦', 'warn')
+    return
+  }
+  actions.order(dish.id, '', activeMeal.value)
+}
+
+const doneCount = computed(() => orders.value.filter((o) => o.done).length)
+const peopleCount = computed(() => new Set(orders.value.map((o) => o.userId)).size)
+const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
+  const dish = state.dishes.find((d) => d.id === o.dishId)
+  return sum + (dish?.minutes || 20)
+}, 0))
+</script>
+
+<template>
+  <section>
+    <div class="today-hero">
+      <span class="hero-deco">🍲</span>
+      <div class="hero-label">今日份 · {{ friendlyDate(state.today) }}</div>
+      <h1 class="hero-title">
+        <template v-if="chef || washer">
+          <span>{{ chef ? `${chef.avatar} ${chef.name} 掌勺` : '掌勺待定' }}</span>
+          <span class="hero-sep">·</span>
+          <span>{{ washer ? `${washer.avatar} ${washer.name} 洗碗` : '洗碗待定' }}</span>
+        </template>
+        <template v-else>今天谁做饭、谁洗碗呀？</template>
+      </h1>
+      <p class="hero-sub">
+        已经点了 {{ orders.length }} 道菜{{ doneCount ? `，上桌 ${doneCount} 道` : '' }}，
+        {{ orders.length ? '就等开饭啦' : '先点几个，别让掌勺的人猜' }}
+      </p>
+
+      <div class="meal-switch" role="group" aria-label="点的是哪一餐">
+        <span class="meal-switch-label">点的是</span>
+        <button
+          v-for="m in meals" :key="m.key" type="button"
+          class="meal-chip"
+          :class="{ active: activeMeal === m.key, 'is-past': isMealExpired(m.key, state.now, state.meals) }"
+          :aria-pressed="activeMeal === m.key"
+          :title="`${m.label} · ${m.end} 前；${isMealExpired(m.key, state.now, state.meals) ? '已过饭点，选它属于补记' : '接下来点的菜归到这一餐'}${state.mealPick === m.key ? '（再点一次跟随时间）' : ''}`"
+          @click="selectMeal(m.key)"
+        >{{ m.icon }} {{ m.label }}</button>
+      </div>
+
+      <div class="duty-grid">
+        <div class="duty-block">
+          <div class="duty-label">👨‍🍳 谁掌勺</div>
+          <div class="chef-grid">
+            <button
+              v-for="m in state.members" :key="m.id"
+              class="chef-choice" :class="{ active: state.plan.chefId === m.id }"
+              :disabled="pending('duty')" @click="chooseChef(m)"
+            >
+              <span class="avatar avatar-sm" :style="{ background: m.color }">{{ m.avatar }}</span>
+              <span class="chef-name">{{ m.name }}</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="duty-block">
+          <div class="duty-label">
+            🧽 谁洗碗
+            <button class="btn btn-sm btn-soft wash-random" @click="openPK" title="骰子 PK：点大的掌勺，点小的洗碗">
+              🎲 摇骰子
+            </button>
+          </div>
+          <div class="wash-grid">
+            <button
+              v-for="m in state.members" :key="m.id"
+              class="wash-choice" :class="{ active: state.plan.dishwasherId === m.id }"
+              :disabled="pending('duty')" @click="chooseWasher(m)"
+            >
+              <span class="avatar avatar-sm" :style="{ background: m.color }">{{ m.avatar }}</span>
+              <span class="chef-name">{{ m.name }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <p class="duty-summary" :class="{ muted: !chef || !washer }">
+        <template v-if="samePerson">{{ chef?.name }} 又做饭又洗碗，辛苦啦 🥲</template>
+        <template v-else-if="chef && washer">分工已定，就等开饭啦 🍚</template>
+        <template v-else-if="!chef && !washer">上面点名字，或用 🎲 抽一个比大小来定</template>
+        <template v-else>{{ !chef ? '还差掌勺的人' : '还差洗碗的人' }}没定</template>
+      </p>
+
+      <div class="note-row" :class="{ 'is-dirty': noteDirty, 'is-saved': noteSaved }">
+        <div class="note-input-wrap">
+          <input
+            v-model="noteText" class="input" maxlength="200"
+            placeholder="给今天留句话：想吃点清淡的 / 冰箱里有排骨…"
+            @blur="saveNote" @keyup.enter="$event.target.blur()"
+          />
+          <Transition name="page"><span v-if="noteSaved" class="note-check">✓</span></Transition>
+        </div>
+        <button
+          class="btn btn-sm note-save-btn" :class="noteBtnClass"
+          :disabled="!noteDirty || pending('note')" @click="saveNote"
+        >
+          <span v-if="pending('note')" class="btn-spinner" aria-hidden="true" />
+          {{ pending('note') ? '保存中' : (noteSaved ? '✓ 已保存' : '保存') }}
+        </button>
+      </div>
+    </div>
+
+    <div class="stat-strip">
+      <div class="stat-item"><span class="stat-num value-pop" :key="`dishes-${orders.length}`">{{ orders.length }}</span> 道菜</div>
+      <div class="stat-item"><span class="stat-num value-pop" :key="`people-${peopleCount}`">{{ peopleCount }}</span> 人点菜</div>
+      <div class="stat-item"><span class="stat-num value-pop" :key="`minutes-${totalMinutes}`">{{ totalMinutes }}</span> 分钟预计耗时</div>
+    </div>
+
+    <div class="today-cols">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">🍽️ 今日菜单</div>
+            <div class="section-sub">谁点的、做没做好，一眼看清</div>
+          </div>
+          <button class="btn btn-soft btn-sm" @click="state.tab = 'menu'">去点菜 ＋</button>
+        </div>
+
+        <div v-if="orders.length" class="meal-groups">
+          <template v-for="m in mealGroups" :key="m.key">
+            <!-- 只显示真正点了菜的那一餐：已过饭点或没点的分组不占版面 -->
+            <div v-if="grouped[m.key].length" class="meal-group" :class="{ 'is-current': m.key === state.meal }">
+              <div class="meal-group-head">
+                <span class="meal-group-title">{{ m.icon }} {{ m.label }}</span>
+                <span v-if="m.key === state.meal" class="meal-group-now">现在这顿</span>
+                <span class="meal-group-count">{{ grouped[m.key].length }} 道</span>
+              </div>
+              <TransitionGroup name="list" tag="div" class="order-list">
+                <div v-for="o in grouped[m.key]" :key="o.id" class="order-row" :class="{ done: o.done }">
+                  <div class="order-thumb">
+                    <img :src="dishImage(o, state.cuisines, state.dishes)" :alt="o.dishName" :style="artStyle(o, state.dishes)" loading="lazy" />
+                  </div>
+                  <div class="order-main">
+                    <div class="order-name">{{ o.dishName }}</div>
+                    <div class="order-meta">
+                      <span>{{ o.userAvatar }} {{ o.userName }}</span>
+                      <span>{{ cuisineName(o.dishCuisine, state.cuisines) }}</span>
+                      <span v-if="o.note">「{{ o.note }}」</span>
+                    </div>
+                  </div>
+                  <div class="order-actions">
+                    <button
+                      class="icon-btn" :aria-label="o.done ? '标记为还没做' : '标记已上桌'"
+                      :title="o.done ? '标记为还没做' : '标记已上桌'"
+                      :disabled="pending(`toggle:${o.id}`)" @click="actions.toggleOrder(o.id)"
+                    >
+                      {{ o.done ? '✅' : '⭕' }}
+                    </button>
+                    <button
+                      class="icon-btn icon-btn-danger" aria-label="撤掉这道" title="撤掉这道"
+                      :disabled="pending(`remove:${o.id}`)" @click="actions.removeOrder(o.id)"
+                    >✕</button>
+                  </div>
+                </div>
+              </TransitionGroup>
+            </div>
+          </template>
+        </div>
+        <div v-else class="empty">
+          <span class="empty-icon">🥢</span>
+          今天还没人点菜，去菜谱挑几道吧
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">🎲 选择困难？</div>
+            <div class="section-sub">从菜谱里随手捞三道</div>
+          </div>
+          <button class="btn btn-sm" @click="shuffle" aria-label="换一批推荐">🔄 换一批</button>
+        </div>
+        <TransitionGroup name="swap" tag="div" class="suggest-grid">
+          <div
+            v-for="d in suggestions" :key="d.id" class="suggest-card"
+            :class="{ picked: isPicked(d) }"
+            role="button" tabindex="0" :aria-label="`点这道：${d.name}`"
+            :aria-disabled="pending(`order:${d.id}`)"
+            @click="quickOrder(d)" @keydown.enter="quickOrder(d)" @keydown.space.prevent="quickOrder(d)"
+          >
+            <div class="suggest-photo">
+              <img :src="dishImage(d, state.cuisines)" :alt="d.name" :style="artStyle(d, state.dishes)" loading="lazy" />
+              <button class="suggest-recipe" title="看做法" aria-label="看做法" @click.stop="detailId = d.id"><span class="badge-ico">📖</span></button>
+              <span v-if="isPicked(d)" class="suggest-picked">✓ 已点</span>
+              <span v-else-if="pending(`order:${d.id}`)" class="suggest-adding">加菜中…</span>
+              <span v-else class="suggest-add" aria-hidden="true"><span class="badge-ico">＋</span></span>
+            </div>
+            <span class="suggest-name">{{ d.name }}</span>
+          </div>
+        </TransitionGroup>
+        <hr class="divider" />
+        <p class="tiny muted">
+          点一下卡片就直接加进今日菜单，点右上角 📖 可以看做法。点菜前记得在右上角选好「我是谁」，这样掌勺的人知道是谁馋的。
+        </p>
+      </div>
+    </div>
+
+    <Transition name="modal">
+      <DishDetail v-if="detailDish" :dish="detailDish" :editable="false" @close="detailId = null" />
+    </Transition>
+    <Transition name="modal">
+      <DicePK v-if="pkOpen" :members="state.members" @close="pkOpen = false" @apply="applyPK" />
+    </Transition>
+  </section>
+</template>

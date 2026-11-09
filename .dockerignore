@@ -1,0 +1,11 @@
+.git
+.gitignore
+docs/
+data/
+web/node_modules
+web/dist
+webapp/dist
+menu
+menu.exe
+*.log
+.shots/

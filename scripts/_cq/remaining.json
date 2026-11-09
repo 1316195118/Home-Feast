@@ -1,0 +1,236 @@
+[
+  {
+    "idx": 25,
+    "name": "清炒菜心",
+    "dishId": "d864f6ffe3cfe30cb",
+    "vessel": "青瓷圆盘，豆青釉，盘心光滑无纹",
+    "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base/img1e9c698025e3e22969ecdee5.png",
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/25",
+    "prompt": "专业写实美食摄影。以参考图为底做局部替换：完整保留这道『清炒菜心』的形态、份量、食材与摆盘，不改变菜品；只把原来的白圆盘换成【青瓷圆盘，豆青釉，盘心光滑无纹】。背景保持与参考图一致的浅色原木木纹桌面、柔和自然侧光、俯拍45度构图、干净留白，整体色调统一。真实食物摄影，高细节，柔和景深，无任何文字、logo、水印。"
+  },
+  {
+    "idx": 26,
+    "name": "柠檬鸡爪",
+    "dishId": "dcb5611679aa4b149",
+    "vessel": "白瓷宽口浅碗，纯白釉带一圈浮雕莲瓣",
+    "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base/img45050cc31b9c6c70c9afeb41.png",
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/26",
+    "prompt": "专业写实美食摄影。以参考图为底做局部替换：完整保留这道『柠檬鸡爪』的形态、份量、食材与摆盘，不改变菜品；只把原来的白圆盘换成【白瓷宽口浅碗，纯白釉带一圈浮雕莲瓣】。背景保持与参考图一致的浅色原木木纹桌面、柔和自然侧光、俯拍45度构图、干净留白，整体色调统一。真实食物摄影，高细节，柔和景深，无任何文字、logo、水印。"
+  },
+  {
+    "idx": 27,
+    "name": "鸡爪鸡翅煲",
+    "dishId": "ddd4276f5348e5c55",
+    "vessel": "赤陶带盖砂煲，赭红无釉陶土，盖钮圆润",
+    "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base/imgc94c3e76d2fd80f711c12460.png",
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/27",
+    "prompt": "专业写实美食摄影。以参考图为底做局部替换：完整保留这道『鸡爪鸡翅煲』的形态、份量、食材与摆盘，不改变菜品；只把原来的白圆盘换成【赤陶带盖砂煲，赭红无釉陶土，盖钮圆润】。背景保持与参考图一致的浅色原木木纹桌面、柔和自然侧光、俯拍45度构图、干净留白，整体色调统一。真实食物摄影，高细节，柔和景深，无任何文字、logo、水印。"
+  },
+  {
+    "idx": 28,
+    "name": "炝炒西葫芦",
+    "dishId": "d3b9d73576e8e89df",
+    "vessel": "白瓷盘，象牙白釉带细密开片",
+    "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base/img6cf6e36a4c70e29e10bf764d.png",
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/28",
+    "prompt": "专业写实美食摄影。以参考图为底做局部替换：完整保留这道『炝炒西葫芦』的形态、份量、食材与摆盘，不改变菜品；只把原来的白圆盘换成【白瓷盘，象牙白釉带细密开片】。背景保持与参考图一致的浅色原木木纹桌面、柔和自然侧光、俯拍45度构图、干净留白，整体色调统一。真实食物摄影，高细节，柔和景深，无任何文字、logo、水印。"
+  },
+  {
+    "idx": 29,
+    "name": "香辣鸡翅",
+    "dishId": "d125ebdca78aed48a",
+    "vessel": "铁板带木托，黑色椭圆铁板，下垫木托",
+    "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base/img54c24d3e2f3cd64188d4fa7a.png",
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/29",
+    "prompt": "专业写实美食摄影。以参考图为底做局部替换：完整保留这道『香辣鸡翅』的形态、份量、食材与摆盘，不改变菜品；只把原来的白圆盘换成【铁板带木托，黑色椭圆铁板，下垫木托】。背景保持与参考图一致的浅色原木木纹桌面、柔和自然侧光、俯拍45度构图、干净留白，整体色调统一。真实食物摄影，高细节，柔和景深，无任何文字、logo、水印。"
+  },
+  {
+    "idx": 30,
+    "name": "土豆炖牛腩",
+    "dishId": "d4451ec81fca8ac7f",
+    "vessel": "米白粗陶炖煲，奶白粗釉带细小铁点，配原木隔热托",
+    "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base/imgf25d4e983a22c05a5cf7d1d4.png",
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/30",
+    "prompt": "专业写实美食摄影。以参考图为底做局部替换：完整保留这道『土豆炖牛腩』的形态、份量、食材与摆盘，不改变菜品；只把原来的白圆盘换成【米白粗陶炖煲，奶白粗釉带细小铁点，配原木隔热托】。背景保持与参考图一致的浅色原木木纹桌面、柔和自然侧光、俯拍45度构图、干净留白，整体色调统一。真实食物摄影，高细节，柔和景深，无任何文字、logo、水印。"
+  },
+  {
+    "idx": 32,
+    "name": "香辣土豆片",
+    "dishId": "d6ceffb92d567fdfa",
+    "vessel": "黑釉浅钵，乌金釉，口沿一圈露胎",
+    "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base/img841b3198961c88540eacee41.png",
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/32",
+    "prompt": "专业写实美食摄影。以参考图为底做局部替换：完整保留这道『香辣土豆片』的形态、份量、食材与摆盘，不改变菜品；只把原来的白圆盘换成【黑釉浅钵，乌金釉，口沿一圈露胎】。背景保持与参考图一致的浅色原木木纹桌面、柔和自然侧光、俯拍45度构图、干净留白，整体色调统一。真实食物摄影，高细节，柔和景深，无任何文字、logo、水印。"
+  },
+  {
+    "idx": 33,
+    "name": "干煸鱿鱼须",
+    "dishId": "d40f46af733f32906",
+    "vessel": "圆形铁板，黑铁圆盘，边缘微微上翘",
+    "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base/img822d2e0c3d81b7482f899b56.png",
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/33",
+    "prompt": "专业写实美食摄影。以参考图为底做局部替换：完整保留这道『干煸鱿鱼须』的形态、份量、食材与摆盘，不改变菜品；只把原来的白圆盘换成【圆形铁板，黑铁圆盘，边缘微微上翘】。背景保持与参考图一致的浅色原木木纹桌面、柔和自然侧光、俯拍45度构图、干净留白，整体色调统一。真实食物摄影，高细节，柔和景深，无任何文字、logo、水印。"
+  },
+  {
+    "idx": 34,
+    "name": "炝炒包包菜",
+    "dishId": "dfaee79aecce1d234",
+    "vessel": "白瓷浅盘，白釉带浅浮雕菊瓣",
+    "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base/img4dd366e4586304b5b31b5477.png",
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/34",
+    "prompt": "专业写实美食摄影。以参考图为底做局部替换：完整保留这道『炝炒包包菜』的形态、份量、食材与摆盘，不改变菜品；只把原来的白圆盘换成【白瓷浅盘，白釉带浅浮雕菊瓣】。背景保持与参考图一致的浅色原木木纹桌面、柔和自然侧光、俯拍45度构图、干净留白，整体色调统一。真实食物摄影，高细节，柔和景深，无任何文字、logo、水印。"
+  },
+  {
+    "idx": 35,
+    "name": "蒜蓉炒大虾",
+    "dishId": "d43cd0dbb6378c9c2",
+    "vessel": "白瓷椭圆长盘，纯白釉长盘，两端微翘",
+    "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base/img90a5a85a0fdc9adf44572ff4.png",
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/35",
+    "prompt": "专业写实美食摄影。以参考图为底做局部替换：完整保留这道『蒜蓉炒大虾』的形态、份量、食材与摆盘，不改变菜品；只把原来的白圆盘换成【白瓷椭圆长盘，纯白釉长盘，两端微翘】。背景保持与参考图一致的浅色原木木纹桌面、柔和自然侧光、俯拍45度构图、干净留白，整体色调统一。真实食物摄影，高细节，柔和景深，无任何文字、logo、水印。"
+  },
+  {
+    "idx": 36,
+    "name": "手撕茄子",
+    "dishId": "d585a2227ff474254",
+    "vessel": "青瓷小碟，龙泉粉青釉，冰裂纹，圆口浅腹",
+    "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base/img43681907ee7962b1c8e2281e.png",
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/36",
+    "prompt": "专业写实美食摄影。以参考图为底做局部替换：完整保留这道『手撕茄子』的形态、份量、食材与摆盘，不改变菜品；只把原来的白圆盘换成【青瓷小碟，龙泉粉青釉，冰裂纹，圆口浅腹】。背景保持与参考图一致的浅色原木木纹桌面、柔和自然侧光、俯拍45度构图、干净留白，整体色调统一。真实食物摄影，高细节，柔和景深，无任何文字、logo、水印。"
+  },
+  {
+    "idx": 37,
+    "name": "红烧茄子",
+    "dishId": "db3f95c80e90b800a",
+    "vessel": "赤陶浅盘，赭红无釉陶土，质朴粗边",
+    "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base/img215f0936cc54cc4f7e7a92a8.png",
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/37",
+    "prompt": "专业写实美食摄影。以参考图为底做局部替换：完整保留这道『红烧茄子』的形态、份量、食材与摆盘，不改变菜品；只把原来的白圆盘换成【赤陶浅盘，赭红无釉陶土，质朴粗边】。背景保持与参考图一致的浅色原木木纹桌面、柔和自然侧光、俯拍45度构图、干净留白，整体色调统一。真实食物摄影，高细节，柔和景深，无任何文字、logo、水印。"
+  },
+  {
+    "idx": 38,
+    "name": "炒花菜",
+    "dishId": "d2ad5121a9eaec907",
+    "vessel": "米黄釉陶盘，暖米黄粗釉，盘沿手捏起伏",
+    "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base/imgfed17bab82752cb5569cb0a5.png",
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/38",
+    "prompt": "专业写实美食摄影。以参考图为底做局部替换：完整保留这道『炒花菜』的形态、份量、食材与摆盘，不改变菜品；只把原来的白圆盘换成【米黄釉陶盘，暖米黄粗釉，盘沿手捏起伏】。背景保持与参考图一致的浅色原木木纹桌面、柔和自然侧光、俯拍45度构图、干净留白，整体色调统一。真实食物摄影，高细节，柔和景深，无任何文字、logo、水印。"
+  },
+  {
+    "idx": 39,
+    "name": "炝炒小白菜",
+    "dishId": "d53046ce0b2336c67",
+    "vessel": "青瓷浅盘，灰青釉，浅腹宽沿",
+    "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base/img1c2cfc8335ad86c95f1ecfc4.png",
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/39",
+    "prompt": "专业写实美食摄影。以参考图为底做局部替换：完整保留这道『炝炒小白菜』的形态、份量、食材与摆盘，不改变菜品；只把原来的白圆盘换成【青瓷浅盘，灰青釉，浅腹宽沿】。背景保持与参考图一致的浅色原木木纹桌面、柔和自然侧光、俯拍45度构图、干净留白，整体色调统一。真实食物摄影，高细节，柔和景深，无任何文字、logo、水印。"
+  },
+  {
+    "idx": 40,
+    "name": "干煸四季豆",
+    "dishId": "d7986ea4109eb8e0c",
+    "vessel": "黑陶盘，炭黑哑光，盘面细密拉坯纹",
+    "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base/img9d0c16f301031fcf2bb67cad.png",
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/40",
+    "prompt": "专业写实美食摄影。以参考图为底做局部替换：完整保留这道『干煸四季豆』的形态、份量、食材与摆盘，不改变菜品；只把原来的白圆盘换成【黑陶盘，炭黑哑光，盘面细密拉坯纹】。背景保持与参考图一致的浅色原木木纹桌面、柔和自然侧光、俯拍45度构图、干净留白，整体色调统一。真实食物摄影，高细节，柔和景深，无任何文字、logo、水印。"
+  },
+  {
+    "idx": 41,
+    "name": "青椒炒肉丝",
+    "dishId": "d15f689ed22e16f56",
+    "vessel": "白瓷盘，白釉带一圈浅灰口沿",
+    "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base/imgeac7fd565b06b2fd46d2e812.png",
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/41",
+    "prompt": "专业写实美食摄影。以参考图为底做局部替换：完整保留这道『青椒炒肉丝』的形态、份量、食材与摆盘，不改变菜品；只把原来的白圆盘换成【白瓷盘，白釉带一圈浅灰口沿】。背景保持与参考图一致的浅色原木木纹桌面、柔和自然侧光、俯拍45度构图、干净留白，整体色调统一。真实食物摄影，高细节，柔和景深，无任何文字、logo、水印。"
+  },
+  {
+    "idx": 42,
+    "name": "米饭",
+    "dishId": "d5a979427d6e5cbc4",
+    "vessel": "青花小饭碗，白釉靛蓝山水纹，圆腹圈足",
+    "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base/img1998a8c035e120dc69f57008.png",
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/42",
+    "prompt": "专业写实美食摄影。以参考图为底做局部替换：完整保留这道『米饭』的形态、份量、食材与摆盘，不改变菜品；只把原来的白圆盘换成【青花小饭碗，白釉靛蓝山水纹，圆腹圈足】。背景保持与参考图一致的浅色原木木纹桌面、柔和自然侧光、俯拍45度构图、干净留白，整体色调统一。真实食物摄影，高细节，柔和景深，无任何文字、logo、水印。"
+  },
+  {
+    "idx": 43,
+    "name": "炒鸡",
+    "dishId": "d072e7e11f03b77dc",
+    "vessel": "黑陶深盘，深褐黑陶，厚沿深腹",
+    "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base/imgc01dec2357372eedc7ad1b50.png",
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/43",
+    "prompt": "专业写实美食摄影。以参考图为底做局部替换：完整保留这道『炒鸡』的形态、份量、食材与摆盘，不改变菜品；只把原来的白圆盘换成【黑陶深盘，深褐黑陶，厚沿深腹】。背景保持与参考图一致的浅色原木木纹桌面、柔和自然侧光、俯拍45度构图、干净留白，整体色调统一。真实食物摄影，高细节，柔和景深，无任何文字、logo、水印。"
+  },
+  {
+    "idx": 44,
+    "name": "蒜香排骨",
+    "dishId": "d83087fd3eb9891f4",
+    "vessel": "竹编长盘，长条竹编浅盘，内垫竹叶",
+    "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base/imgb97cec0504eb5a8750b2684c.png",
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/44",
+    "prompt": "专业写实美食摄影。以参考图为底做局部替换：完整保留这道『蒜香排骨』的形态、份量、食材与摆盘，不改变菜品；只把原来的白圆盘换成【竹编长盘，长条竹编浅盘，内垫竹叶】。背景保持与参考图一致的浅色原木木纹桌面、柔和自然侧光、俯拍45度构图、干净留白，整体色调统一。真实食物摄影，高细节，柔和景深，无任何文字、logo、水印。"
+  },
+  {
+    "idx": 45,
+    "name": "爆炒龙虾尾",
+    "dishId": "d636fb1f689c162fb",
+    "vessel": "黑釉大碗，墨黑亮釉，碗身矮而宽",
+    "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base/img056755a68e51e7545cb62527.png",
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/45",
+    "prompt": "专业写实美食摄影。以参考图为底做局部替换：完整保留这道『爆炒龙虾尾』的形态、份量、食材与摆盘，不改变菜品；只把原来的白圆盘换成【黑釉大碗，墨黑亮釉，碗身矮而宽】。背景保持与参考图一致的浅色原木木纹桌面、柔和自然侧光、俯拍45度构图、干净留白，整体色调统一。真实食物摄影，高细节，柔和景深，无任何文字、logo、水印。"
+  },
+  {
+    "idx": 46,
+    "name": "爆炒小龙虾",
+    "dishId": "d21cd15e515cee6a1",
+    "vessel": "黑陶盆，粗黑陶大盆，敞口",
+    "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base/imgad5ef385159eaa06fc5225aa.png",
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/46",
+    "prompt": "专业写实美食摄影。以参考图为底做局部替换：完整保留这道『爆炒小龙虾』的形态、份量、食材与摆盘，不改变菜品；只把原来的白圆盘换成【黑陶盆，粗黑陶大盆，敞口】。背景保持与参考图一致的浅色原木木纹桌面、柔和自然侧光、俯拍45度构图、干净留白，整体色调统一。真实食物摄影，高细节，柔和景深，无任何文字、logo、水印。"
+  },
+  {
+    "idx": 48,
+    "name": "萝卜炖排骨",
+    "dishId": "ddaba9c9414f7e009",
+    "vessel": "黑釉双耳砂锅，乌亮黑釉带手工旋纹，锅盖半掀在一侧",
+    "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base/imga17a59727985b7656a92b009.png",
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/48",
+    "prompt": "专业写实美食摄影。以参考图为底做局部替换：完整保留这道『萝卜炖排骨』的形态、份量、食材与摆盘，不改变菜品；只把原来的白圆盘换成【黑釉双耳砂锅，乌亮黑釉带手工旋纹，锅盖半掀在一侧】。背景保持与参考图一致的浅色原木木纹桌面、柔和自然侧光、俯拍45度构图、干净留白，整体色调统一。真实食物摄影，高细节，柔和景深，无任何文字、logo、水印。"
+  },
+  {
+    "idx": 49,
+    "name": "酸辣土豆丝",
+    "dishId": "dc3dbf12028c0cad4",
+    "vessel": "白瓷盘，亮白釉，圆盘平底",
+    "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base/imgb8fb65656c21fec2d3ee7cda.png",
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/49",
+    "prompt": "专业写实美食摄影。以参考图为底做局部替换：完整保留这道『酸辣土豆丝』的形态、份量、食材与摆盘，不改变菜品；只把原来的白圆盘换成【白瓷盘，亮白釉，圆盘平底】。背景保持与参考图一致的浅色原木木纹桌面、柔和自然侧光、俯拍45度构图、干净留白，整体色调统一。真实食物摄影，高细节，柔和景深，无任何文字、logo、水印。"
+  },
+  {
+    "idx": 50,
+    "name": "炝炒油麦菜",
+    "dishId": "d8957f248a6d92092",
+    "vessel": "白瓷长盘，纯白釉椭圆长盘，线条利落",
+    "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base/img0f58dc4d0e81b4b403c2dbab.png",
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/50",
+    "prompt": "专业写实美食摄影。以参考图为底做局部替换：完整保留这道『炝炒油麦菜』的形态、份量、食材与摆盘，不改变菜品；只把原来的白圆盘换成【白瓷长盘，纯白釉椭圆长盘，线条利落】。背景保持与参考图一致的浅色原木木纹桌面、柔和自然侧光、俯拍45度构图、干净留白，整体色调统一。真实食物摄影，高细节，柔和景深，无任何文字、logo、水印。"
+  },
+  {
+    "idx": 51,
+    "name": "蒜苔炒肉丝",
+    "dishId": "dc8eeac8299f225df",
+    "vessel": "米黄釉陶盘，浅杏色陶釉，圆形浅盘",
+    "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base/img68409755537ee132fdcf349e.png",
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/51",
+    "prompt": "专业写实美食摄影。以参考图为底做局部替换：完整保留这道『蒜苔炒肉丝』的形态、份量、食材与摆盘，不改变菜品；只把原来的白圆盘换成【米黄釉陶盘，浅杏色陶釉，圆形浅盘】。背景保持与参考图一致的浅色原木木纹桌面、柔和自然侧光、俯拍45度构图、干净留白，整体色调统一。真实食物摄影，高细节，柔和景深，无任何文字、logo、水印。"
+  },
+  {
+    "idx": 52,
+    "name": "西红柿炒鸡蛋",
+    "dishId": "dc6741a2566cb789f",
+    "vessel": "白瓷浅盘，乳白釉，盘沿细金线一圈",
+    "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base/imgbb6f62b6b5dfc73155d89c90.png",
+    "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/gen/52",
+    "prompt": "专业写实美食摄影。以参考图为底做局部替换：完整保留这道『西红柿炒鸡蛋』的形态、份量、食材与摆盘，不改变菜品；只把原来的白圆盘换成【白瓷浅盘，乳白釉，盘沿细金线一圈】。背景保持与参考图一致的浅色原木木纹桌面、柔和自然侧光、俯拍45度构图、干净留白，整体色调统一。真实食物摄影，高细节，柔和景深，无任何文字、logo、水印。"
+  }
+]

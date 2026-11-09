@@ -1,0 +1,29 @@
+name: family-menu
+
+services:
+  family-menu:
+    build: .
+    image: family-menu:local
+    container_name: family-menu
+    # 群晖 / 绿联等 NAS 若需要指定运行身份，取消下一行注释并按实际 UID:GID 调整：
+    # user: "1000:10"
+    ports:
+      - "8090:8090"          # 宿主机:容器，改左边即可换端口
+    environment:
+      - TZ=Asia/Shanghai
+      # 可选：设置后网页需要输入访问口令，防止局域网内外人改菜单
+      # - MENU_ACCESS_CODE=please-change-me
+    volumes:
+      - ./data:/data          # NAS 上改成 /volume1/docker/family-menu/data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8090/api/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 256M

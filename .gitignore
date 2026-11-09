@@ -1,0 +1,43 @@
+# 运行期数据（部署时由 volume 挂载，绝不入库）
+/data/*
+!/data/.gitkeep
+
+# 前端依赖与构建中间产物
+/web/node_modules/
+/web/dist/
+
+# Go embed 目录只保留占位文件，产物由构建脚本生成
+/webapp/dist/*
+!/webapp/dist/.gitkeep
+
+# 本地编译产物
+/menu
+/menu.exe
+/menu.exe~
+*.log
+.DS_Store
+.shots/
+
+# AI 绘图 / 验收截图的中间产物（体积大；成品图已上传到 /data/uploads）
+# 仓库只保留生成脚本与 json 清单，clone 后仍可复现流程
+/scripts/_cq/gen/
+/scripts/_cq/out/
+/scripts/_cq/base/
+/scripts/_ui/shots/
+/docs/artwork/
+/scripts/fm_patch.tgz
+
+# 本地工作台数据（含项目记忆/日志），不进公开仓库
+/.workbuddy/
+/.workbuddy-ai/
+
+# 内网运维脚本含 PVE 凭据，绝不进公开仓库（本地保留用于部署）
+/scripts/_deploy.py
+# 抓取的原始素材 / 中间快照：体积大且来源不对外发布
+/scripts/_src_images/
+/scripts/_src_dishes.html
+/scripts/_src_dishes.json
+/scripts/_boot.json
+/scripts/_tgt_bootstrap.json
+/scripts/_cq/menu_shot.png
+/scripts/_cq/progress_review.png
