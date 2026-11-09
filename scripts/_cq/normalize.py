@@ -5,7 +5,7 @@
 3. 把桌面色调平移到统一目标色，消除「每张背景都不一样」。
 输出统一 1200x900（4:3），前端 contain 显示时不会再出现留白或半截盘子。
 """
-from PIL import Image, ImageFilter
+from PIL import Image, ImageDraw, ImageFilter
 
 TARGET_BG = (238, 226, 208)  # 统一的浅木纹桌面色
 OUT_SIZE = (1200, 900)
@@ -15,9 +15,10 @@ def _hide_watermark(im):
     """用紧邻左侧的桌面区域覆盖右下角平台标识，并用羽化遮罩融入原图，
     避免出现矩形色块；必须在主体识别前做，否则水印会被算进菜品边界导致偏心。"""
     w, h = im.size
-    ow, oh = int(w * 0.20), int(h * 0.12)
+    # 只覆盖最右下角标识本身那一小块；区域过大会把盘子边缘一起抹成色块
+    ow, oh = int(w * 0.15), int(h * 0.085)
     patch = im.crop((w - 2 * ow, h - oh, w - ow, h))
-    fade = max(2, min(ow, oh) // 3)
+    fade = max(2, min(ow, oh) // 2)
     mask = Image.new('L', (ow, oh), 255)
     mp = mask.load()
     for y in range(oh):
@@ -69,14 +70,31 @@ def _subject_bbox(im, bg):
     return (int(rx[0] * sx), int(ry[0] * sy), int(rx[1] * sx), int(ry[1] * sy))
 
 
-def _tone_shift(im, src):
-    """整图做轻微通道平移，把桌面色拉到统一目标色；高光/暗部仍保留细节。"""
-    ch = list(im.split())
-    out = []
-    for i, c in enumerate(ch):
-        d = (TARGET_BG[i] - src[i]) * 0.8
-        out.append(c.point(lambda v, d=d: max(0, min(255, int(v + d)))))
-    return Image.merge('RGB', tuple(out))
+def _uniform_background(size):
+    """所有图片共用同一套自绘浅木纹桌面，保证四角/边缘背景完全一致。"""
+    w, h = size
+    bg = Image.new('RGB', size, TARGET_BG)
+    d = ImageDraw.Draw(bg)
+    for i, y in enumerate(range(0, h, 7)):
+        tone = 3 if i % 2 == 0 else -4
+        c = tuple(max(0, min(255, v + tone)) for v in TARGET_BG)
+        d.line((0, y, w, y), fill=c, width=1)
+    return bg
+
+
+def _compose_on_uniform_bg(base, rel_bbox, crop_size, size):
+    """只把主体之外（四角、边缘）换成统一桌面；椭圆内是原图像素，明暗一点不动。
+    rel_bbox 是主体在裁切画布坐标系里的边界；因为裁切画布以主体中心为中心，
+    椭圆天然落在画面正中。"""
+    sx, sy = size[0] / crop_size[0], size[1] / crop_size[1]
+    cx = (rel_bbox[0] + rel_bbox[2]) / 2 * sx
+    cy = (rel_bbox[1] + rel_bbox[3]) / 2 * sy
+    rx = max(1, (rel_bbox[2] - rel_bbox[0]) / 2 * sx * 1.18)
+    ry = max(1, (rel_bbox[3] - rel_bbox[1]) / 2 * sy * 1.18)
+    mask = Image.new('L', size, 0)
+    ImageDraw.Draw(mask).ellipse((cx - rx, cy - ry, cx + rx, cy + ry), fill=255)
+    mask = mask.filter(ImageFilter.GaussianBlur(min(size) * 0.035))
+    return Image.composite(base, _uniform_background(size), mask)
 
 
 def normalize_dish(path):
@@ -86,20 +104,15 @@ def normalize_dish(path):
     bw, bh = max(1, x1 - x0), max(1, y1 - y0)
     cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
 
-    # 让主体占画面约 78%，四周自然留约 11% 的等距边距
+    # 以主体中心裁 4:3，让主体约占 78%、四周留等距边距。
+    # 裁切框严格限制在原图内，绝不补色/合成/调亮度：
+    # 早期试过的「整图色调平移」造成过曝，「椭圆统一背景」留下圆形光晕，
+    # 「纯色画布填充」又拉高整图亮度，全部弃用。背景保持生成图自然桌面。
     cw = max(bw / 0.78, (bh / 0.78) * 4 / 3)
+    max_cw = min(im.width, im.height * 4 / 3)
+    cw = min(cw, max_cw)
     ch = cw * 3 / 4
-    if cw > im.width or ch > im.height:
-        # 主体本身几乎占满原图：等比缩小后居中，避免拉伸变形
-        scale = min(OUT_SIZE[0] / im.width, OUT_SIZE[1] / im.height)
-        nw, nh = int(im.width * scale), int(im.height * scale)
-        small = im.resize((nw, nh), Image.LANCZOS)
-        canvas = Image.new('RGB', OUT_SIZE, TARGET_BG)
-        canvas.paste(small, ((OUT_SIZE[0] - nw) // 2, (OUT_SIZE[1] - nh) // 2))
-        out = _tone_shift(canvas, bg)
-    else:
-        left = max(0, min(im.width - cw, cx - cw / 2))
-        top = max(0, min(im.height - ch, cy - ch / 2))
-        crop = im.crop((int(left), int(top), int(left + cw), int(top + ch)))
-        out = _tone_shift(crop, bg).resize(OUT_SIZE, Image.LANCZOS)
-    return out
+    left = max(0, min(im.width - cw, cx - cw / 2))
+    top = max(0, min(im.height - ch, cy - ch / 2))
+    crop = im.crop((int(left), int(top), int(left + cw), int(top + ch)))
+    return crop.resize(OUT_SIZE, Image.LANCZOS)
