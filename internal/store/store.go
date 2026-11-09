@@ -477,6 +477,16 @@ func (s *Store) AddOrder(date string, o Order) (Plan, error) {
 	defer s.mu.Unlock()
 	p := s.plans[date]
 	p.Date = date
+	if p.Orders == nil {
+		p.Orders = []Order{}
+	}
+	// 同一天同一道菜只记一条：连点、多端并发、旧客户端重试都不会在今日菜单里堆出重复行。
+	// 返回当前 plan 而不是报错，保证接口幂等。
+	for _, existing := range p.Orders {
+		if existing.DishID == o.DishID {
+			return p, nil
+		}
+	}
 	o.ID = newID("o")
 	o.CreatedAt = now()
 	p.Orders = append(p.Orders, o)

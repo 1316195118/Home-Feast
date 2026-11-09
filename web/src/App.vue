@@ -228,13 +228,20 @@ const actions = {
   setNote: (note) => guard(() => api.setPlan(state.today, { note }), '', 'note'),
   // 手动选的餐别放在全局 state：今天页、菜谱卡片、菜品详情弹窗三个入口归到同一餐。
   setMealPick: (key) => { state.mealPick = key || '' },
-  order: (dishId, note = '', meal = '') => withSound(guard(
-    () => api.addOrder(state.today, {
-      dishId, userId: state.currentUserId, note,
-      meal: meal || state.mealPick || state.meal,
-    }),
-    '点好啦，等开饭 🍚', `order:${dishId}`,
-  ), playAdd),
+  order: (dishId, note = '', meal = '') => {
+    // 同一道菜今天已经在菜单里就不再重复添加；返回 true 让详情弹窗也能正常关闭
+    if ((state.plan.orders || []).some((o) => o.dishId === dishId)) {
+      toast('这道菜已经在今日菜单里啦', 'warn')
+      return Promise.resolve(true)
+    }
+    return withSound(guard(
+      () => api.addOrder(state.today, {
+        dishId, userId: state.currentUserId, note,
+        meal: meal || state.mealPick || state.meal,
+      }),
+      '点好啦，等开饭 🍚', `order:${dishId}`,
+    ), playAdd)
+  },
   toggleOrder: (orderId) => guard(() => api.toggleOrder(state.today, orderId), '', `toggle:${orderId}`),
   removeOrder: (orderId) => withSound(guard(() => api.removeOrder(state.today, orderId), '已撤掉这道菜', `remove:${orderId}`), playRemove),
 

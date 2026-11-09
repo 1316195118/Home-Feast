@@ -201,7 +201,9 @@
 .suggest-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .suggest-name { display: block; padding: 8px 9px; font-size: 0.82rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* 常驻的「＋」让「点一下就加菜」一眼可见；外观统一走下方「图片角标」规则 */
-.suggest-add { right: 1px; bottom: 1px; pointer-events: none; }
+/* 推荐卡角标「吸附在边上」：负偏移让 24px 视觉圆点正好贴住图片的两条边，
+   超出的热区被 .suggest-photo 的 overflow:hidden 裁掉，看不出浮在图片里 */
+.suggest-add { right: -6px; bottom: -6px; pointer-events: none; }
 
 /* ---------- 菜谱 ---------- */
 .cuisine-strip {
@@ -228,7 +230,7 @@
 /* ---------- 图片角标（📖 / ☆ / ＋）----------
    热区 36px 保证手指好点，视觉只有 24px 的半透明磨砂小圆点贴在角落；
    默认几乎不挡菜品，只有鼠标悬停 / 键盘聚焦 / 按下时才高亮放大。 */
-.dish-recipe, .dish-fav, .suggest-recipe, .suggest-add, .dish-add {
+.dish-recipe, .dish-fav, .suggest-recipe, .suggest-add {
   position: absolute; z-index: 1;
   width: 36px; height: 36px; padding: 0;
   display: grid; place-items: center;
@@ -237,7 +239,7 @@
   line-height: 1;
   transition: transform 0.18s var(--ease);
 }
-.dish-recipe::before, .dish-fav::before, .suggest-recipe::before, .suggest-add::before, .dish-add::before {
+.dish-recipe::before, .dish-fav::before, .suggest-recipe::before, .suggest-add::before {
   content: ""; position: absolute; inset: 6px;
   border-radius: 50%;
   background: var(--badge-bg);
@@ -248,39 +250,35 @@
   opacity: 0.82;
   transition: opacity 0.18s var(--ease), transform 0.18s var(--ease), background 0.18s var(--ease);
 }
-.dish-recipe .badge-ico, .dish-fav .badge-ico, .suggest-recipe .badge-ico, .suggest-add .badge-ico, .dish-add .badge-ico {
+.dish-recipe .badge-ico, .dish-fav .badge-ico, .suggest-recipe .badge-ico, .suggest-add .badge-ico {
   position: relative; z-index: 1;
   font-size: 0.74rem; line-height: 1;
   opacity: 0.86;
   transition: opacity 0.18s var(--ease), transform 0.18s var(--ease);
 }
 /* 键盘聚焦 / 按下：所有设备都给明确反馈 */
-:is(.dish-recipe, .dish-fav, .suggest-recipe, .dish-add):focus-visible::before,
-:is(.dish-recipe, .dish-fav, .suggest-recipe, .dish-add):active::before {
+:is(.dish-recipe, .dish-fav, .suggest-recipe):focus-visible::before,
+:is(.dish-recipe, .dish-fav, .suggest-recipe):active::before {
   background: var(--badge-bg-strong); opacity: 1; transform: scale(1.08);
 }
-:is(.dish-recipe, .dish-fav, .suggest-recipe, .dish-add):focus-visible .badge-ico,
-:is(.dish-recipe, .dish-fav, .suggest-recipe, .dish-add):active .badge-ico { opacity: 1; transform: scale(1.08); }
-:is(.dish-recipe, .dish-fav, .suggest-recipe, .dish-add):active { transform: scale(0.92); }
+:is(.dish-recipe, .dish-fav, .suggest-recipe):focus-visible .badge-ico,
+:is(.dish-recipe, .dish-fav, .suggest-recipe):active .badge-ico { opacity: 1; transform: scale(1.08); }
+:is(.dish-recipe, .dish-fav, .suggest-recipe):active { transform: scale(0.92); }
 /* 只有真有鼠标悬停的设备才做 hover 高亮，避免触屏把 hover 状态「粘住」 */
 @media (hover: hover) {
-  .dish-card:hover :is(.dish-recipe, .dish-fav, .dish-add)::before,
+  .dish-card:hover :is(.dish-recipe, .dish-fav)::before,
   .suggest-card:hover .suggest-recipe::before,
-  :is(.dish-recipe, .dish-fav, .suggest-recipe, .dish-add):hover::before {
+  :is(.dish-recipe, .dish-fav, .suggest-recipe):hover::before {
     background: var(--badge-bg-strong); opacity: 1; transform: scale(1.08);
   }
-  .dish-card:hover :is(.dish-recipe, .dish-fav, .dish-add) .badge-ico,
+  .dish-card:hover :is(.dish-recipe, .dish-fav) .badge-ico,
   .suggest-card:hover .suggest-recipe .badge-ico,
-  :is(.dish-recipe, .dish-fav, .suggest-recipe, .dish-add):hover .badge-ico { opacity: 1; transform: scale(1.08); }
+  :is(.dish-recipe, .dish-fav, .suggest-recipe):hover .badge-ico { opacity: 1; transform: scale(1.08); }
   .suggest-card:hover .suggest-add::before { background: var(--brand); opacity: 1; transform: scale(1.08); }
 }
 .dish-recipe { top: 2px; left: 2px; }
 .dish-fav { top: 2px; right: 2px; }
 .dish-fav.is-fav { animation: star-pop 0.34s var(--ease); }
-/* 菜谱卡右下角的「＋」是真正可点的快捷点菜角标，与 📖/☆ 同款半透明小圆点 */
-.dish-add { right: 2px; bottom: 2px; }
-.dish-add::before { background: rgba(192, 90, 60, 0.62); border-color: var(--badge-line); }
-.dish-add .badge-ico { color: #fff; font-size: 0.95rem; font-weight: 800; opacity: 0.96; }
 /* ＋ 是纯装饰（整张卡片可点），半透明品牌色保留「加菜」提示但不抢画面 */
 .suggest-add::before { background: rgba(192, 90, 60, 0.58); border-color: var(--badge-line); }
 .suggest-add .badge-ico { color: #fff; font-size: 0.92rem; font-weight: 800; opacity: 0.95; }
@@ -436,7 +434,7 @@
 .dish-name-link:hover { color: var(--brand-dark); }
 .suggest-photo { position: relative; }
 /* 看做法角标沿用「图片角标」通用外观，这里只定位 */
-.suggest-recipe { top: 1px; right: 1px; cursor: pointer; }
+.suggest-recipe { top: -6px; right: -6px; cursor: pointer; }
 
 .dish-detail .detail-top { display: grid; grid-template-columns: minmax(180px, 240px) 1fr; gap: 18px; }
 /* 详情图要「看全」：contain 完整呈现整张图，再限高，避免把下面的配料/做法挤出弹窗 */
@@ -722,13 +720,12 @@
   .dish-desc { font-size: 0.76rem; min-height: 2.25em; }
   .dish-foot .btn { padding-left: 8px; padding-right: 8px; font-size: 0.78rem; }
   /* 手机没有真 hover：角标更小更淡，点按才高亮，菜品主体完整露出 */
-  .dish-recipe, .dish-fav, .suggest-recipe, .suggest-add, .dish-add { width: 34px; height: 34px; }
-  .dish-recipe::before, .dish-fav::before, .suggest-recipe::before, .suggest-add::before, .dish-add::before { inset: 7px; opacity: 0.72; }
+  .dish-recipe, .dish-fav, .suggest-recipe, .suggest-add { width: 34px; height: 34px; }
+  .dish-recipe::before, .dish-fav::before, .suggest-recipe::before, .suggest-add::before { inset: 7px; opacity: 0.72; }
   .dish-recipe { top: 1px; left: 1px; }
   .dish-fav { top: 1px; right: 1px; }
-  .dish-add { right: 0; bottom: 0; }
-  .suggest-recipe { top: 0; right: 0; }
-  .suggest-add { right: 0; bottom: 0; }
+  .suggest-recipe { top: -7px; right: -7px; }
+  .suggest-add { right: -7px; bottom: -7px; }
 
   /* 关键修复：单列时不能再让所有卡片等高，否则会被内容最多的那张撑出大片空白 */
   .settings-grid { grid-template-columns: 1fr; grid-auto-rows: auto; gap: 12px; }

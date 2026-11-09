@@ -34,11 +34,6 @@ const avoidHits = computed(() => {
         :disabled="pending(`fav:${dish.id}`)"
         @click.stop="actions.toggleFavorite(dish)"
       ><span class="badge-ico">{{ dish.favorite ? '⭐' : '☆' }}</span></button>
-      <button
-        class="dish-add" :disabled="pending(`order:${dish.id}`)"
-        :title="`把 ${dish.name} 加进今日菜单`" aria-label="点这道"
-        @click.stop="actions.order(dish.id)"
-      ><span class="badge-ico">＋</span></button>
     </div>
     <div class="dish-body">
       <div class="dish-title">
