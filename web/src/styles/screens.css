@@ -383,6 +383,23 @@
 .shopping-name { font-weight: 700; }
 .shopping-count { font-size: 0.76rem; color: var(--brand-dark); }
 .shopping-from { margin-left: auto; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shopping-group + .shopping-group { margin-top: 14px; }
+.shopping-group-title {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 0.86rem; font-weight: 800; color: var(--ink-soft);
+  padding: 4px 0 7px; margin-bottom: 6px;
+  border-bottom: 1px dashed var(--line-strong);
+}
+.shopping-group-title .tiny { margin-left: auto; font-weight: 600; }
+.shopping-preview { margin-top: 14px; text-align: center; }
+.shopping-preview img {
+  display: block; width: 100%; max-width: 420px; margin: 0 auto;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  /* 允许手机长按弹出「保存图片」，不要被禁用长按的全局样式挡住 */
+  -webkit-touch-callout: default; user-select: auto; -webkit-user-select: auto;
+}
+.shopping-preview-hint { font-size: 0.76rem; color: var(--muted); margin-top: 6px; }
 
 /* 「管理菜系显示」入口按钮 */
 .cuisine-manage-btn { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; }

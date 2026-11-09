@@ -112,6 +112,24 @@ export function avoidConflicts(dish, member) {
   return avoid.filter((a) => (a === '辣' ? (dish.spicy || 0) > 0 : hay.includes(a)))
 }
 
+// 购物清单分类：佐料（调味料 / 炝锅辅料）与食材（主料）分开列。
+// 用具体词而不是单字「油」「粉」，避免把「油炸花生米」「中筋面粉」误判成佐料。
+const SEASONING_WORDS = [
+  '盐', '糖', '冰糖', '白糖', '蜂蜜', '醋', '香醋', '生抽', '老抽', '酱油', '豉油', '蚝油',
+  '料酒', '黄酒', '食用油', '香油', '辣椒油', '花椒油', '黄油', '番茄酱',
+  '蒜', '姜', '葱', '花椒', '胡椒', '五香粉', '椒盐', '干辣椒', '泡椒',
+  '豆瓣酱', '豆豉', '火锅底料', '淀粉', '红薯淀粉', '味精', '鸡精',
+  '芝麻', '熟芝麻', '清水', '温水', '高汤',
+]
+// 这些词里虽然带「蒜 / 葱」，但本身是蔬菜主料，优先判为食材
+const INGREDIENT_EXCEPTIONS = ['蒜苗', '蒜苔', '蒜薹', '青蒜', '洋葱', '姜母', '姜撞奶']
+
+export function shoppingKind(name) {
+  const n = String(name || '')
+  if (INGREDIENT_EXCEPTIONS.some((k) => n.includes(k))) return '食材'
+  return SEASONING_WORDS.some((k) => n.includes(k)) ? '佐料' : '食材'
+}
+
 // 购物清单：把今天已点菜品的配料按「第一段食材名」聚合，同名合并并记下来源菜。
 // 纯前端计算，不新增后端字段；「盐 少许」「盐 适量」会归成一条「盐」。
 export function shoppingList(orders, dishes) {
@@ -124,13 +142,22 @@ export function shoppingList(orders, dishes) {
       const text = String(raw).trim()
       if (!text) continue
       const key = text.split(/\s+/)[0].replace(/[0-9０-９]/g, '').trim() || text
-      if (!map.has(key)) map.set(key, { text: key, count: 0, from: [] })
+      if (!map.has(key)) map.set(key, { text: key, kind: shoppingKind(key), count: 0, from: [] })
       const item = map.get(key)
       item.count++
       if (!item.from.includes(d.name)) item.from.push(d.name)
     }
   }
-  return [...map.values()].sort((a, b) => a.text.localeCompare(b.text, 'zh'))
+  return [...map.values()].sort((a, b) =>
+    a.kind === b.kind ? a.text.localeCompare(b.text, 'zh') : (a.kind === '食材' ? -1 : 1))
+}
+
+// 按「食材 / 佐料」两组输出，供清单面板分节显示
+export function shoppingGroups(list) {
+  return [
+    { key: '食材', icon: '🥬', items: (list || []).filter((x) => x.kind === '食材') },
+    { key: '佐料', icon: '🧂', items: (list || []).filter((x) => x.kind === '佐料') },
+  ]
 }
 
 // 用餐时段预设图标：点一下就选，仍可在面板底部的输入框里自定义

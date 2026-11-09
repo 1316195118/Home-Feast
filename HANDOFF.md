@@ -61,7 +61,8 @@
 - **PWA 离线**：`web/public/manifest.json` + 自绘 `icon-192/512.png` + `sw.js`（app shell / 静态资源缓存，`/api/` 一律走网络，导航 network-first、离线回退 index.html）；`index.html` 加 manifest/apple meta，`main.js` 注册。CDP 实测 registration/controller 均存在，断网刷新后页面仍能渲染。
 - **Excel 导出**：`internal/api/excel.go` 用 Go 标准库 `archive/zip` 生成真 `.xlsx`（今日菜单 + 菜谱清单两个工作表，inlineStr 中文），`GET /api/export/excel`，设置页「📊 导出 Excel」。实测 zip 结构完整、sheet2 110 行中文正常。
 - **口味避雷**：`Member.Avoid` 落 `members.json`（omitempty 兼容旧数据），`members.go` 清洗去重；`avoidChoices` + `avoidConflicts`；FamilyView 预设/自定义选择、成员卡展示；菜卡 `⚠️` 提示。**注意**内置菜配料由 `recipes.js` 动态生成，匹配时要并入 `getRecipe()` 的配料。
-- **购物清单**：`ShoppingList.vue` 从今日订单聚合配料（同名合并、记来源），可勾选（`fm.shopping.<date>` 存本机）与复制；今日页「🛒 购物清单」入口。同样需先用 `getRecipe()` 展开配料，否则内置菜 `ingredients` 为空会算出空清单（实测踩过并修好）。
+- **购物清单**：`ShoppingList.vue` 从今日订单聚合配料（同名合并、记来源），按 `shoppingKind()` 分成「🥬 食材 / 🧂 佐料」两类分节显示（佐料词表排除「蒜苗 / 洋葱」等易误判主料）；可勾选（`fm.shopping.<date>` 存本机）与复制；今日页「🛒 购物清单」入口。同样需先用 `getRecipe()` 展开配料，否则内置菜 `ingredients` 为空会算出空清单（实测踩过并修好）。
+  - **清单图**：「🖼️ 生成清单图」用 Canvas 自绘暖米纸风格 PNG（720 逻辑宽 ×2 DPR，分组色条、圆角行卡、勾选框、纸纹点、落款），不引入任何图片素材；「📱 保存到相册」优先 `navigator.canShare({files})` + `navigator.share` 调系统面板（含「存储图像」），不支持时降级 `<a download>`，并提示长按预览图保存；预览图 CSS 允许 `-webkit-touch-callout` 长按。实测双视口生成 1440×1676 PNG、按钮可用、无 JS 报错。
 - **菜谱卡片**：16 张菜系封面全部换成写真实拍风（1200×900 4:3），`.dish-photo img` 改 `object-fit: contain` 整图可见；右下角新增可点的「＋」快捷角标（与 📖/☆ 同款半透明小圆点），`ripple.js` 同步纳入点击指向。
 
 **上线验收**：`go vet` / `go test` / `vite build` 通过；`api-test` 14/14；CDP 双视口（1280/390）截图无布局问题；三个新弹窗与第一批 5 项双视口专项实测通过（主题/PWA 离线/避雷/购物清单/＋角标），无 JS 报错；16 张写实封面 HTTP 200；部署后线上 JS/CSS hash 与本地一致，健康检查 `{"ok":true}`。
