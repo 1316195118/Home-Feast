@@ -1,6 +1,6 @@
 <script setup>
 import { inject, computed, reactive, ref } from 'vue'
-import { avatarChoices, avatarGroups, colorChoices, memberOf, friendlyDate } from '../utils'
+import { avatarChoices, avatarGroups, colorChoices, memberOf, friendlyDate, avoidChoices } from '../utils'
 import { useModalBehavior } from '../modal'
 
 const { state, actions, confirmDialog, pending } = inject('app')
@@ -26,13 +26,27 @@ const editorOpen = ref(false)
 const editorRoot = ref(null)
 useModalBehavior(() => { editorOpen.value = false }, editorRoot, editorOpen)
 const editingId = ref(null)
-const form = reactive({ name: '', avatar: '🙂', color: colorChoices[0] })
+const form = reactive({ name: '', avatar: '🙂', color: colorChoices[0], avoid: [] })
+const customAvoid = ref('')
+
+function toggleAvoid(a) {
+  const i = form.avoid.indexOf(a)
+  if (i >= 0) form.avoid.splice(i, 1)
+  else if (form.avoid.length < 16) form.avoid.push(a)
+}
+function addCustomAvoid() {
+  const v = customAvoid.value.trim().slice(0, 16)
+  if (v && !form.avoid.includes(v) && form.avoid.length < 16) form.avoid.push(v)
+  customAvoid.value = ''
+}
 
 function openAdd() {
   editingId.value = null
   form.name = ''
   form.avatar = avatarChoices[Math.floor(Math.random() * avatarChoices.length)]
   form.color = colorChoices[state.members.length % colorChoices.length]
+  form.avoid = []
+  customAvoid.value = ''
   editorOpen.value = true
 }
 function openEdit(member) {
@@ -40,6 +54,8 @@ function openEdit(member) {
   form.name = member.name
   form.avatar = member.avatar
   form.color = member.color
+  form.avoid = [...(member.avoid || [])]
+  customAvoid.value = ''
   editorOpen.value = true
 }
 async function save() {
@@ -47,7 +63,7 @@ async function save() {
     actions.toast('总得有个称呼吧', 'warn')
     return
   }
-  const payload = { name: form.name.trim(), avatar: form.avatar, color: form.color }
+  const payload = { name: form.name.trim(), avatar: form.avatar, color: form.color, avoid: [...form.avoid] }
   const ok = editingId.value
     ? await actions.updateMember(editingId.value, payload)
     : await actions.addMember(payload)
@@ -84,6 +100,7 @@ async function remove(id) {
             <div class="tiny muted">{{ chefCount[m.id] || 0 }} 次掌勺 · {{ washCount[m.id] || 0 }} 次洗碗 · {{ orderCount[m.id] || 0 }} 次点菜</div>
           </div>
         </div>
+        <div v-if="(m.avoid || []).length" class="member-avoid tiny">⚠️ 不吃 {{ m.avoid.join('、') }}</div>
         <div class="member-stat"><span>掌勺 / 洗碗</span><span>{{ chefCount[m.id] || 0 }} / {{ washCount[m.id] || 0 }} 天</span></div>
         <div class="stat-bar">
           <div class="stat-bar-fill" :style="{ width: `${((chefCount[m.id] || 0) / maxChef) * 100}%`, background: m.color }"></div>
@@ -151,6 +168,25 @@ async function remove(id) {
               v-for="c in colorChoices" :key="c" class="swatch" :class="{ active: form.color === c }"
               :style="{ background: c }" :aria-label="`颜色 ${c}`" @click="form.color = c"
             ></button>
+          </div>
+        </div>
+        <div class="field" style="margin-top: 14px">
+          <label>口味避雷（点菜时会提示）</label>
+          <div class="avoid-picker">
+            <button
+              v-for="a in avoidChoices" :key="a" type="button" class="chip"
+              :class="{ active: form.avoid.includes(a) }" @click="toggleAvoid(a)"
+            >{{ a }}</button>
+          </div>
+          <div v-if="form.avoid.length" class="avoid-selected">
+            <span v-for="a in form.avoid" :key="a" class="tag tag-avoid" @click="toggleAvoid(a)">{{ a }} ✕</span>
+          </div>
+          <div class="avoid-custom">
+            <input
+              v-model="customAvoid" class="input" maxlength="16" placeholder="自定义，如「折耳根」"
+              @keydown.enter.prevent="addCustomAvoid"
+            />
+            <button class="btn btn-soft btn-sm" @click="addCustomAvoid">添加</button>
           </div>
         </div>
         <div class="modal-foot">

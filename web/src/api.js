@@ -62,5 +62,6 @@ export const api = {
   saveSettings: (body) => request('/api/settings', { method: 'PUT', body }),
   upload: (form) => request('/api/upload', { method: 'POST', body: form, isForm: true }),
   exportBackup: () => request('/api/backup', { raw: true }),
+  exportExcel: () => request('/api/export/excel', { raw: true }),
   importBackup: (form) => request('/api/backup', { method: 'POST', body: form, isForm: true }),
 }

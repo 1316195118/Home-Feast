@@ -3,11 +3,13 @@ import { inject, computed, ref, watch, onUnmounted } from 'vue'
 import { friendlyDate, memberOf, dishImage, cuisineName, pickRandom, artStyle, isCuisineHidden, normalizeMeals, isMealExpired } from '../utils'
 import DishDetail from './DishDetail.vue'
 import DicePK from './DicePK.vue'
+import ShoppingList from './ShoppingList.vue'
 
 const { state, actions, pending } = inject('app')
 const detailId = ref(null)
 const detailDish = computed(() => state.dishes.find((d) => d.id === detailId.value) || null)
 const pkOpen = ref(false)
+const shoppingOpen = ref(false)
 
 const orders = computed(() => state.plan.orders || [])
 // 餐别完全来自后端下发：名字、图标、结束时刻都能在设置里改，这里不写死。
@@ -218,7 +220,10 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
             <div class="panel-title">🍽️ 今日菜单</div>
             <div class="section-sub">谁点的、做没做好，一眼看清</div>
           </div>
-          <button class="btn btn-soft btn-sm" @click="state.tab = 'menu'">去点菜 ＋</button>
+          <div class="panel-head-actions">
+            <button class="btn btn-soft btn-sm" @click="shoppingOpen = true">🛒 购物清单</button>
+            <button class="btn btn-soft btn-sm" @click="state.tab = 'menu'">去点菜 ＋</button>
+          </div>
         </div>
 
         <div v-if="orders.length" class="meal-groups">
@@ -305,6 +310,9 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
     </Transition>
     <Transition name="modal">
       <DicePK v-if="pkOpen" :members="state.members" @close="pkOpen = false" @apply="applyPK" />
+    </Transition>
+    <Transition name="modal">
+      <ShoppingList v-if="shoppingOpen" @close="shoppingOpen = false" />
     </Transition>
   </section>
 </template>

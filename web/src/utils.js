@@ -95,6 +95,44 @@ export const avatarGroups = [
 export const avatarChoices = avatarGroups.flatMap((g) => g.items)
 export const colorChoices = ['#d9a066', '#cf8b9b', '#7fa98d', '#8d9bc4', '#c59a6d', '#a98bb5']
 
+// 家庭口味避雷：预设一批常见忌口，成员可多选也可自定义
+export const avoidChoices = [
+  '香菜', '葱', '姜', '蒜', '辣', '花生',
+  '海鲜', '牛奶', '鸡蛋', '牛肉', '猪肉', '羊肉',
+  '菌菇', '内脏', '芹菜', '胡萝卜',
+]
+
+// 一道菜命中了某位成员的哪些避雷项：菜名 / 描述 / 标签 / 配料里出现即算，
+// 「辣」额外看辣度字段。返回命中项数组，空数组表示安全。
+export function avoidConflicts(dish, member) {
+  const avoid = Array.isArray(member?.avoid) ? member.avoid : []
+  if (!avoid.length || !dish) return []
+  const hay = [dish.name, dish.desc, ...(dish.tags || []), ...(dish.ingredients || [])]
+    .filter(Boolean).join(' ')
+  return avoid.filter((a) => (a === '辣' ? (dish.spicy || 0) > 0 : hay.includes(a)))
+}
+
+// 购物清单：把今天已点菜品的配料按「第一段食材名」聚合，同名合并并记下来源菜。
+// 纯前端计算，不新增后端字段；「盐 少许」「盐 适量」会归成一条「盐」。
+export function shoppingList(orders, dishes) {
+  const map = new Map()
+  const byId = new Map((dishes || []).map((d) => [d.id, d]))
+  for (const o of orders || []) {
+    const d = byId.get(o.dishId)
+    if (!d) continue
+    for (const raw of d.ingredients || []) {
+      const text = String(raw).trim()
+      if (!text) continue
+      const key = text.split(/\s+/)[0].replace(/[0-9０-９]/g, '').trim() || text
+      if (!map.has(key)) map.set(key, { text: key, count: 0, from: [] })
+      const item = map.get(key)
+      item.count++
+      if (!item.from.includes(d.name)) item.from.push(d.name)
+    }
+  }
+  return [...map.values()].sort((a, b) => a.text.localeCompare(b.text, 'zh'))
+}
+
 // 用餐时段预设图标：点一下就选，仍可在面板底部的输入框里自定义
 export const mealIconChoices = [
   '🌅', '☀️', '🌙', '🍽️', '🥐', '🍚',

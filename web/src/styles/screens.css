@@ -108,7 +108,7 @@
 .chef-choice, .wash-choice {
   display: flex; align-items: center; gap: 8px;
   padding: 6px 12px 6px 7px;
-  background: rgba(255, 253, 249, 0.82);
+  background: var(--glass-bg);
   border: 1.5px solid transparent;
   border-radius: 999px;
   font-weight: 700; font-size: 0.86rem;
@@ -116,13 +116,13 @@
 }
 .chef-choice:hover, .wash-choice:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
 .chef-choice:active, .wash-choice:active { transform: scale(0.95); }
-.chef-choice.active { border-color: var(--brand); background: #fff; box-shadow: 0 4px 14px rgba(192, 90, 60, 0.16); }
-.wash-choice.active { border-color: var(--green); background: #fff; box-shadow: 0 4px 14px rgba(109, 145, 119, 0.2); }
+.chef-choice.active { border-color: var(--brand); background: var(--surface-solid); box-shadow: 0 4px 14px rgba(192, 90, 60, 0.16); }
+.wash-choice.active { border-color: var(--green); background: var(--surface-solid); box-shadow: 0 4px 14px rgba(109, 145, 119, 0.2); }
 .duty-summary { margin-top: 12px; font-size: 0.82rem; color: var(--ink-soft); }
 .duty-summary strong { color: var(--green); }
 .note-row { margin-top: 12px; display: flex; align-items: center; gap: 8px; }
 .note-input-wrap { position: relative; flex: 1; min-width: 0; max-width: 420px; }
-.note-row .input { width: 100%; padding-right: 34px; background: rgba(255, 253, 249, 0.85); }
+.note-row .input { width: 100%; padding-right: 34px; background: var(--input-bg); }
 .note-row.is-dirty .input { border-color: var(--brand); }
 .note-check {
   position: absolute; right: 11px; top: 50%; transform: translateY(-50%);
@@ -176,7 +176,7 @@
   transition: all 0.16s var(--ease);
 }
 .meal-chip:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
-.meal-chip.active { border-color: var(--brand); background: #fff; color: var(--brand-dark); box-shadow: var(--shadow-sm); }
+.meal-chip.active { border-color: var(--brand); background: var(--surface-solid); color: var(--brand-dark); box-shadow: var(--shadow-sm); }
 /* 已过饭点的餐别弱化显示；仍可点，属于主动补记 */
 .meal-chip.is-past:not(.active) { opacity: 0.55; }
 .meal-chip.is-past.active { border-style: dashed; }
@@ -222,12 +222,13 @@
 .dish-card { overflow: hidden; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease), border-color 0.2s var(--ease); }
 .dish-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); border-color: var(--line-strong); }
 .dish-photo { position: relative; width: 100%; aspect-ratio: 4 / 3; overflow: hidden; background: var(--paper-deep); }
-.dish-photo img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.35s var(--ease); }
+/* 菜系封面与菜品写实图现在都是 4:3；contain 兜底其它比例的图，保证整张看全不被裁 */
+.dish-photo img { width: 100%; height: 100%; object-fit: contain; display: block; transition: transform 0.35s var(--ease); }
 .dish-card:hover .dish-photo img { transform: scale(1.06); }
 /* ---------- 图片角标（📖 / ☆ / ＋）----------
    热区 36px 保证手指好点，视觉只有 24px 的半透明磨砂小圆点贴在角落；
    默认几乎不挡菜品，只有鼠标悬停 / 键盘聚焦 / 按下时才高亮放大。 */
-.dish-recipe, .dish-fav, .suggest-recipe, .suggest-add {
+.dish-recipe, .dish-fav, .suggest-recipe, .suggest-add, .dish-add {
   position: absolute; z-index: 1;
   width: 36px; height: 36px; padding: 0;
   display: grid; place-items: center;
@@ -236,48 +237,52 @@
   line-height: 1;
   transition: transform 0.18s var(--ease);
 }
-.dish-recipe::before, .dish-fav::before, .suggest-recipe::before, .suggest-add::before {
+.dish-recipe::before, .dish-fav::before, .suggest-recipe::before, .suggest-add::before, .dish-add::before {
   content: ""; position: absolute; inset: 6px;
   border-radius: 50%;
-  background: rgba(255, 253, 249, 0.46);
-  border: 1px solid rgba(255, 255, 255, 0.62);
+  background: var(--badge-bg);
+  border: 1px solid var(--badge-line);
   box-shadow: 0 1px 4px rgba(60, 50, 41, 0.12);
   -webkit-backdrop-filter: blur(3px);
   backdrop-filter: blur(3px);
   opacity: 0.82;
   transition: opacity 0.18s var(--ease), transform 0.18s var(--ease), background 0.18s var(--ease);
 }
-.dish-recipe .badge-ico, .dish-fav .badge-ico, .suggest-recipe .badge-ico, .suggest-add .badge-ico {
+.dish-recipe .badge-ico, .dish-fav .badge-ico, .suggest-recipe .badge-ico, .suggest-add .badge-ico, .dish-add .badge-ico {
   position: relative; z-index: 1;
   font-size: 0.74rem; line-height: 1;
   opacity: 0.86;
   transition: opacity 0.18s var(--ease), transform 0.18s var(--ease);
 }
 /* 键盘聚焦 / 按下：所有设备都给明确反馈 */
-:is(.dish-recipe, .dish-fav, .suggest-recipe):focus-visible::before,
-:is(.dish-recipe, .dish-fav, .suggest-recipe):active::before {
-  background: rgba(255, 253, 249, 0.94); opacity: 1; transform: scale(1.08);
+:is(.dish-recipe, .dish-fav, .suggest-recipe, .dish-add):focus-visible::before,
+:is(.dish-recipe, .dish-fav, .suggest-recipe, .dish-add):active::before {
+  background: var(--badge-bg-strong); opacity: 1; transform: scale(1.08);
 }
-:is(.dish-recipe, .dish-fav, .suggest-recipe):focus-visible .badge-ico,
-:is(.dish-recipe, .dish-fav, .suggest-recipe):active .badge-ico { opacity: 1; transform: scale(1.08); }
-:is(.dish-recipe, .dish-fav, .suggest-recipe):active { transform: scale(0.92); }
+:is(.dish-recipe, .dish-fav, .suggest-recipe, .dish-add):focus-visible .badge-ico,
+:is(.dish-recipe, .dish-fav, .suggest-recipe, .dish-add):active .badge-ico { opacity: 1; transform: scale(1.08); }
+:is(.dish-recipe, .dish-fav, .suggest-recipe, .dish-add):active { transform: scale(0.92); }
 /* 只有真有鼠标悬停的设备才做 hover 高亮，避免触屏把 hover 状态「粘住」 */
 @media (hover: hover) {
-  .dish-card:hover :is(.dish-recipe, .dish-fav)::before,
+  .dish-card:hover :is(.dish-recipe, .dish-fav, .dish-add)::before,
   .suggest-card:hover .suggest-recipe::before,
-  :is(.dish-recipe, .dish-fav, .suggest-recipe):hover::before {
-    background: rgba(255, 253, 249, 0.94); opacity: 1; transform: scale(1.08);
+  :is(.dish-recipe, .dish-fav, .suggest-recipe, .dish-add):hover::before {
+    background: var(--badge-bg-strong); opacity: 1; transform: scale(1.08);
   }
-  .dish-card:hover :is(.dish-recipe, .dish-fav) .badge-ico,
+  .dish-card:hover :is(.dish-recipe, .dish-fav, .dish-add) .badge-ico,
   .suggest-card:hover .suggest-recipe .badge-ico,
-  :is(.dish-recipe, .dish-fav, .suggest-recipe):hover .badge-ico { opacity: 1; transform: scale(1.08); }
+  :is(.dish-recipe, .dish-fav, .suggest-recipe, .dish-add):hover .badge-ico { opacity: 1; transform: scale(1.08); }
   .suggest-card:hover .suggest-add::before { background: var(--brand); opacity: 1; transform: scale(1.08); }
 }
 .dish-recipe { top: 2px; left: 2px; }
 .dish-fav { top: 2px; right: 2px; }
 .dish-fav.is-fav { animation: star-pop 0.34s var(--ease); }
+/* 菜谱卡右下角的「＋」是真正可点的快捷点菜角标，与 📖/☆ 同款半透明小圆点 */
+.dish-add { right: 2px; bottom: 2px; }
+.dish-add::before { background: rgba(192, 90, 60, 0.62); border-color: var(--badge-line); }
+.dish-add .badge-ico { color: #fff; font-size: 0.95rem; font-weight: 800; opacity: 0.96; }
 /* ＋ 是纯装饰（整张卡片可点），半透明品牌色保留「加菜」提示但不抢画面 */
-.suggest-add::before { background: rgba(192, 90, 60, 0.58); border-color: rgba(255, 255, 255, 0.5); }
+.suggest-add::before { background: rgba(192, 90, 60, 0.58); border-color: var(--badge-line); }
 .suggest-add .badge-ico { color: #fff; font-size: 0.92rem; font-weight: 800; opacity: 0.95; }
 .dish-body { padding: 12px 13px 13px; display: flex; flex-direction: column; gap: 7px; flex: 1; }
 .dish-title { font-size: 1rem; font-weight: 800; display: flex; align-items: center; justify-content: space-between; gap: 6px; }
@@ -354,6 +359,30 @@
 .setting-row-inline .input { width: auto; flex: 1 1 200px; min-width: 0; }
 .setting-row-inline .btn { flex: none; }
 .setting-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; padding-top: 14px; }
+.theme-choices { flex-wrap: wrap; }
+
+/* ---------- 口味避雷 ---------- */
+.tag-avoid { background: var(--amber-soft); color: var(--brand-dark); font-weight: 700; }
+.member-avoid { color: var(--brand-dark); margin-top: 2px; }
+.avoid-picker { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.avoid-selected { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.avoid-selected .tag-avoid { cursor: pointer; }
+.avoid-custom { display: flex; gap: 6px; margin-top: 8px; }
+.avoid-custom .input { flex: 1; min-width: 0; }
+
+/* ---------- 购物清单 ---------- */
+.panel-head-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.shopping-list { display: flex; flex-direction: column; gap: 6px; max-height: 46vh; overflow-y: auto; margin-top: 12px; }
+.shopping-item {
+  display: flex; align-items: center; gap: 9px; padding: 8px 10px;
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  background: var(--surface-soft); cursor: pointer;
+}
+.shopping-item.done { opacity: 0.58; }
+.shopping-item.done .shopping-name { text-decoration: line-through; }
+.shopping-name { font-weight: 700; }
+.shopping-count { font-size: 0.76rem; color: var(--brand-dark); }
+.shopping-from { margin-left: auto; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* 「管理菜系显示」入口按钮 */
 .cuisine-manage-btn { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; }
@@ -489,8 +518,8 @@
 .pk-row.is-rolling { border-color: var(--amber); background: var(--amber-soft); }
 .pk-name { flex: 1; min-width: 0; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pk-tag { flex: none; font-size: 0.74rem; font-weight: 800; white-space: nowrap; padding: 3px 8px; border-radius: 999px; }
-.chef-tag { color: var(--brand-dark); background: #fff; }
-.wash-tag { color: #42674e; background: #fff; }
+.chef-tag { color: var(--brand-dark); background: var(--surface-solid); }
+.wash-tag { color: #42674e; background: var(--surface-solid); }
 .safe-tag { color: var(--muted); background: transparent; }
 
 /* 正在摇：只展示当前摇骰子的人，不提供切换（切换走右上角「我是」） */
@@ -608,7 +637,7 @@
     position: fixed; left: 0; right: 0; bottom: 0; top: auto; z-index: 40;
     gap: 2px;
     padding: 5px 6px calc(5px + env(safe-area-inset-bottom));
-    background: rgba(255, 253, 249, 0.97);
+    background: var(--badge-bg-strong);
     border-top: 1px solid var(--line);
     box-shadow: 0 -6px 24px rgba(96, 70, 44, 0.07);
     backdrop-filter: blur(16px);
@@ -676,10 +705,11 @@
   .dish-desc { font-size: 0.76rem; min-height: 2.25em; }
   .dish-foot .btn { padding-left: 8px; padding-right: 8px; font-size: 0.78rem; }
   /* 手机没有真 hover：角标更小更淡，点按才高亮，菜品主体完整露出 */
-  .dish-recipe, .dish-fav, .suggest-recipe, .suggest-add { width: 34px; height: 34px; }
-  .dish-recipe::before, .dish-fav::before, .suggest-recipe::before, .suggest-add::before { inset: 7px; opacity: 0.72; }
+  .dish-recipe, .dish-fav, .suggest-recipe, .suggest-add, .dish-add { width: 34px; height: 34px; }
+  .dish-recipe::before, .dish-fav::before, .suggest-recipe::before, .suggest-add::before, .dish-add::before { inset: 7px; opacity: 0.72; }
   .dish-recipe { top: 1px; left: 1px; }
   .dish-fav { top: 1px; right: 1px; }
+  .dish-add { right: 0; bottom: 0; }
   .suggest-recipe { top: 0; right: 0; }
   .suggest-add { right: 0; bottom: 0; }
 

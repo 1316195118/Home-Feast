@@ -52,6 +52,7 @@ func New(st *store.Store, web fs.FS, envCode string) http.Handler {
 	api.HandleFunc("POST /api/upload", s.upload)
 	api.HandleFunc("GET /api/backup", s.exportBackup)
 	api.HandleFunc("POST /api/backup", s.importBackup)
+	api.HandleFunc("GET /api/export/excel", s.exportExcel)
 
 	root := http.NewServeMux()
 	root.Handle("/api/", s.protect(api))

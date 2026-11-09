@@ -5,7 +5,7 @@
 import { playTap } from './audio'
 const SELECTOR = [
   '.btn', '.chip', '.icon-btn', '.tab', '.chef-choice', '.wash-choice',
-  '.user-pick-item', '.dish-recipe', '.dish-fav', '.suggest-recipe',
+  '.user-pick-item', '.dish-recipe', '.dish-fav', '.dish-add', '.suggest-recipe',
   '.avatar-picker button', '.swatch', '.cuisine-toggle',
 ].join(',')
 

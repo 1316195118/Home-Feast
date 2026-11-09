@@ -29,7 +29,7 @@
   animation: spin 0.7s linear infinite;
 }
 .btn-spinner-light { border-color: rgba(255, 255, 255, 0.4); border-top-color: #fff; }
-.btn-primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+.btn-primary { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
 .btn-primary:hover { background: var(--brand-dark); }
 .btn-soft { background: var(--brand-soft); border-color: transparent; color: var(--brand-dark); }
 .btn-green { background: var(--green-soft); border-color: transparent; color: #42674e; }
@@ -74,7 +74,7 @@
 }
 .chip:hover { border-color: var(--line-strong); background: var(--surface-soft); }
 .chip:active { transform: scale(0.95); }
-.chip.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+.chip.active { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
 /* 选中态给一个轻弹，让「切菜系 / 只看收藏」有明确反馈 */
 .chip.active { animation: result-pop 0.3s var(--ease); }
 

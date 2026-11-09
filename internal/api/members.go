@@ -14,9 +14,10 @@ var colorPattern = regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)
 var palette = []string{"#d9a066", "#cf8b9b", "#7fa98d", "#8d9bc4", "#c59a6d", "#a98bb5"}
 
 type memberInput struct {
-	Name   string `json:"name"`
-	Avatar string `json:"avatar"`
-	Color  string `json:"color"`
+	Name   string   `json:"name"`
+	Avatar string   `json:"avatar"`
+	Color  string   `json:"color"`
+	Avoid  []string `json:"avoid"`
 }
 
 func (s *Server) listMembers(w http.ResponseWriter, r *http.Request) {
@@ -45,9 +46,10 @@ func (s *Server) createMember(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) updateMember(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		Name   *string `json:"name"`
-		Avatar *string `json:"avatar"`
-		Color  *string `json:"color"`
+		Name   *string   `json:"name"`
+		Avatar *string   `json:"avatar"`
+		Color  *string   `json:"color"`
+		Avoid  *[]string `json:"avoid"`
 	}
 	if err := decodeBody(w, r, &in); err != nil {
 		jsonErr(w, http.StatusBadRequest, err.Error())
@@ -69,6 +71,10 @@ func (s *Server) updateMember(w http.ResponseWriter, r *http.Request) {
 	if in.Color != nil {
 		v := cleanColor(*in.Color, 0)
 		p.Color = &v
+	}
+	if in.Avoid != nil {
+		v := cleanAvoid(*in.Avoid)
+		p.Avoid = &v
 	}
 	updated, err := s.st.UpdateMember(r.PathValue("id"), p)
 	if err != nil {
@@ -99,6 +105,7 @@ func normalizeMember(in memberInput, index int) (store.Member, error) {
 		Name:   name,
 		Avatar: cleanAvatar(in.Avatar),
 		Color:  cleanColor(in.Color, index),
+		Avoid:  cleanAvoid(in.Avoid),
 	}, nil
 }
 
@@ -116,4 +123,22 @@ func cleanColor(v string, index int) string {
 		return v
 	}
 	return palette[index%len(palette)]
+}
+
+// cleanAvoid 清洗忌口标签：去空白、去重、限长限数量，避免手改请求塞进一堆垃圾。
+func cleanAvoid(list []string) []string {
+	seen := make(map[string]bool, len(list))
+	out := make([]string, 0, len(list))
+	for _, v := range list {
+		v = trimmed(v, 16)
+		if v == "" || seen[v] {
+			continue
+		}
+		seen[v] = true
+		out = append(out, v)
+		if len(out) >= 16 {
+			break
+		}
+	}
+	return out
 }

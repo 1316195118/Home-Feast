@@ -1,7 +1,7 @@
 # 家里吃点啥 · 家庭点菜系统 — 任务交接（Handoff）
 
 > **一句话接管提示（直接发给下一个 AI）：**
-> 请接管「家里吃点啥」（项目根 `C:/Users/Administrator/WorkBuddy AI/家庭点菜系统`，**Go 标准库零依赖 + Vue 3 + Vite**，数据纯 JSON 存 `/data`，单二进制 embed 前端）。代码已发布到 **https://github.com/1316195118/Home-Feast**（中文名「家里吃点啥」），并部署在 PVE docker-LXC `10.10.10.251:8090`。A–E + 16 菜系专属插画 + 交互反馈**全部完成**；**下一批 10 项新需求**（购物清单、每周排班、避雷标签、SSE、PWA、智能推荐、Excel 导出、深色主题、多家庭隔离、定时备份）已按批次列在第三节，**需确认优先级后开工**。注意版权硬约束与部署约定。
+> 请接管「家里吃点啥」（项目根 `C:/Users/Administrator/WorkBuddy AI/家庭点菜系统`，**Go 标准库零依赖 + Vue 3 + Vite**，数据纯 JSON 存 `/data`，单二进制 embed 前端）。代码已发布到 **https://github.com/1316195118/Home-Feast**（中文名「家里吃点啥」），并部署在 PVE docker-LXC `10.10.10.251:8090`。A–E、交互反馈、**第一批 5 项新功能**（深色主题 / PWA / Excel / 避雷标签 / 购物清单）以及 16 张写实菜系封面**全部完成并上线**；剩余待办见第三节：**105 道菜逐道写实图（需确认范围与积分）**、第二批排班/智能推荐、第三批架构级需求。注意版权硬约束与部署约定。
 
 ---
 
@@ -56,7 +56,15 @@
 - 布局：手机端 `.btn` / `.icon-btn` 点击区统一 40px、编辑图标不再被挤扁，`.setting-actions` 换行、弹窗标题字号收敛。
 - 实测：真实指针事件下 `pointer/ripple/is-tapped` 全为 true；轻点击产生 1 oscillator + 1 bufferSource + 3 gain，点菜后再 +2 oscillator；双视口无 JS 报错。
 
-**上线验收**：`go vet` / `go test` / `vite build` 通过；`api-test` 14/14；CDP 双视口（1280/390）截图无布局问题；三个新弹窗（详情图/图标面板/头像面板）双视口实测通过；16 张插画 HTTP 200；部署后线上 JS/CSS hash 与本地一致，含 `--dur-base`、`AudioContext`、`fm.sound`、`createBufferSource`，健康检查 `{"ok":true}`，数据备份在 `/opt/family-menu/data-backup-20261110-003526`。
+**第一批 5 项新功能（已完成）**
+- **深色主题**：`tokens.css` 加语义变量 + `html[data-theme="dark"]` 覆盖；`theme.js` 管理 `fm.theme`（跟随系统/浅色/深色）并监听 `prefers-color-scheme`；设置页三选一。CDP 实测背景 `rgb(251,246,238)` → `rgb(24,20,16)`。
+- **PWA 离线**：`web/public/manifest.json` + 自绘 `icon-192/512.png` + `sw.js`（app shell / 静态资源缓存，`/api/` 一律走网络，导航 network-first、离线回退 index.html）；`index.html` 加 manifest/apple meta，`main.js` 注册。CDP 实测 registration/controller 均存在，断网刷新后页面仍能渲染。
+- **Excel 导出**：`internal/api/excel.go` 用 Go 标准库 `archive/zip` 生成真 `.xlsx`（今日菜单 + 菜谱清单两个工作表，inlineStr 中文），`GET /api/export/excel`，设置页「📊 导出 Excel」。实测 zip 结构完整、sheet2 110 行中文正常。
+- **口味避雷**：`Member.Avoid` 落 `members.json`（omitempty 兼容旧数据），`members.go` 清洗去重；`avoidChoices` + `avoidConflicts`；FamilyView 预设/自定义选择、成员卡展示；菜卡 `⚠️` 提示。**注意**内置菜配料由 `recipes.js` 动态生成，匹配时要并入 `getRecipe()` 的配料。
+- **购物清单**：`ShoppingList.vue` 从今日订单聚合配料（同名合并、记来源），可勾选（`fm.shopping.<date>` 存本机）与复制；今日页「🛒 购物清单」入口。同样需先用 `getRecipe()` 展开配料，否则内置菜 `ingredients` 为空会算出空清单（实测踩过并修好）。
+- **菜谱卡片**：16 张菜系封面全部换成写真实拍风（1200×900 4:3），`.dish-photo img` 改 `object-fit: contain` 整图可见；右下角新增可点的「＋」快捷角标（与 📖/☆ 同款半透明小圆点），`ripple.js` 同步纳入点击指向。
+
+**上线验收**：`go vet` / `go test` / `vite build` 通过；`api-test` 14/14；CDP 双视口（1280/390）截图无布局问题；三个新弹窗与第一批 5 项双视口专项实测通过（主题/PWA 离线/避雷/购物清单/＋角标），无 JS 报错；16 张写实封面 HTTP 200；部署后线上 JS/CSS hash 与本地一致，健康检查 `{"ok":true}`。
 
 ---
 
@@ -73,17 +81,25 @@
 - 线上核对：JS/CSS hash 与本地一致（`index-CDU8Whuz.js` / `index-Bxnu_sUd.css`）；CSS 含 `pointer-ring` / `ripple-pointer` / `is-tapped` / `focus-visible` / `--dur-base`，JS 含 `AudioContext` / `createBufferSource` / `createOscillator` / `bandpass`；7 张新插画与 52 张菜品图均 200；`data` 五份文件完好（157 道菜 / 52 带图 / 16 菜系）。
 - 若以后要 CT 内直接 `git pull`，需给 LXC 配代理 / 镜像加速。
 
-### 2. 下一批 10 项新需求（用户 2026-11-10 提出，待确认优先级）
+### 2. ✅ 第一批已完成（2026-11-10）
+深色主题、PWA 离线、Excel 导出、家庭口味避雷、购物清单 5 项已实现并双视口验收，详见第二节。
+
+### 3. 105 道菜逐道写实图（范围待用户确认，尚未做）
+- 现状：157 道菜里只有重庆菜 52 道有逐道写实图；其余 15 个菜系共 **105 道**仍显示各自菜系的封面（同一菜系共用一张图，截图上 5 道川菜是同一张）。
+- 本轮只把 **16 张菜系封面**换成写真实拍（1200×900 4:3，约 80–160 积分），没有做逐道图。
+- 若用户要的是「每道菜都像重庆菜那样各一张写实图」：需 105 张文生图（其它菜系没有 `scripts/_cq/base/*.png` 底图，不能照搬重庆菜「图生图换餐具」的流程），约 **525–1050 积分**；另需写批量发布脚本上传并 `PUT /api/dishes/{id}` 更新 image，建议每批 ≤3 张 + 断点续跑。
+- **先确认范围**：只到菜系封面（已完成）还是要做 105 道逐道图。
+
+### 4. 剩余批次（待确认优先级）
 
 | 批次 | 需求 | 说明 / 风险 |
 | --- | --- | --- |
-| **一（低风险，不动架构）** | 深色主题、PWA 离线可用、Excel 导出、家庭口味避雷标签、购物清单 | 深色主题只需扩展 `tokens.css` 变量 + 切换持久化；PWA 需 manifest + service worker（注意 embed 静态资源的缓存版本）；Excel 在零依赖下可用 CSV（Excel 可直接打开）或自写最小 xlsx（zip + XML）；避雷标签是 `Dish` 新字段 + 筛选；购物清单由今日订单的 `ingredients` 聚合 |
 | **二（新增数据模型）** | 每周掌勺排班与轮换提醒、按季节 / 冰箱食材智能推荐 | 需要新的 `roster.json` / `pantry.json` 与设置 UI；推荐建议用本地规则（季节 + 现有食材 + 辣度 / 耗时），不接外部 LLM 更稳妥 |
 | **三（架构级，需先定方案）** | 多人实时同步 SSE、多家庭 / 多账簿隔离、自动化定时备份到 NAS 另一目录 | SSE 要后端事件流 + 前端 EventSource + 写冲突策略；多家庭隔离要引入租户 / 登录与数据分仓，**与当前「单家庭纯 JSON」模型冲突**，需先确认是否真的需要；定时备份属于部署侧 cron + 备份路径与保留策略，不进应用代码 |
 
-**建议**：先做第一批（不破坏现有数据），再评估第二批；第三批逐项出方案确认后再动手。不要一次性全上，避免把已经稳定的单文件架构改坏。
+**建议**：先确认第 3 节的图片范围，再做第二批；第三批逐项出方案确认后再动手。不要一次性全上，避免把已经稳定的单文件架构改坏。
 
-### 3. 可选：真机试听音效
+### 5. 可选：真机试听音效
 - 结果音（win/lose/safe）只验证了合成路径与代码分支，尚未在真实设备上试听音量与听感；让家人摇一局确认即可。
 
 ---
@@ -95,6 +111,7 @@
 - 菜卡 / 详情：`web/src/components/DishCard.vue`、`web/src/components/DishDetail.vue`、`web/src/styles/screens.css`（「图片角标」段、`.detail-photo`）
 - 图标 / 头像 / 动效：`web/src/utils.js`（`mealIconChoices`/`avatarGroups`）、`SettingsView.vue`、`FamilyView.vue`、`styles/tokens.css`、`styles/base.css`
 - 图片：`scripts/_cq/remaining.json`、`manifest.json`、`publish.py`、`published.json`（52 项）、`gen_progress.json`
+- 第一批：`web/src/theme.js`（深色）、`web/public/manifest.json` + `sw.js` + `icon-*.png`（PWA）、`internal/api/excel.go`（xlsx）、`web/src/components/ShoppingList.vue`（购物清单）、`web/src/recipes.js`（**内置菜配料的真实来源**，避雷/清单都要经过 `getRecipe()`）
 - 验收：`scripts/_ui/capture.mjs`（CDP 双视口截图）、`scripts/api-test.mjs`
 - 部署 / 发布：`scripts/_deploy.py`（本地，含凭据）、`scripts/fm_patch.tgz`、`Dockerfile`、`docker-compose.yml`、`README.md`、`NOTICE.md`
 

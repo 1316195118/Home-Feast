@@ -19,11 +19,12 @@ type Dish struct {
 
 // Member 是家庭中的一个人，用头像 emoji 与昵称区分，不收集任何个人信息。
 type Member struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Avatar    string `json:"avatar"`
-	Color     string `json:"color"`
-	CreatedAt string `json:"createdAt"`
+	ID        string   `json:"id"`
+	Name      string   `json:"name"`
+	Avatar    string   `json:"avatar"`
+	Color     string   `json:"color"`
+	Avoid     []string `json:"avoid,omitempty"` // 忌口 / 口味避雷标签，omitempty 兼容旧 members.json
+	CreatedAt string   `json:"createdAt"`
 }
 
 // Order 是一次点菜。除了引用 ID，还留下菜名、菜系与点菜人快照，

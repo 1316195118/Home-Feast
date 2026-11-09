@@ -307,9 +307,10 @@ func (s *Store) ListMembers() []Member {
 
 // MemberPatch 是编辑成员时允许改动的字段。
 type MemberPatch struct {
-	Name   *string `json:"name"`
-	Avatar *string `json:"avatar"`
-	Color  *string `json:"color"`
+	Name   *string   `json:"name"`
+	Avatar *string   `json:"avatar"`
+	Color  *string   `json:"color"`
+	Avoid  *[]string `json:"avoid"`
 }
 
 func (s *Store) AddMember(m Member) (Member, error) {
@@ -348,6 +349,9 @@ func (s *Store) UpdateMember(id string, p MemberPatch) (Member, error) {
 	}
 	if p.Color != nil {
 		m.Color = *p.Color
+	}
+	if p.Avoid != nil {
+		m.Avoid = append([]string(nil), (*p.Avoid)...)
 	}
 	next[idx] = m
 	if err := s.writeJSON(membersFile, next); err != nil {

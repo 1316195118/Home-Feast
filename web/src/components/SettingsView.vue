@@ -3,11 +3,14 @@ import { inject, ref, watch, computed } from 'vue'
 import { api, setAccessCode } from '../api'
 import { isCuisineHidden, DEFAULT_MEALS, mealEndMinutes, normalizeMeals, mealIconChoices } from '../utils'
 import { useModalBehavior } from '../modal'
+import { themeChoices, currentThemeMode, setThemeMode } from '../theme'
 
 const { state, actions, confirmDialog, pending } = inject('app')
 const familyName = ref(state.settings.familyName || '我们家')
 const importBusy = ref(false)
 const cuisineRoot = ref(null)
+const themeMode = ref(currentThemeMode())
+function chooseTheme(mode) { themeMode.value = setThemeMode(mode) }
 
 watch(() => state.settings.familyName, (v) => { familyName.value = v || '我们家' })
 
@@ -52,6 +55,23 @@ async function doExport() {
     link.remove()
     setTimeout(() => URL.revokeObjectURL(url), 3000)
     actions.toast('备份已下载，记得放到 NAS 另一个文件夹', 'success')
+  } catch (err) {
+    actions.toast(err.message, 'error')
+  }
+}
+
+async function doExportExcel() {
+  try {
+    const blob = await api.exportExcel()
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `家里吃点啥-${new Date().toISOString().slice(0, 10)}.xlsx`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 3000)
+    actions.toast('Excel 已下载：今日菜单 + 菜谱清单两个工作表', 'success')
   } catch (err) {
     actions.toast(err.message, 'error')
   }
@@ -200,10 +220,25 @@ async function saveMeals() {
         </p>
         <div class="setting-actions">
           <button class="btn btn-soft btn-sm" @click="doExport">⬇️ 导出备份 zip</button>
+          <button class="btn btn-soft btn-sm" @click="doExportExcel">📊 导出 Excel</button>
           <label class="btn btn-soft btn-sm" :class="{ 'btn-ghost': importBusy }">
             {{ importBusy ? '恢复中…' : '⬆️ 从备份恢复' }}
             <input type="file" accept=".zip,application/zip" hidden @change="doImport" />
           </label>
+        </div>
+      </div>
+
+      <div class="card setting-card">
+        <div class="setting-title">🌙 外观</div>
+        <p class="setting-desc">
+          深色主题只影响这台设备；选「跟随系统」会随手机 / 电脑的深浅模式自动切换，设置会记在本机。
+        </p>
+        <div class="setting-actions theme-choices">
+          <button
+            v-for="t in themeChoices" :key="t.key" class="btn btn-sm"
+            :class="themeMode === t.key ? 'btn-primary' : 'btn-soft'"
+            :aria-pressed="themeMode === t.key" @click="chooseTheme(t.key)"
+          >{{ t.label }}</button>
         </div>
       </div>
 

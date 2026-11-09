@@ -1,6 +1,7 @@
 <script setup>
 import { inject, computed } from 'vue'
-import { dishImage, cuisineName, cuisineIcon, spicyText, artStyle } from '../utils'
+import { dishImage, cuisineName, cuisineIcon, spicyText, artStyle, avoidConflicts } from '../utils'
+import { getRecipe } from '../recipes'
 
 const props = defineProps({ dish: { type: Object, required: true } })
 defineEmits(['edit', 'open'])
@@ -8,6 +9,13 @@ const { state, actions, pending } = inject('app')
 
 const image = computed(() => dishImage(props.dish, state.cuisines))
 const cuisine = computed(() => cuisineName(props.dish.cuisine, state.cuisines))
+const selfMember = computed(() => state.members.find((m) => m.id === state.currentUserId) || null)
+// 内置菜配料由 recipes.js 动态生成，一并纳入忌口匹配（香菜 / 蒜 / 花生这类才命中得到）
+const avoidHits = computed(() => {
+  const r = getRecipe(props.dish)
+  const enriched = { ...props.dish, ingredients: [...(props.dish.ingredients || []), ...r.ingredients] }
+  return avoidConflicts(enriched, selfMember.value)
+})
 </script>
 
 <template>
@@ -26,6 +34,11 @@ const cuisine = computed(() => cuisineName(props.dish.cuisine, state.cuisines))
         :disabled="pending(`fav:${dish.id}`)"
         @click.stop="actions.toggleFavorite(dish)"
       ><span class="badge-ico">{{ dish.favorite ? '⭐' : '☆' }}</span></button>
+      <button
+        class="dish-add" :disabled="pending(`order:${dish.id}`)"
+        :title="`把 ${dish.name} 加进今日菜单`" aria-label="点这道"
+        @click.stop="actions.order(dish.id)"
+      ><span class="badge-ico">＋</span></button>
     </div>
     <div class="dish-body">
       <div class="dish-title">
@@ -37,6 +50,10 @@ const cuisine = computed(() => cuisineName(props.dish.cuisine, state.cuisines))
         <span class="tag" v-for="t in (dish.tags || []).slice(0, 3)" :key="t">{{ t }}</span>
         <span class="tag tag-spicy" v-if="dish.spicy > 0">{{ spicyText(dish.spicy) }}</span>
         <span class="tag tag-green" v-if="!dish.builtin">自家菜</span>
+        <span
+          v-if="avoidHits.length" class="tag tag-avoid"
+          :title="`与 ${selfMember?.name} 的口味避雷冲突`"
+        >⚠️ {{ avoidHits.join('、') }}</span>
       </div>
       <div class="dish-meta">
         <span>⏱ {{ dish.minutes || 20 }} 分钟</span>
@@ -48,7 +65,7 @@ const cuisine = computed(() => cuisineName(props.dish.cuisine, state.cuisines))
           @click="actions.order(dish.id)"
         >
           <span v-if="pending(`order:${dish.id}`)" class="btn-spinner" aria-hidden="true" />
-          {{ pending(`order:${dish.id}`) ? '添加中' : '＋ 点这道' }}
+          {{ pending(`order:${dish.id}`) ? '添加中' : '点这道' }}
         </button>
         <button class="icon-btn" title="编辑菜品" aria-label="编辑菜品" @click="$emit('edit', dish)">✏️</button>
       </div>
