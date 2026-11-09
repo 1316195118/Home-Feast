@@ -1,11 +1,24 @@
 # 家里吃点啥 · 家庭点菜系统
 
-> 仓库：https://github.com/1316195118/Home-Feast
+> **中文名：家里吃点啥** ｜ 仓库：https://github.com/1316195118/Home-Feast
 
-一家人自己用的点菜系统：网页访问、内置常见菜系、菜品效果图由 AI 绘制、每个人都有身份、每天定谁掌勺。
-**数据只存在自己的 NAS / 本机**，纯 JSON 文件，无数据库、无外部服务、无需注册。
+「今天吃什么？」——把这个问题交给全家人一起点。这是一个**完全自托管**的家庭点菜网页：手机、平板、电脑打开同一个地址，每个人选好「我是谁」，就能点菜、看做法、定谁掌勺谁洗碗。
+**数据只存在自己的 NAS / 本机**，纯 JSON 文件，无数据库、无外部服务、无需注册、不上传任何数据。
 
-单容器 / 单文件即可运行：Go 内嵌 Vue 3 前端，Docker 多阶段构建后运行镜像里只有一个二进制。
+## ✨ 为什么用它（优点速览）
+
+| 优点 | 说明 |
+| --- | --- |
+| **零依赖单二进制** | 后端只用 Go 标准库；Docker 多阶段构建后，运行镜像里只有一个可执行文件，没有 Node.js、没有数据库 |
+| **数据完全归你** | 5 个 JSON 文件存在 `/data`，直接打包就是完整备份；不依赖任何云服务，断网照常用 |
+| **一条命令部署** | 仓库根自带 `docker-compose.yml`，复制下面的命令即可起；升级 `git pull` 后重建，菜单和记录都不丢 |
+| **手机 / 电脑自适应** | 电脑顶栏多列、手机底部导航双列菜谱，弹窗在手机上自动变成底部抽屉 |
+| **16 菜系专属插画 + 52 道写实菜图** | 每个菜系一张水彩手绘，重庆菜逐道 AI 写实效果图；也可以上传自家照片 |
+| **今天谁做，不用吵** | 骰子 PK 每人摇一次，点数落库、换人刷新都不丢，都摇完自动定掌勺/洗碗，平局自动加摇 |
+| **音效零素材、版权干净** | 摇骰 / 胜利 / 失败全部用 Web Audio 实时合成，不带任何音频文件；图标是 emoji，字体走系统字体栈 |
+| **照顾家里每个人** | 自定义用餐时段与图标、56 个分组头像、逐道菜的做法教程、网页直接改访问口令、支持系统「减少动效」 |
+
+技术栈：**Go（标准库，运行时零依赖）+ Vue 3 + Vite**，前端构建后 embed 进单文件服务端。
 
 ---
 
@@ -14,7 +27,7 @@
 | 功能 | 说明 |
 | --- | --- |
 | 内置菜谱 | 100+ 道常见菜，覆盖川、粤、鲁、苏、浙、闽、湘、徽八大菜系，以及家常菜、汤羹、主食、凉菜、早餐、甜品饮品、西餐烘焙 |
-| AI 效果图 | 10 张统一水彩手绘风的菜系插画，压缩后随前端嵌入；也可为任意一道菜上传自己的照片 |
+| AI 效果图 | 16 个菜系各一张专属水彩手绘插画 + 52 道重庆菜 AI 写实效果图，压缩后随前端嵌入；也可为任意一道菜上传自己的照片 |
 | 家庭成员 | 每人一个昵称 + emoji 头像 + 颜色，切换身份即可点菜；不用注册、不填手机号 |
 | 今天谁做 | 每天指定掌勺人、写一句备注，点菜墙按人展示，可标记「已上桌」或撤掉 |
 | 选择困难 | 从菜谱随机捞三道，点一下直接加进今日菜单 |
@@ -37,7 +50,7 @@
 
 ![今天页](docs/images/today.png)
 
-**菜谱** — 15 个分类、109 道内置菜，插画由 AI 绘制
+**菜谱** — 16 个菜系、150+ 道内置菜，插画由 AI 绘制
 
 ![菜谱页](docs/images/menu.png)
 
@@ -51,18 +64,62 @@
 
 ## 二、Docker 部署到 NAS（推荐）
 
-### 最快：clone 下来一条命令起
+### 30 秒部署：复制这一条命令
 
-`docker-compose.yml` 已经放在**仓库根目录**，克隆完直接起，不用装 Go、不用装 Node：
+在 NAS / 服务器 / 自己的电脑上（装好 Docker 与 Compose v2）粘贴执行：
 
 ```bash
-git clone https://github.com/1316195118/Home-Feast.git
-cd Home-Feast
-docker compose up -d --build
+git clone https://github.com/1316195118/Home-Feast.git && cd Home-Feast && docker compose up -d --build
 ```
 
-浏览器打开 `http://<这台机器的 IP>:8090`。数据全部落在项目下的 `./data`（已加入 `.gitignore`，不会进仓库）。
-以后升级：`git pull && docker compose up -d --build`，`data/` 不动，菜单、成员、历史都在。
+浏览器打开 `http://<这台机器的 IP>:8090` 就能开始点菜。**不用装 Go、不用装 Node、不用建数据库**，`docker-compose.yml` 已在仓库根，Dockerfile 会在构建阶段自动编译前端和后端；首次约 2 分钟。
+
+数据全部落在项目下的 `./data`（已加入 `.gitignore`，不会进仓库）。以后升级：
+
+```bash
+git pull && docker compose up -d --build
+```
+
+`data/` 不动，菜单、成员、历史、上传的照片都在。
+
+### 完整 compose（可直接复制保存）
+
+下面就是仓库根 `docker-compose.yml` 的**完整内容**。改端口、改挂载路径、加访问口令，编辑这个文件即可。
+注意 `build: .` 需要同目录里有 `Dockerfile` 和源码，所以请把它放在 clone 下来的项目根目录里（或直接改 clone 下来的那份）：
+
+```yaml
+name: family-menu
+
+services:
+  family-menu:
+    build: .
+    image: family-menu:local
+    container_name: family-menu
+    # 群晖 / 绿联等 NAS 若需要指定运行身份，取消下一行注释并按实际 UID:GID 调整：
+    # user: "1000:10"
+    ports:
+      - "8090:8090"          # 宿主机:容器，改左边即可换端口
+    environment:
+      - TZ=Asia/Shanghai
+      # 可选：设置后网页需要输入访问口令，防止局域网内外人改菜单
+      # - MENU_ACCESS_CODE=please-change-me
+    volumes:
+      - ./data:/data          # NAS 上改成 /volume1/docker/family-menu/data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8090/api/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 256M
+```
+
+改完在同一目录执行 `docker compose up -d --build` 即可，其它什么都不用配。
 
 ### 拷到 NAS 上跑
 
@@ -170,7 +227,7 @@ internal/store/      数据模型 + JSON 文件存储（原子写、并发锁）
 internal/seed/       首次启动的内置菜品与示例成员
 web/                 Vue 3 + Vite 前端源码
 web/src/styles/      四层 CSS：设计令牌 / 基础 / 组件 / 版面
-web/public/dishes/   AI 绘制的菜系插画（压缩后的 JPEG）
+web/public/dishes/   16 个菜系的水彩插画 + 内置菜品图（压缩后的 JPEG）
 webapp/dist/         前端构建产物，Go embed 目录（构建时生成）
 docs/artwork/        AI 插画原始 PNG（含生成平台标识，留档）
 scripts/             构建、接口测试、图片转码

@@ -102,7 +102,7 @@ type Cuisine struct {
 // Cuisines 是全部内置分类，顺序即界面上的展示顺序。
 // 默认都展示；用户可在「设置 → 菜系显示」里逐个关掉不想要的（存进 Settings.HiddenCuisines）。
 var Cuisines = []Cuisine{
-	{"chongqing", "重庆菜", "🌶️", "/dishes/sichuan.jpg", "麻辣鲜香，山城江湖味", "#f3d9cd"},
+	{"chongqing", "重庆菜", "🌶️", "/dishes/chongqing.jpg", "麻辣鲜香，山城江湖味", "#f3d9cd"},
 	{"sichuan", "川菜", "🌶️", "/dishes/sichuan.jpg", "麻辣鲜香，一菜一格", "#f3d9cd"},
 	{"cantonese", "粤菜", "🥢", "/dishes/cantonese.jpg", "清鲜精致，讲究火候", "#dce9dd"},
 	{"shandong", "鲁菜", "🐟", "/dishes/shandong.jpg", "咸鲜醇厚，擅用高汤", "#f0e2c8"},
@@ -112,12 +112,12 @@ var Cuisines = []Cuisine{
 	{"hunan", "湘菜", "🔥", "/dishes/hunan.jpg", "香辣浓烈，下饭首选", "#f5d5cb"},
 	{"anhui", "徽菜", "🏔️", "/dishes/anhui.jpg", "重油重色，山野风味", "#e6ddcd"},
 	{"homestyle", "家常菜", "🍳", "/dishes/homestyle.jpg", "天天吃也不腻的老味道", "#f6e6c9"},
-	{"soup", "汤羹", "🥣", "/dishes/soup-staple.jpg", "一碗热汤，饭才圆满", "#dfe9ec"},
-	{"staple", "主食", "🍚", "/dishes/soup-staple.jpg", "米面馒头，管饱担当", "#eee4cf"},
-	{"cold", "凉菜", "🥗", "/dishes/homestyle.jpg", "爽口开胃，先上桌", "#e1ebd8"},
-	{"breakfast", "早餐", "🥞", "/dishes/homestyle.jpg", "一天从好好吃饭开始", "#f7e7d2"},
-	{"dessert", "甜品饮品", "🍰", "/dishes/homestyle.jpg", "饭后那口甜", "#f2dce2"},
-	{"western", "西餐烘焙", "🍝", "/dishes/homestyle.jpg", "偶尔换换口味", "#e4e2ee"},
+	{"soup", "汤羹", "🥣", "/dishes/soup.jpg", "一碗热汤，饭才圆满", "#dfe9ec"},
+	{"staple", "主食", "🍚", "/dishes/staple.jpg", "米面馒头，管饱担当", "#eee4cf"},
+	{"cold", "凉菜", "🥗", "/dishes/cold.jpg", "爽口开胃，先上桌", "#e1ebd8"},
+	{"breakfast", "早餐", "🥞", "/dishes/breakfast.jpg", "一天从好好吃饭开始", "#f7e7d2"},
+	{"dessert", "甜品饮品", "🍰", "/dishes/dessert.jpg", "饭后那口甜", "#f2dce2"},
+	{"western", "西餐烘焙", "🍝", "/dishes/western.jpg", "偶尔换换口味", "#e4e2ee"},
 }
 
 // CuisineByKey 返回分类定义，未知分类回退到家常菜。
