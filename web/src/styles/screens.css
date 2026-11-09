@@ -395,12 +395,17 @@
 .dish-detail .detail-top { display: grid; grid-template-columns: minmax(180px, 240px) 1fr; gap: 18px; }
 /* 详情图要「看全」：contain 完整呈现整张图，再限高，避免把下面的配料/做法挤出弹窗 */
 .detail-photo {
+  position: relative;
   border-radius: var(--radius-sm); overflow: hidden;
   background: var(--paper-deep);
-  display: grid; place-items: center;
   aspect-ratio: 4 / 3; max-height: 230px;
 }
-.detail-photo img { width: 100%; height: 100%; object-fit: contain; display: block; }
+/* 绝对定位让 img 严格等于容器：grid 布局下 height:100% 会失效，图片会被裁掉上下一截 */
+.detail-photo img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: contain; display: block;
+}
 .detail-info { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
 .detail-desc { margin: 0; font-size: 0.9rem; line-height: 1.7; color: var(--ink-soft); }
 .detail-meta, .detail-info .dish-tags { display: flex; gap: 6px; flex-wrap: wrap; }
