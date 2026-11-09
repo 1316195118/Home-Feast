@@ -81,6 +81,7 @@
 - PVE 宿主 `10.10.10.252` 与 CT 100 **都直连不通 GitHub**（curl 返回 000、`git ls-remote` 超时），CT 内没法直接 `git pull`。
 - 采用等价方式：本机从 GitHub `git clone` 最新 `main`（`6af6e74`）→ `git archive` 导出约 10MB 源码包 → 上传 PVE → CT 内 `docker compose down` → 备份并移出 `data/` → **删除旧 `/opt/family-menu`** → 解压线上源码 → 移回 `data/` → `docker compose up -d --build` → 健康检查通过。源码确实来自线上仓库，不是本地工作副本；数据全程只移出再移回。
 - **推送注意**：某次 `git push` 报 `schannel: server closed abruptly`，用 `git -c http.version=HTTP/1.1 push origin main` 重试即成功；上线前务必用 GitHub API 核对 `main` 的 SHA 与本地一致，再跑部署脚本，否则会拉到旧版本。
+- **仓库体积**：曾有一次 `git add -A` 把 `gen2/` 的 105 张生成原图（约 200MB）提交进历史，当前 HEAD 已通过 `.gitignore`（`gen2/`、`out2/`、`__pycache__/`）移除。为避免强推改写历史，统一用 **`git clone --depth 1`** 浅克隆（README 的一键命令与 PVE 部署脚本均已如此），实际下载约 10MB。
 - 线上核对：JS/CSS hash 与本地一致（`index-B2YOV6bN.js` / `index-C4dbfzGF.css`）；JS 含 `这道菜已经在今日菜单里啦`（点菜去重）且无 `dish-add` 残留，CSS 含 `-6px`（角标贴边）；`manifest.json` / `sw.js` / `/api/export/excel` / 16 张写实封面全部 200；`data` 完好，当天 3 条订单无重复（157 道菜 / 16 菜系 / 2 成员）。
 - 若以后要 CT 内直接 `git pull`，需给 LXC 配代理 / 镜像加速。
 

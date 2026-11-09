@@ -77,7 +77,7 @@
 在 NAS / 服务器 / 自己的电脑上（装好 Docker 与 Compose v2）粘贴执行：
 
 ```bash
-git clone https://github.com/1316195118/Home-Feast.git && cd Home-Feast && docker compose up -d --build
+git clone --depth 1 https://github.com/1316195118/Home-Feast.git && cd Home-Feast && docker compose up -d --build
 ```
 
 浏览器打开 `http://<这台机器的 IP>:8090` 就能开始点菜。**不用装 Go、不用装 Node、不用建数据库**，`docker-compose.yml` 已在仓库根，Dockerfile 会在构建阶段自动编译前端和后端；首次约 2 分钟。
