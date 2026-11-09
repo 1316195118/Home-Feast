@@ -76,10 +76,10 @@
 - `.gitignore` 排除了 `data/`、构建产物、AI 绘图中间产物、`.workbuddy/`，以及**含 PVE root 密码的 `scripts/_deploy.py`** 和抓取的原始素材；公开仓库无凭据、无第三方素材。
 - README 顶部有中文名 + 优点速览表 +「30 秒部署」一条命令 + **完整可复制的 `docker-compose.yml`**；仓库根自带 compose 与 Dockerfile。
 
-### 1. ✅ 已完成：PVE 从线上重新拉取并换掉旧目录（最近一次 2026-11-10 01:30，`a7d422e`）
+### 1. ✅ 已完成：PVE 从线上重新拉取并换掉旧目录（最近一次 2026-11-10 01:40，`699e0cb`）
 - PVE 宿主 `10.10.10.252` 与 CT 100 **都直连不通 GitHub**（curl 返回 000、`git ls-remote` 超时），CT 内没法直接 `git pull`。
-- 采用等价方式：本机从 GitHub `git clone` 最新 `main`（`a7d422e`）→ `git archive` 导出约 10MB 源码包 → 上传 PVE → CT 内 `docker compose down` → 备份并移出 `data/` → **删除旧 `/opt/family-menu`** → 解压线上源码 → 移回 `data/` → `docker compose up -d --build` → 健康检查通过。源码确实来自线上仓库，不是本地工作副本；数据全程只移出再移回。
-- 线上核对：JS/CSS hash 与本地一致（`index-Cs2UPPU2.js` / `index-NJ4r8nGL.css`）；`manifest.json` / `sw.js` / `icon-*.png` / 16 张写实封面均 200，`/api/export/excel` 返回 15KB 合法 xlsx；JS 含 `fm.theme` / `serviceWorker` / `AudioContext`；`data` 五份文件完好（157 道菜 / 52 带图 / 16 菜系 / 2 成员）。
+- 采用等价方式：本机从 GitHub `git clone` 最新 `main`（`699e0cb`）→ `git archive` 导出约 10MB 源码包 → 上传 PVE → CT 内 `docker compose down` → 备份并移出 `data/` → **删除旧 `/opt/family-menu`** → 解压线上源码 → 移回 `data/` → `docker compose up -d --build` → 健康检查通过。源码确实来自线上仓库，不是本地工作副本；数据全程只移出再移回。
+- 线上核对：JS/CSS hash 与本地一致（`index-Byf0lc5_.js` / `index-BlN2agLa.css`）；`manifest.json` / `sw.js` / `icon-*.png` / 16 张写实封面 / `/api/export/excel` 全部 200；JS 含 `保存到相册` / `生成清单图` / `食材` / `佐料` / `fm.theme` / `serviceWorker`；`data` 五份文件完好（157 道菜 / 16 菜系 / 2 成员）。
 - 若以后要 CT 内直接 `git pull`，需给 LXC 配代理 / 镜像加速。
 
 ### 2. ✅ 第一批已完成（2026-11-10）
