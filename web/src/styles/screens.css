@@ -84,48 +84,36 @@
 .hero-sub { font-size: 0.86rem; color: var(--ink-soft); margin-top: 4px; }
 .hero-deco { position: absolute; right: 12px; top: -18px; font-size: 7rem; opacity: 0.13; pointer-events: none; transform: rotate(-14deg); animation: float-soft 7s ease-in-out infinite; }
 
-/* ---------- 分工选择：掌勺 / 洗碗 两个选择 ---------- */
-.duty-picker { margin-top: 14px; }
-.duty-roles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.duty-role {
-  display: flex; flex-direction: column; gap: 7px; text-align: left;
-  padding: 11px 14px; min-height: 78px;
+/* ---------- 分工认领：我来掌勺 / 我来洗碗 两个按钮 ---------- */
+.duty-claim-grid { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.duty-claim {
+  display: flex; align-items: center; gap: 10px; text-align: left; position: relative;
+  padding: 12px 14px; min-height: 76px;
   background: var(--glass-bg); border: 1.5px solid var(--line);
   border-radius: var(--radius); transition: all 0.18s var(--ease);
 }
-.duty-role:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
-.duty-role-top { display: flex; align-items: center; gap: 7px; }
-.duty-role-emoji { font-size: 1.15rem; line-height: 1; }
-.duty-role-name { font-weight: 800; font-size: 0.92rem; }
-.duty-role-who {
-  display: flex; align-items: center; gap: 6px;
-  font-size: 0.82rem; color: var(--muted); font-weight: 600;
-}
-.duty-role-who .avatar-sm { width: 24px; height: 24px; font-size: 0.85rem; }
-.duty-role-chef.active { border-color: var(--brand); background: var(--brand-soft); }
-.duty-role-chef.filled .duty-role-who { color: var(--brand-dark); }
-.duty-role-wash.active { border-color: var(--green); background: var(--green-soft); }
-.duty-role-wash.filled .duty-role-who { color: var(--green-dark, var(--green)); }
-.duty-member-label { margin: 12px 0 7px; font-size: 0.82rem; font-weight: 700; color: var(--ink-soft); }
-.duty-members { display: flex; flex-wrap: wrap; gap: 8px; }
-.duty-member {
-  display: flex; align-items: center; gap: 8px; position: relative;
-  padding: 6px 14px 6px 6px; min-height: 44px;
-  background: var(--surface-solid); border: 1.5px solid var(--line);
-  border-radius: 999px; font-weight: 700; font-size: 0.86rem;
-  transition: all 0.16s var(--ease);
-}
-.duty-member:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
-.duty-member:active { transform: scale(0.95); }
-.duty-member .avatar-sm { width: 30px; height: 30px; font-size: 0.95rem; }
-.duty-member.is-chef.active { border-color: var(--brand); background: var(--brand-soft); }
-.duty-member.is-wash.active { border-color: var(--green); background: var(--green-soft); }
-.duty-member-check { font-weight: 900; color: var(--brand); }
-.duty-member.is-wash .duty-member-check { color: var(--green); }
+.duty-claim:hover:not(:disabled) { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.duty-claim:active:not(:disabled) { transform: scale(0.98); }
+.duty-claim-emoji { font-size: 1.5rem; line-height: 1; flex: none; }
+.duty-claim-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.duty-claim-text b { font-weight: 800; font-size: 0.95rem; }
+.duty-claim-status { display: flex; align-items: center; gap: 5px; font-size: 0.78rem; color: var(--muted); font-weight: 600; }
+.duty-claim-status .avatar-sm { width: 22px; height: 22px; font-size: 0.8rem; }
+.duty-claim-check { position: absolute; right: 10px; top: 10px; font-weight: 900; font-size: 0.9rem; }
+.duty-claim-chef.taken { border-color: var(--brand); }
+.duty-claim-chef.active { border-color: var(--brand); background: var(--brand-soft); }
+.duty-claim-chef.active .duty-claim-status { color: var(--brand-dark); }
+.duty-claim-chef .duty-claim-check { color: var(--brand); }
+.duty-claim-wash.taken { border-color: var(--green); }
+.duty-claim-wash.active { border-color: var(--green); background: var(--green-soft); }
+.duty-claim-wash.active .duty-claim-status { color: var(--green-dark, var(--green)); }
+.duty-claim-wash .duty-claim-check { color: var(--green); }
 .duty-pulse {
-  display: inline-block; margin-top: 10px; padding: 5px 12px;
+  position: absolute; left: 50%; bottom: -6px; transform: translateX(-50%);
+  white-space: nowrap; padding: 5px 12px;
   font-size: 0.82rem; font-weight: 800; color: var(--brand-dark);
-  background: var(--brand-soft); border-radius: 999px;
+  background: var(--surface-solid); border: 1px solid var(--line-strong); border-radius: 999px;
+  box-shadow: var(--shadow); pointer-events: none; z-index: 2;
 }
 .duty-pop-enter-active { animation: pop-spring 0.34s var(--ease); }
 .duty-pop-leave-active { transition: opacity 0.2s var(--ease); }
@@ -853,18 +841,14 @@
   }
   .stat-strip::-webkit-scrollbar { display: none; }
   .stat-item { flex: none; }
-  /* 分工选择手机端：两个角色卡并排收紧，成员横滑、保持 44px 热区 */
-  .duty-picker { margin-top: 12px; }
-  .duty-roles { gap: 8px; }
-  .duty-role { padding: 9px 11px; min-height: 72px; gap: 5px; }
-  .duty-role-emoji { font-size: 1rem; }
-  .duty-role-name { font-size: 0.86rem; }
-  .duty-role-who { font-size: 0.78rem; }
-  .duty-member-label { margin: 10px 0 6px; font-size: 0.78rem; }
-  .duty-members { flex-wrap: nowrap; gap: 6px; overflow-x: auto; margin-right: -14px; padding-right: 14px; padding-bottom: 6px; scrollbar-width: none; }
-  .duty-members::-webkit-scrollbar { display: none; }
-  .duty-member { flex: none; padding: 4px 12px 4px 4px; min-height: 44px; min-width: 44px; gap: 5px; }
-  .duty-member .avatar-sm { width: 30px; height: 30px; font-size: 0.95rem; }
+  /* 分工认领按钮手机端：两卡并排收紧，保持 44px 热区 */
+  .duty-claim-grid { gap: 8px; margin-top: 12px; }
+  .duty-claim { padding: 10px; min-height: 70px; gap: 7px; }
+  .duty-claim-emoji { font-size: 1.25rem; }
+  .duty-claim-text b { font-size: 0.86rem; }
+  .duty-claim-status { font-size: 0.72rem; }
+  .duty-claim-check { right: 7px; top: 7px; }
+  .duty-pulse { font-size: 0.76rem; padding: 5px 10px; }
   .duty-summary { font-size: 0.78rem; margin-top: 9px; }
   .note-row .input { max-width: none; width: 100%; }
   .panel { padding: 14px; }
@@ -964,9 +948,8 @@
   .tab { font-size: 0.66rem; }
   .hero-title { font-size: 1.18rem; }
   /* 极窄屏成员按钮只留头像，避免横滑格太宽 */
-  .duty-member-name { display: none; }
-  .duty-member { padding: 4px; }
-  .duty-role-who .avatar-sm { width: 22px; height: 22px; }
+  .duty-claim { padding: 8px; gap: 5px; }
+  .duty-claim-emoji { font-size: 1.1rem; }
   .duty-label { font-size: 0.7rem; }
   .stat-item { padding: 7px 10px; }
   .section-sub { font-size: 0.78rem; }

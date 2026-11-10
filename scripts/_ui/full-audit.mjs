@@ -12,7 +12,7 @@ const COLLECT = `JSON.stringify((()=>{
   const q=(s)=>[...document.querySelectorAll(s)];
   const txt=(e)=>(e.textContent||'').replace(/\\s+/g,' ').trim();
   const r=(e)=>e.getBoundingClientRect();
-  const buttons=q('.btn,.chip,.icon-btn,.tab,.duty-role,.duty-member,.pantry-card').map(e=>({
+  const buttons=q('.btn,.chip,.icon-btn,.tab,.duty-claim,.pantry-card').map(e=>({
     t:txt(e).slice(0,26), w:Math.round(r(e).width), h:Math.round(r(e).height),
     cls:(e.className||'').toString().slice(0,40),
   })).filter(x=>x.w>0);

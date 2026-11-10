@@ -4,7 +4,7 @@
 // 避免给宿主加 overflow:hidden 而裁掉 .tab::before 这类移到边界外的装饰。
 import { playTap } from './audio'
 const SELECTOR = [
-  '.btn', '.chip', '.icon-btn', '.tab', '.duty-role', '.duty-member',
+  '.btn', '.chip', '.icon-btn', '.tab', '.duty-claim',
   '.user-pick-item', '.dish-recipe', '.dish-fav', '.suggest-recipe',
   '.avatar-picker button', '.swatch', '.cuisine-toggle',
 ].join(',')

@@ -1,10 +1,23 @@
-// 分工选择验收：掌勺/洗碗两个 tab 切换、选中反馈动画、已定成员回显。
+// 分工认领验收：「我来掌勺 / 我来洗碗」两个按钮用当前身份认领、再点取消、文字动画反馈。
 // 用法：先启动服务端，再 node scripts/_ui/duty-verify.mjs；可设 BASE 指向线上。
-// 注意：脚本会临时设置再取消两个分工，结束时恢复为空。
+// 脚本先记下当前身份与分工，测完恢复，不影响线上数据。
 import { spawn } from 'node:child_process'
 import { setTimeout as sleep } from 'node:timers/promises'
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8090'
+async function api(method, path, body) {
+  const r = await fetch(BASE + path, {
+    method, headers: body ? { 'Content-Type': 'application/json' } : {},
+    body: body ? JSON.stringify(body) : undefined,
+  })
+  return (await r.json().catch(() => ({})))
+}
+const boot = await api('GET', '/api/bootstrap')
+const today = boot.today
+const beforePlan = await api('GET', `/api/plans/${today}`)
+const backup = { chefId: beforePlan.chefId || '', dishwasherId: beforePlan.dishwasherId || '' }
+console.log('测试前分工:', JSON.stringify(backup))
+
 const PORT = 9977
 const PROFILE = `C:/Users/Administrator/AppData/Local/Temp/fm-duty-${Date.now()}`
 const proc = spawn('C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', [
@@ -36,29 +49,31 @@ await ev(`document.querySelector('.user-pick-item')?.click()`)
 await sleep(500)
 
 const snap = () => ev(`JSON.stringify((()=>({
-  tabs:[...document.querySelectorAll('.duty-role')].map(t=>({cls:t.className.includes('active')?'active':'',who:t.querySelector('.duty-role-who')?.textContent.trim()})),
-  label:document.querySelector('.duty-member-label')?.textContent.trim().slice(0,20),
-  members:[...document.querySelectorAll('.duty-member')].map(m=>m.textContent.trim()),
+  me: document.querySelector('.user-switch select')?.value || document.querySelector('.user-switch')?.textContent.trim().slice(0,12),
+  claims:[...document.querySelectorAll('.duty-claim')].map(c=>({
+    label:c.querySelector('b')?.textContent.trim(),
+    status:c.querySelector('.duty-claim-status')?.textContent.trim(),
+    active:c.className.includes('active'),
+    mine:!!c.querySelector('.duty-claim-check'),
+  })),
   pulse:document.querySelector('.duty-pulse')?.textContent.trim()||'',
+  summary:document.querySelector('.duty-summary')?.textContent.trim(),
 }))())`)
 
 console.log('初始:', await snap())
-await ev(`document.querySelectorAll('.duty-role')[1]?.click()`)
+await ev(`document.querySelector('.duty-claim-chef')?.click()`)
 await sleep(350)
-console.log('切洗碗:', await snap())
-await ev(`document.querySelector('.duty-member')?.click()`)
+console.log('点我来掌勺:', await snap())
+await ev(`document.querySelector('.duty-claim-wash')?.click()`)
 await sleep(350)
-console.log('选洗碗的人:', await snap())
-await ev(`document.querySelectorAll('.duty-role')[0]?.click()`)
+console.log('点我来洗碗:', await snap())
+await ev(`document.querySelector('.duty-claim-chef')?.click()`)
 await sleep(350)
-await ev(`document.querySelectorAll('.duty-member')[1]?.click()`)
-await sleep(350)
-console.log('选掌勺的人:', await snap())
+console.log('再点掌勺取消:', await snap())
 console.log('JS 异常:', errors.length)
-// 清理：取消两个分工
-await ev(`document.querySelector('.duty-member.active')?.click()`); await sleep(200)
-await ev(`document.querySelectorAll('.duty-role')[1]?.click()`); await sleep(200)
-await ev(`document.querySelector('.duty-member.active')?.click()`); await sleep(200)
-console.log('已清理分工')
+
+// 恢复分工
+await api('PUT', `/api/plans/${today}`, { chefId: backup.chefId, dishwasherId: backup.dishwasherId })
+console.log('已恢复分工')
 ws.close(); proc.kill()
 process.exit(0)

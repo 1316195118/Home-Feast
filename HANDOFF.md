@@ -370,10 +370,10 @@
 
 用户要求「谁掌勺和谁洗碗改成这两个选择，选中给提示或动画，一眼看懂」。
 
-- `TodayView.vue`：原并排两栏（`.duty-grid` / `.chef-choice` / `.wash-choice`）改为分段式角色选择——`.duty-role`（掌勺红 / 洗碗绿两个 tab，卡上直接显示已定成员）+ `.duty-members`（当前角色的成员横滑格，选中打勾）。新增 `activeRole`、`dutyPulse`；`chooseMember()` 统一处理设置/取消与文字反馈（`setTimeout` 2.4s，`onUnmounted` 清理）。
-- 新增 `@keyframes` 复用的 `duty-pop` 过渡（pop-spring 进、淡出）；成员格切换用 `page` 过渡。
-- 涟漪/焦点/点击态选择器同步换成 `.duty-role`/`.duty-member`（`ripple.js`、`base.css`、`full-audit.mjs`）。
-- 验收 `scripts/_ui/duty-verify.mjs`：切 tab、选人回显、文字动画、取消、JS 异常 0 全过。
+- **第一版理解偏了**（做成「先点角色 tab、再从成员里选人」两步），用户纠正：「这两个按钮就是当前用户点谁就是它」。**最终版改成一键认领**。
+- `TodayView.vue`：原并排两栏（`.duty-grid` / `.chef-choice` / `.wash-choice`）改为两个大按钮 `.duty-claim`——「👨‍🍳 我来掌勺」「🧽 我来洗碗」。**当前身份点一下就认领该角色，再点取消**；别人已认领时点它会接管（改主意）。按钮上显示「是你 · 再点取消」或「XX 已认领」，右上角 ✓ 标记当前用户认领的角色。新增 `dutyPulse`、`claimRole()`（`selfMember` 为认领主体，`setTimeout` 2.4s，`onUnmounted` 清理），动画反馈「😀 XX 来掌勺啦！」/「已取消掌勺」。掌勺红、洗碗绿。
+- `duty-pop` 过渡（pop-spring 进、淡出）。涟漪/焦点/点击态选择器同步换成 `.duty-claim`（`ripple.js`、`base.css`、`full-audit.mjs`）。骰子 PK 保留（一次定两人）。
+- 验收 `scripts/_ui/duty-verify.mjs`（重写为认领版）：点掌勺→认领+动画、点洗碗→认领+动画、再点掌勺→取消，按钮状态/JS 异常 0 全过，测完恢复原分工。
 
 ### 2. 相似菜排查（只读，未改动任何菜）
 
