@@ -1,6 +1,7 @@
 <script setup>
 import { inject, computed, ref, watch, onUnmounted } from 'vue'
-import { friendlyDate, memberOf, dishImage, cuisineName, pickRandom, artStyle, isCuisineHidden, normalizeMeals, isMealExpired } from '../utils'
+import { friendlyDate, memberOf, dishImage, cuisineName, artStyle, isCuisineHidden, normalizeMeals, isMealExpired, rosterForDate, seasonOf, smartSuggest } from '../utils'
+import { getRecipe } from '../recipes'
 import DishDetail from './DishDetail.vue'
 import DicePK from './DicePK.vue'
 import ShoppingList from './ShoppingList.vue'
@@ -51,15 +52,64 @@ const noteBtnClass = computed(() =>
 let noteTimer = null
 onUnmounted(() => clearTimeout(noteTimer))
 const suggestions = ref([])
+const suggestSalt = ref(0)
+const season = computed(() => seasonOf(state.today))
+const selfMember = computed(() => state.members.find((m) => m.id === state.currentUserId) || null)
+const pantryCount = computed(() => (state.settings.pantry || []).length)
+
+// 智能推荐：季节 + 冰箱食材 + 口味避雷 + 耗时 + 收藏，全是本地规则，不调用外部服务。
+// 内置菜的配料由 recipes.js 动态生成，必须经 getRecipe() 展开才能匹配冰箱食材。
+function computeSuggestions(excludeIds = []) {
+  return smartSuggest(state.dishes, {
+    today: state.today,
+    pantry: state.settings.pantry || [],
+    member: selfMember.value,
+    hiddenCuisines: state.hiddenCuisines,
+    orders: state.plan.orders || [],
+    excludeIds,
+    salt: suggestSalt.value,
+    limit: 3,
+    ingredientsOf: (d) => getRecipe(d).ingredients || [],
+  })
+}
+function refreshSuggestions() { suggestions.value = computeSuggestions([]) }
+function shuffle() {
+  // 换一批时排除当前这三道，避免点一下还是同一批
+  const exclude = suggestions.value.map((s) => s.dish.id)
+  suggestSalt.value++
+  suggestions.value = computeSuggestions(exclude)
+}
+
+// 每周排班提醒：只在「排班已开启 + 今天有安排 + 当前分工不一致」时出现，可一键套用。
+const rosterToday = computed(() => rosterForDate(state.settings.roster, state.today))
+const rosterNames = computed(() => {
+  const r = rosterToday.value
+  if (!r) return null
+  return {
+    chef: state.members.find((m) => m.id === r.chefId) || null,
+    wash: state.members.find((m) => m.id === r.washId) || null,
+  }
+})
+const rosterDiff = computed(() => {
+  const r = rosterToday.value
+  if (!r) return false
+  const chefOk = !r.chefId || state.plan.chefId === r.chefId
+  const washOk = !r.washId || state.plan.dishwasherId === r.washId
+  return !(chefOk && washOk)
+})
+function applyRoster() {
+  const r = rosterToday.value
+  if (!r) return
+  // 排班没填的那一半保留今天已定的人，不误清空
+  actions.setDuties(r.chefId || state.plan.chefId || '', r.washId || state.plan.dishwasherId || '')
+}
 
 watch(() => state.plan.note, (v) => { noteText.value = v || '' })
-watch(() => state.today, shuffle, { immediate: true })
-
-function shuffle() {
-  // 只从「当前已显示」的菜系里随机（隐藏的菜系不参与推荐）
-  const visible = state.dishes.filter((d) => !isCuisineHidden(d.cuisine, state.hiddenCuisines))
-  suggestions.value = pickRandom(visible.length ? visible : state.dishes, 3)
-}
+watch(
+  () => [state.today, state.dishes, state.settings.pantry, state.hiddenCuisines, state.plan.orders],
+  refreshSuggestions,
+  { immediate: true },
+)
 
 function chooseChef(member) {
   if (state.plan.chefId === member.id) actions.clearChef()
@@ -144,6 +194,18 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
           :title="`${m.label} · ${m.end} 前；${isMealExpired(m.key, state.now, state.meals) ? '已过饭点，选它属于补记' : '接下来点的菜归到这一餐'}${state.mealPick === m.key ? '（再点一次跟随时间）' : ''}`"
           @click="selectMeal(m.key)"
         >{{ m.icon }} {{ m.label }}</button>
+      </div>
+
+      <div v-if="rosterToday && rosterNames" class="roster-hint" :class="{ 'is-done': !rosterDiff }">
+        <span class="roster-hint-icon">{{ rosterDiff ? '📅' : '✅' }}</span>
+        <span class="roster-hint-text">
+          <template v-if="rosterDiff">
+            按每周排班，今天该
+            <b v-if="rosterNames.chef">{{ rosterNames.chef.avatar }} {{ rosterNames.chef.name }} 掌勺</b><b v-if="rosterNames.chef && rosterNames.wash">、</b><b v-if="rosterNames.wash">{{ rosterNames.wash.avatar }} {{ rosterNames.wash.name }} 洗碗</b>
+          </template>
+          <template v-else>今天的分工和排班一致</template>
+        </span>
+        <button v-if="rosterDiff" class="btn btn-primary btn-sm" :disabled="pending('duty')" @click="applyRoster">一键套用</button>
       </div>
 
       <div class="duty-grid">
@@ -275,32 +337,33 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
       <div class="panel">
         <div class="panel-head">
           <div>
-            <div class="panel-title">🎲 选择困难？</div>
-            <div class="section-sub">从菜谱里随手捞三道</div>
+            <div class="panel-title">💡 今天吃啥</div>
+            <div class="section-sub">{{ season.label }}天 · 按季节{{ pantryCount ? '、冰箱里的 ' + pantryCount + ' 样食材' : '' }}和口味避雷挑的</div>
           </div>
           <button class="btn btn-sm" @click="shuffle" aria-label="换一批推荐">🔄 换一批</button>
         </div>
         <TransitionGroup name="swap" tag="div" class="suggest-grid">
           <div
-            v-for="d in suggestions" :key="d.id" class="suggest-card"
-            :class="{ picked: isPicked(d) }"
-            role="button" tabindex="0" :aria-label="`点这道：${d.name}`"
-            :aria-disabled="pending(`order:${d.id}`)"
-            @click="quickOrder(d)" @keydown.enter="quickOrder(d)" @keydown.space.prevent="quickOrder(d)"
+            v-for="s in suggestions" :key="s.dish.id" class="suggest-card"
+            :class="{ picked: isPicked(s.dish) }"
+            role="button" tabindex="0" :aria-label="`点这道：${s.dish.name}`"
+            :aria-disabled="pending(`order:${s.dish.id}`)"
+            @click="quickOrder(s.dish)" @keydown.enter="quickOrder(s.dish)" @keydown.space.prevent="quickOrder(s.dish)"
           >
             <div class="suggest-photo">
-              <img :src="dishImage(d, state.cuisines)" :alt="d.name" :style="artStyle(d, state.dishes)" loading="lazy" />
-              <button class="suggest-recipe" title="看做法" aria-label="看做法" @click.stop="detailId = d.id"><span class="badge-ico">📖</span></button>
-              <span v-if="isPicked(d)" class="suggest-picked">✓ 已点</span>
-              <span v-else-if="pending(`order:${d.id}`)" class="suggest-adding">加菜中…</span>
+              <img :src="dishImage(s.dish, state.cuisines)" :alt="s.dish.name" :style="artStyle(s.dish, state.dishes)" loading="lazy" />
+              <button class="suggest-recipe" title="看做法" aria-label="看做法" @click.stop="detailId = s.dish.id"><span class="badge-ico">📖</span></button>
+              <span v-if="isPicked(s.dish)" class="suggest-picked">✓ 已点</span>
+              <span v-else-if="pending(`order:${s.dish.id}`)" class="suggest-adding">加菜中…</span>
               <span v-else class="suggest-add" aria-hidden="true"><span class="badge-ico">＋</span></span>
             </div>
-            <span class="suggest-name">{{ d.name }}</span>
+            <span class="suggest-name">{{ s.dish.name }}</span>
+            <span class="suggest-reasons">{{ s.reasons.join(' · ') }}</span>
           </div>
         </TransitionGroup>
         <hr class="divider" />
         <p class="tiny muted">
-          点一下卡片就直接加进今日菜单，点右上角 📖 可以看做法。点菜前记得在右上角选好「我是谁」，这样掌勺的人知道是谁馋的。
+          点一下卡片直接加进今日菜单，右上角 📖 看做法。推荐只看季节、冰箱食材和家人口味，不把数据发到外面。
         </p>
       </div>
     </div>

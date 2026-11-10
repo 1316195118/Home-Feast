@@ -98,7 +98,7 @@
 
 | 批次 | 需求 | 说明 / 风险 |
 | --- | --- | --- |
-| **二（新增数据模型）** | 每周掌勺排班与轮换提醒、按季节 / 冰箱食材智能推荐 | 需要新的 `roster.json` / `pantry.json` 与设置 UI；推荐建议用本地规则（季节 + 现有食材 + 辣度 / 耗时），不接外部 LLM 更稳妥 |
+| **二（新增数据模型）** | ✅ 已完成：每周掌勺排班与轮换提醒、按季节 / 冰箱食材智能推荐 | 实际做法是把 `roster` / `pantry` 放进 `Settings`，复用 settings 读写、bootstrap 与备份链路，不新建 JSON 文件；推荐是纯本地规则（季节 + 现有食材 + 避雷 + 耗时 + 收藏），不接外部 LLM。详见第八节 |
 | **三（架构级，需先定方案）** | 多人实时同步 SSE、多家庭 / 多账簿隔离、自动化定时备份到 NAS 另一目录 | SSE 要后端事件流 + 前端 EventSource + 写冲突策略；多家庭隔离要引入租户 / 登录与数据分仓，**与当前「单家庭纯 JSON」模型冲突**，需先确认是否真的需要；定时备份属于部署侧 cron + 备份路径与保留策略，不进应用代码 |
 
 **建议**：先确认第 3 节的图片范围，再做第二批；第三批逐项出方案确认后再动手。不要一次性全上，避免把已经稳定的单文件架构改坏。
@@ -164,3 +164,45 @@
 - ⚠️ **事故教训**：曾派 3 个子代理并行调用 `ImageGen`，其 `output_dir` 在并发下**串位**（返回路径落到别的编号目录），83 张图张冠李戴、33 个目录缺图，整批作废（残图备份在 Temp `fm-unified-broken/`，勿用）。**必须全局串行、统一输出到 `unified_raw/`，再用 `assign_raw.py` 按文件名时间戳归位**。已用 002/011/012/013 抽查验证串行 100% 可靠。
 - 关键脚本：`build_unified_manifest.py`（105 项 prompt，含线上菜品 desc）、`assign_raw.py`（归位）、`publish_unified.py`（抹水印 + 居中裁 + 上传 PVE，断点续跑）。
 - 处理原则仍是不调亮度、不填色、不合成（过曝事故见第六节）。
+
+---
+
+## 八、手机端布局修复 + 第二批功能（2026-11-10 23:45 – 11-11 00:20，已上线）
+
+### 1. 菜系切换「画面会动一下」— 已量化修掉
+
+用户反馈切菜系时画面晃动。定位到 4 个叠加原因，全部处理后用 `scripts/_ui/layout-audit.mjs` 量化复验：
+
+| 原因 | 处理 |
+| --- | --- |
+| 菜谱网格 `TransitionGroup name="grid"` 的 0.3s 进出场 + move（`.grid-leave-active{position:absolute}`） | `MenuView.vue` 改回普通 `<div class="dish-grid">`；增删菜品是低频操作，稳定优先 |
+| `.chip.active` 的 `result-pop` 缩放弹跳 | 只保留配色变化，删掉动画 |
+| 页面滚动条出现/消失造成 10px 宽度跳 | `base.css` 加 `html { scrollbar-gutter: stable }` |
+| 菜系条 `scroll-snap` 吸附 + 横向滚动条占位（桌面切菜系把网格顶下去 10px） | `scroll-snap-type: none`；横向滚动条改成不占位（`scrollbar-width:none` + `::-webkit-scrollbar{display:none}`） |
+
+**复验**：桌面 / 手机切换菜系，视口宽度变化 0px、网格起点变化 0px、卡片位移 0px、残留动画类 0。
+
+### 2. 手机端布局 — 已修
+
+- 欢迎 toast 在窄屏换行成两行大绿条遮挡内容：文案加 `.toast-text { white-space:nowrap; overflow:hidden; text-overflow:ellipsis }`，手机端收紧成单行小胶囊（187×43 → 170×39）。
+- 菜谱页「＋ 添加菜品」独占一行：`.section-head.menu-head` 改为标题与按钮同行。
+- 漏网小按钮 `.wash-random` 34px → 40px；第二批新增控件统一 ≥44px 触摸热区。
+- 双视口审计：5 个页签均 `溢出=0 / 小按钮=0`，无横向滚动。
+
+### 3. 第二批功能 — 已完成
+
+**设计决策**：排班与冰箱食材放进 `Settings`（`internal/store/model.go` 新增 `Roster` / `RosterDay` 类型与 `NormalizeRoster()`），复用 `PUT /api/settings` → bootstrap → 备份 zip 的既有链路，**不新建 `roster.json` / `pantry.json`**，旧 settings.json 零值兼容无需迁移。
+
+| 模块 | 实现 |
+| --- | --- |
+| 每周掌勺排班 | 设置页 7 天 × 掌勺/洗碗下拉（跨两列宽卡）；后端校验只保留合法星期 key 与真实成员 ID；今日页在「排班开启 + 今天有安排 + 当前分工不一致」时提示并可一键套用，未填的那一半保留已定的人 |
+| 智能推荐 | `utils.js` 新增 `seasonOf` / `rosterForDate` / `smartSuggest`；按季节 + 冰箱食材（经 `getRecipe()` 展开配料）+ 口味避雷 + 耗时 + 收藏本地打分，给出可读理由，换一批排除当前三道；**不接外部 LLM，数据不出本机** |
+| 后端校验 | `internal/api/settings.go` 处理 `roster` / `pantry`：非法星期丢弃、不存在成员 ID 清空、食材去空白去重、单项 ≤12 字、最多 40 项 |
+
+**验收**：`go vet` / `go test` / `api-test` 14/14；`scripts/_ui/batch2-verify.mjs` 双视口（1280 / 390）验证排班提醒、一键套用、推荐理由、换一批、设置页 7 行 14 下拉 20 个食材标签、横向溢出 0、过小控件 0、JS 异常 0；后端非法数据校验与持久化全部通过。
+
+### 4. 仍待做（下一批）
+
+1. **成员可设置密码、登录 / 切换身份时输入**（用户 11-10 02:38 提出）：需 `Member` 存密码哈希、校验接口、FamilyView 设置入口、选人弹窗与顶部切换的校验链路；仍是独立登录链路，未与这批混做。
+2. **统一底图菜品图 92 张**（idx 014–105）：额度用尽（HTTP 429）暂停，续跑方法见 `scripts/_cq/RESUME_UNIFIED.md`。
+3. 第三批（SSE / 多家庭隔离 / 定时备份）按第三节逐项出方案。

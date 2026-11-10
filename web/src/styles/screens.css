@@ -323,6 +323,34 @@
 
 /* ---------- 用餐时段编辑（放在弹窗里，卡片本身与其它设置卡一样大） ---------- */
 .setting-title-tag { margin-left: 8px; font-size: 0.7rem; font-weight: 800; vertical-align: middle; }
+
+/* ---------- 第二批：每周排班 / 冰箱食材 / 智能推荐 ---------- */
+.setting-card-wide { grid-column: 1 / -1; }
+.switch-row { display: inline-flex; align-items: center; gap: 8px; margin: 10px 0 12px; font-size: 0.88rem; font-weight: 600; cursor: pointer; }
+.switch-row input { width: 18px; height: 18px; accent-color: var(--brand); cursor: pointer; flex: none; }
+.roster-grid { display: flex; flex-direction: column; gap: 7px; }
+.roster-row { display: grid; grid-template-columns: 64px minmax(0, 1fr) minmax(0, 1fr) 44px; gap: 8px; align-items: center; }
+.roster-head { font-size: 0.76rem; font-weight: 800; color: var(--muted); }
+.roster-day { font-weight: 700; font-size: 0.86rem; }
+.roster-select { min-height: 38px; padding: 6px 8px; font-size: 0.82rem; width: 100%; }
+.roster-clear { min-height: 38px; min-width: 44px; padding: 0; }
+.pantry-presets { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; }
+/* 单字食材（虾、葱、蒜）也要有 44px 的触摸热区 */
+.chip-sm { min-height: 36px; min-width: 44px; justify-content: center; padding: 6px 12px; font-size: 0.78rem; }
+.roster-hint {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 10px 14px; margin: 0 0 12px;
+  background: var(--brand-soft); border: 1px solid var(--line-strong);
+  border-radius: var(--radius); font-size: 0.86rem;
+}
+.roster-hint.is-done { background: var(--green-soft); }
+.roster-hint-icon { font-size: 1.1rem; flex: none; }
+.roster-hint-text { flex: 1; min-width: 0; line-height: 1.5; }
+.roster-hint .btn { flex: none; }
+.suggest-reasons {
+  display: block; padding: 0 9px 9px; font-size: 0.7rem; line-height: 1.4;
+  color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 .meal-edit-list { display: flex; flex-direction: column; gap: 9px; margin-top: 12px; }
 .meal-edit-row {
   padding: 10px 12px; border: 1px solid var(--line);
@@ -820,4 +848,21 @@
   .tab { min-height: 42px; }
   .tab-icon { font-size: 1.1rem; }
   .main { padding-bottom: 68px; }
+}
+
+/* 第二批功能的手机端适配：排班表收窄、提醒条换行、推荐理由允许折行 */
+@media (max-width: 720px) {
+  .setting-card-wide { grid-column: auto; }
+  .roster-row { grid-template-columns: 46px minmax(0, 1fr) minmax(0, 1fr) 44px; gap: 5px; }
+  .roster-select { font-size: 0.76rem; padding: 5px 4px; min-height: 40px; }
+  .roster-clear { min-height: 40px; min-width: 44px; }
+  .roster-hint { font-size: 0.8rem; padding: 9px 11px; gap: 8px; }
+  .roster-hint-text { flex-basis: calc(100% - 34px); }
+  .roster-hint .btn { margin-left: 30px; }
+  .chip-sm { min-height: 38px; }
+  .suggest-reasons { font-size: 0.66rem; white-space: normal; }
+}
+@media (max-width: 430px) {
+  .roster-row { grid-template-columns: 40px minmax(0, 1fr) minmax(0, 1fr) 44px; gap: 4px; }
+  .roster-day { font-size: 0.78rem; }
 }

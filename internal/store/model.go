@@ -82,11 +82,54 @@ type MealSlot struct {
 	End   string `json:"end"`
 }
 
+// RosterDay 是每周某一天的分工。ChefID / WashID 为空串表示这天没安排。
+type RosterDay struct {
+	ChefID string `json:"chefId"`
+	WashID string `json:"washId"`
+}
+
+// Roster 是每周掌勺 / 洗碗排班表。Days 的 key 用 "0".."6"（周日..周六，
+// 与 JS Date.getDay() 一致），缺项表示那天不安排。Enabled 关掉后前端不提示、不套用。
+// 放进 Settings 而不是新建 roster.json：复用 settings 的读写、bootstrap 与备份链路，
+// 旧 settings.json 没有这两个字段时零值兼容，无需数据迁移。
+type Roster struct {
+	Enabled bool                 `json:"enabled"`
+	Days    map[string]RosterDay `json:"days"`
+}
+
+// NormalizeRoster 校验排班：只保留合法的星期 key 与确实存在的成员 ID，
+// 防止前端手滑写进脏数据；同时避免同一天掌勺和洗碗是同一人（家庭场景没意义）。
+func NormalizeRoster(in Roster, members []Member) Roster {
+	known := make(map[string]bool, len(members))
+	for _, m := range members {
+		known[m.ID] = true
+	}
+	out := Roster{Enabled: in.Enabled, Days: map[string]RosterDay{}}
+	for k, day := range in.Days {
+		if len(k) != 1 || k[0] < '0' || k[0] > '6' {
+			continue
+		}
+		if !known[day.ChefID] {
+			day.ChefID = ""
+		}
+		if !known[day.WashID] {
+			day.WashID = ""
+		}
+		if day.ChefID == "" && day.WashID == "" {
+			continue
+		}
+		out.Days[k] = day
+	}
+	return out
+}
+
 // Settings 是可以随手改的家庭级配置。
 type Settings struct {
 	FamilyName     string     `json:"familyName"`
 	HiddenCuisines []string   `json:"hiddenCuisines"` // 用户选择不展示的菜系 key 列表
 	Meals          []MealSlot `json:"meals"`           // 空表示使用默认三餐
+	Roster         Roster     `json:"roster"`          // 每周掌勺 / 洗碗排班
+	Pantry         []string   `json:"pantry"`          // 冰箱里现有的食材，供智能推荐匹配
 	UpdatedAt      string     `json:"updatedAt"`
 }
 

@@ -12,6 +12,8 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 		FamilyName     *string           `json:"familyName"`
 		HiddenCuisines *[]string         `json:"hiddenCuisines"`
 		Meals          *[]store.MealSlot `json:"meals"`
+		Roster         *store.Roster     `json:"roster"`  // 每周掌勺 / 洗碗排班
+		Pantry         *[]string         `json:"pantry"`  // 冰箱现有食材
 		AccessCode     *string           `json:"accessCode"` // 空串 = 关闭口令
 	}
 	if err := decodeBody(w, r, &in); err != nil {
@@ -51,6 +53,30 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		v.Meals = normalized
+	}
+	if in.Roster != nil {
+		// 排班里只保留合法星期与真实存在的成员，删掉不存在的 ID
+		v.Roster = store.NormalizeRoster(*in.Roster, s.st.ListMembers())
+	}
+	if in.Pantry != nil {
+		// 冰箱食材：去空白、去重、限长限量；不接外部服务，纯本地匹配
+		seen := map[string]bool{}
+		clean := make([]string, 0, len(*in.Pantry))
+		for _, raw := range *in.Pantry {
+			item := strings.TrimSpace(raw)
+			if item == "" || seen[item] {
+				continue
+			}
+			if len([]rune(item)) > 12 {
+				item = string([]rune(item)[:12])
+			}
+			seen[item] = true
+			clean = append(clean, item)
+			if len(clean) >= 40 {
+				break
+			}
+		}
+		v.Pantry = clean
 	}
 	// 访问口令：先校验（失败不产生任何改动），设置保存成功后再写独立文件。
 	var newCode *string

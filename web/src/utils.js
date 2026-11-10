@@ -223,3 +223,93 @@ export function isMealExpired(meal, now = new Date(), meals) {
   const d = toDate(now)
   return d.getHours() * 60 + d.getMinutes() >= mealEndMinutes(m.end)
 }
+
+// ---------- 第二批：每周排班 / 智能推荐 ----------
+export const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+export const pantryPresets = [
+  '鸡蛋', '番茄', '土豆', '青椒', '黄瓜', '豆腐', '猪肉', '鸡胸肉',
+  '虾', '白菜', '洋葱', '胡萝卜', '香菇', '面条', '米饭', '葱',
+  '蒜', '菠菜', '茄子', '西兰花',
+]
+
+// 取某天的排班；date 是 "YYYY-MM-DD"，用中午构造避免本地时区把日期挪到前一天。
+export function rosterForDate(roster, date) {
+  if (!roster?.enabled || !date) return null
+  const d = new Date(`${date}T12:00:00`)
+  if (Number.isNaN(d.getTime())) return null
+  const day = roster.days?.[String(d.getDay())]
+  if (!day || (!day.chefId && !day.washId)) return null
+  return day
+}
+
+function monthOf(dateLike) {
+  if (!dateLike) return new Date().getMonth() + 1
+  if (typeof dateLike === 'string') {
+    const m = Number(dateLike.slice(5, 7))
+    if (m >= 1 && m <= 12) return m
+  }
+  const d = dateLike instanceof Date ? dateLike : new Date(dateLike)
+  return Number.isNaN(d.getTime()) ? new Date().getMonth() + 1 : d.getMonth() + 1
+}
+
+// 季节偏好：只影响推荐排序，不硬性屏蔽任何菜（家里想吃什么还是家里说了算）。
+export function seasonOf(dateLike) {
+  const m = monthOf(dateLike)
+  if (m >= 3 && m <= 5) return { key: 'spring', label: '春', hint: '清爽时令', likes: ['cold', 'zhejiang', 'jiangsu', 'cantonese'], dislikes: ['sichuan', 'hunan'] }
+  if (m >= 6 && m <= 8) return { key: 'summer', label: '夏', hint: '清爽开胃', likes: ['cold', 'soup', 'zhejiang', 'cantonese'], dislikes: ['anhui', 'hunan'] }
+  if (m >= 9 && m <= 11) return { key: 'autumn', label: '秋', hint: '温补滋润', likes: ['soup', 'fujian', 'staple', 'homestyle'], dislikes: ['cold'] }
+  return { key: 'winter', label: '冬', hint: '热乎下饭', likes: ['soup', 'sichuan', 'hunan', 'homestyle', 'staple'], dislikes: ['cold', 'dessert'] }
+}
+
+function tinyHash(s) {
+  let h = 2166136261
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i)
+    h = Math.imul(h, 16777619)
+  }
+  return (h >>> 0) / 4294967295
+}
+
+// 本地规则推荐，不接外部 LLM：季节 + 冰箱食材 + 口味避雷 + 耗时 + 收藏。
+// salt 变化可以「换一批」，但同一盐值下结果稳定，刷新页面不会乱跳。
+export function smartSuggest(dishes, opts = {}) {
+  const {
+    today = '', pantry = [], member = null, hiddenCuisines = [],
+    orders = [], excludeIds = [], limit = 3, salt = 0,
+    ingredientsOf = null,
+  } = opts
+  const season = seasonOf(today)
+  const picked = new Set([...(orders || []).map((o) => o.dishId), ...(excludeIds || [])])
+  const pan = (Array.isArray(pantry) ? pantry : []).map((x) => String(x).trim()).filter(Boolean)
+  const scored = []
+
+  for (const d of dishes || []) {
+    if (!d || picked.has(d.id) || isCuisineHidden(d.cuisine, hiddenCuisines)) continue
+    const ings = typeof ingredientsOf === 'function' ? ingredientsOf(d) : (d.ingredients || [])
+    const hay = Array.isArray(ings) ? ings.filter(Boolean).join(' ') : String(ings || '')
+    // 内置菜的配料由 recipes.js 动态生成，这里用展开后的配料做避雷判断才准
+    if (avoidConflicts({ ...d, ingredients: Array.isArray(ings) ? ings : [] }, member).length) continue
+
+    let score = 1.5 + tinyHash(`${d.id}:${salt}`) * 1.6
+    const reasons = []
+    if (season.likes.includes(d.cuisine)) score += 2.2
+    if (season.dislikes.includes(d.cuisine)) score -= 1.2
+    const hits = pan.filter((p) => hay.includes(p))
+    if (hits.length) {
+      score += Math.min(hits.length, 4) * 2.6
+      reasons.push(`用得上冰箱里的${hits.slice(0, 2).join('、')}`)
+    } else if (season.likes.includes(d.cuisine)) {
+      reasons.push(`${season.label}天吃${season.hint}`)
+    }
+    if (d.minutes > 0 && d.minutes <= 25) {
+      score += 1.1
+      if (reasons.length < 2) reasons.push(`${d.minutes} 分钟快手`)
+    }
+    if (d.minutes >= 60) score -= 0.8
+    if (d.favorite) score += 0.9
+    if (!reasons.length) reasons.push(`${season.label}天也合适`)
+    scored.push({ dish: d, score, reasons: reasons.slice(0, 2) })
+  }
+  scored.sort((a, b) => b.score - a.score || String(a.dish.id).localeCompare(String(b.dish.id)))
+  return scored.slice(0, limit)
+}

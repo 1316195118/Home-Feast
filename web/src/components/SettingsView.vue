@@ -1,7 +1,7 @@
 <script setup>
-import { inject, ref, watch, computed } from 'vue'
+import { inject, ref, watch, computed, reactive } from 'vue'
 import { api, setAccessCode } from '../api'
-import { isCuisineHidden, DEFAULT_MEALS, mealEndMinutes, normalizeMeals, mealIconChoices } from '../utils'
+import { isCuisineHidden, DEFAULT_MEALS, mealEndMinutes, normalizeMeals, mealIconChoices, WEEKDAYS, pantryPresets } from '../utils'
 import { useModalBehavior } from '../modal'
 import { themeChoices, currentThemeMode, setThemeMode } from '../theme'
 
@@ -189,6 +189,49 @@ async function saveMeals() {
   const ok = await actions.saveSettings({ meals: list })
   if (ok) showMealsModal.value = false
 }
+
+// ---------- 每周掌勺 / 洗碗排班 ----------
+// 放在 settings.json 里，随备份一起走；只做提醒与一键套用，不自动改写已定好的分工。
+const rosterEnabled = ref(false)
+const rosterDays = reactive({
+  0: { chefId: '', washId: '' }, 1: { chefId: '', washId: '' },
+  2: { chefId: '', washId: '' }, 3: { chefId: '', washId: '' },
+  4: { chefId: '', washId: '' }, 5: { chefId: '', washId: '' },
+  6: { chefId: '', washId: '' },
+})
+watch(() => state.settings.roster, (r) => {
+  rosterEnabled.value = !!r?.enabled
+  for (const k of Object.keys(rosterDays)) {
+    rosterDays[k].chefId = r?.days?.[k]?.chefId || ''
+    rosterDays[k].washId = r?.days?.[k]?.washId || ''
+  }
+}, { immediate: true, deep: true })
+const memberOptions = computed(() => state.members || [])
+function clearRosterDay(k) { rosterDays[k].chefId = ''; rosterDays[k].washId = '' }
+function saveRoster() {
+  const days = {}
+  for (const k of Object.keys(rosterDays)) {
+    if (rosterDays[k].chefId || rosterDays[k].washId) days[k] = { ...rosterDays[k] }
+  }
+  actions.saveSettings({ roster: { enabled: rosterEnabled.value, days } })
+}
+
+// ---------- 冰箱里有什么（智能推荐的输入）----------
+const pantryText = ref('')
+watch(() => state.settings.pantry, (p) => { pantryText.value = (p || []).join('、') }, { immediate: true })
+const pantrySet = computed(() => new Set(
+  pantryText.value.split(/[、,，\s]+/).map((s) => s.trim()).filter(Boolean),
+))
+function togglePreset(word) {
+  const cur = [...pantrySet.value]
+  const i = cur.indexOf(word)
+  if (i >= 0) cur.splice(i, 1)
+  else cur.push(word)
+  pantryText.value = cur.join('、')
+}
+function savePantry() {
+  actions.saveSettings({ pantry: [...pantrySet.value] })
+}
 </script>
 
 <template>
@@ -225,6 +268,65 @@ async function saveMeals() {
             {{ importBusy ? '恢复中…' : '⬆️ 从备份恢复' }}
             <input type="file" accept=".zip,application/zip" hidden @change="doImport" />
           </label>
+        </div>
+      </div>
+
+      <div class="card setting-card setting-card-wide">
+        <div class="setting-title">
+          📅 每周掌勺排班
+          <span class="tag setting-title-tag" :class="rosterEnabled ? 'tag-green' : ''">
+            {{ rosterEnabled ? '已开启' : '未开启' }}
+          </span>
+        </div>
+        <p class="setting-desc">
+          给每天定好谁掌勺、谁洗碗。开启后今日页会提醒「按排班今天该谁」，可一键套用；留空表示那天不安排。
+        </p>
+        <label class="switch-row">
+          <input type="checkbox" v-model="rosterEnabled" />
+          <span>启用每周排班提醒</span>
+        </label>
+        <div class="roster-grid">
+          <div class="roster-row roster-head">
+            <span>星期</span><span>👨‍🍳 掌勺</span><span>🧽 洗碗</span><span></span>
+          </div>
+          <div v-for="(label, idx) in WEEKDAYS" :key="idx" class="roster-row">
+            <span class="roster-day">{{ label }}</span>
+            <select v-model="rosterDays[String(idx)].chefId" class="input roster-select" :aria-label="`${label}掌勺`">
+              <option value="">不安排</option>
+              <option v-for="m in memberOptions" :key="m.id" :value="m.id">{{ m.avatar }} {{ m.name }}</option>
+            </select>
+            <select v-model="rosterDays[String(idx)].washId" class="input roster-select" :aria-label="`${label}洗碗`">
+              <option value="">不安排</option>
+              <option v-for="m in memberOptions" :key="m.id" :value="m.id">{{ m.avatar }} {{ m.name }}</option>
+            </select>
+            <button class="btn btn-ghost btn-sm roster-clear" @click="clearRosterDay(String(idx))" :aria-label="`清空${label}`">✕</button>
+          </div>
+        </div>
+        <div class="setting-actions">
+          <button class="btn btn-primary btn-sm" :disabled="pending('settings')" @click="saveRoster">保存排班</button>
+          <span class="tiny muted">只提醒，不自动改写已经定好的分工</span>
+        </div>
+      </div>
+
+      <div class="card setting-card">
+        <div class="setting-title">🧊 冰箱里有什么</div>
+        <p class="setting-desc">
+          填上现有食材，今日页「选择困难？」会优先推荐用得上它们的菜，并按季节、耗时和口味避雷排序。
+        </p>
+        <input
+          v-model="pantryText" class="input" placeholder="例如：鸡蛋、番茄、土豆"
+          aria-label="冰箱食材" @keyup.enter="savePantry"
+        />
+        <div class="pantry-presets">
+          <button
+            v-for="p in pantryPresets" :key="p" type="button"
+            class="chip chip-sm" :class="{ active: pantrySet.has(p) }"
+            :aria-pressed="pantrySet.has(p)" @click="togglePreset(p)"
+          >{{ p }}</button>
+        </div>
+        <div class="setting-actions">
+          <button class="btn btn-primary btn-sm" :disabled="pending('settings')" @click="savePantry">保存食材</button>
+          <span class="tiny muted">已选 {{ pantrySet.size }} 项</span>
         </div>
       </div>
 
