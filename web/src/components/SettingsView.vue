@@ -275,17 +275,38 @@ async function saveRoster() {
       </div>
 
       <div class="card setting-card sc-backup">
-        <div class="setting-title">💾 数据备份</div>
+        <div class="setting-title">
+          💾 备份与恢复
+          <span class="tag setting-title-tag" :class="autoBackup ? 'tag-green' : ''">
+            {{ autoBackup ? '自动备份中' : '仅手动' }}
+          </span>
+        </div>
         <p class="setting-desc">
-          导出一个 zip，里面是四份 JSON 和你上传的照片。恢复时会覆盖当前数据，操作前会再确认一次。
+          自动备份每天 03:30 把四份数据和图片打包到 <code>backups/</code>，保留最近 {{ backupKeep }} 份；也可随时手动导出 / 恢复。恢复会覆盖当前数据，操作前会再确认。
         </p>
-        <div class="setting-actions">
-          <button class="btn btn-soft btn-sm" @click="doExport">⬇️ 导出备份 zip</button>
-          <button class="btn btn-soft btn-sm" @click="doExportExcel">📊 导出 Excel</button>
-          <label class="btn btn-soft btn-sm" :class="{ 'btn-ghost': importBusy }">
-            {{ importBusy ? '恢复中…' : '⬆️ 从备份恢复' }}
-            <input type="file" accept=".zip,application/zip" hidden @change="doImport" />
+        <div class="backup-merged">
+          <label class="switch-row">
+            <input type="checkbox" :checked="autoBackup" @change="toggleAutoBackup" />
+            <span>每天自动备份</span>
           </label>
+          <div class="setting-actions">
+            <button class="btn btn-primary btn-sm" :disabled="backupBusy" @click="runBackup">
+              {{ backupBusy ? '备份中…' : '⏱ 立即备份' }}
+            </button>
+            <button class="btn btn-soft btn-sm" @click="doExport">⬇️ 导出 zip</button>
+            <button class="btn btn-soft btn-sm" @click="doExportExcel">📊 导出 Excel</button>
+            <label class="btn btn-soft btn-sm" :class="{ 'btn-ghost': importBusy }">
+              {{ importBusy ? '恢复中…' : '⬆️ 从备份恢复' }}
+              <input type="file" accept=".zip,application/zip" hidden @change="doImport" />
+            </label>
+          </div>
+          <div v-if="backups.length" class="backup-list">
+            <div v-for="b in backups.slice(0, 3)" :key="b.name" class="backup-row tiny">
+              <span>{{ b.at }}</span>
+              <span class="muted">{{ (b.size / 1024 / 1024).toFixed(1) }} MB</span>
+            </div>
+          </div>
+          <div class="tiny muted">共 {{ backups.length }} 份备份</div>
         </div>
       </div>
 
@@ -362,34 +383,6 @@ async function saveRoster() {
             <button class="btn btn-sm btn-ghost" @click="forgetCode">本机重新输入</button>
           </div>
         </template>
-      </div>
-
-      <div class="card setting-card sc-autobackup">
-        <div class="setting-title">
-          ⏰ 自动备份
-          <span class="tag setting-title-tag" :class="autoBackup ? 'tag-green' : ''">
-            {{ autoBackup ? '已开启' : '未开启' }}
-          </span>
-        </div>
-        <p class="setting-desc">
-          每天 03:30 把四份数据和上传的图片打包到 NAS 上的 <code>backups/</code>，自动保留最近 {{ backupKeep }} 份。
-        </p>
-        <label class="switch-row">
-          <input type="checkbox" :checked="autoBackup" @change="toggleAutoBackup" />
-          <span>每天自动备份</span>
-        </label>
-        <div v-if="backups.length" class="backup-list">
-          <div v-for="b in backups.slice(0, 3)" :key="b.name" class="backup-row tiny">
-            <span>{{ b.at }}</span>
-            <span class="muted">{{ (b.size / 1024 / 1024).toFixed(1) }} MB</span>
-          </div>
-        </div>
-        <div class="setting-actions">
-          <button class="btn btn-primary btn-sm" :disabled="backupBusy" @click="runBackup">
-            {{ backupBusy ? '备份中…' : '⏱ 立即备份' }}
-          </button>
-          <span class="tiny muted">共 {{ backups.length }} 份</span>
-        </div>
       </div>
 
       <div class="card setting-card sc-storage">

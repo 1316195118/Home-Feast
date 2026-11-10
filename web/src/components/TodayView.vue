@@ -296,7 +296,7 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
         <div class="note-input-wrap">
           <input
             v-model="noteText" class="input" maxlength="200"
-            placeholder="给今天留句话，例如：想吃点清淡的、冰箱里有排骨…"
+            placeholder="留句话，例如：想吃点清淡的…"
             @blur="saveNote" @keyup.enter="$event.target.blur()"
           />
           <Transition name="page"><span v-if="noteSaved" class="note-check">✓</span></Transition>

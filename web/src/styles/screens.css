@@ -373,9 +373,8 @@
 .settings-grid .sc-theme { order: 5; }
 .settings-grid .sc-access { order: 6; }
 .settings-grid .sc-backup { order: 7; }
-.settings-grid .sc-autobackup { order: 8; }
-.settings-grid .sc-storage { order: 9; }
-.settings-grid .sc-about { order: 10; }
+.settings-grid .sc-storage { order: 8; }
+.settings-grid .sc-about { order: 9; }
 .setting-card { padding: 18px; display: flex; flex-direction: column; min-height: 218px; }
 
 /* ---------- 用餐时段编辑（放在弹窗里，卡片本身与其它设置卡一样大） ---------- */
@@ -416,6 +415,9 @@
 
 /* ---------- 第二批：每周排班 / 智能推荐 ---------- */
 .roster-manage-btn { margin-top: auto; }
+.backup-merged .setting-actions { flex-wrap: wrap; gap: 7px; margin: 0; }
+.backup-merged .switch-row { margin: 8px 0 10px; }
+.backup-merged .backup-list { margin: 10px 0 4px; }
 .backup-list { display: flex; flex-direction: column; gap: 4px; margin-top: 2px; }
 .backup-row { display: flex; justify-content: space-between; gap: 8px; padding: 4px 8px; background: var(--surface-soft); border-radius: 6px; }
 .switch-row { display: inline-flex; align-items: center; gap: 8px; margin: 10px 0 12px; font-size: 0.88rem; font-weight: 600; cursor: pointer; }
@@ -852,6 +854,12 @@
   .duty-summary { font-size: 0.78rem; margin-top: 9px; }
   .note-row .input { max-width: none; width: 100%; }
   .panel { padding: 14px; }
+  /* 面板头：标题与副标题占满整行，按钮组移到下一行（两个按钮仍同行），
+     避免副标题被右侧按钮挤到只剩「清」「的」这种孤字 */
+  .panel-head { flex-wrap: wrap; gap: 8px; }
+  .panel-head > div:first-child { flex: 1 1 100%; min-width: 0; }
+  .panel-head > .btn, .panel-head > .panel-head-actions { flex: 0 0 auto; }
+  .section-sub { text-wrap: balance; }
   .suggest-grid { gap: 8px; }
   .order-thumb { width: 52px; height: 46px; }
   .meal-switch { gap: 6px; margin-top: 12px; }
@@ -908,6 +916,9 @@
   .modal-enter-active .modal { animation: sheet-up 0.3s var(--ease); }
   .modal-leave-active .modal { animation: sheet-down 0.2s var(--ease) forwards; }
   .modal-head { margin-bottom: 12px; }
+  /* 骰子 PK 内容多，别让标题贴住抽屉上沿：多留顶部内边距 + 降低整体高度离屏幕顶更远 */
+  .pk-modal { max-height: 78vh; padding-top: 26px; }
+  .pk-modal .modal-head { padding-top: 2px; }
   .modal-foot { flex-wrap: wrap; gap: 8px; }
   .form-grid { grid-template-columns: 1fr; }
   .form-grid .span-2 { grid-column: span 1; }
