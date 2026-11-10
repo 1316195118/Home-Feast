@@ -3,7 +3,7 @@ import { inject, ref, computed, watch } from 'vue'
 import DishCard from './DishCard.vue'
 import DishEditor from './DishEditor.vue'
 import DishDetail from './DishDetail.vue'
-import { isCuisineHidden, pantryPresets, pantryVisual, pantryMatches } from '../utils'
+import { isCuisineHidden, pantryGroups, pantryVisual, pantryMatches } from '../utils'
 import { getRecipe } from '../recipes'
 import { useModalBehavior } from '../modal'
 
@@ -95,13 +95,12 @@ const pantryDraft = ref(new Set(state.settings.pantry || []))
 const pantryCustom = ref('')
 useModalBehavior(() => { pantryOpen.value = false }, pantryRoot, pantryOpen)
 
-const pantryCards = computed(() => {
-  const cards = pantryPresets.map((p) => ({ ...p }))
-  for (const n of pantryDraft.value) {
-    if (!cards.some((c) => c.name === n)) cards.push(pantryVisual(n))
-  }
-  return cards
-})
+// 预设食材按分类展示（见 pantryGroups）；这里只算出「自定义」的那些，单独一组。
+const pantryCustomCards = computed(() =>
+  [...pantryDraft.value]
+    .filter((n) => !pantryGroups.some((g) => g.items.includes(n)))
+    .map((n) => pantryVisual(n)),
+)
 function openPantry() {
   pantryDraft.value = new Set(state.settings.pantry || [])
   pantryCustom.value = ''
@@ -113,6 +112,13 @@ function togglePantry(name) {
   else next.add(name)
   pantryDraft.value = next
 }
+// 实时反馈：当前勾选的食材能匹配到多少道菜，让用户知道选了有用
+const pantryHitCount = computed(() => {
+  if (!pantryDraft.value.size) return 0
+  return state.dishes.filter((d) =>
+    pantryMatches(d, [...pantryDraft.value], recipeIngredients).count > 0,
+  ).length
+})
 function addCustomPantry() {
   const words = pantryCustom.value.split(/[、,，\s]+/).map((s) => s.trim()).filter(Boolean)
   const next = new Set(pantryDraft.value)
@@ -201,20 +207,46 @@ async function savePantry() {
             <button class="icon-btn" aria-label="关闭" @click="pantryOpen = false">✕</button>
           </div>
           <p class="setting-desc">
-            点选家里现有的食材，今日页「今天吃啥」会优先推荐用得上它们的菜。每项都是本项目自绘的效果图，不用第三方图片。
+            点选家里现有的食材，「今天吃啥」和菜谱「优先推荐」会立刻按它们重排。按类别找更快，佐料不参与推荐。
           </p>
-          <div class="pantry-grid">
-            <button
-              v-for="p in pantryCards" :key="p.name" type="button"
-              class="pantry-card" :class="{ active: pantryDraft.has(p.name) }"
-              :aria-pressed="pantryDraft.has(p.name)" @click="togglePantry(p.name)"
-            >
-              <span class="pantry-art" :style="{ background: p.tint }">
-                <span class="pantry-art-icon">{{ p.icon }}</span>
+          <div class="pantry-feedback" aria-live="polite">
+            <Transition name="duty-pop">
+              <span :key="pantryDraft.size + '-' + pantryHitCount">
+                🥬 已选 <b>{{ pantryDraft.size }}</b> 样食材，菜谱里有 <b>{{ pantryHitCount }}</b> 道菜用得上
               </span>
-              <span class="pantry-card-name">{{ p.name }}</span>
-              <span v-if="pantryDraft.has(p.name)" class="pantry-check">✓</span>
-            </button>
+            </Transition>
+          </div>
+          <div v-for="g in pantryGroups" :key="g.key" class="pantry-section">
+            <div class="pantry-group-head" :style="{ borderColor: g.tint }">{{ g.label }}</div>
+            <div class="pantry-grid">
+              <button
+                v-for="p in g.items" :key="p" type="button"
+                class="pantry-card" :class="{ active: pantryDraft.has(p) }"
+                :aria-pressed="pantryDraft.has(p)" @click="togglePantry(p)"
+              >
+                <span class="pantry-art" :style="{ background: pantryVisual(p).tint }">
+                  <span class="pantry-art-icon">{{ pantryVisual(p).icon }}</span>
+                </span>
+                <span class="pantry-card-name">{{ p }}</span>
+                <span v-if="pantryDraft.has(p)" class="pantry-check">✓</span>
+              </button>
+            </div>
+          </div>
+          <div v-if="pantryCustomCards.length" class="pantry-section">
+            <div class="pantry-group-head">✏️ 自定义食材</div>
+            <div class="pantry-grid">
+              <button
+                v-for="p in pantryCustomCards" :key="p.name" type="button"
+                class="pantry-card" :class="{ active: pantryDraft.has(p.name) }"
+                :aria-pressed="pantryDraft.has(p.name)" @click="togglePantry(p.name)"
+              >
+                <span class="pantry-art" :style="{ background: p.tint }">
+                  <span class="pantry-art-icon">{{ p.icon }}</span>
+                </span>
+                <span class="pantry-card-name">{{ p.name }}</span>
+                <span v-if="pantryDraft.has(p.name)" class="pantry-check">✓</span>
+              </button>
+            </div>
           </div>
           <div class="pantry-add-row">
             <input
@@ -225,7 +257,7 @@ async function savePantry() {
             <button class="btn btn-soft btn-sm" @click="addCustomPantry">添加</button>
           </div>
           <div class="modal-foot">
-            <span class="tiny muted">已选 {{ pantryDraft.size }} 项</span>
+            <span class="tiny muted">保存后立即生效</span>
             <button class="btn" @click="pantryOpen = false">取消</button>
             <button class="btn btn-primary" :disabled="pending('settings')" @click="savePantry">保存食材</button>
           </div>

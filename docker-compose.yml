@@ -14,7 +14,8 @@ services:
       # 可选：设置后网页需要输入访问口令，防止局域网内外人改菜单
       # - MENU_ACCESS_CODE=please-change-me
     volumes:
-      - ./data:/data          # NAS 上改成 /volume1/docker/family-menu/data:/data
+      - ./data:/data          # 用户数据：JSON / 图片 / 备份；NAS 上改成绝对路径
+      - ./config:/config      # 配置：家庭设置（settings.json），与 data 平级
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8090/api/ping"]

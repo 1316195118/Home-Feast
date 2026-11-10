@@ -24,10 +24,10 @@ FROM alpine:3.21
 RUN apk add --no-cache tzdata ca-certificates wget
 ENV TZ=Asia/Shanghai
 COPY --from=backend /out/menu /usr/local/bin/menu
-RUN mkdir -p /data/uploads
-VOLUME ["/data"]
+RUN mkdir -p /data/uploads /config
+VOLUME ["/data", "/config"]
 EXPOSE 8090
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD wget -qO- http://127.0.0.1:8090/api/ping >/dev/null || exit 1
 ENTRYPOINT ["/usr/local/bin/menu"]
-CMD ["-addr", "0.0.0.0", "-port", "8090", "-data", "/data"]
+CMD ["-addr", "0.0.0.0", "-port", "8090", "-data", "/data", "-config", "/config"]

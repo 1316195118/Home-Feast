@@ -22,7 +22,8 @@ import (
 func main() {
 	addr := flag.String("addr", "0.0.0.0", "监听地址，只给本机用可设 127.0.0.1")
 	port := flag.String("port", "8090", "监听端口")
-	dataDir := flag.String("data", "", "数据目录，默认程序旁的 data/")
+	dataDir := flag.String("data", "", "用户数据目录，默认程序旁的 data/")
+	configDir := flag.String("config", "", "配置目录（家庭设置等），默认程序旁的 config/，与 data 平级")
 	showVersion := flag.Bool("version", false, "打印版本号")
 	flag.Parse()
 
@@ -42,17 +43,23 @@ func main() {
 	if v := os.Getenv("MENU_DATA_DIR"); v != "" && !explicit["data"] {
 		*dataDir = v
 	}
+	if v := os.Getenv("MENU_CONFIG_DIR"); v != "" && !explicit["config"] {
+		*configDir = v
+	}
 	if *dataDir == "" {
 		*dataDir = "data"
+	}
+	if *configDir == "" {
+		*configDir = "config"
 	}
 
 	web, err := fs.Sub(familymenu.Assets, familymenu.WebRoot)
 	if err != nil {
 		log.Fatalf("读取内嵌前端失败: %v", err)
 	}
-	st, err := store.Open(*dataDir)
+	st, err := store.Open(*dataDir, *configDir)
 	if err != nil {
-		log.Fatalf("打开数据目录失败: %v", err)
+		log.Fatalf("打开数据/配置目录失败: %v", err)
 	}
 	accessCode := os.Getenv("MENU_ACCESS_CODE")
 
@@ -66,7 +73,7 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("家里吃点啥 %s 已启动: http://%s:%s  数据目录: %s", api.Version, *addr, *port, *dataDir)
+		log.Printf("家里吃点啥 %s 已启动: http://%s:%s  数据: %s  配置: %s", api.Version, *addr, *port, *dataDir, *configDir)
 		if accessCode != "" {
 			log.Printf("已启用访问口令")
 		}

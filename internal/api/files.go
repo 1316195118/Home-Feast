@@ -80,7 +80,7 @@ func (s *Server) exportBackup(w http.ResponseWriter, r *http.Request) {
 		fmt.Sprintf(`attachment; filename="family-menu-%s.zip"`, time.Now().Format("20060102")))
 	zw := zip.NewWriter(w)
 	for _, name := range jsonNames {
-		b, err := os.ReadFile(filepath.Join(s.st.Dir(), name))
+		b, err := os.ReadFile(s.st.Path(name))
 		if err != nil {
 			continue
 		}
@@ -151,7 +151,7 @@ func (s *Server) importBackup(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			continue
 		}
-		dest := filepath.Join(s.st.Dir(), filepath.FromSlash(name))
+		dest := s.st.Path(filepath.Base(name))
 		if err := os.MkdirAll(filepath.Dir(dest), 0o755); err != nil {
 			continue
 		}
@@ -172,7 +172,7 @@ func (s *Server) importBackup(w http.ResponseWriter, r *http.Request) {
 
 func backupAllowed(name string) bool {
 	for _, n := range jsonNames {
-		if name == n {
+		if name == n || name == "config/"+n {
 			return true
 		}
 	}

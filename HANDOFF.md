@@ -415,3 +415,30 @@
 ### 6. 验收
 
 `go vet/test`、`api-test` 14/14；分工认领、round3（设置卡 9 张同宽）、第二批、第三批（SSE 0→1、备份）、成员密码、菜系切换 0 位移全回归通过；横向溢出 0、过小控件 0、JS 异常 0。
+
+## 十五、config 与 data 分离 + 全站布局再优化（2026-11-11 02:30）
+
+用户：① 用户数据放 data、其他放 config ② data 不包含 config ③ 电脑端布局/窗口过长/提示动画反馈/删冗余/冰箱食材太少要分类 ④ 今日菜单与今天吃啥「我就要一排」 ⑤ 重新优化所有布局、卡片大小、补缺失信息。
+
+### 1. config 独立目录（与 data 平级，非嵌套）
+
+先误做成 `data/config/settings.json`，用户纠正「data 不包含 config」，改为独立顶层 `config/settings.json`。
+
+- `store.go`：Store 加 `configDir` 字段；`pathOf(name)` 方法让配置类文件（仅 settings.json）进 configDir，其余进 data。`Open(dir, cfgDir)` 接收两个目录。迁移旧位置：`data/settings.json` 与 `data/config/settings.json` → `config/settings.json`。
+- `cmd/menu/main.go`：加 `-config` 参数与 `MENU_CONFIG_DIR` 环境变量，默认 `config`，启动日志同时打印数据/配置目录。
+- 备份 zip 里 settings.json 保持**扁平文件名**（兼容旧备份与旧部署），导出从 `s.st.Path()` 读、导入用 `filepath.Base()` 落到 config；`backupAllowed` 兼容 `config/settings.json`。`autobackup.go` 打包同样改用 `s.st.Path()`。
+- Docker：`Dockerfile` VOLUME 加 `/config`、CMD 加 `-config /config`；`docker-compose.yml` 挂载 `./config:/config`。部署脚本 `fm-pve-online-deploy.py` 同步保护 config（备份/移出/移回/回滚/核对）。
+- `.gitignore` 忽略 `/config/*`（保留 .gitkeep）。
+
+### 2. 全站布局优化
+
+- **设置卡**：去掉统一 `min-height:218px`，改内容自适应（桌面仍同行等高，但不再大片空白）；桌面设置页总高 1360→1095px。
+- **冰箱食材**：20→70 种，按 7 类分组（🥩肉禽/🦐水产/🥬蔬菜/🍄菌菇豆制品/🍚主食/🍎水果/🥛蛋奶），每组彩色左边框标题；面板顶部新增实时反馈「已选 N 样·菜谱 X 道用得上」（带 pop 动画）；弹窗 max-width 820/88vh 可滚动。
+- **今日页 hero 压缩**：padding 24→18、各块 margin 收紧、骰子 CTA/认领按钮/留言区间距缩小；删与骰子 CTA 重复的说明文案；桌面认领按钮从各占 50% 改为 `flex:0 1 320px`（手机仍等分）。桌面总高 1199→1095、手机 1447→1321px。
+- **今日菜单/今天吃啥副标题**：手机端 `.panel-head` 标题区占满整行、按钮下一行（两按钮仍同行）+ `text-wrap:balance`，副标题一排无孤字（量化：今日页多行副标题 0 条）。
+
+### 3. 验收
+
+`go vet/test`、`api-test` 14/14；配置迁移实测（3 个旧位置→config）、备份往返（扁平名→config 落点）、分工认领、round3、第二批、第三批、成员密码、菜系切换 0 位移全回归通过；横向溢出 0、过小控件 0、JS 异常 0。
+
+**说明**：截图里本地菜谱卡多道菜图片相同是「本地 data 无图片数据→菜系封面兜底」所致；线上每道菜有独立 `/uploads/img*.webp`，非 bug。

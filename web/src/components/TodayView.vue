@@ -288,7 +288,7 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
       <p class="duty-summary" :class="{ muted: !chef || !washer }">
         <template v-if="samePerson">{{ chef?.name }} 又做饭又洗碗，辛苦啦 🥲</template>
         <template v-else-if="chef && washer">分工已定，就等开饭啦 🍚</template>
-        <template v-else-if="!chef && !washer">点上面按钮自己认领，或用 🎲 一把定</template>
+        <template v-else-if="!chef && !washer">还没人认领，点上面按钮或摇骰子定</template>
         <template v-else>{{ !chef ? '还差掌勺的人' : '还差洗碗的人' }}没定</template>
       </p>
 

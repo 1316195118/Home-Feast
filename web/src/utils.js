@@ -257,28 +257,56 @@ export function isMealExpired(meal, now = new Date(), meals) {
 export const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
 // 冰箱食材预设：每项都有一张自绘「效果图」（大 emoji + 渐变底色），
 // 风格与站内自绘素材一致，不引入第三方图片；自定义食材由 pantryVisual 兜底配色。
-export const pantryPresets = [
-  { name: '鸡蛋', icon: '🥚', tint: '#f6e2bb' },
-  { name: '番茄', icon: '🍅', tint: '#f7d3c8' },
-  { name: '土豆', icon: '🥔', tint: '#eee0c4' },
-  { name: '青椒', icon: '🫑', tint: '#d9e9ce' },
-  { name: '黄瓜', icon: '🥒', tint: '#d8ead2' },
-  { name: '豆腐', icon: '🧈', tint: '#f2ecdc' },
-  { name: '猪肉', icon: '🥩', tint: '#f3d2cc' },
-  { name: '鸡胸肉', icon: '🍗', tint: '#f4dec6' },
-  { name: '虾', icon: '🦐', tint: '#f8d8c4' },
-  { name: '白菜', icon: '🥬', tint: '#dcecd3' },
-  { name: '洋葱', icon: '🧅', tint: '#eee0ea' },
-  { name: '胡萝卜', icon: '🥕', tint: '#f9ddc1' },
-  { name: '香菇', icon: '🍄', tint: '#e7dccb' },
-  { name: '面条', icon: '🍜', tint: '#f3e4c8' },
-  { name: '米饭', icon: '🍚', tint: '#eef0e6' },
-  { name: '葱', icon: '🌿', tint: '#dcebd2' },
-  { name: '蒜', icon: '🧄', tint: '#eeeae2' },
-  { name: '菠菜', icon: '🥬', tint: '#d6e9c8' },
-  { name: '茄子', icon: '🍆', tint: '#e5d9ec' },
-  { name: '西兰花', icon: '🥦', tint: '#d8e9cd' },
+export const pantryGroups = [
+  {
+    key: 'meat', label: '🥩 肉禽', tint: '#f6ded8',
+    items: ['猪肉', '五花肉', '排骨', '牛肉', '牛腩', '鸡胸肉', '鸡腿肉', '鸡翅', '鸡蛋', '培根', '香肠', '羊肉'],
+  },
+  {
+    key: 'seafood', label: '🦐 水产', tint: '#dcebf0',
+    items: ['虾', '虾仁', '鲈鱼', '鲤鱼', '带鱼', '三文鱼', '鱿鱼', '花甲', '生蚝', '海带'],
+  },
+  {
+    key: 'veg', label: '🥬 蔬菜', tint: '#dcecd3',
+    items: ['番茄', '土豆', '青椒', '黄瓜', '白菜', '菠菜', '茄子', '西兰花', '胡萝卜', '洋葱', '芹菜', '生菜', '上海青', '豆角', '莴笋', '冬瓜', '南瓜', '玉米', '青蒜'],
+  },
+  {
+    key: 'mushroom', label: '🍄 菌菇豆制品', tint: '#e8e1d1',
+    items: ['香菇', '金针菇', '平菇', '木耳', '豆腐', '豆干', '腐竹', '黄豆', '毛豆'],
+  },
+  {
+    key: 'staple', label: '🍚 主食', tint: '#f3e7cc',
+    items: ['米饭', '面条', '挂面', '馒头', '饺子皮', '面粉', '年糕', '粉丝', '面包'],
+  },
+  {
+    key: 'fruit', label: '🍎 水果', tint: '#f7dfd8',
+    items: ['苹果', '香蕉', '柠檬', '菠萝', '梨', '橙子'],
+  },
+  {
+    key: 'dairy', label: '🥛 蛋奶', tint: '#f5ecd9',
+    items: ['牛奶', '酸奶', '黄油', '奶酪', '咸鸭蛋'],
+  },
 ]
+
+// 展开成扁平预设（每项带 group），兼容 pantryVisual / pantryPresets 的既有调用。
+const ICONS = {
+  猪肉: '🥩', 五花肉: '🥓', 排骨: '🍖', 牛肉: '🥩', 牛腩: '🥩', 鸡胸肉: '🍗', 鸡腿肉: '🍗',
+  鸡翅: '🍗', 鸡蛋: '🥚', 培根: '🥓', 香肠: '🌭', 羊肉: '🍖',
+  虾: '🦐', 虾仁: '🦐', 鲈鱼: '🐟', 鲤鱼: '🐟', 带鱼: '🐟', 三文鱼: '🐟', 鱿鱼: '🦑',
+  花甲: '🐚', 生蚝: '🦪', 海带: '🌿',
+  番茄: '🍅', 土豆: '🥔', 青椒: '🫑', 黄瓜: '🥒', 白菜: '🥬', 菠菜: '🥬', 茄子: '🍆',
+  西兰花: '🥦', 胡萝卜: '🥕', 洋葱: '🧅', 芹菜: '🥬', 生菜: '🥬', 上海青: '🥬',
+  豆角: '🫛', 莴笋: '🥬', 冬瓜: '🥒', 南瓜: '🎃', 玉米: '🌽', 青蒜: '🌿',
+  香菇: '🍄', 金针菇: '🍄', 平菇: '🍄', 木耳: '🍄', 豆腐: '🧈', 豆干: '🧈', 腐竹: '🧈',
+  黄豆: '🫘', 毛豆: '🫛',
+  米饭: '🍚', 面条: '🍜', 挂面: '🍜', 馒头: '🥟', 饺子皮: '🥟', 面粉: '🌾', 年糕: '🍡',
+  粉丝: '🍜', 面包: '🍞',
+  苹果: '🍎', 香蕉: '🍌', 柠檬: '🍋', 菠萝: '🍍', 梨: '🍐', 橙子: '🍊',
+  牛奶: '🥛', 酸奶: '🥛', 黄油: '🧈', 奶酪: '🧀', 咸鸭蛋: '🥚',
+}
+export const pantryPresets = pantryGroups.flatMap((g) =>
+  [...new Set(g.items)].map((name) => ({ name, icon: ICONS[name] || '🥗', tint: g.tint, group: g.key })),
+)
 const PANTRY_TINTS = ['#f3e2c9', '#dfe9d2', '#f5d9d0', '#e5e0ef', '#f7e8c6', '#d9e7e6']
 export function pantryVisual(name) {
   const hit = pantryPresets.find((p) => p.name === name)

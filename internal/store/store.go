@@ -32,10 +32,14 @@ const (
 	pinsFile = "pins.json"
 )
 
+// configFile 判断某文件是否属于配置目录（目前只有 settings.json）。
+func configFile(name string) bool { return name == settingsFile }
+
 // Store 是内存中的数据镜像，所有公开方法都可并发调用。
 type Store struct {
-	mu       sync.RWMutex
-	dir      string
+	mu         sync.RWMutex
+	dir        string // 用户数据目录（JSON / uploads / backups）
+	configDir  string // 配置目录，与 data 平级（家庭设置 settings.json）
 	dishes   []Dish
 	members  []Member
 	plans      map[string]Plan
@@ -68,16 +72,45 @@ func newSalt() string {
 	return hex.EncodeToString(buf)
 }
 
-// Open 打开（必要时创建）数据目录。文件损坏时直接报错，绝不悄悄覆盖用户数据。
-func Open(dir string) (*Store, error) {
+// pathOf 返回逻辑文件名的真实磁盘路径：配置类进独立 configDir，其余进 dir。
+func (s *Store) pathOf(name string) string {
+	if configFile(name) {
+		return filepath.Join(s.configDir, name)
+	}
+	return filepath.Join(s.dir, name)
+}
+
+// Open 打开（必要时创建）数据目录与配置目录。文件损坏时直接报错，绝不悄悄覆盖用户数据。
+func Open(dir, cfgDir string) (*Store, error) {
 	if dir == "" {
 		dir = "data"
+	}
+	if cfgDir == "" {
+		cfgDir = "config"
 	}
 	if err := os.MkdirAll(filepath.Join(dir, "uploads"), 0o755); err != nil {
 		return nil, fmt.Errorf("创建数据目录: %w", err)
 	}
-	s := &Store{dir: dir, plans: make(map[string]Plan), pins: make(map[string]pinRecord)}
+	if err := os.MkdirAll(cfgDir, 0o755); err != nil {
+		return nil, fmt.Errorf("创建配置目录: %w", err)
+	}
+	s := &Store{dir: dir, configDir: cfgDir, plans: make(map[string]Plan), pins: make(map[string]pinRecord)}
 
+	// 迁移旧位置：data/settings.json 与 data/config/settings.json → 独立 config/settings.json。
+	newSettings := s.pathOf(settingsFile)
+	for _, old := range []string{
+		filepath.Join(dir, settingsFile),
+		filepath.Join(dir, "config", settingsFile),
+	} {
+		if _, err := os.Stat(old); err == nil {
+			if _, err2 := os.Stat(newSettings); os.IsNotExist(err2) {
+				if b, err3 := os.ReadFile(old); err3 == nil {
+					_ = os.WriteFile(newSettings, b, 0o644)
+				}
+			}
+			_ = os.Remove(old)
+		}
+	}
 	var planList []Plan
 	for _, item := range []struct {
 		file string
@@ -88,7 +121,7 @@ func Open(dir string) (*Store, error) {
 		{plansFile, &planList},
 		{settingsFile, &s.settings},
 	} {
-		if err := readJSON(filepath.Join(dir, item.file), item.dest); err != nil {
+		if err := readJSON(s.pathOf(item.file), item.dest); err != nil {
 			return nil, fmt.Errorf("读取 %s 失败: %w", item.file, err)
 		}
 	}
@@ -154,6 +187,10 @@ func Open(dir string) (*Store, error) {
 // Dir 返回数据目录，供上传与备份使用。
 func (s *Store) Dir() string { return s.dir }
 
+// Path 返回某个逻辑文件名的真实磁盘路径（配置类进 config/，其余进根目录）。
+// 供备份导出/导入使用，使 zip 里保持扁平文件名、落盘时自动分流。
+func (s *Store) Path(name string) string { return s.pathOf(name) }
+
 // Reload 在导入备份后重新把磁盘内容读进内存。
 func (s *Store) Reload() error {
 	s.mu.Lock()
@@ -171,7 +208,7 @@ func (s *Store) Reload() error {
 		{dishesFile, &dishes}, {membersFile, &members},
 		{plansFile, &planList}, {settingsFile, &settings},
 	} {
-		if err := readJSON(filepath.Join(s.dir, item.file), item.dest); err != nil {
+		if err := readJSON(s.pathOf(item.file), item.dest); err != nil {
 			return err
 		}
 	}
@@ -723,7 +760,11 @@ func (s *Store) writeJSON(name string, value any) error {
 		return err
 	}
 	raw = append(raw, '\n')
-	tmp := filepath.Join(s.dir, "."+name+".tmp")
+	target := s.pathOf(name)
+	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+		return err
+	}
+	tmp := target + ".tmp"
 	f, err := os.OpenFile(tmp, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
 	if err != nil {
 		return err
@@ -739,7 +780,7 @@ func (s *Store) writeJSON(name string, value any) error {
 	if err = f.Close(); err != nil {
 		return err
 	}
-	return os.Rename(tmp, filepath.Join(s.dir, name))
+	return os.Rename(tmp, target)
 }
 
 func now() string { return time.Now().Format(time.RFC3339) }

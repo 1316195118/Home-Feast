@@ -45,7 +45,7 @@ func (s *Server) writeBackupZip(w io.Writer) error {
 	zw := zip.NewWriter(w)
 	root := s.st.Dir()
 	for _, name := range jsonNames {
-		b, err := os.ReadFile(filepath.Join(root, name))
+		b, err := os.ReadFile(s.st.Path(name))
 		if err != nil {
 			continue
 		}
