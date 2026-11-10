@@ -112,15 +112,32 @@ watch(
   { immediate: true },
 )
 
-function chooseChef(member) {
-  if (state.plan.chefId === member.id) actions.clearChef()
-  else actions.setChef(member.id)
+// 分工改成「掌勺 / 洗碗」两个选择：先点角色，再点人；每个 tab 直接显示已定的人。
+const activeRole = ref('chef') // 'chef' | 'wash'
+// 选中后的文字反馈动画：谁被定为哪个角色，一眼看到
+const dutyPulse = ref('')
+let dutyPulseTimer = null
+function setRole(role) {
+  activeRole.value = role
+  dutyPulse.value = ''
 }
-
-function chooseWasher(member) {
-  if (state.plan.dishwasherId === member.id) actions.clearDishwasher()
-  else actions.setDishwasher(member.id)
+function chooseMember(member) {
+  const isChef = activeRole.value === 'chef'
+  const already = isChef ? state.plan.chefId === member.id : state.plan.dishwasherId === member.id
+  if (isChef) {
+    if (already) actions.clearChef()
+    else actions.setChef(member.id)
+  } else {
+    if (already) actions.clearDishwasher()
+    else actions.setDishwasher(member.id)
+  }
+  // 动画反馈：取消显示「已取消」，选中显示「😀 XX 掌勺」
+  const verb = isChef ? '掌勺' : '洗碗'
+  dutyPulse.value = { id: member.id, text: already ? `已取消 ${member.name} 的${verb}` : `${member.avatar} ${member.name} ${verb}！` }
+  clearTimeout(dutyPulseTimer)
+  dutyPulseTimer = setTimeout(() => { dutyPulse.value = '' }, 2400)
 }
+onUnmounted(() => clearTimeout(dutyPulseTimer))
 
 // 骰子 PK：全员掷骰，点大的掌勺、点小的洗碗
 function openPK() {
@@ -226,40 +243,60 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
         <button class="btn btn-primary pk-cta-btn" @click="openPK">摇骰子</button>
       </div>
 
-      <div class="duty-grid">
-        <div class="duty-block">
-          <div class="duty-label">👨‍🍳 谁掌勺</div>
-          <div class="chef-grid">
-            <button
-              v-for="m in state.members" :key="m.id"
-              class="chef-choice" :class="{ active: state.plan.chefId === m.id }"
-              :disabled="pending('duty')" @click="chooseChef(m)"
-            >
-              <span class="avatar avatar-sm" :style="{ background: m.color }">{{ m.avatar }}</span>
-              <span class="chef-name">{{ m.name }}</span>
-            </button>
-          </div>
+      <!-- 掌勺 / 洗碗两个选择：点角色卡切换，再点下面的人；已定的人直接写在卡上 -->
+      <div class="duty-picker">
+        <div class="duty-roles" role="tablist" aria-label="选分工">
+          <button
+            type="button" role="tab" class="duty-role duty-role-chef"
+            :class="{ active: activeRole === 'chef', filled: !!chef }"
+            :aria-selected="activeRole === 'chef'" @click="setRole('chef')"
+          >
+            <span class="duty-role-top"><span class="duty-role-emoji">👨‍🍳</span><span class="duty-role-name">掌勺</span></span>
+            <span class="duty-role-who">
+              <template v-if="chef"><span class="avatar avatar-sm" :style="{ background: chef.color }">{{ chef.avatar }}</span>{{ chef.name }}</template>
+              <template v-else>点下面选一个</template>
+            </span>
+          </button>
+          <button
+            type="button" role="tab" class="duty-role duty-role-wash"
+            :class="{ active: activeRole === 'wash', filled: !!washer }"
+            :aria-selected="activeRole === 'wash'" @click="setRole('wash')"
+          >
+            <span class="duty-role-top"><span class="duty-role-emoji">🧽</span><span class="duty-role-name">洗碗</span></span>
+            <span class="duty-role-who">
+              <template v-if="washer"><span class="avatar avatar-sm" :style="{ background: washer.color }">{{ washer.avatar }}</span>{{ washer.name }}</template>
+              <template v-else>点下面选一个</template>
+            </span>
+          </button>
         </div>
 
-        <div class="duty-block">
-          <div class="duty-label">🧽 谁洗碗</div>
-          <div class="wash-grid">
+        <div class="duty-member-label">
+          {{ activeRole === 'chef' ? '👨‍🍳 谁来掌勺？' : '🧽 谁来洗碗？' }}
+          <span class="tiny muted">点一下定好，再点一下取消</span>
+        </div>
+        <Transition name="page" mode="out-in">
+          <div :key="activeRole" class="duty-members">
             <button
               v-for="m in state.members" :key="m.id"
-              class="wash-choice" :class="{ active: state.plan.dishwasherId === m.id }"
-              :disabled="pending('duty')" @click="chooseWasher(m)"
+              class="duty-member" :class="[activeRole === 'chef' ? 'is-chef' : 'is-wash', { active: (activeRole === 'chef' ? state.plan.chefId : state.plan.dishwasherId) === m.id }]"
+              :disabled="pending('duty')" @click="chooseMember(m)"
             >
               <span class="avatar avatar-sm" :style="{ background: m.color }">{{ m.avatar }}</span>
-              <span class="chef-name">{{ m.name }}</span>
+              <span class="duty-member-name">{{ m.name }}</span>
+              <span v-if="(activeRole === 'chef' ? state.plan.chefId : state.plan.dishwasherId) === m.id" class="duty-member-check">✓</span>
             </button>
           </div>
-        </div>
+        </Transition>
+
+        <Transition name="duty-pop">
+          <div v-if="dutyPulse" :key="dutyPulse.text" class="duty-pulse" aria-live="polite">{{ dutyPulse.text }}</div>
+        </Transition>
       </div>
 
       <p class="duty-summary" :class="{ muted: !chef || !washer }">
         <template v-if="samePerson">{{ chef?.name }} 又做饭又洗碗，辛苦啦 🥲</template>
         <template v-else-if="chef && washer">分工已定，就等开饭啦 🍚</template>
-        <template v-else-if="!chef && !washer">上面点名字，或用 🎲 抽一个比大小来定</template>
+        <template v-else-if="!chef && !washer">先选「掌勺」或「洗碗」，再点人；或用 🎲 一把定</template>
         <template v-else>{{ !chef ? '还差掌勺的人' : '还差洗碗的人' }}没定</template>
       </p>
 
