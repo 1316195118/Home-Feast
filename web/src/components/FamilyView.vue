@@ -2,6 +2,7 @@
 import { inject, computed, reactive, ref } from 'vue'
 import { avatarChoices, avatarGroups, colorChoices, memberOf, friendlyDate, avoidChoices } from '../utils'
 import { useModalBehavior } from '../modal'
+import { api } from '../api'
 
 const { state, actions, confirmDialog, pending } = inject('app')
 
@@ -79,6 +80,43 @@ async function remove(id) {
   if (!ok) return
   await actions.deleteMember(id)
 }
+
+// ---------- 成员密码 ----------
+// 明文只在输入框里出现一次，提交后由服务端做盐+哈希；前端只拿得到 hasPin 布尔。
+const pinEditor = ref(null) // { id, name, avatar, hasPin }
+const pinRoot = ref(null)
+const pinForm = reactive({ oldPin: '', newPin: '', confirmPin: '' })
+const pinBusy = ref(false)
+const pinError = ref('')
+useModalBehavior(() => { pinEditor.value = null }, pinRoot, computed(() => !!pinEditor.value), true)
+
+function openPin(m) {
+  pinEditor.value = { id: m.id, name: m.name, avatar: m.avatar, hasPin: !!m.hasPin }
+  pinForm.oldPin = ''
+  pinForm.newPin = ''
+  pinForm.confirmPin = ''
+  pinError.value = ''
+}
+async function savePin() {
+  const e = pinEditor.value
+  if (!e || pinBusy.value) return
+  pinError.value = ''
+  const np = pinForm.newPin
+  if (np && (np.length < 4 || np.length > 16)) { pinError.value = '新密码需要 4–16 个字符'; return }
+  if (np && np !== pinForm.confirmPin) { pinError.value = '两次输入的新密码不一致'; return }
+  if (!np && !e.hasPin) { pinError.value = '先填一个新密码'; return }
+  pinBusy.value = true
+  try {
+    await api.setMemberPin(e.id, { pin: np, oldPin: e.hasPin ? pinForm.oldPin : '' })
+    await actions.refresh() // 刷新 members 才能拿到最新的 hasPin
+    pinEditor.value = null
+    actions.toast(np ? '密码设置好了' : '密码已取消', 'success')
+  } catch (err) {
+    pinError.value = err.message || '保存失败'
+  } finally {
+    pinBusy.value = false
+  }
+}
 </script>
 
 <template>
@@ -101,11 +139,13 @@ async function remove(id) {
           </div>
         </div>
         <div v-if="(m.avoid || []).length" class="member-avoid tiny">⚠️ 不吃 {{ m.avoid.join('、') }}</div>
+        <div v-if="m.hasPin" class="member-avoid tiny">🔒 切换身份需要密码</div>
         <div class="member-stat"><span>掌勺 / 洗碗</span><span>{{ chefCount[m.id] || 0 }} / {{ washCount[m.id] || 0 }} 天</span></div>
         <div class="stat-bar">
           <div class="stat-bar-fill" :style="{ width: `${((chefCount[m.id] || 0) / maxChef) * 100}%`, background: m.color }"></div>
         </div>
         <div class="member-actions">
+          <button class="btn btn-sm btn-soft" @click="openPin(m)">{{ m.hasPin ? '🔑 改密码' : '🔑 设密码' }}</button>
           <button class="btn btn-sm btn-ghost" @click="openEdit(m)">编辑</button>
           <button class="btn btn-sm btn-danger" @click="remove(m.id)">移除</button>
         </div>
@@ -197,6 +237,39 @@ async function remove(id) {
           </button>
         </div>
       </div>
+      </div>
+    </Transition>
+
+    <Transition name="modal">
+      <div v-if="pinEditor" class="modal-backdrop pin-backdrop" @click.self="pinEditor = null">
+        <div ref="pinRoot" class="modal pin-modal" role="dialog" aria-modal="true" aria-label="设置成员密码">
+          <div class="modal-head">
+            <h2>🔑 {{ pinEditor.avatar }} {{ pinEditor.name }} 的密码</h2>
+            <button class="icon-btn" aria-label="取消" @click="pinEditor = null">✕</button>
+          </div>
+          <p class="setting-desc">
+            设好后，别人切到这个身份点菜会先要密码。密码只存哈希，不进备份，也不会出现在页面数据里。
+          </p>
+          <div v-if="pinEditor.hasPin" class="field">
+            <label for="pin-old">当前密码</label>
+            <input id="pin-old" v-model="pinForm.oldPin" class="input" type="password" maxlength="16" autocomplete="current-password" />
+          </div>
+          <div class="field">
+            <label for="pin-new">新密码（4–16 位；留空表示取消密码）</label>
+            <input id="pin-new" v-model="pinForm.newPin" class="input" type="password" maxlength="16" autocomplete="new-password" />
+          </div>
+          <div v-if="pinForm.newPin" class="field">
+            <label for="pin-confirm">再输一次新密码</label>
+            <input id="pin-confirm" v-model="pinForm.confirmPin" class="input" type="password" maxlength="16" autocomplete="new-password" @keyup.enter="savePin" />
+          </div>
+          <p v-if="pinError" class="pin-error" role="alert">{{ pinError }}</p>
+          <div class="modal-foot">
+            <button class="btn btn-soft" @click="pinEditor = null">取消</button>
+            <button class="btn btn-primary" :disabled="pinBusy" @click="savePin">
+              {{ pinBusy ? '保存中…' : '保存' }}
+            </button>
+          </div>
+        </div>
       </div>
     </Transition>
   </section>

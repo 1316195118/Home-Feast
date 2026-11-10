@@ -53,6 +53,8 @@ export const api = {
   addMember: (member) => request('/api/members', { method: 'POST', body: member }),
   updateMember: (id, patch) => request(`/api/members/${id}`, { method: 'PUT', body: patch }),
   deleteMember: (id) => request(`/api/members/${id}`, { method: 'DELETE' }),
+  setMemberPin: (id, body) => request(`/api/members/${id}/pin`, { method: 'POST', body }),
+  verifyMemberPin: (id, pin) => request(`/api/members/${id}/verify`, { method: 'POST', body: { pin } }),
 
   setPlan: (date, patch) => request(`/api/plans/${date}`, { method: 'PUT', body: patch }),
   addOrder: (date, body) => request(`/api/plans/${date}/orders`, { method: 'POST', body }),

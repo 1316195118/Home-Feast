@@ -24,6 +24,8 @@ type Member struct {
 	Avatar    string   `json:"avatar"`
 	Color     string   `json:"color"`
 	Avoid     []string `json:"avoid,omitempty"` // 忌口 / 口味避雷标签，omitempty 兼容旧 members.json
+	// HasPin 是计算字段：由 ListMembers() 按 pins.json 填充，不落盘、不含任何密码材料。
+	HasPin    bool     `json:"hasPin,omitempty"`
 	CreatedAt string   `json:"createdAt"`
 }
 

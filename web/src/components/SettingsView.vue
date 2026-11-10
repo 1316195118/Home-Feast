@@ -402,6 +402,9 @@ function savePantry() {
         <p class="setting-desc" style="margin-top: 10px">
           直接打包整个目录也能备份；换机器时把目录挂回去即可，无需迁移。
         </p>
+        <p class="setting-desc" style="margin-top: 8px">
+          访问口令 <code>access.json</code> 与成员密码哈希 <code>pins.json</code> 单独存放，不随导出的备份 zip 分发。
+        </p>
       </div>
 
       <div class="card setting-card">

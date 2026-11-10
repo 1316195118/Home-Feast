@@ -40,6 +40,8 @@ func New(st *store.Store, web fs.FS, envCode string) http.Handler {
 	api.HandleFunc("POST /api/members", s.createMember)
 	api.HandleFunc("PUT /api/members/{id}", s.updateMember)
 	api.HandleFunc("DELETE /api/members/{id}", s.deleteMember)
+	api.HandleFunc("POST /api/members/{id}/pin", s.setMemberPin)
+	api.HandleFunc("POST /api/members/{id}/verify", s.verifyMemberPin)
 
 	api.HandleFunc("GET /api/plans", s.listPlans)
 	api.HandleFunc("GET /api/plans/{date}", s.getPlan)

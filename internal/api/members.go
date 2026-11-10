@@ -84,6 +84,37 @@ func (s *Server) updateMember(w http.ResponseWriter, r *http.Request) {
 	jsonOK(w, updated)
 }
 
+// setMemberPin 设置 / 修改 / 清除成员密码。已设过密码时必须带对 oldPin。
+func (s *Server) setMemberPin(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		Pin    string `json:"pin"`
+		OldPin string `json:"oldPin"`
+	}
+	if err := decodeBody(w, r, &in); err != nil {
+		jsonErr(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if err := s.st.SetMemberPin(r.PathValue("id"), in.Pin, in.OldPin); err != nil {
+		jsonErr(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	jsonOK(w, map[string]any{"ok": true, "hasPin": in.Pin != ""})
+}
+
+// verifyMemberPin 校验成员密码。
+// 注意：失败也返回 200 + {ok:false}，不能返回 401 —— 前端 request() 把 401
+// 当成「访问口令错误」会触发 fm:locked 把整页锁掉，那是另一套全局口令机制。
+func (s *Server) verifyMemberPin(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		Pin string `json:"pin"`
+	}
+	if err := decodeBody(w, r, &in); err != nil {
+		jsonErr(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	jsonOK(w, map[string]bool{"ok": s.st.VerifyMemberPin(r.PathValue("id"), in.Pin)})
+}
+
 func (s *Server) deleteMember(w http.ResponseWriter, r *http.Request) {
 	if len(s.st.ListMembers()) <= 1 {
 		jsonErr(w, http.StatusBadRequest, "至少保留一位家庭成员")

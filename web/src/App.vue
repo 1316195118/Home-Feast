@@ -79,6 +79,49 @@ useModalBehavior(
   computed(() => needsUserPick.value && state.ready && !state.locked), false,
 )
 
+// 成员密码：切到设了密码的身份之前先校验，避免家人随手用别人名义点菜。
+// 密码哈希只在服务端 pins.json，前端只拿到 hasPin 布尔，不接触任何密码材料。
+const pinPrompt = ref(null) // { id, name, avatar, purpose: 'switch' | 'pick' }
+const pinInput = ref('')
+const pinError = ref('')
+const pinBusy = ref(false)
+const pinRoot = ref(null)
+useModalBehavior(
+  () => { pinPrompt.value = null },
+  pinRoot,
+  computed(() => !!pinPrompt.value),
+  true, // 可以取消，取消就保持原身份
+)
+function openPinPrompt(member, purpose) {
+  pinPrompt.value = { id: member.id, name: member.name, avatar: member.avatar, purpose }
+  pinInput.value = ''
+  pinError.value = ''
+}
+async function submitPin() {
+  const p = pinPrompt.value
+  if (!p || pinBusy.value) return
+  if (!pinInput.value) { pinError.value = '先输入密码'; return }
+  pinBusy.value = true
+  pinError.value = ''
+  try {
+    const res = await api.verifyMemberPin(p.id, pinInput.value)
+    if (!res.ok) {
+      pinError.value = '密码不对，再试一次'
+      pinInput.value = ''
+      toast('密码不对，身份没切换', 'error')
+      return
+    }
+    pinPrompt.value = null
+    pinInput.value = ''
+    if (p.purpose === 'pick') doPick(p.id)
+    else doSwitch(p.id)
+  } catch (err) {
+    pinError.value = err.message || '校验失败'
+  } finally {
+    pinBusy.value = false
+  }
+}
+
 let toastTimer = null
 let syncTimer = null
 let toastSeq = 0
@@ -125,18 +168,33 @@ function selectUser(id) {
   else localStorage.removeItem('fm.user')
 }
 
-function pickUser(id) {
+function doPick(id) {
   selectUser(id)
   needsUserPick.value = false
   const m = state.members.find((x) => x.id === id)
   if (m) toast(`${m.avatar} 欢迎回家，${m.name}`, 'success')
 }
+function pickUser(id) {
+  const m = state.members.find((x) => x.id === id)
+  if (m?.hasPin) { openPinPrompt(m, 'pick'); return }
+  doPick(id)
+}
 
-function onSwitchUser(e) {
-  const id = e.target.value
+function doSwitch(id) {
   selectUser(id)
   const m = state.members.find((x) => x.id === id)
   if (m) toast(`${m.avatar} 现在以 ${m.name} 的身份点菜`, 'info')
+}
+function onSwitchUser(e) {
+  const id = e.target.value
+  const m = state.members.find((x) => x.id === id)
+  if (m?.hasPin) {
+    // select 的 DOM 值已经变了，先复原；密码通过后再真正切身份
+    e.target.value = state.currentUserId
+    openPinPrompt(m, 'switch')
+    return
+  }
+  doSwitch(id)
 }
 
 // 统一的「确认」弹窗：替换浏览器原生 confirm，保持界面风格一致，也带入场动画。
@@ -473,6 +531,31 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
+    </Transition>
+
+    <!-- 成员密码：切到设了密码的身份前校验；叠在首次选人弹窗之上 -->
+    <Transition name="modal">
+      <div v-if="pinPrompt" class="modal-backdrop pin-backdrop" @click.self="pinPrompt = null">
+        <div ref="pinRoot" class="modal pin-modal" role="dialog" aria-modal="true" aria-label="输入成员密码">
+          <div class="modal-head">
+            <h2>🔒 {{ pinPrompt.avatar }} {{ pinPrompt.name }} 的密码</h2>
+            <button class="icon-btn" aria-label="取消" @click="pinPrompt = null">✕</button>
+          </div>
+          <p class="setting-desc">这位家人设了密码，切换身份前先验证一下。</p>
+          <input
+            v-model="pinInput" class="input pin-input" type="password"
+            inputmode="numeric" maxlength="16" placeholder="4–16 位密码"
+            aria-label="成员密码" @keyup.enter="submitPin"
+          />
+          <p v-if="pinError" class="pin-error" role="alert">{{ pinError }}</p>
+          <div class="modal-foot">
+            <button class="btn btn-soft" @click="pinPrompt = null">取消</button>
+            <button class="btn btn-primary" :disabled="pinBusy" @click="submitPin">
+              {{ pinBusy ? '校验中…' : '确认切换' }}
+            </button>
+          </div>
+        </div>
+      </div>
     </Transition>
 
     <!-- 统一确认弹窗：替换浏览器原生 confirm，与所有窗口保持同款动画 -->

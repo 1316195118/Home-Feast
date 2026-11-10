@@ -5,6 +5,8 @@ package store
 import (
 	"bytes"
 	"crypto/rand"
+	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -25,6 +27,9 @@ const (
 	settingsFile = "settings.json"
 	// 访问口令单独存放：不进 settings.json，避免随 bootstrap / 备份 zip 泄露。
 	accessFile = "access.json"
+	// 成员密码哈希单独存放，同样不进备份 zip，也不随 bootstrap 下发。
+	// members.json 里只有 hasPin 这个计算出来的布尔值，不含任何密码材料。
+	pinsFile = "pins.json"
 )
 
 // Store 是内存中的数据镜像，所有公开方法都可并发调用。
@@ -36,11 +41,31 @@ type Store struct {
 	plans      map[string]Plan
 	settings   Settings
 	accessCode string
+	pins       map[string]pinRecord
 }
 
 // accessFileData 是 access.json 的结构。
 type accessFileData struct {
 	Code string `json:"code"`
+}
+
+// pinRecord 只存随机盐与哈希，绝不存明文；pins.json 也不在备份白名单里。
+type pinRecord struct {
+	Salt string `json:"salt"`
+	Hash string `json:"hash"`
+}
+
+func hashPin(salt, pin string) string {
+	sum := sha256.Sum256([]byte(salt + "\x00" + pin))
+	return hex.EncodeToString(sum[:])
+}
+
+func newSalt() string {
+	buf := make([]byte, 16)
+	if _, err := rand.Read(buf); err != nil {
+		return fmt.Sprintf("%d", time.Now().UnixNano())
+	}
+	return hex.EncodeToString(buf)
 }
 
 // Open 打开（必要时创建）数据目录。文件损坏时直接报错，绝不悄悄覆盖用户数据。
@@ -51,7 +76,7 @@ func Open(dir string) (*Store, error) {
 	if err := os.MkdirAll(filepath.Join(dir, "uploads"), 0o755); err != nil {
 		return nil, fmt.Errorf("创建数据目录: %w", err)
 	}
-	s := &Store{dir: dir, plans: make(map[string]Plan)}
+	s := &Store{dir: dir, plans: make(map[string]Plan), pins: make(map[string]pinRecord)}
 
 	var planList []Plan
 	for _, item := range []struct {
@@ -77,6 +102,15 @@ func Open(dir string) (*Store, error) {
 		return nil, fmt.Errorf("读取 %s 失败: %w", accessFile, err)
 	}
 	s.accessCode = access.Code
+	// pins.json 不存在时保持空 map；它不在备份白名单里，恢复备份不会清掉现有密码。
+	var pins map[string]pinRecord
+	if err := readJSON(filepath.Join(dir, pinsFile), &pins); err != nil {
+		return nil, fmt.Errorf("读取 %s 失败: %w", pinsFile, err)
+	}
+	if pins == nil {
+		pins = make(map[string]pinRecord)
+	}
+	s.pins = pins
 
 	// 首次运行：写入内置菜品、示例成员和默认设置。
 	if len(s.dishes) == 0 {
@@ -302,7 +336,65 @@ func (s *Store) DeleteDish(id string) error {
 func (s *Store) ListMembers() []Member {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return append([]Member{}, s.members...)
+	out := append([]Member{}, s.members...)
+	for i := range out {
+		_, out[i].HasPin = s.pins[out[i].ID]
+	}
+	return out
+}
+
+// SetMemberPin 设置 / 修改 / 清除成员密码。已设过密码时必须先给对 oldPin，
+// 防止别人随手把密码改掉；pin 为空串表示清除。
+func (s *Store) SetMemberPin(id, pin, oldPin string) error {
+	if n := len([]rune(pin)); pin != "" && (n < 4 || n > 16) {
+		return errors.New("密码需要 4–16 个字符")
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	exists := false
+	for _, m := range s.members {
+		if m.ID == id {
+			exists = true
+			break
+		}
+	}
+	if !exists {
+		return errors.New("成员不存在")
+	}
+	current, has := s.pins[id]
+	if has && subtle.ConstantTimeCompare(
+		[]byte(hashPin(current.Salt, oldPin)), []byte(current.Hash),
+	) != 1 {
+		return errors.New("当前密码不正确")
+	}
+	next := make(map[string]pinRecord, len(s.pins)+1)
+	for k, v := range s.pins {
+		next[k] = v
+	}
+	if pin == "" {
+		delete(next, id)
+	} else {
+		salt := newSalt()
+		next[id] = pinRecord{Salt: salt, Hash: hashPin(salt, pin)}
+	}
+	if err := s.writeJSON(pinsFile, next); err != nil {
+		return err
+	}
+	s.pins = next
+	return nil
+}
+
+// VerifyMemberPin 校验成员密码；没设密码的成员直接通过。
+func (s *Store) VerifyMemberPin(id, pin string) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	rec, has := s.pins[id]
+	if !has {
+		return true
+	}
+	return subtle.ConstantTimeCompare(
+		[]byte(hashPin(rec.Salt, pin)), []byte(rec.Hash),
+	) == 1
 }
 
 // MemberPatch 是编辑成员时允许改动的字段。
@@ -380,6 +472,19 @@ func (s *Store) DeleteMember(id string) error {
 		return err
 	}
 	s.members = next
+	// 成员删掉后顺手清掉他的密码记录，避免 pins.json 里堆积孤立条目
+	if _, has := s.pins[id]; has {
+		pins := make(map[string]pinRecord, len(s.pins))
+		for k, v := range s.pins {
+			if k != id {
+				pins[k] = v
+			}
+		}
+		if err := s.writeJSON(pinsFile, pins); err != nil {
+			return err
+		}
+		s.pins = pins
+	}
 	return nil
 }
 

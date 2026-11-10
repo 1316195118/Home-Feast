@@ -866,3 +866,16 @@
   .roster-row { grid-template-columns: 40px minmax(0, 1fr) minmax(0, 1fr) 44px; gap: 4px; }
   .roster-day { font-size: 0.78rem; }
 }
+
+/* ---------- 成员密码 ---------- */
+.pin-backdrop { z-index: 200; } /* 要盖住「首次选人」弹窗 */
+.pin-modal { max-width: 420px; }
+.pin-modal .field { margin-top: 12px; }
+.pin-modal .setting-desc { margin-top: 0; }
+.pin-input { margin-top: 10px; }
+.pin-error { margin: 10px 0 0; font-size: 0.82rem; font-weight: 700; color: #a4462c; }
+.member-actions { flex-wrap: wrap; }
+@media (max-width: 720px) {
+  .pin-modal { width: calc(100vw - 28px); }
+  .member-actions .btn { flex: 1; min-width: 96px; }
+}
