@@ -314,6 +314,23 @@ export function seasonOf(dateLike) {
   return { key: 'winter', label: '冬', hint: '热乎下饭', likes: ['soup', 'sichuan', 'hunan', 'homestyle', 'staple'], dislikes: ['cold', 'dessert'] }
 }
 
+// 冰箱食材命中：只统计主料（食材），佐料（盐 / 油 / 葱蒜 / 酱油…）一律不参与，
+// 否则「有盐有葱」会把几乎每道菜都算成「冰箱里有」，推荐就失去意义。
+// 菜谱筛选与今日页智能推荐共用这一套规则，勾选变化后两处一起实时重排。
+export function pantryMatches(dish, pantry, ingredientsOf = null) {
+  const pan = (Array.isArray(pantry) ? pantry : [])
+    .map((x) => String(x).trim()).filter(Boolean)
+    .filter((p) => shoppingKind(p) !== '佐料')
+  if (!pan.length || !dish) return { hits: [], count: 0 }
+  const ings = typeof ingredientsOf === 'function' ? ingredientsOf(dish) : (dish.ingredients || [])
+  const mainOnly = (Array.isArray(ings) ? ings : [])
+    .filter(Boolean)
+    .filter((i) => shoppingKind(String(i).split(/\s+/)[0]) !== '佐料')
+    .join(' ')
+  const hits = pan.filter((p) => mainOnly.includes(p))
+  return { hits, count: hits.length }
+}
+
 function tinyHash(s) {
   let h = 2166136261
   for (let i = 0; i < s.length; i++) {
@@ -333,13 +350,11 @@ export function smartSuggest(dishes, opts = {}) {
   } = opts
   const season = seasonOf(today)
   const picked = new Set([...(orders || []).map((o) => o.dishId), ...(excludeIds || [])])
-  const pan = (Array.isArray(pantry) ? pantry : []).map((x) => String(x).trim()).filter(Boolean)
   const scored = []
 
   for (const d of dishes || []) {
     if (!d || picked.has(d.id) || isCuisineHidden(d.cuisine, hiddenCuisines)) continue
     const ings = typeof ingredientsOf === 'function' ? ingredientsOf(d) : (d.ingredients || [])
-    const hay = Array.isArray(ings) ? ings.filter(Boolean).join(' ') : String(ings || '')
     // 内置菜的配料由 recipes.js 动态生成，这里用展开后的配料做避雷判断才准
     if (avoidConflicts({ ...d, ingredients: Array.isArray(ings) ? ings : [] }, member).length) continue
 
@@ -347,7 +362,7 @@ export function smartSuggest(dishes, opts = {}) {
     const reasons = []
     if (season.likes.includes(d.cuisine)) score += 2.2
     if (season.dislikes.includes(d.cuisine)) score -= 1.2
-    const hits = pan.filter((p) => hay.includes(p))
+    const hits = pantryMatches(d, pantry, ingredientsOf).hits
     if (hits.length) {
       score += Math.min(hits.length, 4) * 2.6
       reasons.push(`用得上冰箱里的${hits.slice(0, 2).join('、')}`)

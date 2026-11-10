@@ -185,7 +185,7 @@ async function savePin() {
         </div>
         <div class="field">
           <label for="member-name">怎么称呼</label>
-          <input id="member-name" v-model="form.name" class="input" maxlength="20" placeholder="爸爸 / 奶奶 / 小宝" />
+          <input id="member-name" v-model="form.name" class="input" maxlength="20" placeholder="例如：爸爸、奶奶、小宝" />
         </div>
         <div class="field" style="margin-top: 14px">
           <label>挑个头像</label>
@@ -233,7 +233,7 @@ async function savePin() {
           <button class="btn" :disabled="pending('member')" @click="editorOpen = false">取消</button>
           <button class="btn btn-primary" :disabled="pending('member')" @click="save">
             <span v-if="pending('member')" class="btn-spinner btn-spinner-light" aria-hidden="true" />
-            {{ pending('member') ? '保存中…' : '保存' }}
+            {{ pending('member') ? '保存中…' : '保存成员' }}
           </button>
         </div>
       </div>
@@ -266,7 +266,7 @@ async function savePin() {
           <div class="modal-foot">
             <button class="btn btn-soft" @click="pinEditor = null">取消</button>
             <button class="btn btn-primary" :disabled="pinBusy" @click="savePin">
-              {{ pinBusy ? '保存中…' : '保存' }}
+              {{ pinBusy ? '保存中…' : '保存密码' }}
             </button>
           </div>
         </div>

@@ -138,6 +138,12 @@ func Open(dir string) (*Store, error) {
 	}
 	if s.settings.FamilyName == "" {
 		s.settings = Settings{FamilyName: "我们家", UpdatedAt: now()}
+	}
+	// 旧 settings.json 没有自动备份字段：首次升级默认开启、保留 7 份。
+	// 用户主动关闭后 BackupKeep 仍是 7，不会被这段逻辑重新打开。
+	if s.settings.BackupKeep == 0 {
+		s.settings.AutoBackup = true
+		s.settings.BackupKeep = 7
 		if err := s.writeJSON(settingsFile, s.settings); err != nil {
 			return nil, err
 		}

@@ -11,6 +11,34 @@ const importBusy = ref(false)
 const cuisineRoot = ref(null)
 const themeMode = ref(currentThemeMode())
 function chooseTheme(mode) { themeMode.value = setThemeMode(mode) }
+const realtimeText = computed(() => ({
+  online: '🟢 已连接', connecting: '🟡 连接中', reconnecting: '🟡 断线重连中',
+  unsupported: '⚪ 浏览器不支持', off: '⚪ 未开启',
+}[state.realtime] || '⚪ 未开启'))
+
+// ---------- 自动备份 ----------
+const backups = ref([])
+const backupBusy = ref(false)
+const autoBackup = computed(() => state.settings.autoBackup !== false)
+const backupKeep = computed(() => state.settings.backupKeep || 7)
+async function loadBackups() {
+  try { backups.value = await api.listBackups() } catch { backups.value = [] }
+}
+function toggleAutoBackup() { actions.saveSettings({ autoBackup: !autoBackup.value }) }
+async function runBackup() {
+  backupBusy.value = true
+  try {
+    const r = await api.runBackupNow()
+    actions.toast(`备份好了：${r.name}`, 'success')
+    await actions.refresh()
+    await loadBackups()
+  } catch (err) {
+    actions.toast(err.message || '备份失败', 'error')
+  } finally {
+    backupBusy.value = false
+  }
+}
+loadBackups()
 
 watch(() => state.settings.familyName, (v) => { familyName.value = v || '我们家' })
 
@@ -241,7 +269,7 @@ async function saveRoster() {
           <input v-model="familyName" class="input" maxlength="24" aria-label="家的名字" @keyup.enter="saveName" />
           <button class="btn btn-primary btn-sm" :disabled="pending('settings')" @click="saveName">
             <span v-if="pending('settings')" class="btn-spinner btn-spinner-light" aria-hidden="true" />
-            {{ pending('settings') ? '保存中' : '保存' }}
+            {{ pending('settings') ? '保存中' : '保存名字' }}
           </button>
         </div>
       </div>
@@ -271,19 +299,12 @@ async function saveRoster() {
         <p class="setting-desc">
           给每天定好谁掌勺、谁洗碗；今日页会提醒「按排班今天该谁」，可一键套用。
         </p>
-        <label class="switch-row">
-          <input type="checkbox" v-model="rosterEnabled" />
-          <span>启用每周排班提醒</span>
-        </label>
-        <button class="btn btn-soft btn-sm cuisine-manage-btn" @click="showRosterModal = true">
+        <!-- 开关与保存都收进弹窗，卡片里不再放第二个「保存排班」，避免功能重复 -->
+        <button class="btn btn-soft btn-sm cuisine-manage-btn roster-manage-btn" @click="showRosterModal = true">
           管理每周排班
           <span class="cuisine-count">{{ rosterFilledDays }} / 7 天已安排</span>
           <span class="chev">›</span>
         </button>
-        <div class="setting-actions">
-          <button class="btn btn-primary btn-sm" :disabled="pending('settings')" @click="saveRoster">保存排班</button>
-          <span class="tiny muted">只提醒，不改已定好的分工</span>
-        </div>
       </div>
 
       <div class="card setting-card">
@@ -329,11 +350,11 @@ async function saveRoster() {
           <div class="setting-row setting-row-inline">
             <input
               v-model="accessInput" class="input" type="password" maxlength="64"
-              placeholder="新口令（至少 4 位）" autocomplete="new-password"
+              placeholder="设置访问口令（至少 4 位）" autocomplete="new-password"
               aria-label="访问口令" @keyup.enter="saveAccess"
             />
             <button class="btn btn-primary btn-sm" :disabled="accessBusy" @click="saveAccess">
-              {{ accessBusy ? '保存中' : (state.accessRequired ? '改口令' : '开启') }}
+              {{ accessBusy ? '保存中' : (state.accessRequired ? '改口令' : '开启口令') }}
             </button>
           </div>
           <div class="setting-actions" v-if="state.accessRequired" style="margin-top: 10px">
@@ -341,6 +362,34 @@ async function saveRoster() {
             <button class="btn btn-sm btn-ghost" @click="forgetCode">本机重新输入</button>
           </div>
         </template>
+      </div>
+
+      <div class="card setting-card">
+        <div class="setting-title">
+          ⏰ 自动备份
+          <span class="tag setting-title-tag" :class="autoBackup ? 'tag-green' : ''">
+            {{ autoBackup ? '已开启' : '未开启' }}
+          </span>
+        </div>
+        <p class="setting-desc">
+          每天 03:30 把四份数据和上传的图片打包到 NAS 上的 <code>backups/</code>，自动保留最近 {{ backupKeep }} 份。
+        </p>
+        <label class="switch-row">
+          <input type="checkbox" :checked="autoBackup" @change="toggleAutoBackup" />
+          <span>每天自动备份</span>
+        </label>
+        <div v-if="backups.length" class="backup-list">
+          <div v-for="b in backups.slice(0, 3)" :key="b.name" class="backup-row tiny">
+            <span>{{ b.at }}</span>
+            <span class="muted">{{ (b.size / 1024 / 1024).toFixed(1) }} MB</span>
+          </div>
+        </div>
+        <div class="setting-actions">
+          <button class="btn btn-primary btn-sm" :disabled="backupBusy" @click="runBackup">
+            {{ backupBusy ? '备份中…' : '⏱ 立即备份' }}
+          </button>
+          <span class="tiny muted">共 {{ backups.length }} 份</span>
+        </div>
       </div>
 
       <div class="card setting-card">
@@ -360,6 +409,9 @@ async function saveRoster() {
         </p>
         <p class="setting-desc" style="margin-top: 8px">
           访问口令 <code>access.json</code> 与成员密码哈希 <code>pins.json</code> 单独存放，不随导出的备份 zip 分发。
+        </p>
+        <p class="setting-desc" style="margin-top: 8px">
+          🔄 多人实时同步：<b>{{ realtimeText }}</b>。家里几台设备同时打开时，谁改了菜单其它设备会自动更新。
         </p>
       </div>
 
@@ -400,6 +452,10 @@ async function saveRoster() {
               <button class="icon-btn" aria-label="关闭" @click="showRosterModal = false">✕</button>
             </div>
             <p class="setting-desc">留空表示那天不安排。改完点「保存排班」才生效；今日页只提醒，不改写已定好的分工。</p>
+            <label class="switch-row">
+              <input type="checkbox" v-model="rosterEnabled" />
+              <span>启用每周排班提醒</span>
+            </label>
             <div class="roster-grid">
               <div class="roster-row roster-head">
                 <span>星期</span><span>👨‍🍳 掌勺</span><span>🧽 洗碗</span><span></span>
@@ -475,7 +531,7 @@ async function saveRoster() {
               <button class="btn btn-ghost btn-sm" @click="resetMeals">恢复默认</button>
               <button class="btn btn-primary btn-sm" :disabled="pending('settings')" @click="saveMeals">
                 <span v-if="pending('settings')" class="btn-spinner btn-spinner-light" aria-hidden="true" />
-                {{ pending('settings') ? '保存中' : '保存' }}
+                {{ pending('settings') ? '保存中' : '保存时段' }}
               </button>
             </div>
           </div>

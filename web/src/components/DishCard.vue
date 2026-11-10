@@ -45,6 +45,7 @@ const avoidHits = computed(() => {
         <span class="tag" v-for="t in (dish.tags || []).slice(0, 3)" :key="t">{{ t }}</span>
         <span class="tag tag-spicy" v-if="dish.spicy > 0">{{ spicyText(dish.spicy) }}</span>
         <span class="tag tag-green" v-if="!dish.builtin">自家菜</span>
+        <span class="tag tag-pantry" v-if="dish._pantryHits > 0" title="冰箱里已有的主料命中数，佐料不计">🧊 {{ dish._pantryHits }} 样现成</span>
         <span
           v-if="avoidHits.length" class="tag tag-avoid"
           :title="`与 ${selfMember?.name} 的口味避雷冲突`"

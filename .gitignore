@@ -49,3 +49,6 @@
 /scripts/_tgt_bootstrap.json
 /scripts/_cq/menu_shot.png
 /scripts/_cq/progress_review.png
+
+# UI 审计输出（每次运行都会变，不入库）
+/scripts/_ui/audit-report.json

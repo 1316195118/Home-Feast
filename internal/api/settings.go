@@ -14,6 +14,8 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 		Meals          *[]store.MealSlot `json:"meals"`
 		Roster         *store.Roster     `json:"roster"`  // 每周掌勺 / 洗碗排班
 		Pantry         *[]string         `json:"pantry"`  // 冰箱现有食材
+		AutoBackup     *bool             `json:"autoBackup"`
+		BackupKeep     *int              `json:"backupKeep"`
 		AccessCode     *string           `json:"accessCode"` // 空串 = 关闭口令
 	}
 	if err := decodeBody(w, r, &in); err != nil {
@@ -57,6 +59,19 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 	if in.Roster != nil {
 		// 排班里只保留合法星期与真实存在的成员，删掉不存在的 ID
 		v.Roster = store.NormalizeRoster(*in.Roster, s.st.ListMembers())
+	}
+	if in.AutoBackup != nil {
+		v.AutoBackup = *in.AutoBackup
+	}
+	if in.BackupKeep != nil {
+		k := *in.BackupKeep
+		if k < 1 {
+			k = 1
+		}
+		if k > 60 {
+			k = 60
+		}
+		v.BackupKeep = k
 	}
 	if in.Pantry != nil {
 		// 冰箱食材：去空白、去重、限长限量；不接外部服务，纯本地匹配

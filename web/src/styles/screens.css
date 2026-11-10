@@ -37,7 +37,7 @@
   box-shadow: var(--shadow-sm);
 }
 .user-switch-label { font-size: 0.78rem; color: var(--muted); }
-.user-switch select { border: 0; background: transparent; font-weight: 700; font-size: 0.88rem; outline: none; padding: 5px 6px; cursor: pointer; }
+.user-switch select { border: 0; background: transparent; font-weight: 700; font-size: 0.88rem; outline: none; padding: 5px 6px; min-height: 42px; cursor: pointer; }
 
 .tabs {
   max-width: 1180px; margin: 0 auto;
@@ -367,13 +367,16 @@
 .shopping-amount { flex: none; font-size: 0.76rem; font-weight: 700; color: var(--brand-dark); white-space: nowrap; }
 
 /* ---------- 第二批：每周排班 / 智能推荐 ---------- */
+.roster-manage-btn { margin-top: auto; }
+.backup-list { display: flex; flex-direction: column; gap: 4px; margin-top: 2px; }
+.backup-row { display: flex; justify-content: space-between; gap: 8px; padding: 4px 8px; background: var(--surface-soft); border-radius: 6px; }
 .switch-row { display: inline-flex; align-items: center; gap: 8px; margin: 10px 0 12px; font-size: 0.88rem; font-weight: 600; cursor: pointer; }
 .switch-row input { width: 18px; height: 18px; accent-color: var(--brand); cursor: pointer; flex: none; }
 .roster-grid { display: flex; flex-direction: column; gap: 7px; }
 .roster-row { display: grid; grid-template-columns: 64px minmax(0, 1fr) minmax(0, 1fr) 44px; gap: 8px; align-items: center; }
 .roster-head { font-size: 0.76rem; font-weight: 800; color: var(--muted); }
 .roster-day { font-weight: 700; font-size: 0.86rem; }
-.roster-select { min-height: 38px; padding: 6px 8px; font-size: 0.82rem; width: 100%; }
+.roster-select { min-height: 42px; padding: 6px 8px; font-size: 0.82rem; width: 100%; }
 .roster-clear { min-height: 38px; min-width: 44px; padding: 0; }
 .roster-hint {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
@@ -438,6 +441,8 @@
 
 /* ---------- 口味避雷 ---------- */
 .tag-avoid { background: var(--amber-soft); color: var(--brand-dark); font-weight: 700; }
+/* 冰箱食材命中标签：与「自家菜」同色系但加一点冷色，和避雷标签区分开 */
+.tag-pantry { background: #dceae6; color: #3d6b60; font-weight: 700; }
 .member-avoid { color: var(--brand-dark); margin-top: 2px; }
 .avoid-picker { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .avoid-selected { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
@@ -723,7 +728,7 @@
   .brand-sub { display: none; }
   .user-switch-label { display: none; }
   .user-switch { padding: 3px 4px 3px 8px; }
-  .user-switch select { font-size: 0.84rem; padding: 6px 4px; min-height: 36px; }
+  .user-switch select { font-size: 16px; padding: 6px 4px; min-height: 44px; }
 
   /* 底部导航：大触摸区、选中指示条、安全区 */
   .tabs {
@@ -819,6 +824,10 @@
   /* 手机端：行内输入框放宽到整行，按钮自然落到下一行，避免挤压 */
   .setting-row-inline { flex-wrap: wrap; }
   .setting-row-inline .input { flex-basis: 100%; }
+  /* iOS Safari 在输入字号 <16px 时会自动放大整页：统一到 16px，并把触摸目标统一到 44px。
+     排除 checkbox / radio / hidden / file，避免把它们撑成 44px 方块。 */
+  input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=file]),
+  select, textarea { font-size: 16px; min-height: 44px; }
   .modal-cuisine-list { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); }
   .cuisine-foot-count { width: 100%; margin-right: 0; }
 
@@ -900,7 +909,7 @@
   .pk-cta-text b { font-size: 0.86rem; }
   .pk-cta-btn { width: 100%; margin-top: 4px; }
   .roster-row { grid-template-columns: 46px minmax(0, 1fr) minmax(0, 1fr) 44px; gap: 5px; }
-  .roster-select { font-size: 0.76rem; padding: 5px 4px; min-height: 40px; }
+  .roster-select { font-size: 16px; padding: 5px 4px; min-height: 44px; }
   .roster-clear { min-height: 40px; min-width: 44px; }
   .roster-hint { font-size: 0.8rem; padding: 9px 11px; gap: 8px; }
   .roster-hint-text { flex-basis: calc(100% - 34px); }

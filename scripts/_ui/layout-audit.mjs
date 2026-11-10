@@ -65,7 +65,10 @@ async function run(width, height, tag, mobile) {
 
   // 菜系切换抖动量化：记录切换前后视口宽度、网格起点、动画类数量与卡片位移
   await ev(`window.location.hash='#menu'`)
-  await sleep(700)
+  // 等页签进出场动画彻底结束并归零滚动，再取基线，否则会把「切页」的位移误算到「切菜系」头上
+  await sleep(1100)
+  await ev(`window.scrollTo(0,0)`)
+  await sleep(250)
   const before = JSON.parse(await ev(`(()=>{const g=document.querySelector('.dish-grid');return JSON.stringify({w:document.documentElement.clientWidth,top:g?Math.round(g.getBoundingClientRect().top):null,anim:document.querySelectorAll('[class*="grid-enter"],[class*="grid-leave"],[class*="grid-move"]').length})})()`))
   await ev(`document.querySelectorAll('.cuisine-chip')[1]?.click()`)
   await sleep(60)

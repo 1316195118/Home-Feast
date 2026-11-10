@@ -50,6 +50,7 @@ const state = reactive({
   members: [],
   plan: { orders: [] },
   plans: [],
+  realtime: 'off',     // SSE 连接状态：off / connecting / online / reconnecting / unsupported
   currentUserId: localStorage.getItem('fm.user') || '',
 })
 
@@ -217,6 +218,7 @@ function onConfirmCancel() { confirmState.open = false; confirmResolve?.(false);
 // key 相同的写操作会互相防连点；组件可用 pending(key) 把按钮置为 loading/禁用。
 const pendingKeys = reactive({})
 function pending(key) { return !!pendingKeys[key] }
+let lastLocalRefresh = 0 // 本机写操作后 guard 刷新过的时间，用来忽略 SSE 回声
 
 async function guard(fn, message, key = '') {
   if (key && pendingKeys[key]) return null
@@ -225,6 +227,7 @@ async function guard(fn, message, key = '') {
   try {
     const result = await fn()
     await refresh()
+    lastLocalRefresh = Date.now() // SSE 回声去重：本机刚刷新过就不再重复拉
     if (message) toast(message, 'success')
     return result === undefined ? true : result
   } catch (err) {
@@ -405,11 +408,59 @@ function onVisible() {
   if (document.visibilityState === 'visible') syncNow()
 }
 
+// ---------- 多人实时同步（SSE）----------
+// 服务端只推「数据变了」的版本号；这里做防抖与去重，避免打断正在输入的内容、
+// 正在播放的动画，或把自己刚提交的写操作重复刷新一遍。
+let source = null
+let sseTimer = null
+let ssePending = false
+function isTyping() {
+  const el = document.activeElement
+  return !!el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) && el.type !== 'checkbox'
+}
+function doRemoteRefresh() {
+  if (document.hidden || isTyping() || state.busy > 0) { ssePending = true; return }
+  if (Date.now() - lastLocalRefresh < 1200) return
+  refresh().catch(() => {})
+}
+function scheduleRemoteRefresh() {
+  if (!state.ready || state.locked) return
+  if (document.hidden || isTyping() || state.busy > 0) { ssePending = true; return }
+  clearTimeout(sseTimer)
+  sseTimer = setTimeout(doRemoteRefresh, 350)
+}
+function flushRemoteRefresh() {
+  if (!ssePending) return
+  ssePending = false
+  clearTimeout(sseTimer)
+  sseTimer = setTimeout(doRemoteRefresh, 250)
+}
+function onFocusOut() { setTimeout(flushRemoteRefresh, 120) }
+function onVisibilityRealtime() {
+  if (document.visibilityState === 'visible') flushRemoteRefresh()
+}
+function installRealtime() {
+  if (typeof EventSource === 'undefined') { state.realtime = 'unsupported'; return }
+  try {
+    source = new EventSource('/api/events')
+    source.onopen = () => { state.realtime = 'online' }
+    source.onmessage = () => scheduleRemoteRefresh()
+    source.onerror = () => { state.realtime = 'reconnecting' }
+    state.realtime = 'connecting'
+  } catch {
+    state.realtime = 'unsupported'
+  }
+  document.addEventListener('focusout', onFocusOut)
+  document.addEventListener('visibilitychange', onVisibilityRealtime)
+  window.addEventListener('focus', flushRemoteRefresh)
+}
+
 onMounted(() => {
   window.addEventListener('fm:locked', onLocked)
   window.addEventListener('hashchange', onHashChange)
   document.addEventListener('visibilitychange', onVisible)
   boot()
+  installRealtime()
   syncTimer = setInterval(syncNow, 60000)
 })
 onUnmounted(() => {
@@ -418,6 +469,11 @@ onUnmounted(() => {
   document.removeEventListener('visibilitychange', onVisible)
   clearTimeout(toastTimer)
   if (syncTimer) clearInterval(syncTimer)
+  if (source) source.close()
+  clearTimeout(sseTimer)
+  document.removeEventListener('focusout', onFocusOut)
+  document.removeEventListener('visibilitychange', onVisibilityRealtime)
+  window.removeEventListener('focus', flushRemoteRefresh)
 })
 </script>
 

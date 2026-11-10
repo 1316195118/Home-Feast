@@ -3,7 +3,8 @@ import { inject, ref, computed, watch } from 'vue'
 import DishCard from './DishCard.vue'
 import DishEditor from './DishEditor.vue'
 import DishDetail from './DishDetail.vue'
-import { isCuisineHidden, pantryPresets, pantryVisual } from '../utils'
+import { isCuisineHidden, pantryPresets, pantryVisual, pantryMatches } from '../utils'
+import { getRecipe } from '../recipes'
 import { useModalBehavior } from '../modal'
 
 const { state, actions, pending } = inject('app')
@@ -35,15 +36,30 @@ const visibleDishCount = computed(() =>
   state.dishes.filter((d) => !isCuisineHidden(d.cuisine, state.hiddenCuisines)).length
 )
 
+// 「优先推荐」：按冰箱已选主料的命中数实时重排，佐料不参与；
+// 命中数相同保持菜谱原顺序，勾选食材后 computed 自动重算，无需刷新。
+const priorityPantry = ref(localStorage.getItem('fm.priorityPantry') === '1')
+function togglePriority() {
+  priorityPantry.value = !priorityPantry.value
+  try { localStorage.setItem('fm.priorityPantry', priorityPantry.value ? '1' : '0') } catch { /* 隐私模式忽略 */ }
+}
+const recipeIngredients = (d) => getRecipe(d).ingredients || []
+
 const filtered = computed(() => {
   const q = keyword.value.trim().toLowerCase()
-  return state.dishes.filter((d) => {
+  const base = state.dishes.filter((d) => {
     if (isCuisineHidden(d.cuisine, state.hiddenCuisines)) return false
     if (activeCuisine.value !== 'all' && d.cuisine !== activeCuisine.value) return false
     if (onlyFavorite.value && !d.favorite) return false
     if (!q) return true
     return [d.name, d.desc, ...(d.tags || [])].join(' ').toLowerCase().includes(q)
   })
+  if (!priorityPantry.value) return base
+  const pantry = state.settings.pantry || []
+  return base
+    .map((d, i) => ({ d, i, hits: pantryMatches(d, pantry, recipeIngredients).count }))
+    .sort((a, b) => b.hits - a.hits || a.i - b.i)
+    .map(({ d, hits }) => ({ ...d, _pantryHits: hits }))
 })
 
 // 当前选中的分类若是被隐藏了，自动退回「全部」
@@ -143,9 +159,15 @@ async function savePantry() {
       <div class="search-box">
         <input v-model="keyword" class="input" placeholder="搜菜名、口味、标签…" aria-label="搜索菜品" />
       </div>
-      <button class="chip" :class="{ active: onlyFavorite }" @click="onlyFavorite = !onlyFavorite">
+      <button class="chip" :class="{ active: onlyFavorite }" :aria-pressed="onlyFavorite" @click="onlyFavorite = !onlyFavorite">
         ⭐ 只看收藏
       </button>
+      <button
+        class="chip" :class="{ active: priorityPantry }" :aria-pressed="priorityPantry"
+        title="按冰箱已选的食材把能做的菜排到前面；盐、油、葱蒜等佐料不参与"
+        @click="togglePriority"
+      >🥬 优先推荐</button>
+      <span v-if="priorityPantry && !(state.settings.pantry || []).length" class="tiny muted">先点「🧊 冰箱食材」选几样</span>
       <span class="tiny muted">共 {{ filtered.length }} 道</span>
     </div>
 
@@ -197,7 +219,7 @@ async function savePantry() {
           <div class="pantry-add-row">
             <input
               v-model="pantryCustom" class="input" maxlength="60"
-              placeholder="还能加：排骨、玉米…（顿号或逗号分隔）"
+              placeholder="自定义食材，例如：排骨、玉米…"
               aria-label="自定义食材" @keyup.enter="addCustomPantry"
             />
             <button class="btn btn-soft btn-sm" @click="addCustomPantry">添加</button>
@@ -205,7 +227,7 @@ async function savePantry() {
           <div class="modal-foot">
             <span class="tiny muted">已选 {{ pantryDraft.size }} 项</span>
             <button class="btn" @click="pantryOpen = false">取消</button>
-            <button class="btn btn-primary" :disabled="pending('settings')" @click="savePantry">保存</button>
+            <button class="btn btn-primary" :disabled="pending('settings')" @click="savePantry">保存食材</button>
           </div>
         </div>
       </div>

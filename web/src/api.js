@@ -65,5 +65,7 @@ export const api = {
   upload: (form) => request('/api/upload', { method: 'POST', body: form, isForm: true }),
   exportBackup: () => request('/api/backup', { raw: true }),
   exportExcel: () => request('/api/export/excel', { raw: true }),
+  listBackups: () => request('/api/backups'),
+  runBackupNow: () => request('/api/backups/run', { method: 'POST' }),
   importBackup: (form) => request('/api/backup', { method: 'POST', body: form, isForm: true }),
 }

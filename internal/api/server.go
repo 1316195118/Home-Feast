@@ -19,17 +19,19 @@ const Version = "0.1.0"
 type Server struct {
 	st      *store.Store
 	web     fs.FS
-	envCode string // MENU_ACCESS_CODE 环境变量；非空时优先于网页里设置的口令
+	envCode string       // MENU_ACCESS_CODE 环境变量；非空时优先于网页里设置的口令
+	events  *eventBroker // SSE 广播器，写操作成功后通知所有在线设备
 }
 
 // New 组装全部路由。网页里也能设置访问口令，见 updateSettings。
 func New(st *store.Store, web fs.FS, envCode string) http.Handler {
-	s := &Server{st: st, web: web, envCode: envCode}
+	s := &Server{st: st, web: web, envCode: envCode, events: newEventBroker()}
 
 	api := http.NewServeMux()
 	api.HandleFunc("GET /api/ping", s.ping)
 	api.HandleFunc("GET /api/config", s.config)
 	api.HandleFunc("GET /api/bootstrap", s.bootstrap)
+	api.HandleFunc("GET /api/events", s.streamEvents)
 
 	api.HandleFunc("GET /api/dishes", s.listDishes)
 	api.HandleFunc("POST /api/dishes", s.createDish)
@@ -55,6 +57,11 @@ func New(st *store.Store, web fs.FS, envCode string) http.Handler {
 	api.HandleFunc("GET /api/backup", s.exportBackup)
 	api.HandleFunc("POST /api/backup", s.importBackup)
 	api.HandleFunc("GET /api/export/excel", s.exportExcel)
+	api.HandleFunc("GET /api/backups", s.listBackups)
+	api.HandleFunc("POST /api/backups/run", s.runBackupNow)
+
+	// 应用内定时备份：随进程启动，不需要宿主机 cron
+	s.startAutoBackup()
 
 	root := http.NewServeMux()
 	root.Handle("/api/", s.protect(api))
@@ -68,20 +75,32 @@ func New(st *store.Store, web fs.FS, envCode string) http.Handler {
 func (s *Server) protect(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-store")
-		if r.Method != http.MethodGet && r.Method != http.MethodHead && !sameOrigin(r) {
+		isWrite := r.Method != http.MethodGet && r.Method != http.MethodHead
+		if isWrite && !sameOrigin(r) {
 			jsonErr(w, http.StatusForbidden, "跨站请求已拒绝")
 			return
 		}
 		// 每次请求都读当前口令，网页里改完立刻生效，不用重启容器。
-		if code := s.effectiveCode(); code != "" && r.URL.Path != "/api/ping" && r.URL.Path != "/api/config" {
+		// EventSource 无法带自定义请求头，事件流与 ping/config 一样跳过校验；
+		// 它只推版本号，不含任何业务数据。
+		if code := s.effectiveCode(); code != "" && !publicAPIPath(r.URL.Path) {
 			given := r.Header.Get("X-Access-Code")
 			if subtle.ConstantTimeCompare([]byte(given), []byte(code)) != 1 {
 				jsonErr(w, http.StatusUnauthorized, "需要访问口令")
 				return
 			}
 		}
-		next.ServeHTTP(w, r)
+		sw := &statusWriter{ResponseWriter: w}
+		next.ServeHTTP(sw, r)
+		// 写操作成功后广播一次；前端自己也会 refresh，回声会被前端去重
+		if isWrite && sw.status >= 200 && sw.status < 300 {
+			s.events.publish()
+		}
 	})
+}
+
+func publicAPIPath(path string) bool {
+	return path == "/api/ping" || path == "/api/config" || path == "/api/events"
 }
 
 // effectiveCode 环境变量优先，其次才是网页里保存到 access.json 的口令。
@@ -129,6 +148,7 @@ func (s *Server) bootstrap(w http.ResponseWriter, r *http.Request) {
 	jsonOK(w, map[string]any{
 		"version":   Version,
 		"today":     date,
+		"familyId":  s.familyID(),
 		"settings":  s.st.GetSettings(),
 		"meals":     s.st.Meals(), // 生效的用餐时段配置（含旧数据兜底默认三餐）
 		"cuisines":  store.Cuisines,

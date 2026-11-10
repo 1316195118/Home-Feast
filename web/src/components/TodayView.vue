@@ -104,7 +104,8 @@ function applyRoster() {
   actions.setDuties(r.chefId || state.plan.chefId || '', r.washId || state.plan.dishwasherId || '')
 }
 
-watch(() => state.plan.note, (v) => { noteText.value = v || '' })
+// 有未保存的草稿时，实时同步 / 其它设备改动触发的刷新都不覆盖输入框内容
+watch(() => state.plan.note, (v) => { if (!noteDirty.value) noteText.value = v || '' })
 watch(
   () => [state.today, state.dishes, state.settings.pantry, state.hiddenCuisines, state.plan.orders],
   refreshSuggestions,
@@ -259,7 +260,7 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
         <div class="note-input-wrap">
           <input
             v-model="noteText" class="input" maxlength="200"
-            placeholder="给今天留句话：想吃点清淡的 / 冰箱里有排骨…"
+            placeholder="给今天留句话，例如：想吃点清淡的、冰箱里有排骨…"
             @blur="saveNote" @keyup.enter="$event.target.blur()"
           />
           <Transition name="page"><span v-if="noteSaved" class="note-check">✓</span></Transition>
@@ -269,7 +270,7 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
           :disabled="!noteDirty || pending('note')" @click="saveNote"
         >
           <span v-if="pending('note')" class="btn-spinner" aria-hidden="true" />
-          {{ pending('note') ? '保存中' : (noteSaved ? '✓ 已保存' : '保存') }}
+          {{ pending('note') ? '保存中' : (noteSaved ? '✓ 已存好' : '保存留言') }}
         </button>
       </div>
     </div>
