@@ -329,6 +329,18 @@
    不能用 grid-auto-rows:1fr，否则下面那张通栏的「用餐时段」会把所有行一起撑高。 */
 /* 设置页所有卡片统一：同宽、同内边距、同最小高度，操作区一律贴底 */
 .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 16px; grid-auto-rows: auto; }
+/* 设置卡按使用动线排序：日常基础 → 偏好 → 安全 → 数据备份三连 → 关于。
+   用 CSS order 而非挪 DOM，键盘 Tab 顺序仍按模板，读屏连贯。 */
+.settings-grid .sc-name { order: 1; }
+.settings-grid .sc-meals { order: 2; }
+.settings-grid .sc-cuisine { order: 3; }
+.settings-grid .sc-roster { order: 4; }
+.settings-grid .sc-theme { order: 5; }
+.settings-grid .sc-access { order: 6; }
+.settings-grid .sc-backup { order: 7; }
+.settings-grid .sc-autobackup { order: 8; }
+.settings-grid .sc-storage { order: 9; }
+.settings-grid .sc-about { order: 10; }
 .setting-card { padding: 18px; display: flex; flex-direction: column; min-height: 218px; }
 
 /* ---------- 用餐时段编辑（放在弹窗里，卡片本身与其它设置卡一样大） ---------- */
@@ -365,6 +377,7 @@
 .pantry-add-row { display: flex; gap: 8px; margin-top: 4px; }
 .pantry-add-row .input { flex: 1; min-width: 0; }
 .shopping-amount { flex: none; font-size: 0.76rem; font-weight: 700; color: var(--brand-dark); white-space: nowrap; }
+.shopping-precise { margin: -4px 0 10px; font-size: 0.78rem; font-weight: 600; color: var(--green-dark, #4e7a5a); background: var(--green-soft, #eef6ef); border-radius: 8px; padding: 7px 11px; }
 
 /* ---------- 第二批：每周排班 / 智能推荐 ---------- */
 .roster-manage-btn { margin-top: auto; }
@@ -451,7 +464,16 @@
 .avoid-custom .input { flex: 1; min-width: 0; }
 
 /* ---------- 购物清单 ---------- */
-.panel-head-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.panel-head-actions { display: flex; gap: 6px; flex-wrap: nowrap; flex: none; }
+/* 今日菜单速览：首屏就能看到「今天点了什么」，点一下滚到完整菜单 */
+.today-peek {
+  display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+  margin-top: 12px; padding: 11px 14px; min-height: 46px;
+  background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--radius);
+}
+.today-peek-label { flex: none; font-weight: 800; font-size: 0.84rem; color: var(--brand-dark); }
+.today-peek-names { flex: 1; min-width: 0; font-size: 0.82rem; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.today-peek-go { flex: none; font-size: 0.78rem; font-weight: 700; color: var(--brand); }
 .shopping-list { display: flex; flex-direction: column; gap: 6px; max-height: 46vh; overflow-y: auto; margin-top: 12px; }
 .shopping-item {
   display: flex; align-items: center; gap: 9px; padding: 8px 10px;
@@ -774,6 +796,8 @@
   /* 今天页：横向滚动条代替换行，减少纵向占用 */
   .today-hero { padding: 18px 16px; }
   .hero-title { font-size: 1.28rem; }
+  /* 手机端这句和下方统计条 / 今日菜单速览重复，省掉一行给首屏 */
+  .hero-sub { display: none; }
   .hero-deco { font-size: 4.6rem; }
   .chef-grid, .wash-grid, .stat-strip {
     flex-wrap: nowrap; overflow-x: auto;
@@ -782,8 +806,14 @@
   }
   .chef-grid::-webkit-scrollbar, .wash-grid::-webkit-scrollbar, .stat-strip::-webkit-scrollbar { display: none; }
   .chef-choice, .wash-choice, .stat-item { flex: none; }
-  .duty-grid { grid-template-columns: 1fr; gap: 12px; margin-top: 14px; }
-  .duty-summary { font-size: 0.8rem; }
+  /* 分工两卡压成轻量行：去掉大块底色和上下 padding，成员按钮保持 44px 热区但更紧凑 */
+  .duty-grid { grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .duty-block { padding: 10px 10px 8px; background: rgba(255, 255, 255, 0.4); }
+  .duty-label { margin-bottom: 6px; font-size: 0.74rem; }
+  .chef-grid, .wash-grid { flex-wrap: nowrap; gap: 5px; overflow-x: auto; margin-right: -8px; padding-right: 8px; }
+  .chef-choice, .wash-choice { padding: 4px 8px 4px 4px; min-height: 44px; min-width: 44px; gap: 5px; }
+  .chef-choice .avatar-sm, .wash-choice .avatar-sm { width: 30px; height: 30px; font-size: 0.95rem; }
+  .duty-summary { font-size: 0.78rem; margin-top: 9px; }
   .note-row .input { max-width: none; width: 100%; }
   .panel { padding: 14px; }
   .suggest-grid { gap: 8px; }
@@ -881,6 +911,10 @@
   .suggest-name { font-size: 0.76rem; padding: 7px; }
   .tab { font-size: 0.66rem; }
   .hero-title { font-size: 1.18rem; }
+  /* 极窄屏分工卡只留头像，避免两列里名字挤成一团 */
+  .chef-choice .chef-name, .wash-choice .chef-name { display: none; }
+  .chef-choice, .wash-choice { padding: 4px; }
+  .duty-label { font-size: 0.7rem; }
   .stat-item { padding: 7px 10px; }
   .section-sub { font-size: 0.78rem; }
   .hero-sep { margin: 0 4px; }
@@ -904,10 +938,12 @@
   .menu-head-actions .btn { padding-left: 9px; padding-right: 9px; font-size: 0.78rem; }
   .pantry-grid { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; max-height: 42vh; }
   .pantry-art-icon { font-size: 1.6rem; }
-  .pk-cta { padding: 10px 12px; gap: 8px; }
-  .pk-cta-icon { font-size: 1.4rem; }
+  /* 骰子 CTA 收紧成一条：按钮与标题同行，不再独占整行把菜单挤出首屏 */
+  .pk-cta { padding: 9px 12px; gap: 9px; }
+  .pk-cta-icon { font-size: 1.3rem; }
   .pk-cta-text b { font-size: 0.86rem; }
-  .pk-cta-btn { width: 100%; margin-top: 4px; }
+  .pk-cta-hint { display: none; }
+  .pk-cta-btn { width: auto; margin-top: 0; min-height: 42px; padding-left: 14px; padding-right: 14px; }
   .roster-row { grid-template-columns: 46px minmax(0, 1fr) minmax(0, 1fr) 44px; gap: 5px; }
   .roster-select { font-size: 16px; padding: 5px 4px; min-height: 44px; }
   .roster-clear { min-height: 40px; min-width: 44px; }

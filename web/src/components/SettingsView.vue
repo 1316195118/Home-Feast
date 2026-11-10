@@ -262,7 +262,7 @@ async function saveRoster() {
     </div>
 
     <div class="settings-grid">
-      <div class="card setting-card">
+      <div class="card setting-card sc-name">
         <div class="setting-title">🏠 家的名字</div>
         <p class="setting-desc">显示在左上角，改成你们家习惯的叫法。</p>
         <div class="setting-row setting-row-inline">
@@ -274,7 +274,7 @@ async function saveRoster() {
         </div>
       </div>
 
-      <div class="card setting-card">
+      <div class="card setting-card sc-backup">
         <div class="setting-title">💾 数据备份</div>
         <p class="setting-desc">
           导出一个 zip，里面是四份 JSON 和你上传的照片。恢复时会覆盖当前数据，操作前会再确认一次。
@@ -289,7 +289,7 @@ async function saveRoster() {
         </div>
       </div>
 
-      <div class="card setting-card">
+      <div class="card setting-card sc-roster">
         <div class="setting-title">
           📅 每周掌勺排班
           <span class="tag setting-title-tag" :class="rosterEnabled ? 'tag-green' : ''">
@@ -307,7 +307,7 @@ async function saveRoster() {
         </button>
       </div>
 
-      <div class="card setting-card">
+      <div class="card setting-card sc-theme">
         <div class="setting-title">🌙 外观</div>
         <p class="setting-desc">
           深色主题只影响这台设备；选「跟随系统」会随手机 / 电脑的深浅模式自动切换，设置会记在本机。
@@ -321,7 +321,7 @@ async function saveRoster() {
         </div>
       </div>
 
-      <div class="card setting-card">
+      <div class="card setting-card sc-cuisine">
         <div class="setting-title">🍽️ 菜系显示</div>
         <p class="setting-desc">
           不想看到的菜系可以关掉，关掉后它在菜谱分类和「全部」里都不再出现；想看回来，随时打开即可。
@@ -333,7 +333,7 @@ async function saveRoster() {
         </button>
       </div>
 
-      <div class="card setting-card">
+      <div class="card setting-card sc-access">
         <div class="setting-title">
           🔒 访问口令
           <span class="tag setting-title-tag" :class="state.accessRequired ? 'tag-green' : ''">
@@ -364,7 +364,7 @@ async function saveRoster() {
         </template>
       </div>
 
-      <div class="card setting-card">
+      <div class="card setting-card sc-autobackup">
         <div class="setting-title">
           ⏰ 自动备份
           <span class="tag setting-title-tag" :class="autoBackup ? 'tag-green' : ''">
@@ -392,7 +392,7 @@ async function saveRoster() {
         </div>
       </div>
 
-      <div class="card setting-card">
+      <div class="card setting-card sc-storage">
         <div class="setting-title">📂 数据在哪</div>
         <p class="setting-desc">
           Docker 部署时 <code>/data</code> 映射到 NAS 目录，里面是纯文本文件，不依赖数据库：
@@ -415,7 +415,7 @@ async function saveRoster() {
         </p>
       </div>
 
-      <div class="card setting-card">
+      <div class="card setting-card sc-about">
         <div class="setting-title">🎨 关于与版权</div>
         <p class="setting-desc">
           界面里的菜品插画由 AI 绘制，属于本项目自生成素材；菜名与菜系是通用饮食常识，
@@ -430,7 +430,7 @@ async function saveRoster() {
         </div>
       </div>
 
-      <div class="card setting-card">
+      <div class="card setting-card sc-meals">
         <div class="setting-title">🕐 用餐时段</div>
         <p class="setting-desc">
           给每一餐起名字、定收起时间；过了时间，今天这一餐的菜会自动从今日菜单收起，历史记录仍保留。

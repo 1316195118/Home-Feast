@@ -81,8 +81,11 @@ try {
       open: !!document.querySelector('.shopping-item'),
       rows: document.querySelectorAll('.shopping-item').length,
       amounts: [...document.querySelectorAll('.shopping-amount')].map(x=>x.textContent.trim()).slice(0,8),
+      preciseTip: !!document.querySelector('.shopping-precise'),
+      preciseAmounts: [...document.querySelectorAll('.shopping-amount')].map(x=>x.textContent.trim()).filter(x=>/\d+\s*(g|克|ml|毫升|支|根|瓣|棵)/.test(x)).length,
     }))())`))
     console.log('购物清单 行数', s.rows, '| 用量', JSON.stringify(s.amounts))
+    console.log('HowToCook 精确用量提示', s.preciseTip, '| 带数值单位用量条数', s.preciseAmounts)
     await ev(`[...document.querySelectorAll('.setting-actions .btn')].find(b=>b.textContent.includes('完成'))?.click()`)
     await sleep(300)
 

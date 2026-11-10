@@ -454,6 +454,35 @@ const SPICY = new Set([
   '柠檬鸡爪', '擂辣椒皮蛋', '凉拌三丝',
 ])
 
+// HowToCook (Unlicense, 公共领域) 精确用量表：23 道与本地同名菜的配料用量，
+// 由 scripts/_cq/parse_howto_amounts.py 从其「计算」段解析。仅用于把「少许/适量」换成克/毫升，
+// 做法步骤仍用本项目自写模板；用户自定义配料永远优先。来源见 NOTICE.md。
+const HOWTO = {
+  "凉拌木耳": ["干木耳 20g", "蒜瓣 2-3 个", "小米辣 2 个", "盐 2 g", "糖 5-10g", "生抽 15ml", "醋 15ml", "香油 5ml", "芥末 约 2cm"],
+  "口水鸡": ["食用油 20ml", "鸡 半只500g", "辣椒粉 20g", "花椒 30 颗20g", "花生 10 颗30g", "小葱 2 颗50g", "姜 1 小块20g", "蒜 2 个 10g", "白糖 5g", "生抽 5ml", "醋 5ml", "味精 5g", "花椒粉 5g", "香菜 5g"],
+  "可乐鸡翅": ["鸡翅 10-12 只", "可乐 500ml", "白糖 10 克", "生抽 15 克", "老抽 3 克", "盐 2 克", "生姜 2 片", "料酒 20 毫升"],
+  "回锅肉": ["小葱 2 棵", "生姜 10-40g", "蒜苗 1 把", "料酒 5ml", "豆瓣酱 10ml", "味精 5g", "生抽 5ml"],
+  "地三鲜": ["茄子 200g", "土豆 150g", "尖椒 3-4 个", "淀粉 8g"],
+  "宫保鸡丁": ["手枪腿 1 支", "大葱 1 根", "熟花生 150g", "姜片 10g", "干辣椒 10g", "生抽酱油 10g", "白糖 2g", "盐 2g", "植物油 20g", "淀粉 15g", "料酒 15g", "老抽酱油 5g", "花椒 5g", "香醋 5g", "鸡精 2g", "芝麻油 10g", "豆瓣酱 10g", "莴笋 约 250g", "油泼辣子 5g"],
+  "小炒黄牛肉": ["牛里脊 400g", "芹菜 200g", "小米椒 30g", "野山椒 30g", "香菜 30g", "食用油 15ml", "酱油 6ml"],
+  "小米粥": ["小米 100 克", "水 2000 克"],
+  "扬州炒饭": ["冷饭 500g", "鸡蛋 2-3 个", "冷冻去头去皮基围虾 10-15 只", "午餐肉罐头 150g", "青豆 30g", "胡萝卜 30g", "玉米粒 30g", "葱 1 根", "油 30-40ml", "盐 12-15g"],
+  "水煮鱼": ["巴沙鱼 500g", "蔬菜 300g 至 500g", "红油豆瓣酱 40g", "豆豉 10g", "藤椒油 10ml", "菜籽油 25ml", "白胡椒粉 3g", "大蒜 2 瓣", "盐 5g", "糖 2g"],
+  "油焖大虾": ["虾 10 只", "花椒 5g", "葱 50g", "姜 20g", "黄酒 30g", "盐 3g", "冰糖 10g"],
+  "清蒸鲈鱼": ["食用油 10-15ml", "蒸鱼豉油 10-15ml", "料酒 10-15ml", "食用盐 5-10g"],
+  "玉米排骨汤": ["排骨 500-800g", "食用油 10 ml", "黑胡椒粉 4g", "料酒 10ml", "醋 10ml", "食用盐 10-15g", "开水 1000 ml"],
+  "皮蛋豆腐": ["皮蛋 2 个", "内酯豆腐 1 盒", "生抽 15 ml", "白砂糖 2.5g", "醋 15 ml", "香油 15 ml", "辣椒油 10 ml", "花生碎 10 g", "葱花 15 g", "香菜 1 株"],
+  "糖醋鲤鱼": ["鲤鱼 约 3 斤", "清水 50g", "番茄酱 40g", "白糖 20g", "白醋 10g", "淀粉 10g", "盐 30g", "大葱 30g约半颗", "姜 30g", "料酒 25g"],
+  "荔枝肉": ["鲜香菇 2 朵", "蟹味菇 30 g", "瘦肉 150 g", "凤梨 100 g", "鸡蛋 1 个", "食用油 500 ml", "白砂糖 5 g", "淀粉 100 g", "生抽 5 ml", "鸡精 5 g", "姜末 5 g", "芝麻 2 g", "番茄酱 20 g", "香醋 2 ml"],
+  "葱油拌面": ["小葱 100 g", "食用油 100 ml", "生抽 60 ml", "老抽 20 ml", "白糖 15 g", "干面条 80 g", "葱油酱汁 15 ml"],
+  "葱烧海参": ["泡发好的海参 4 个", "大葱葱白 1 根", "食用油 20-25ml", "蚝油 20g", "生抽 5g", "白糖 2g", "淀粉 2g"],
+  "蒜蓉西兰花": ["西兰花 200 g", "大蒜 3-4 瓣", "生抽 10 ml", "蚝油 5 ml", "白糖 2 g"],
+  "蚂蚁上树": ["红薯粉丝 80g", "猪肉末 150g", "郫县豆瓣酱 15g", "生抽 10ml", "老抽 5ml", "食用油 10ml", "蒜末 10g", "姜末 5g", "清水 300ml"],
+  "蚝油生菜": ["生菜 1 棵 200 g ± 50", "蚝油 6-8 ml", "大蒜 4-5 瓣", "生抽 6 ml", "盐 0.5 g", "白糖 1 g", "食用油 5-8 ml"],
+  "醉排骨": ["排骨 200 g", "白砂糖 10 g", "食用油 500 ml", "鱼露 5 ml", "芝麻 5 g", "番茄酱 5 g", "香醋 5 ml", "蒜头 2 粒", "葱 1 根", "地瓜粉 30 g", "鸡蛋黄 1 个"],
+  "香菇滑鸡": ["大鸡腿 2 个", "干香菇 5 粒", "姜 2 片", "葱 2 颗", "蒜 2 瓣", "温水 150ml", "料酒 15ml", "生抽 30ml", "盐 1.5g", "老抽 15ml", "糖 15ml", "香油 5ml"],
+}
+
 /**
  * 取一道菜的做法。优先用用户自己编辑并保存的配料/步骤，
  * 否则按菜名查内置参考做法。返回 { ingredients, steps, custom }。
@@ -462,15 +491,21 @@ export function getRecipe(dish) {
   const customIngredients = Array.isArray(dish?.ingredients) ? dish.ingredients.filter(Boolean) : []
   const customSteps = Array.isArray(dish?.steps) ? dish.steps.filter(Boolean) : []
   if (customIngredients.length || customSteps.length) {
-    return { ingredients: customIngredients, steps: customSteps, custom: true }
+    return { ingredients: customIngredients, steps: customSteps, custom: true, precise: false }
   }
   const entry = INDEX[dish?.name]
-  if (!entry) return { ingredients: [], steps: [], custom: false }
+  if (!entry) return { ingredients: [], steps: [], custom: false, precise: false }
   const [key, main, extra] = entry
   const build = T[key] || T.kc
   const auto = key === 'lb' || key === 'qc' ? { spicy: SPICY.has(dish.name) } : {}
   const result = build(main, { ...auto, ...(extra || {}) })
-  return { ...result, ingredients: dedupe(result.ingredients), custom: false }
+  // HowToCook 精确用量：命中同名菜时整表替换模板配料（步骤仍用本项目自写模板）。
+  // 购物清单里「盐 适量 / 生抽 1 勺」因此变成「盐 2 g / 生抽 15ml」，买菜重量有依据。
+  const preciseList = HOWTO[dish?.name]
+  if (preciseList && preciseList.length) {
+    return { ...result, ingredients: preciseList.slice(), custom: false, precise: true }
+  }
+  return { ...result, ingredients: dedupe(result.ingredients), custom: false, precise: false }
 }
 
 export function hasRecipe(dish) {

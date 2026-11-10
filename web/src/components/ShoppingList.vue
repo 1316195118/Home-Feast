@@ -13,9 +13,13 @@ useModalBehavior(() => emit('close'), root)
 // 用户在编辑器里自己填的配料优先（getRecipe 已处理），这里把它展开后再聚合。
 const dishesWithIngredients = computed(() => state.dishes.map((d) => {
   const r = getRecipe(d)
-  return { ...d, ingredients: r.ingredients.length ? r.ingredients : (d.ingredients || []) }
+  return { ...d, ingredients: r.ingredients.length ? r.ingredients : (d.ingredients || []), precise: !!r.precise }
 }))
 const list = computed(() => shoppingList(state.plan.orders || [], dishesWithIngredients.value))
+const preciseCount = computed(() => {
+  const byId = new Map(dishesWithIngredients.value.map((d) => [d.id, d]))
+  return (state.plan.orders || []).filter((o) => byId.get(o.dishId)?.precise).length
+})
 const groups = computed(() => shoppingGroups(list.value))
 const STORE_KEY = `fm.shopping.${state.today}`
 
@@ -219,6 +223,7 @@ async function saveToAlbum() {
       <p class="setting-desc">
         按今天已点菜品的配料自动归并，同名只列一条；勾选状态记在这台设备上（{{ state.today }}）。
       </p>
+      <p v-if="preciseCount" class="shopping-precise">📏 {{ preciseCount }} 道菜用量已精确到克/毫升（公共菜谱数据），「少许」不再是猜的。</p>
       <div v-if="list.length" class="shopping-list">
         <div v-for="g in groups" :key="g.key" class="shopping-group">
           <template v-if="g.items.length">

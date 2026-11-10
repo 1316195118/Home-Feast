@@ -159,6 +159,13 @@ function quickOrder(dish) {
   actions.order(dish.id, '', activeMeal.value)
 }
 
+// 首屏速览：有菜时给一条「今天已点 N 道 · 前几道菜名」，点一下滚到今日菜单，
+// 解决手机端首屏被分工流程占满、看不到今天到底吃什么的问题。
+const orderPreview = computed(() => orders.value.slice(0, 3).map((o) => o.dishName))
+function scrollToMenu() {
+  document.getElementById('today-menu-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
 const doneCount = computed(() => orders.value.filter((o) => o.done).length)
 const peopleCount = computed(() => new Set(orders.value.map((o) => o.userId)).size)
 const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
@@ -213,10 +220,10 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
       <div class="pk-cta">
         <span class="pk-cta-icon">🎲</span>
         <div class="pk-cta-text">
-          <b>今天谁下厨？定不下来就摇一摇</b>
-          <span class="tiny muted">全员掷骰，点大的掌勺、点小的洗碗，一次定好两个分工</span>
+          <b>今天谁下厨？摇一摇定分工</b>
+          <span class="tiny muted pk-cta-hint">全员掷骰，点大的掌勺、点小的洗碗，一次定好两个分工</span>
         </div>
-        <button class="btn btn-primary pk-cta-btn" @click="openPK">🎲 摇骰子决定</button>
+        <button class="btn btn-primary pk-cta-btn" @click="openPK">摇骰子</button>
       </div>
 
       <div class="duty-grid">
@@ -281,8 +288,14 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
       <div class="stat-item"><span class="stat-num value-pop" :key="`minutes-${totalMinutes}`">{{ totalMinutes }}</span> 分钟预计耗时</div>
     </div>
 
+    <button v-if="orders.length" type="button" class="today-peek" @click="scrollToMenu">
+      <span class="today-peek-label">🍽️ 今天已点 {{ orders.length }} 道</span>
+      <span class="today-peek-names">{{ orderPreview.join('、') }}{{ orders.length > 3 ? '…' : '' }}</span>
+      <span class="today-peek-go">查看菜单 ›</span>
+    </button>
+
     <div class="today-cols">
-      <div class="panel">
+      <div id="today-menu-panel" class="panel">
         <div class="panel-head">
           <div>
             <div class="panel-title">🍽️ 今日菜单</div>
