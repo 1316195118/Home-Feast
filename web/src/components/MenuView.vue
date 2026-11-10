@@ -74,7 +74,7 @@ function editFromDetail(dish) {
 
 <template>
   <section>
-    <div class="section-head">
+    <div class="section-head menu-head">
       <div>
         <h2 class="section-title">📖 家里的菜谱</h2>
         <div class="section-sub">内置 {{ state.dishes.length }} 道菜，八大菜系和日常饭菜都有；看不顺眼就自己改</div>
@@ -106,9 +106,11 @@ function editFromDetail(dish) {
       <span class="tiny muted">共 {{ filtered.length }} 道</span>
     </div>
 
-    <TransitionGroup v-if="filtered.length" name="grid" tag="div" class="dish-grid">
+    <!-- 不用 TransitionGroup：切换菜系时整片卡片进出场 + move 会让画面明显晃一下。
+         增删菜品是低频操作，稳定的静态网格比 0.3s 动画更重要。 -->
+    <div v-if="filtered.length" class="dish-grid">
       <DishCard v-for="d in filtered" :key="d.id" :dish="d" @edit="openEdit" @open="openDetail" />
-    </TransitionGroup>
+    </div>
     <Transition name="pop" mode="out-in">
       <div v-if="!filtered.length" key="empty" class="empty">
         <span class="empty-icon">🥕</span>

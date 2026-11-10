@@ -2,6 +2,8 @@
 *, *::before, *::after { box-sizing: border-box; }
 
 html, body, #app { min-height: 100%; }
+/* 常驻滚动条槽位：切菜系/切页签时页面高度变化，滚动条出现或消失会让内容横向跳 10px */
+html { scrollbar-gutter: stable; }
 
 body {
   margin: 0;

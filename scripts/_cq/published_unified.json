@@ -1,0 +1,67 @@
+{
+  "1": {
+    "name": "宫保鸡丁",
+    "dishId": "d7bcdd545f95ec34a",
+    "new": "/uploads/img82b383c2e0c4bf89acb4eced.webp"
+  },
+  "2": {
+    "name": "水煮鱼",
+    "dishId": "d60d0857c76aed782",
+    "new": "/uploads/img513f0ecdc9454e92d0a98a37.webp"
+  },
+  "3": {
+    "name": "回锅肉",
+    "dishId": "d5bb5729ce3f27b40",
+    "new": "/uploads/imgaaafe62c1e0ab072dad10268.webp"
+  },
+  "4": {
+    "name": "鱼香肉丝",
+    "dishId": "da6a1c8f650212b24",
+    "new": "/uploads/imgd31d215b3aeb94e6495b356e.webp"
+  },
+  "5": {
+    "name": "夫妻肺片",
+    "dishId": "d45b837c52329f338",
+    "new": "/uploads/imge357502a0570f666b19da593.webp"
+  },
+  "6": {
+    "name": "辣子鸡",
+    "dishId": "d658a1ed2604a2369",
+    "new": "/uploads/img1e56158a82e30e151beff139.webp"
+  },
+  "7": {
+    "name": "蒜泥白肉",
+    "dishId": "dafa3d3be2dec98c5",
+    "new": "/uploads/imgaaf3460c9180a35c36c2a430.webp"
+  },
+  "8": {
+    "name": "开水白菜",
+    "dishId": "d13d3ffb3d0de5446",
+    "new": "/uploads/imgf092909f1834e477a23c720c.webp"
+  },
+  "9": {
+    "name": "白切鸡",
+    "dishId": "d824ba25c21037751",
+    "new": "/uploads/img9c29ce8960f9fe7cf5ad739c.webp"
+  },
+  "10": {
+    "name": "虾饺",
+    "dishId": "d0512e2b06ed04825",
+    "new": "/uploads/img28f7eb27ad4c8976f5bc8638.webp"
+  },
+  "11": {
+    "name": "深井烧鹅",
+    "dishId": "d78461188978eabe7",
+    "new": "/uploads/img1acae7f119fb0fb8d630c523.webp"
+  },
+  "12": {
+    "name": "清蒸鲈鱼",
+    "dishId": "df78bf782a8808308",
+    "new": "/uploads/img7b95ecd9c91853244b35cc28.webp"
+  },
+  "13": {
+    "name": "蚝油生菜",
+    "dishId": "d67fb0ef2376fff64",
+    "new": "/uploads/imgba225a26938a884e37087316.webp"
+  }
+}

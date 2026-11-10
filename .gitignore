@@ -25,6 +25,10 @@
 /scripts/_cq/out/
 /scripts/_cq/out2/
 /scripts/_cq/base/
+/scripts/_cq/sample/
+/scripts/_cq/unified/
+/scripts/_cq/unified_raw/
+/scripts/_cq/out_unified/
 /scripts/_cq/__pycache__/
 *.pyc
 /scripts/_ui/shots/

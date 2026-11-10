@@ -101,7 +101,7 @@
   font-size: 0.78rem; font-weight: 800; color: var(--brand-dark);
   margin-bottom: 8px;
 }
-.wash-random { margin-left: 4px; padding: 6px 13px; font-size: 0.82rem; font-weight: 800; min-height: 34px; border-radius: 999px; }
+.wash-random { margin-left: 4px; padding: 8px 14px; font-size: 0.82rem; font-weight: 800; min-height: 40px; border-radius: 999px; }
 .wash-random:hover { background: var(--green-soft); }
 
 .chef-grid, .wash-grid { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -211,10 +211,11 @@
   padding: 4px 2px 12px;
   scrollbar-width: thin;
   -webkit-overflow-scrolling: touch;
-  scroll-snap-type: x proximity;
+  /* 不做 scroll-snap：点击分类时吸附会造成第二次横向滚动，看起来像画面晃一下 */
+  scroll-snap-type: none;
 }
 .cuisine-strip::-webkit-scrollbar { height: 5px; }
-.cuisine-chip { flex: none; scroll-snap-align: start; }
+.cuisine-chip { flex: none; }
 .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 10px 0 18px; }
 .search-box { position: relative; flex: 1; min-width: 200px; max-width: 380px; }
 .search-box .input { padding-left: 34px; }
@@ -222,7 +223,10 @@
 
 .dish-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(212px, 1fr)); gap: 16px; }
 .dish-card { overflow: hidden; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease), border-color 0.2s var(--ease); }
-.dish-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); border-color: var(--line-strong); }
+/* 触屏没有真 hover，避免点按后卡片「粘」在抬起状态 */
+@media (hover: hover) {
+  .dish-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); border-color: var(--line-strong); }
+}
 .dish-photo { position: relative; width: 100%; aspect-ratio: 4 / 3; overflow: hidden; background: var(--paper-deep); }
 /* 菜系封面与菜品写实图现在都是 4:3；contain 兜底其它比例的图，保证整张看全不被裁 */
 .dish-photo img { width: 100%; height: 100%; object-fit: contain; display: block; transition: transform 0.35s var(--ease); }
@@ -686,6 +690,14 @@
   .footer { display: none; }
   .section-head { margin: 18px 0 12px; }
   .section-title { font-size: 1.05rem; }
+
+  /* 菜谱页：标题和「＋ 添加菜品」同一行，不再让按钮独占一行挤掉首屏 */
+  .section-head.menu-head { flex-wrap: nowrap; align-items: center; gap: 10px; }
+  .section-head.menu-head > div:first-child { flex: 1; min-width: 0; }
+  .section-head.menu-head .section-sub { font-size: 0.72rem; line-height: 1.45; }
+  .section-head.menu-head .btn { flex: none; padding: 8px 12px; min-height: 38px; font-size: 0.8rem; }
+  /* 手机端 toast 收紧成单行小胶囊，不遮住大片内容 */
+  .toast { font-size: 0.82rem; padding: 9px 14px; }
 
   /* 今天页：横向滚动条代替换行，减少纵向占用 */
   .today-hero { padding: 18px 16px; }

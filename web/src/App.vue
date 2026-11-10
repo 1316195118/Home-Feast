@@ -433,7 +433,7 @@ onUnmounted(() => {
         <span class="toast-icon" aria-hidden="true">{{ {
           success: '✓', error: '!', warn: '!', info: '·',
         }[state.toast.type] || '·' }}</span>
-        <span>{{ state.toast.text }}</span>
+        <span class="toast-text">{{ state.toast.text }}</span>
       </div>
     </Transition>
 
