@@ -132,6 +132,29 @@ export function shoppingKind(name) {
 
 // 购物清单：把今天已点菜品的配料按「第一段食材名」聚合，同名合并并记下来源菜。
 // 纯前端计算，不新增后端字段；「盐 少许」「盐 适量」会归成一条「盐」。
+// 用量文本形如「鸡腿肉 200g」「番茄 2 个」「盐 少许」，拆成食材名 + 用量。
+// 同名食材合并时：能解析成同一单位的数值就累加出总重量/总个数，否则把原文并列。
+const AMOUNT_UNITS = 'g|克|kg|千克|ml|毫升|个|只|根|片|块|勺|瓣|段|把|斤|两|罐|支|茶匙|汤匙|小块'
+function parseAmount(raw) {
+  const s = String(raw || '').replace(/\s+/g, '')
+  if (!s) return null
+  const m = s.match(new RegExp(`^([0-9.]+)(${AMOUNT_UNITS})$`))
+  return m ? { n: Number(m[1]), unit: m[2] } : null
+}
+function formatAmounts(list) {
+  const uniq = [...new Set((list || []).map((x) => String(x).trim()).filter(Boolean))]
+  if (!uniq.length) return ''
+  // 只有一个来源就照抄原用量（「200g」「2 个」「少许」），不加多余的「约」
+  if (uniq.length === 1) return uniq[0]
+  const parsed = uniq.map(parseAmount)
+  if (parsed.every(Boolean) && new Set(parsed.map((p) => p.unit)).size === 1) {
+    const sum = parsed.reduce((s, p) => s + p.n, 0)
+    const n = Number.isInteger(sum) ? sum : Number(sum.toFixed(1))
+    return `合计 ${n}${parsed[0].unit}`
+  }
+  return uniq.slice(0, 2).join('、') + (uniq.length > 2 ? '…' : '')
+}
+
 export function shoppingList(orders, dishes) {
   const map = new Map()
   const byId = new Map((dishes || []).map((d) => [d.id, d]))
@@ -141,14 +164,17 @@ export function shoppingList(orders, dishes) {
     for (const raw of d.ingredients || []) {
       const text = String(raw).trim()
       if (!text) continue
-      const key = text.split(/\s+/)[0].replace(/[0-9０-９]/g, '').trim() || text
-      if (!map.has(key)) map.set(key, { text: key, kind: shoppingKind(key), count: 0, from: [] })
+      const bits = text.split(/\s+/)
+      const key = bits[0].replace(/[0-9０-９]/g, '').trim() || text
+      if (!map.has(key)) map.set(key, { text: key, kind: shoppingKind(key), count: 0, from: [], amounts: [] })
       const item = map.get(key)
       item.count++
+      const amount = bits.slice(1).join(' ').trim()
+      if (amount && !item.amounts.includes(amount)) item.amounts.push(amount)
       if (!item.from.includes(d.name)) item.from.push(d.name)
     }
   }
-  return [...map.values()].sort((a, b) =>
+  return [...map.values()].map((x) => ({ ...x, amount: formatAmounts(x.amounts) })).sort((a, b) =>
     a.kind === b.kind ? a.text.localeCompare(b.text, 'zh') : (a.kind === '食材' ? -1 : 1))
 }
 
@@ -226,11 +252,38 @@ export function isMealExpired(meal, now = new Date(), meals) {
 
 // ---------- 第二批：每周排班 / 智能推荐 ----------
 export const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+// 冰箱食材预设：每项都有一张自绘「效果图」（大 emoji + 渐变底色），
+// 风格与站内自绘素材一致，不引入第三方图片；自定义食材由 pantryVisual 兜底配色。
 export const pantryPresets = [
-  '鸡蛋', '番茄', '土豆', '青椒', '黄瓜', '豆腐', '猪肉', '鸡胸肉',
-  '虾', '白菜', '洋葱', '胡萝卜', '香菇', '面条', '米饭', '葱',
-  '蒜', '菠菜', '茄子', '西兰花',
+  { name: '鸡蛋', icon: '🥚', tint: '#f6e2bb' },
+  { name: '番茄', icon: '🍅', tint: '#f7d3c8' },
+  { name: '土豆', icon: '🥔', tint: '#eee0c4' },
+  { name: '青椒', icon: '🫑', tint: '#d9e9ce' },
+  { name: '黄瓜', icon: '🥒', tint: '#d8ead2' },
+  { name: '豆腐', icon: '🧈', tint: '#f2ecdc' },
+  { name: '猪肉', icon: '🥩', tint: '#f3d2cc' },
+  { name: '鸡胸肉', icon: '🍗', tint: '#f4dec6' },
+  { name: '虾', icon: '🦐', tint: '#f8d8c4' },
+  { name: '白菜', icon: '🥬', tint: '#dcecd3' },
+  { name: '洋葱', icon: '🧅', tint: '#eee0ea' },
+  { name: '胡萝卜', icon: '🥕', tint: '#f9ddc1' },
+  { name: '香菇', icon: '🍄', tint: '#e7dccb' },
+  { name: '面条', icon: '🍜', tint: '#f3e4c8' },
+  { name: '米饭', icon: '🍚', tint: '#eef0e6' },
+  { name: '葱', icon: '🌿', tint: '#dcebd2' },
+  { name: '蒜', icon: '🧄', tint: '#eeeae2' },
+  { name: '菠菜', icon: '🥬', tint: '#d6e9c8' },
+  { name: '茄子', icon: '🍆', tint: '#e5d9ec' },
+  { name: '西兰花', icon: '🥦', tint: '#d8e9cd' },
 ]
+const PANTRY_TINTS = ['#f3e2c9', '#dfe9d2', '#f5d9d0', '#e5e0ef', '#f7e8c6', '#d9e7e6']
+export function pantryVisual(name) {
+  const hit = pantryPresets.find((p) => p.name === name)
+  if (hit) return hit
+  let h = 0
+  for (const ch of String(name || '')) h = (h * 31 + ch.codePointAt(0)) >>> 0
+  return { name, icon: '🥗', tint: PANTRY_TINTS[h % PANTRY_TINTS.length] }
+}
 
 // 取某天的排班；date 是 "YYYY-MM-DD"，用中午构造避免本地时区把日期挪到前一天。
 export function rosterForDate(roster, date) {

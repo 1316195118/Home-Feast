@@ -102,15 +102,14 @@ async function run(width, height, tag, mobile) {
     hash: location.hash,
     cards: document.querySelectorAll('.setting-card').length,
     titles: [...document.querySelectorAll('.setting-title')].map(x=>x.textContent.replace(/\\s+/g,' ').trim()).slice(0,12),
-    rosterRows: document.querySelectorAll('.roster-grid .roster-row:not(.roster-head)').length,
-    selects: document.querySelectorAll('.roster-select').length,
-    presets: document.querySelectorAll('.pantry-presets .chip').length,
+    rosterBtn: [...document.querySelectorAll('.setting-card .btn')].some(b=>b.textContent.includes('管理每周排班')),
+    pantryInSettings: [...document.querySelectorAll('.setting-card')].some(c=>c.textContent.includes('冰箱里有什么')),
     saveBtns: [...document.querySelectorAll('.setting-card .btn-primary')].map(b=>b.textContent.trim()),
     overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
     smallBtns: [...document.querySelectorAll('.btn,.chip,.tab')].filter(e=>{const r=e.getBoundingClientRect();return r.width>0&&(r.width<40||r.height<36)}).length,
   }))())`))
   console.log('设置页 hash', setInfo.hash, '| 卡片数', setInfo.cards, '| 标题', JSON.stringify(setInfo.titles))
-  console.log('设置页 排班行数', setInfo.rosterRows, '| 下拉', setInfo.selects, '| 食材标签', setInfo.presets, '| 保存按钮', JSON.stringify(setInfo.saveBtns))
+  console.log('设置页 排班弹窗入口', setInfo.rosterBtn, '| 食材卡已移出设置页', !setInfo.pantryInSettings, '| 保存按钮', JSON.stringify(setInfo.saveBtns))
   console.log('  横向溢出', setInfo.overflow, '| 过小控件', setInfo.smallBtns, '| JS 异常', errors.length)
   ws.close(); proc.kill()
 }

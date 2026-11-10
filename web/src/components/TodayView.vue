@@ -208,6 +208,16 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
         <button v-if="rosterDiff" class="btn btn-primary btn-sm" :disabled="pending('duty')" @click="applyRoster">一键套用</button>
       </div>
 
+      <!-- 骰子 PK 独立成一条醒目 CTA：以前挤在「谁洗碗」标题里，很容易被当成标题的一部分 -->
+      <div class="pk-cta">
+        <span class="pk-cta-icon">🎲</span>
+        <div class="pk-cta-text">
+          <b>今天谁下厨？定不下来就摇一摇</b>
+          <span class="tiny muted">全员掷骰，点大的掌勺、点小的洗碗，一次定好两个分工</span>
+        </div>
+        <button class="btn btn-primary pk-cta-btn" @click="openPK">🎲 摇骰子决定</button>
+      </div>
+
       <div class="duty-grid">
         <div class="duty-block">
           <div class="duty-label">👨‍🍳 谁掌勺</div>
@@ -224,12 +234,7 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
         </div>
 
         <div class="duty-block">
-          <div class="duty-label">
-            🧽 谁洗碗
-            <button class="btn btn-sm btn-soft wash-random" @click="openPK" title="骰子 PK：点大的掌勺，点小的洗碗">
-              🎲 摇骰子
-            </button>
-          </div>
+          <div class="duty-label">🧽 谁洗碗</div>
           <div class="wash-grid">
             <button
               v-for="m in state.members" :key="m.id"

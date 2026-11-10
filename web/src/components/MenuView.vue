@@ -3,9 +3,10 @@ import { inject, ref, computed, watch } from 'vue'
 import DishCard from './DishCard.vue'
 import DishEditor from './DishEditor.vue'
 import DishDetail from './DishDetail.vue'
-import { isCuisineHidden } from '../utils'
+import { isCuisineHidden, pantryPresets, pantryVisual } from '../utils'
+import { useModalBehavior } from '../modal'
 
-const { state } = inject('app')
+const { state, actions, pending } = inject('app')
 const activeCuisine = ref('all')
 const keyword = ref('')
 const onlyFavorite = ref(false)
@@ -70,6 +71,43 @@ function editFromDetail(dish) {
   detailId.value = null
   openEdit(dish)
 }
+
+// ---------- 冰箱食材（入口放在菜谱标题后，和菜谱一样用带效果图的卡片挑选）----------
+const pantryOpen = ref(false)
+const pantryRoot = ref(null)
+const pantryDraft = ref(new Set(state.settings.pantry || []))
+const pantryCustom = ref('')
+useModalBehavior(() => { pantryOpen.value = false }, pantryRoot, pantryOpen)
+
+const pantryCards = computed(() => {
+  const cards = pantryPresets.map((p) => ({ ...p }))
+  for (const n of pantryDraft.value) {
+    if (!cards.some((c) => c.name === n)) cards.push(pantryVisual(n))
+  }
+  return cards
+})
+function openPantry() {
+  pantryDraft.value = new Set(state.settings.pantry || [])
+  pantryCustom.value = ''
+  pantryOpen.value = true
+}
+function togglePantry(name) {
+  const next = new Set(pantryDraft.value)
+  if (next.has(name)) next.delete(name)
+  else next.add(name)
+  pantryDraft.value = next
+}
+function addCustomPantry() {
+  const words = pantryCustom.value.split(/[、,，\s]+/).map((s) => s.trim()).filter(Boolean)
+  const next = new Set(pantryDraft.value)
+  for (const w of words) next.add(w.slice(0, 12))
+  pantryDraft.value = next
+  pantryCustom.value = ''
+}
+async function savePantry() {
+  const ok = await actions.saveSettings({ pantry: [...pantryDraft.value] })
+  if (ok) pantryOpen.value = false
+}
 </script>
 
 <template>
@@ -79,7 +117,12 @@ function editFromDetail(dish) {
         <h2 class="section-title">📖 家里的菜谱</h2>
         <div class="section-sub">内置 {{ state.dishes.length }} 道菜，八大菜系和日常饭菜都有；看不顺眼就自己改</div>
       </div>
-      <button class="btn btn-primary" @click="openAdd">＋ 添加菜品</button>
+      <div class="menu-head-actions">
+        <button class="btn btn-soft btn-sm" @click="openPantry">
+          🧊 冰箱食材 <span class="tiny">{{ (state.settings.pantry || []).length }}</span>
+        </button>
+        <button class="btn btn-primary" @click="openAdd">＋ 添加菜品</button>
+      </div>
     </div>
 
     <div class="cuisine-strip">
@@ -126,6 +169,46 @@ function editFromDetail(dish) {
     </Transition>
     <Transition name="modal">
       <DishEditor v-if="editorOpen" :dish="editorDish" @close="editorOpen = false" />
+    </Transition>
+
+    <Transition name="modal">
+      <div v-if="pantryOpen" class="modal-backdrop" @click.self="pantryOpen = false">
+        <div ref="pantryRoot" class="modal modal-wide pantry-modal" role="dialog" aria-modal="true" aria-label="冰箱食材">
+          <div class="modal-head">
+            <h2>🧊 冰箱里有什么</h2>
+            <button class="icon-btn" aria-label="关闭" @click="pantryOpen = false">✕</button>
+          </div>
+          <p class="setting-desc">
+            点选家里现有的食材，今日页「今天吃啥」会优先推荐用得上它们的菜。每项都是本项目自绘的效果图，不用第三方图片。
+          </p>
+          <div class="pantry-grid">
+            <button
+              v-for="p in pantryCards" :key="p.name" type="button"
+              class="pantry-card" :class="{ active: pantryDraft.has(p.name) }"
+              :aria-pressed="pantryDraft.has(p.name)" @click="togglePantry(p.name)"
+            >
+              <span class="pantry-art" :style="{ background: p.tint }">
+                <span class="pantry-art-icon">{{ p.icon }}</span>
+              </span>
+              <span class="pantry-card-name">{{ p.name }}</span>
+              <span v-if="pantryDraft.has(p.name)" class="pantry-check">✓</span>
+            </button>
+          </div>
+          <div class="pantry-add-row">
+            <input
+              v-model="pantryCustom" class="input" maxlength="60"
+              placeholder="还能加：排骨、玉米…（顿号或逗号分隔）"
+              aria-label="自定义食材" @keyup.enter="addCustomPantry"
+            />
+            <button class="btn btn-soft btn-sm" @click="addCustomPantry">添加</button>
+          </div>
+          <div class="modal-foot">
+            <span class="tiny muted">已选 {{ pantryDraft.size }} 项</span>
+            <button class="btn" @click="pantryOpen = false">取消</button>
+            <button class="btn btn-primary" :disabled="pending('settings')" @click="savePantry">保存</button>
+          </div>
+        </div>
+      </div>
     </Transition>
   </section>
 </template>

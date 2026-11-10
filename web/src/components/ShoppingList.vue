@@ -54,7 +54,7 @@ function clearChecked() {
 async function copyList() {
   const lines = groups.value.flatMap((g) => g.items.length
     ? [`【${g.key}】`, ...g.items.map(
-        (x) => `${checked.value.has(x.text) ? '☑' : '☐'} ${x.text}${x.count > 1 ? ` ×${x.count}` : ''}`,
+        (x) => `${checked.value.has(x.text) ? '☑' : '☐'} ${x.text}${x.amount ? ` · ${x.amount}` : ''}${x.count > 1 ? ` ×${x.count}` : ''}`,
       )]
     : [])
   const text = `家里吃点啥 · ${state.today} 购物清单\n${lines.join('\n')}`
@@ -159,7 +159,13 @@ function buildImage() {
       }
       ctx.fillStyle = done ? '#948576' : '#3c3229'
       ctx.font = `19px ${FONT}`
+      const nameW = ctx.measureText(item.text).width
       ctx.fillText(item.text, PAD + 46, y + 26)
+      if (item.amount) {
+        ctx.fillStyle = '#948576'
+        ctx.font = `15px ${FONT}`
+        ctx.fillText(`· ${item.amount}`, PAD + 46 + nameW + 10, y + 26)
+      }
       if (item.count > 1) {
         ctx.fillStyle = '#c05a3c'
         ctx.font = `bold 16px ${FONT}`
@@ -230,6 +236,7 @@ async function saveToAlbum() {
             >
               <input type="checkbox" :checked="checked.has(item.text)" @change="toggle(item.text)" />
               <span class="shopping-name">{{ item.text }}</span>
+              <span v-if="item.amount" class="shopping-amount">{{ item.amount }}</span>
               <span v-if="item.count > 1" class="shopping-count">×{{ item.count }}</span>
               <span class="shopping-from tiny muted">{{ item.from.join('、') }}</span>
             </label>
