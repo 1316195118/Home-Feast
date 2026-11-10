@@ -209,12 +209,13 @@
 .cuisine-strip {
   display: flex; gap: 8px; overflow-x: auto;
   padding: 4px 2px 12px;
-  scrollbar-width: thin;
+  /* 横向滚动条不占位：它出现/消失会改变条子高度，连带把下方网格顶下去约 10px */
+  scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
   /* 不做 scroll-snap：点击分类时吸附会造成第二次横向滚动，看起来像画面晃一下 */
   scroll-snap-type: none;
 }
-.cuisine-strip::-webkit-scrollbar { height: 5px; }
+.cuisine-strip::-webkit-scrollbar { display: none; }
 .cuisine-chip { flex: none; }
 .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 10px 0 18px; }
 .search-box { position: relative; flex: 1; min-width: 200px; max-width: 380px; }
