@@ -228,17 +228,8 @@ onUnmounted(() => {
         </div>
       </div>
       <p class="setting-desc">
-        每人点自己的「摇一摇」，<strong>都摇完自动定分工</strong>：点大的掌勺，点小的洗碗。点数会存下来，换人、刷新都不用重摇。
+        每人摇一次，<strong>点大的掌勺、点小的洗碗</strong>；结果自动保存，刷新不用重摇。
       </p>
-
-      <!-- 只展示当前摇骰子的人；要换人请用右上角「我是」切换身份 -->
-      <div class="pk-who">
-        <span class="pk-who-label">正在摇</span>
-        <span class="pk-who-current">
-          <span class="avatar avatar-xs" :style="{ background: selfMember?.color }">{{ selfMember?.avatar }}</span>
-          {{ selfName }}
-        </span>
-      </div>
 
       <div class="pk-list">
         <div
@@ -275,7 +266,7 @@ onUnmounted(() => {
           <span v-else-if="decided && r.id === washer.id" class="pk-tag wash-tag">🧽 洗碗</span>
           <span v-else-if="decided" class="pk-tag safe-tag">安全过关</span>
           <span v-else-if="r.value != null" class="pk-tag safe-tag">✓ 已摇 {{ r.value }} 点</span>
-          <span v-else class="pk-hint-other">点右上角「我是」切到 {{ r.name }}</span>
+          <span v-else class="pk-tag safe-tag">待摇</span>
         </div>
       </div>
 
@@ -305,10 +296,10 @@ onUnmounted(() => {
           🎲 点数打平，自动加摇…
         </div>
         <div v-else-if="needSelf.length" key="self" class="pk-wait is-self">
-          轮到 <strong>{{ selfName }}</strong> 摇了，点你的「🎲 摇一摇」
+          轮到 <strong>{{ selfName }}</strong>，点「🎲 摇一摇」
         </div>
         <div v-else-if="needOthers.length" key="other" class="pk-wait is-other">
-          还有 <strong>{{ needOthers.length }}</strong> 位没摇（{{ needOtherNames }}），点右上角「我是」切过去再摇 🔄
+          还有 {{ needOthers.length }} 位没摇 · 右上角「我是」切换身份再摇
         </div>
         <div v-else key="wait" class="pk-wait">
           摇完自动出结果…

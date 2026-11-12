@@ -236,8 +236,8 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
       <div class="pk-cta">
         <span class="pk-cta-icon">🎲</span>
         <div class="pk-cta-text">
-          <b>今天谁下厨？摇一摇定分工</b>
-          <span class="tiny muted pk-cta-hint">全员掷骰，点大的掌勺、点小的洗碗，一次定好两个分工</span>
+          <b>摇骰子，一把定分工</b>
+          <span class="tiny muted pk-cta-hint">全员掷骰，点大的掌勺、点小的洗碗</span>
         </div>
         <button class="btn btn-primary pk-cta-btn" @click="openPK">摇骰子</button>
       </div>
@@ -288,7 +288,7 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
       <p class="duty-summary" :class="{ muted: !chef || !washer }">
         <template v-if="samePerson">{{ chef?.name }} 又做饭又洗碗，辛苦啦 🥲</template>
         <template v-else-if="chef && washer">分工已定，就等开饭啦 🍚</template>
-        <template v-else-if="!chef && !washer">还没人认领，点上面按钮或摇骰子定</template>
+        <template v-else-if="!chef && !washer">分工还没定</template>
         <template v-else>{{ !chef ? '还差掌勺的人' : '还差洗碗的人' }}没定</template>
       </p>
 

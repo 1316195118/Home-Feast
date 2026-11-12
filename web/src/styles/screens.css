@@ -377,14 +377,24 @@
 .settings-grid .sc-storage { order: 8; }
 .settings-grid .sc-about { order: 9; }
 .setting-card { padding: 18px; display: flex; flex-direction: column; }
+.setting-details { margin-top: 8px; }
+.setting-details summary { font-size: 0.8rem; font-weight: 700; color: var(--brand); cursor: pointer; padding: 4px 0; }
+.setting-details[open] summary { margin-bottom: 6px; }
 
 /* ---------- 用餐时段编辑（放在弹窗里，卡片本身与其它设置卡一样大） ---------- */
 .setting-title-tag { margin-left: 8px; font-size: 0.7rem; font-weight: 800; vertical-align: middle; }
 
 /* ---------- 冰箱食材面板：入口在菜谱标题后，每项一张自绘效果图 ---------- */
 .menu-head-actions { display: flex; gap: 8px; align-items: center; flex: none; flex-wrap: nowrap; }
+/* 没菜的菜系弱化显示，不删除（避免用户以为菜系没了） */
+.cuisine-chip.is-empty { opacity: 0.5; }
 .pantry-modal { max-width: 820px; max-height: 88vh; overflow-y: auto; }
-.pantry-section { margin-top: 12px; }
+.pantry-toolbar { display: flex; gap: 8px; margin: 10px 0 8px; }
+.pantry-toolbar .input { flex: 1; min-width: 0; }
+.pantry-jumps { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.pantry-jumps .chip { padding: 3px 9px; font-size: 0.74rem; }
+.pantry-no-result { padding: 16px 0; text-align: center; }
+.pantry-section { margin-top: 12px; scroll-margin-top: 8px; }
 .pantry-group-head {
   display: flex; align-items: center; gap: 8px;
   font-size: 0.8rem; font-weight: 800; color: var(--brand-dark);
@@ -676,12 +686,12 @@
 }
 
 /* ---------- 骰子 PK ---------- */
-.pk-modal { max-width: 540px; }
+.pk-modal { max-width: 500px; padding: 18px; }
 .pk-head-actions { display: flex; align-items: center; gap: 4px; }
-.pk-list { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+.pk-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
 .pk-row {
   display: flex; align-items: center; gap: 12px;
-  padding: 11px 12px; border: 1.5px solid var(--line);
+  padding: 8px 11px; border: 1.5px solid var(--line);
   border-radius: var(--radius); background: var(--surface-soft);
   transition: border-color 0.25s var(--ease), background 0.25s var(--ease);
 }
@@ -694,30 +704,20 @@
 .wash-tag { color: #42674e; background: var(--surface-solid); }
 .safe-tag { color: var(--muted); background: transparent; }
 
-/* 正在摇：只展示当前摇骰子的人，不提供切换（切换走右上角「我是」） */
-.pk-who { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-.pk-who-label { font-size: 0.78rem; font-weight: 700; color: var(--muted); }
-.pk-who-current {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 4px 12px 4px 5px; border-radius: 999px;
-  background: var(--brand-soft); border: 1.5px solid var(--brand);
-  font-size: 0.82rem; font-weight: 800; color: var(--brand-dark);
-}
 .pk-you {
   display: inline-block; margin-left: 4px; padding: 0 5px;
   font-size: 0.62rem; font-weight: 800; color: #fff; background: var(--brand); border-radius: 999px;
 }
 .pk-row.is-self { background: var(--brand-soft); }
-.pk-hint-other { font-size: 0.74rem; color: var(--muted); font-style: italic; padding-left: 4px; }
 .pk-wait.is-self { border-color: var(--brand); background: var(--brand-soft); color: var(--brand-dark); font-weight: 700; }
 .pk-wait.is-other { border-color: var(--line-strong); background: var(--surface-soft); color: var(--ink-soft); font-weight: 700; }
 .pk-roll-btn:disabled { opacity: 0.55; }
 
 /* 用 3x3 圆点画真实骰面，点数变化时跟着滚 */
 .dice {
-  flex: none; width: 58px; height: 58px;
+  flex: none; width: 46px; height: 46px;
   display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr);
-  gap: 3px; padding: 10px;
+  gap: 2px; padding: 8px;
   background: var(--surface); border: 1.5px solid var(--line-strong);
   border-radius: 14px; box-shadow: var(--shadow-sm);
 }
@@ -732,9 +732,9 @@
   display: grid; place-items: center;
   font-size: 1.5rem; font-weight: 800; color: var(--muted);
 }
-.pk-roll-btn { flex: none; min-width: 124px; min-height: 42px; font-size: 0.9rem; font-weight: 800; }
+.pk-roll-btn { flex: none; min-width: 104px; min-height: 40px; font-size: 0.9rem; font-weight: 800; }
 .pk-wait {
-  margin-top: 14px; padding: 11px 14px; text-align: center;
+  margin-top: 10px; padding: 8px 12px; text-align: center;
   border: 1px dashed var(--line-strong); border-radius: var(--radius);
   background: var(--surface-soft); color: var(--muted); font-size: 0.84rem;
   animation: result-pop 0.3s var(--ease);
@@ -743,7 +743,7 @@
 .pk-wait.is-tied { border-color: var(--amber); background: var(--amber-soft); color: var(--ink-soft); font-weight: 700; }
 
 .pk-result {
-  margin-top: 14px; padding: 12px 14px;
+  margin-top: 10px; padding: 10px 12px;
   border: 1px dashed var(--line-strong); border-radius: var(--radius);
   background: var(--surface);
   /* 入场动画改由 .is-fx 控制：结果动画按用户维度只播一次，已看过的人不再重播 */
@@ -838,9 +838,11 @@
   .section-title { font-size: 1.05rem; }
 
   /* 菜谱页：标题和「＋ 添加菜品」同一行，不再让按钮独占一行挤掉首屏 */
-  .section-head.menu-head { flex-wrap: nowrap; align-items: center; gap: 10px; }
-  .section-head.menu-head > div:first-child { flex: 1; min-width: 0; }
-  .section-head.menu-head .section-sub { font-size: 0.72rem; line-height: 1.45; }
+  /* 菜谱标题区：标题与副标题占满整行，按钮组下一行（仍同行），副标题不再被挤成 3 行孤字 */
+  .section-head.menu-head { flex-wrap: wrap; align-items: center; gap: 8px; }
+  .section-head.menu-head > div:first-child { flex: 1 1 100%; min-width: 0; }
+  .section-head.menu-head .menu-head-actions { flex: 0 0 auto; }
+  .section-head.menu-head .section-sub { font-size: 0.76rem; line-height: 1.45; }
   .section-head.menu-head .btn { flex: none; padding: 8px 12px; min-height: 38px; font-size: 0.8rem; }
   /* 手机端 toast 收紧成单行小胶囊，不遮住大片内容 */
   .toast { font-size: 0.82rem; padding: 9px 14px; }
@@ -911,9 +913,10 @@
   /* 关键修复：单列时不能再让所有卡片等高，否则会被内容最多的那张撑出大片空白 */
   .settings-grid { grid-template-columns: 1fr; grid-auto-rows: auto; gap: 12px; }
   .setting-card { padding: 16px; }
-  /* 手机端：行内输入框放宽到整行，按钮自然落到下一行，避免挤压 */
-  .setting-row-inline { flex-wrap: wrap; }
-  .setting-row-inline .input { flex-basis: 100%; }
+  /* 手机端：输入框与按钮同行（输入框自适应收缩），不再让按钮独占一行 */
+  .setting-row-inline { flex-wrap: nowrap; gap: 7px; }
+  .setting-row-inline .input { flex: 1 1 0; min-width: 0; }
+  .setting-row-inline .btn { padding-left: 11px; padding-right: 11px; }
   /* iOS Safari 在输入字号 <16px 时会自动放大整页：统一到 16px，并把触摸目标统一到 44px。
      排除 checkbox / radio / hidden / file，避免把它们撑成 44px 方块。 */
   input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=file]),
@@ -933,7 +936,7 @@
   .modal-leave-active .modal { animation: sheet-down 0.2s var(--ease) forwards; }
   .modal-head { margin-bottom: 12px; }
   /* 骰子 PK 内容多，别让标题贴住抽屉上沿：多留顶部内边距 + 降低整体高度离屏幕顶更远 */
-  .pk-modal { max-height: 78vh; padding-top: 26px; }
+  .pk-modal { max-height: 82vh; padding-top: 20px; }
   .pk-modal .modal-head { padding-top: 2px; }
   .modal-foot { flex-wrap: wrap; gap: 8px; }
   .form-grid { grid-template-columns: 1fr; }

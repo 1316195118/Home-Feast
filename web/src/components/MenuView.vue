@@ -45,6 +45,10 @@ function togglePriority() {
 }
 const recipeIngredients = (d) => getRecipe(d).ingredients || []
 
+// 有筛选时才显示结果数，避免和菜系条「全部 N」重复
+const hasFilter = computed(() =>
+  !!keyword.value.trim() || activeCuisine.value !== 'all' || onlyFavorite.value || priorityPantry.value,
+)
 const filtered = computed(() => {
   const q = keyword.value.trim().toLowerCase()
   const base = state.dishes.filter((d) => {
@@ -93,7 +97,23 @@ const pantryOpen = ref(false)
 const pantryRoot = ref(null)
 const pantryDraft = ref(new Set(state.settings.pantry || []))
 const pantryCustom = ref('')
+const pantryQuery = ref('')
 useModalBehavior(() => { pantryOpen.value = false }, pantryRoot, pantryOpen)
+
+// 70 种食材分 7 类，加搜索与分类快捷跳转，避免长滚动里找不到想要的那一项
+const shownPantryGroups = computed(() => {
+  const q = pantryQuery.value.trim().toLowerCase()
+  if (!q) return pantryGroups
+  return pantryGroups
+    .map((g) => ({ ...g, items: g.items.filter((n) => n.toLowerCase().includes(q)) }))
+    .filter((g) => g.items.length)
+})
+function jumpToGroup(key) {
+  pantryQuery.value = ''
+  const el = document.getElementById('pantry-group-' + key)
+  el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+function clearPantry() { pantryDraft.value = new Set() }
 
 // 预设食材按分类展示（见 pantryGroups）；这里只算出「自定义」的那些，单独一组。
 const pantryCustomCards = computed(() =>
@@ -104,6 +124,7 @@ const pantryCustomCards = computed(() =>
 function openPantry() {
   pantryDraft.value = new Set(state.settings.pantry || [])
   pantryCustom.value = ''
+  pantryQuery.value = ''
   pantryOpen.value = true
 }
 function togglePantry(name) {
@@ -137,7 +158,7 @@ async function savePantry() {
     <div class="section-head menu-head">
       <div>
         <h2 class="section-title">📖 家里的菜谱</h2>
-        <div class="section-sub">内置 {{ state.dishes.length }} 道菜，八大菜系和日常饭菜都有；看不顺眼就自己改</div>
+        <div class="section-sub">{{ state.dishes.length }} 道菜 · 八大菜系和家常菜，都能自己改</div>
       </div>
       <div class="menu-head-actions">
         <button class="btn btn-soft btn-sm" @click="openPantry">
@@ -153,7 +174,7 @@ async function savePantry() {
       </button>
       <button
         v-for="c in visibleCuisines" :key="c.key"
-        class="chip cuisine-chip" :class="{ active: activeCuisine === c.key }"
+        class="chip cuisine-chip" :class="{ active: activeCuisine === c.key, 'is-empty': !counts[c.key] }"
         @click="activeCuisine = c.key"
         :title="c.desc"
       >
@@ -174,7 +195,7 @@ async function savePantry() {
         @click="togglePriority"
       >🥬 优先推荐</button>
       <span v-if="priorityPantry && !(state.settings.pantry || []).length" class="tiny muted">先点「🧊 冰箱食材」选几样</span>
-      <span class="tiny muted">共 {{ filtered.length }} 道</span>
+      <span v-if="hasFilter" class="tiny muted">找到 {{ filtered.length }} 道</span>
     </div>
 
     <!-- 不用 TransitionGroup：切换菜系时整片卡片进出场 + move 会让画面明显晃一下。
@@ -209,6 +230,16 @@ async function savePantry() {
           <p class="setting-desc">
             点选家里现有的食材，「今天吃啥」和菜谱「优先推荐」会立刻按它们重排。按类别找更快，佐料不参与推荐。
           </p>
+          <div class="pantry-toolbar">
+            <input
+              v-model="pantryQuery" class="input" placeholder="搜食材，例如：排骨、番茄…"
+              aria-label="搜索食材" maxlength="20"
+            />
+            <button class="btn btn-soft btn-sm" :disabled="!pantryDraft.size" @click="clearPantry">清空已选</button>
+          </div>
+          <div class="pantry-jumps">
+            <button v-for="g in pantryGroups" :key="g.key" type="button" class="chip" @click="jumpToGroup(g.key)">{{ g.label }}</button>
+          </div>
           <div class="pantry-feedback" aria-live="polite">
             <Transition name="duty-pop">
               <span :key="pantryDraft.size + '-' + pantryHitCount">
@@ -216,7 +247,8 @@ async function savePantry() {
               </span>
             </Transition>
           </div>
-          <div v-for="g in pantryGroups" :key="g.key" class="pantry-section">
+          <div v-if="!shownPantryGroups.length" class="pantry-no-result tiny muted">没找到这个食材，可在下面「添加自定义食材」里加一个。</div>
+          <div v-for="g in shownPantryGroups" :key="g.key" :id="'pantry-group-' + g.key" class="pantry-section">
             <div class="pantry-group-head" :style="{ borderColor: g.tint }">{{ g.label }}</div>
             <div class="pantry-grid">
               <button

@@ -257,7 +257,7 @@ async function saveRoster() {
     <div class="section-head">
       <div>
         <h2 class="section-title">⚙️ 设置</h2>
-        <div class="section-sub">数据始终在你自己的设备里，这里只管名字、备份和说明</div>
+        <div class="section-sub">数据都在你自己的设备里：家庭信息、菜系、时段、排班、备份与访问口令</div>
       </div>
     </div>
 
@@ -386,37 +386,28 @@ async function saveRoster() {
       </div>
 
       <div class="card setting-card sc-storage">
-        <div class="setting-title">📂 数据在哪</div>
+        <div class="setting-title">📂 数据与配置在哪</div>
         <p class="setting-desc">
-          Docker 部署时 <code>/data</code> 映射到 NAS 目录，里面是纯文本文件，不依赖数据库：
+          两个平级目录，都是纯文本、不依赖数据库；换机器时挂回去即可，无需迁移：
         </p>
         <div class="dish-tags" style="margin-top: 10px">
-          <span class="tag">dishes.json</span>
-          <span class="tag">members.json</span>
-          <span class="tag">plans.json</span>
-          <span class="tag">settings.json</span>
-          <span class="tag">uploads/</span>
+          <span class="tag">data/ · dishes / members / plans / pins / uploads / backups</span>
+          <span class="tag">config/ · settings.json</span>
         </div>
-        <p class="setting-desc" style="margin-top: 10px">
-          直接打包整个目录也能备份；换机器时把目录挂回去即可，无需迁移。
-        </p>
         <p class="setting-desc" style="margin-top: 8px">
-          访问口令 <code>access.json</code> 与成员密码哈希 <code>pins.json</code> 单独存放，不随导出的备份 zip 分发。
-        </p>
-        <p class="setting-desc" style="margin-top: 8px">
-          🔄 多人实时同步：<b>{{ realtimeText }}</b>。家里几台设备同时打开时，谁改了菜单其它设备会自动更新。
+          🔄 多人实时同步：<b>{{ realtimeText }}</b>。几台设备同时打开时，谁改了菜单其它设备会自动更新。
         </p>
       </div>
 
       <div class="card setting-card sc-about">
         <div class="setting-title">🎨 关于与版权</div>
-        <p class="setting-desc">
-          界面里的菜品插画由 AI 绘制，属于本项目自生成素材；菜名与菜系是通用饮食常识，
-          描述文字自写。未使用任何第三方图库照片、商业模板、字体或图标库。
-        </p>
-        <p class="setting-desc" style="margin-top: 8px">
-          源码采用 MIT 许可，依赖与素材的完整说明见仓库 <code>NOTICE.md</code>。
-        </p>
+        <p class="setting-desc">插画由 AI 生成，文案自写，源码 MIT；未用第三方图库或模板。</p>
+        <details class="setting-details">
+          <summary>查看完整素材与授权说明</summary>
+          <p class="setting-desc">
+            界面里的菜品插画由 AI 绘制，属于本项目自生成素材；菜名与菜系是通用饮食常识，描述文字自写。未使用任何第三方图库照片、商业模板、字体或图标库。精确用量数值取自公共领域项目 HowToCook（Unlicense）。完整说明见仓库 <code>NOTICE.md</code>。
+          </p>
+        </details>
         <div class="setting-actions">
           <span class="tag tag-green">家里吃点啥 v{{ state.version }}</span>
           <span class="tag">Go + Vue 3 · 单文件服务端</span>
