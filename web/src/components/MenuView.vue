@@ -116,11 +116,13 @@ function jumpToGroup(key) {
 function clearPantry() { pantryDraft.value = new Set() }
 
 // 预设食材按分类展示（见 pantryGroups）；这里只算出「自定义」的那些，单独一组。
-const pantryCustomCards = computed(() =>
-  [...pantryDraft.value]
+const pantryCustomCards = computed(() => {
+  const q = pantryQuery.value.trim().toLowerCase()
+  return [...pantryDraft.value]
     .filter((n) => !pantryGroups.some((g) => g.items.includes(n)))
-    .map((n) => pantryVisual(n)),
-)
+    .filter((n) => !q || n.toLowerCase().includes(q))
+    .map((n) => pantryVisual(n))
+})
 function openPantry() {
   pantryDraft.value = new Set(state.settings.pantry || [])
   pantryCustom.value = ''
@@ -247,7 +249,7 @@ async function savePantry() {
               </span>
             </Transition>
           </div>
-          <div v-if="!shownPantryGroups.length" class="pantry-no-result tiny muted">没找到这个食材，可在下面「添加自定义食材」里加一个。</div>
+          <div v-if="!shownPantryGroups.length && !pantryCustomCards.length" class="pantry-no-result tiny muted">没找到这个食材，可在下面「添加自定义食材」里加一个。</div>
           <div v-for="g in shownPantryGroups" :key="g.key" :id="'pantry-group-' + g.key" class="pantry-section">
             <div class="pantry-group-head" :style="{ borderColor: g.tint }">{{ g.label }}</div>
             <div class="pantry-grid">

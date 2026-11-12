@@ -475,3 +475,16 @@
 
 新增 `scripts/_ui/interaction-verify.mjs`：食材搜索「排骨」精确 1 项、分类跳转清空搜索、清空已选反馈归零、骰子弹窗 386px 且无「正在摇」/「点右上角切到」、关于折叠默认收起、JS 异常 0。
 `go vet/test`、`api-test` 14/14、分工认领、round3、第二批、第三批（SSE 0→1）、成员密码、菜系切换 0 位移全回归通过；双视口溢出 0、过小控件 0。手机设置页 2353→2145px。
+
+### 5. 部署脚本 config 嵌套 bug（本次发现并修复，重要）
+
+首次重建后核对发现 `[config 配置完好] fm-config-xxx settings.json`：部署脚本用 `mv` 整个目录移出/移回 config，而 Docker Compose 挂载会**自动创建空 config 目录**，`mv` 到已存在目标时把源目录塞了进去，形成 `config/fm-config-xxx/settings.json` 嵌套。结果应用读到新建的默认配置（「我们家」/ pantry 空 / 隐藏菜系 0），**真实配置被挤进嵌套目录**。
+
+- 立即恢复：把嵌套目录里的 `settings.json` 复制回 `config/settings.json`、删嵌套目录、`docker restart`，验证真实配置全部回来（小小家 / 9 样 pantry / 6 隐藏菜系 / 184 道菜）。
+- 修脚本：`fm-pve-online-deploy.py` 的「移出/移回 config」改用 `cp -a src/. dst/` **内容合并**（先 `mkdir -p`），回滚分支同步；不再用 `mv` 目录。重跑部署验证：config 目录只剩 `settings.json` + `.gitkeep`，配置完整保留。
+- **教训**：部署脚本里凡是对可能由 compose 自动创建的挂载目录做移动，一律用内容复制而非目录 mv。
+
+### 6. 收尾小修
+
+- 线上核对发现食材搜索时「自定义食材」组未跟着过滤 → `pantryCustomCards` 也按 `pantryQuery` 过滤；无结果提示同时判断两组。
+- 「葱 / 蒜 / 姜」加入蔬菜预设（73 种），用户 pantry 里的葱蒜不再落在自定义组。佐料仍不参与推荐（`shoppingKind` 过滤），不受影响。
