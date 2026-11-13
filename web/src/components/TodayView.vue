@@ -222,14 +222,16 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
 
       <div class="meal-switch" role="group" aria-label="点的是哪一餐">
         <span class="meal-switch-label">点的是</span>
-        <button
-          v-for="m in meals" :key="m.key" type="button"
-          class="meal-chip"
-          :class="{ active: activeMeal === m.key, 'is-past': isMealExpired(m.key, state.now, state.meals) }"
-          :aria-pressed="activeMeal === m.key"
-          :title="`${m.label} · ${m.end} 前；${isMealExpired(m.key, state.now, state.meals) ? '已过饭点，选它属于补记' : '接下来点的菜归到这一餐'}${state.mealPick === m.key ? '（再点一次跟随时间）' : ''}`"
-          @click="selectMeal(m.key)"
-        >{{ m.icon }} {{ m.label }}</button>
+        <div class="meal-chips">
+          <button
+            v-for="m in meals" :key="m.key" type="button"
+            class="meal-chip"
+            :class="{ active: activeMeal === m.key, 'is-past': isMealExpired(m.key, state.now, state.meals) }"
+            :aria-pressed="activeMeal === m.key"
+            :title="`${m.label} · ${m.end} 前；${isMealExpired(m.key, state.now, state.meals) ? '已过饭点，选它属于补记' : '接下来点的菜归到这一餐'}${state.mealPick === m.key ? '（再点一次跟随时间）' : ''}`"
+            @click="selectMeal(m.key)"
+          >{{ m.icon }} {{ m.label }}</button>
+        </div>
       </div>
 
       <div v-if="rosterToday && rosterNames" class="roster-hint" :class="{ 'is-done': !rosterDiff }">

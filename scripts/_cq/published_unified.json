@@ -163,5 +163,85 @@
     "name": "龙井虾仁",
     "dishId": "da5c46bc525159b8b",
     "new": "/uploads/img101dad7d79ee96b8fa89fd71.webp"
+  },
+  "34": {
+    "name": "宋嫂鱼羹",
+    "dishId": "d829a9dfd497a4984",
+    "new": "/uploads/img879512c8846bf2e4887cf347.webp"
+  },
+  "35": {
+    "name": "干炸响铃",
+    "dishId": "d376026bb0866bf2e",
+    "new": "/uploads/imgfa2aca73c1b445e50a993373.webp"
+  },
+  "36": {
+    "name": "雪菜大汤黄鱼",
+    "dishId": "d42eb7cb1ae91dd81",
+    "new": "/uploads/imga5aea3cb7b66595e796976ac.webp"
+  },
+  "37": {
+    "name": "叫花童鸡",
+    "dishId": "df33b840538bd15bd",
+    "new": "/uploads/img48814abe95a0981886c1a750.webp"
+  },
+  "38": {
+    "name": "佛跳墙",
+    "dishId": "d16d37ddbc91b6dec",
+    "new": "/uploads/img514d405a73eec70d45557650.webp"
+  },
+  "39": {
+    "name": "荔枝肉",
+    "dishId": "d740d9895a00d006e",
+    "new": "/uploads/img8c337800cb91dd11d9e5249e.webp"
+  },
+  "40": {
+    "name": "醉排骨",
+    "dishId": "d6093e2368abd4f1d",
+    "new": "/uploads/img98f3f1a0d8c8aef299c27bdd.webp"
+  },
+  "41": {
+    "name": "海蛎煎",
+    "dishId": "d7957bd7348a10c07",
+    "new": "/uploads/imgdce7474bdee1b243e16b2522.webp"
+  },
+  "42": {
+    "name": "沙茶面",
+    "dishId": "db711ff24ec3581bf",
+    "new": "/uploads/img185a182696282fe0b0b752b9.webp"
+  },
+  "43": {
+    "name": "扳指干贝",
+    "dishId": "d15204d1f1e71cbcd",
+    "new": "/uploads/imgc360a9af48e14d011b046492.webp"
+  },
+  "44": {
+    "name": "剁椒鱼头",
+    "dishId": "d039236d20f970e9d",
+    "new": "/uploads/img5506f5de14fb005f0a4674b5.webp"
+  },
+  "45": {
+    "name": "辣椒炒肉",
+    "dishId": "dee8d83c0731d258b",
+    "new": "/uploads/imgf14c61f55721315a91be9f2b.webp"
+  },
+  "46": {
+    "name": "小炒黄牛肉",
+    "dishId": "d5af170178d026b5e",
+    "new": "/uploads/img3e938561239e4c27beb9f72f.webp"
+  },
+  "47": {
+    "name": "湘西外婆菜",
+    "dishId": "ddefbbb46f4fe672d",
+    "new": "/uploads/img7a40ec9c06ff2d0f06e640f5.webp"
+  },
+  "48": {
+    "name": "口味虾",
+    "dishId": "d5d7826292d563b0f",
+    "new": "/uploads/img9146d6a517ed003366a27d99.webp"
+  },
+  "49": {
+    "name": "腊味合蒸",
+    "dishId": "df5d39bf3d69bb00a",
+    "new": "/uploads/imgbabb15484acf54e29de4a341.webp"
   }
 }

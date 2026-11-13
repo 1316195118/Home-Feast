@@ -594,3 +594,24 @@ idx 001–033 共 33 张逐张下载校验，**全部 2400×1800、异常 0**；
 `published_unified.json` 已 33/105，**待生成 72 张（idx 034–105）**，下次从 34 开始；额度已恢复。断点续跑流程不变，参数已是加大版。
 
 **版权**：全部为 AI 图生图 + 项目自有统一底图，无第三方素材或新增依赖，沿用 `NOTICE.md` 第 4 节声明。
+
+## 二十、前端 UI 优化 + 成员密码权限 + 发布 16 张图（2026-11-13 21:42）
+
+用户给三张截图要求优化，并限制密码权限；另把已生成未发布的 16 张图上架。
+
+### 1. 发布已生成的 16 张（idx 034–049）
+`assign_raw.py` 归位（映射 034→049 正确），拼抽查图核验 5 张异型器皿（034 汤盅 / 036 汤碗 / 038 砂锅 / 040 长盘 / 049 竹编小屉）均完整无切边、无串位、无糊图。`backup` 后 `publish_unified.py --limit 16` 全部 OK（备份 `family-menu-default-20261113-2134.zip`）。用户此轮明确「先不继续生成」，故未新增生图。
+
+### 2. UI 修复（web/src）
+- **图1「贴合」**：`TodayView.vue` 的 `.meal-switch` 原本「点的是」标签与早/午/晚胶囊挤在同一行 → 标签独立成行、胶囊包进新增 `.meal-chips`，`screens.css` 同步改 `flex-direction: column`。
+- **图2「太长」**：`.pk-cta` 摇骰子横幅原本 `flex:1` 拉伸铺满整行（又长又空）→ 去掉 `flex:1`、加 `width:fit-content;max-width:100%`，变贴合内容的紧凑条。
+- **图3「卡片大小统一」**：`FamilyView.vue` 成员卡 `.member-card` 改 `flex column`；「不吃 / 需密码」行包进新增 `.member-tags` 预留 `min-height`；`.member-actions` 加 `margin-top:auto` 贴底，同排卡片按钮行/进度条对齐。
+- **密码权限**：成员卡「设密码 / 改密码」按钮加 `v-if="m.id === state.currentUserId"`，只给当前「我是」身份设密码（前端限制，沿用既有 `currentUserId` 信任模型；本地家庭 NAS 场景无独立后端鉴权）。
+
+### 3. 构建与部署
+本地 `node scripts/build.mjs`（Vite → webapp/dist + menu.exe）；交叉编译 `GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o menu-linux ./cmd/menu`。**运行实例是 LXC 100 内 Docker 容器 `family-menu`**（IMAGE `family-menu:local`，8090 由 docker-proxy 监听），并非直接跑在 LXC，也非 `/opt/family-menu` 目录（那只是源码镜像）。部署：`docker cp menu-linux family-menu:/usr/local/bin/menu` → `chmod 755` → `docker restart family-menu`。`docker restart` 保留 `/data`、`/config` 卷，安全。重启后 `Up healthy`，线上已服务新资源（`index-DCEljKcV.css` / `index-Cc7HRqud.js`）。
+
+### 4. 验证
+`/api/ping` 正常；新 CSS/JS 含全部新增规则（`.meal-chips`/`.member-tags`/`width:fit-content`/`margin-top:auto`）已核验；16 张新图 HTTP 200；菜数 184。浏览器硬刷新即可看到（资源带 hash 自动换新版）。
+
+**版权/依赖**：仅 AI 图生图 + 项目自有统一底图，无第三方素材，沿用 NOTICE.md 第 4 节。

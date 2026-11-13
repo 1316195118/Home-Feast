@@ -140,14 +140,16 @@ async function savePin() {
             <div class="tiny muted">{{ chefCount[m.id] || 0 }} 次掌勺 · {{ washCount[m.id] || 0 }} 次洗碗 · {{ orderCount[m.id] || 0 }} 次点菜</div>
           </div>
         </div>
-        <div v-if="(m.avoid || []).length" class="member-avoid tiny">⚠️ 不吃 {{ m.avoid.join('、') }}</div>
-        <div v-if="m.hasPin" class="member-avoid tiny">🔒 切换身份需要密码</div>
+        <div class="member-tags">
+          <div v-if="(m.avoid || []).length" class="member-avoid tiny">⚠️ 不吃 {{ m.avoid.join('、') }}</div>
+          <div v-if="m.hasPin" class="member-avoid tiny">🔒 切换身份需要密码</div>
+        </div>
         <div class="member-stat"><span>掌勺 / 洗碗</span><span>{{ chefCount[m.id] || 0 }} / {{ washCount[m.id] || 0 }} 天</span></div>
         <div class="stat-bar">
           <div class="stat-bar-fill" :style="{ width: `${((chefCount[m.id] || 0) / maxChef) * 100}%`, background: m.color }"></div>
         </div>
         <div class="member-actions">
-          <button class="btn btn-sm btn-soft" @click="openPin(m)">{{ m.hasPin ? '🔑 改密码' : '🔑 设密码' }}</button>
+          <button v-if="m.id === state.currentUserId" class="btn btn-sm btn-soft" @click="openPin(m)">{{ m.hasPin ? '🔑 改密码' : '🔑 设密码' }}</button>
           <button class="btn btn-sm btn-ghost" @click="openEdit(m)">编辑</button>
           <button class="btn btn-sm btn-danger" @click="remove(m.id)">移除</button>
         </div>

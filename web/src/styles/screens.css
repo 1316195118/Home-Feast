@@ -140,12 +140,13 @@
 /* 骰子 PK 独立 CTA：不再挤在「谁洗碗」标题里 */
 .pk-cta {
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  width: fit-content; max-width: 100%;
   margin: 0 0 10px; padding: 9px 14px;
   background: var(--brand-soft); border: 1px solid var(--line-strong);
   border-radius: var(--radius-lg);
 }
 .pk-cta-icon { font-size: 1.8rem; flex: none; line-height: 1; }
-.pk-cta-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; line-height: 1.45; }
+.pk-cta-text { min-width: 0; display: flex; flex-direction: column; gap: 2px; line-height: 1.45; }
 .pk-cta-text b { font-size: 0.94rem; }
 .pk-cta-btn { flex: none; min-height: 44px; padding-left: 18px; padding-right: 18px; }
 
@@ -211,8 +212,9 @@
 .order-actions { display: flex; gap: 2px; flex: none; }
 
 /* 点菜餐别切换：早 / 中 / 晚，决定新点的菜归哪一顿 */
-.meal-switch { display: flex; align-items: center; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
-.meal-switch-label { font-size: 0.82rem; font-weight: 700; color: var(--brand-dark); }
+.meal-switch { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; margin-top: 14px; }
+.meal-switch-label { font-size: 0.76rem; font-weight: 800; letter-spacing: 0.06em; color: var(--brand-dark); }
+.meal-chips { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .meal-chip {
   display: inline-flex; align-items: center; gap: 5px;
   padding: 6px 14px; border-radius: 999px;
@@ -342,13 +344,16 @@
 
 /* ---------- 家人 ---------- */
 .member-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
-.member-card { padding: 16px; }
+.member-card { padding: 16px; display: flex; flex-direction: column; }
 .member-head { display: flex; align-items: center; gap: 12px; }
 .member-name { font-weight: 800; font-size: 1.02rem; }
+/* 预留「不吃 / 需密码」行的高度：有无该行时进度条与按钮行都对齐，卡片更整齐 */
+.member-tags { min-height: 1.3em; }
 .member-stat { margin-top: 14px; font-size: 0.8rem; color: var(--muted); display: flex; justify-content: space-between; }
 .stat-bar { height: 7px; border-radius: 99px; background: var(--paper-deep); overflow: hidden; margin-top: 6px; }
 .stat-bar-fill { height: 100%; border-radius: 99px; transition: width 0.3s var(--ease); }
-.member-actions { display: flex; justify-content: flex-end; gap: 4px; margin-top: 10px; }
+/* 按钮行贴底：同排卡片等高时，编辑/移除/设密码始终对齐 */
+.member-actions { display: flex; justify-content: flex-end; gap: 4px; margin-top: auto; }
 
 /* ---------- 历史 ---------- */
 .history-list { display: flex; flex-direction: column; gap: 12px; }
