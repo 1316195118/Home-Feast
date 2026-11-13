@@ -645,3 +645,9 @@ idx 001–033 共 33 张逐张下载校验，**全部 2400×1800、异常 0**；
 - 部署：build.mjs→webapp/dist（新包 hash `index-ckL93jzH.js`）；交叉编译 `menu-linux`；经 **SFTP→`pct push`→`docker cp`** 每步 md5 校验一致后重启，线上 `healthy`、`/api/ping` 正常、`/assets/index-ckL93jzH.js` 含 大盘鸡/手抓饭/酸菜鱼/麻辣香锅/凉拌皮蛋/萝卜炖排骨 等新增条目（均 FOUND）。
 - 提交 `e6850c8` 推送 origin/main。含密码的 `deploy_menu3.py`、`_tmp/` 已加入 .gitignore 不入库。
 - 注意：勿直接用 `parse_howto_amounts.py` 覆盖 howto-amounts.json（会清空人工补全的 86+75 道）。
+
+### 7. 「今天吃啥」推荐去重优化（用户反馈"来来回回就那几样菜"）
+- 根因（取线上 settings.json 实测）：隐藏 6 个菜系(鲁苏浙闽湘皖)→184 砍到 144；冰箱仅勾 6 样有效主料(鸡蛋/番茄/土豆/米饭/青椒/茄子，葱蒜洋葱为佐料不计)；收藏 0。最关键：`smartSuggest` 是「纯按分数取前 N」，而「换一批」只切 salt，salt 仅影响 0~1.6 分基础抖动，远小于冰箱/季节确定性加分(可超 +10)，故换一批几乎换不出新菜；且无限期轮换机制。
+- 方案（用户选"综合优化"）：① `utils.js` 选菜改为「Top-24 候选内按分数带温度加权随机抽 limit 个」(`pickWeighted`, T=3, seeded by salt)，换一批真正能换；② 新增 `recentIds`：近 7 天(不含今天)点过的菜降权 -8，推动轮换；③ 展示数 `limit 3→6`；④ 冰箱命中权重 `2.6→1.2/样` 以拓宽选择面。
+- 验证(node 跑 utils.js 真实数据)：salt=0/1/2 三批仅 1 道重合(高分菜肉末茄子)，多样性大幅提升；把某 6 道设为近7天点过后降权 0/6 仍出现，轮换生效。
+- 部署：build.mjs→`index-5NuDLOgb.js`；交叉编译 `menu-linux`(md5 e2790930...)；SFTP→pct push→docker cp 每步 md5 一致后重启；远端 curl|md5sum 与本地一致(MATCH)，容器 healthy、ping ok。提交 `4bc5ee7` 推送 origin/main（utils.js/TodayView.vue/.gitignore）；含密码 deploy_menu4.py 已加 .gitignore 不入库。
