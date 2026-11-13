@@ -425,6 +425,7 @@
   position: absolute; top: 5px; right: 5px; width: 20px; height: 20px;
   display: grid; place-items: center; border-radius: 50%;
   background: var(--brand); color: var(--on-brand); font-size: 0.72rem; font-weight: 900;
+  animation: check-pop 0.34s var(--ease) both;
 }
 .pantry-feedback {
   margin: 4px 0 12px; padding: 9px 13px; min-height: 40px;

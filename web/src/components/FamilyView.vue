@@ -3,6 +3,7 @@ import { inject, computed, reactive, ref } from 'vue'
 import { avatarChoices, avatarGroups, colorChoices, memberOf, friendlyDate, avoidChoices } from '../utils'
 import { useModalBehavior } from '../modal'
 import { api } from '../api'
+import { shake } from '../feedback'
 
 const { state, actions, confirmDialog, pending } = inject('app')
 
@@ -62,6 +63,7 @@ function openEdit(member) {
 async function save() {
   if (!form.name.trim()) {
     actions.toast('总得有个称呼吧', 'warn')
+    shake('#member-name')
     return
   }
   const payload = { name: form.name.trim(), avatar: form.avatar, color: form.color, avoid: [...form.avoid] }

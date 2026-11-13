@@ -2,6 +2,7 @@
 import { inject, computed, ref, watch, onUnmounted } from 'vue'
 import { friendlyDate, memberOf, dishImage, cuisineName, artStyle, isCuisineHidden, normalizeMeals, isMealExpired, rosterForDate, seasonOf, smartSuggest } from '../utils'
 import { getRecipe } from '../recipes'
+import { sparkleFromEvent } from '../feedback'
 import DishDetail from './DishDetail.vue'
 import DicePK from './DicePK.vue'
 import ShoppingList from './ShoppingList.vue'
@@ -116,7 +117,7 @@ watch(
 // 再点一次取消。别人已认领时点它会接管（改主意），按钮上始终显示当前认领人。
 const dutyPulse = ref('')
 let dutyPulseTimer = null
-function claimRole(role) {
+function claimRole(role, event) {
   const me = selfMember.value
   if (!me) {
     actions.toast('先在右上角选一下「我是谁」', 'warn')
@@ -124,6 +125,7 @@ function claimRole(role) {
   }
   const isChef = role === 'chef'
   const already = isChef ? state.plan.chefId === me.id : state.plan.dishwasherId === me.id
+  if (!already) sparkleFromEvent(event, isChef ? '👨‍🍳' : '🧽')
   if (isChef) {
     if (already) actions.clearChef()
     else actions.setChef(me.id)
@@ -167,11 +169,12 @@ function isPicked(dish) {
 }
 
 // 点完菜保留当前这三张卡片，只标记「已点」，避免图片突然换掉让人以为点错了
-function quickOrder(dish) {
+function quickOrder(dish, event) {
   if (isPicked(dish)) {
     actions.toast('这道已经在今日菜单啦', 'warn')
     return
   }
+  sparkleFromEvent(event, '🍚')
   actions.order(dish.id, '', activeMeal.value)
 }
 
@@ -247,7 +250,7 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
         <button
           type="button" class="duty-claim duty-claim-chef"
           :class="{ active: chef && chef.id === state.currentUserId, taken: !!chef }"
-          :disabled="pending('duty')" @click="claimRole('chef')"
+          :disabled="pending('duty')" @click="claimRole('chef', $event)"
         >
           <span class="duty-claim-emoji">👨‍🍳</span>
           <span class="duty-claim-text">
@@ -265,7 +268,7 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
         <button
           type="button" class="duty-claim duty-claim-wash"
           :class="{ active: washer && washer.id === state.currentUserId, taken: !!washer }"
-          :disabled="pending('duty')" @click="claimRole('wash')"
+          :disabled="pending('duty')" @click="claimRole('wash', $event)"
         >
           <span class="duty-claim-emoji">🧽</span>
           <span class="duty-claim-text">
@@ -348,7 +351,7 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
               <TransitionGroup name="list" tag="div" class="order-list">
                 <div v-for="o in grouped[m.key]" :key="o.id" class="order-row" :class="{ done: o.done }">
                   <div class="order-thumb">
-                    <img :src="dishImage(o, state.cuisines, state.dishes)" :alt="o.dishName" :style="artStyle(o, state.dishes)" loading="lazy" />
+                    <img :src="dishImage(o, state.cuisines, state.dishes)" :alt="o.dishName" :style="artStyle(o, state.dishes)" loading="lazy" class="img-fade" />
                   </div>
                   <div class="order-main">
                     <div class="order-name">{{ o.dishName }}</div>
@@ -396,10 +399,10 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
             :class="{ picked: isPicked(s.dish) }"
             role="button" tabindex="0" :aria-label="`点这道：${s.dish.name}`"
             :aria-disabled="pending(`order:${s.dish.id}`)"
-            @click="quickOrder(s.dish)" @keydown.enter="quickOrder(s.dish)" @keydown.space.prevent="quickOrder(s.dish)"
+            @click="quickOrder(s.dish, $event)" @keydown.enter="quickOrder(s.dish, $event)" @keydown.space.prevent="quickOrder(s.dish, $event)"
           >
             <div class="suggest-photo">
-              <img :src="dishImage(s.dish, state.cuisines)" :alt="s.dish.name" :style="artStyle(s.dish, state.dishes)" loading="lazy" />
+              <img :src="dishImage(s.dish, state.cuisines)" :alt="s.dish.name" :style="artStyle(s.dish, state.dishes)" loading="lazy" class="img-fade" />
               <button class="suggest-recipe" title="看做法" aria-label="看做法" @click.stop="detailId = s.dish.id"><span class="badge-ico">📖</span></button>
               <span v-if="isPicked(s.dish)" class="suggest-picked">✓ 已点</span>
               <span v-else-if="pending(`order:${s.dish.id}`)" class="suggest-adding">加菜中…</span>

@@ -488,3 +488,41 @@
 
 - 线上核对发现食材搜索时「自定义食材」组未跟着过滤 → `pantryCustomCards` 也按 `pantryQuery` 过滤；无结果提示同时判断两组。
 - 「葱 / 蒜 / 姜」加入蔬菜预设（73 种），用户 pantry 里的葱蒜不再落在自定义组。佐料仍不参与推荐（`shoppingKind` 过滤），不受影响。
+
+## 十七、即时反馈与动效增强（2026-11-13 15:40）
+
+用户：「看看还有什么可以优化的地方，或者可以加动画、特效的地方」。
+
+### 1. 审计结论
+
+现有基础已很扎实：`base.css` 有 20+ keyframes（fade/pop/sheet/row-in/dice-shake/result-pop/check-pop/empty-float/shake-error/success-bounce/count-pop/img-reveal…）、`ripple.js` 点按涟漪、`audio.js` Web Audio 合成音效、`prefers-reduced-motion` 统一降级、toast、`value-pop` 统计弹跳、`star-pop` 收藏、列表 TransitionGroup。
+
+**缺口**：`is-invalid` / `feedback-success` 两个反馈类定义了却从未被调用；`img-reveal` 只用在 DishCard，今日页两处图片没淡入；主题切换瞬间换色无过渡；缺少点击的轻量视觉特效。
+
+### 2. 本轮做的 7 项
+
+| 项 | 实现 |
+|---|---|
+| 反馈工具 | 新增 `web/src/feedback.js`：`shake()` / `bounce()` / `sparkle()` / `sparkleFromEvent()` |
+| 校验抖动 | 5 处（菜名、家人称呼、家的名字、访问口令、餐次名/时间）原本只有 toast，现在输入框 `is-invalid` 抖动描红 |
+| 保存弹跳 | 设置页保存名字成功后 `feedback-success` 轻弹（用 guard 返回的布尔值判断） |
+| 点击飘字 | 点菜 🍚、认领掌勺 👨‍🍳 / 洗碗 🧽 → 3 个小图标上浮淡出 0.9s |
+| 选中✓弹跳 | 食材卡 `.pantry-check` 加 `check-pop` |
+| 图片淡入 | 今日页订单缩略图与推荐卡图补 `.img-fade` |
+| 主题过渡 | `theme.js` 的 `setThemeMode()` 调 `applyTheme(true)`，短暂挂 `html.theme-switching`（380ms）只给主要容器加配色过渡；首次加载不触发避免开屏闪烁 |
+
+`index.html` 新增 `#fx-layer` 浮层（Vue 不托管的兄弟节点），`tokens.css` 在减少动效偏好下直接隐藏浮层。
+
+### 3. 踩坑与定案（重要，别再重复）
+
+1. **往 `document.body` 动态 append/remove 飘字节点会与 Vue 渲染竞态**：验收出现 `TypeError: Cannot read properties of null (reading 'insertBefore')`。
+2. 改成给触发元素挂 class + `::after` 也不行：Vue 的 `:class` 绑定会把手动加的类覆盖掉，且异常仍在。
+3. **最终方案：`#fx-layer` 里预置 6 个固定 `<span class="sparkle">` 节点池**，运行时只改 `left/top/animationDelay`、CSS 变量 `--fx-emoji` 和 `is-on` class，**零 DOM 增删**。对比脚本异常归零。
+4. **headless Chrome 默认 `prefers-reduced-motion: reduce`**，会把所有反馈类关掉，验收必须 `Emulation.setEmulatedMedia({features:[{name:'prefers-reduced-motion',value:'no-preference'}]})`，否则误判"动效没生效"。
+5. **shell 优先级坑**：`node build.mjs && ./menu.exe &` 会把整条链放后台，启动的是**构建前**的二进制；且残留 `menu.exe` 会占住 8090，导致所有验收打到旧版本。必须分步执行、启动前 `taskkill` 残留进程、并核对服务端 JS hash 与 `webapp/dist` 一致。
+6. **残留的 `insertBefore of null`**：用 `git stash` 检出上一版（未加任何动效）跑**同一份**验收脚本，同样出现 3~7 条，堆栈完全一致 → 属既有 Vue `<Transition>` 在"动画未结束就切页"极限时序下的竞态，正常操作 0 异常、不影响功能。`fx-verify.mjs` 已把它单独归类，只把其它异常计为回归失败；页面切换本身已是 `mode="out-in"`（最稳结构），未擅自改框架层。
+
+### 4. 验收
+
+新增 `scripts/_ui/fx-verify.mjs`（温和时序）：预置节点 6、认领/点菜飘字各 3、主题过渡类出现并移除、保存弹跳 true、两处校验抖动 true、食材 ✓ `check-pop`、图片淡入、网格起点 14→14、`真实 JS 异常 0`。
+`go vet/test`、`api-test` 14/14、interaction/duty/round3/batch2/batch3(SSE)/pin/layout 全回归通过；双视口溢出 0、小控件 0、菜系切换 0 位移。

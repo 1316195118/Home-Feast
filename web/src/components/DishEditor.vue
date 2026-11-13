@@ -4,6 +4,7 @@ import { api } from '../api'
 import { dishImage } from '../utils'
 import { getRecipe } from '../recipes'
 import { useModalBehavior } from '../modal'
+import { shake } from '../feedback'
 
 const props = defineProps({ dish: { type: Object, default: null } })
 const emit = defineEmits(['close'])
@@ -70,6 +71,7 @@ async function onFile(event) {
 async function save() {
   if (!form.name.trim()) {
     actions.toast('先给这道菜起个名字', 'warn')
+    shake('#dish-name')
     return
   }
   const payload = {

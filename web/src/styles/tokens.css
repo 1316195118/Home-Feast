@@ -93,4 +93,5 @@ html[data-theme="dark"] {
   }
   /* 反馈类动效在减少动效偏好下彻底关闭，而不只是缩短到 0.01ms */
   .value-pop, .is-invalid, .feedback-success, .toast-icon { animation: none !important; }
+  #fx-layer { display: none !important; }
 }

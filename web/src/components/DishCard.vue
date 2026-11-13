@@ -2,6 +2,7 @@
 import { inject, computed } from 'vue'
 import { dishImage, cuisineName, cuisineIcon, spicyText, artStyle, avoidConflicts } from '../utils'
 import { getRecipe } from '../recipes'
+import { sparkleFromEvent } from '../feedback'
 
 const props = defineProps({ dish: { type: Object, required: true } })
 defineEmits(['edit', 'open'])
@@ -10,6 +11,11 @@ const { state, actions, pending } = inject('app')
 const image = computed(() => dishImage(props.dish, state.cuisines))
 const cuisine = computed(() => cuisineName(props.dish.cuisine, state.cuisines))
 const selfMember = computed(() => state.members.find((m) => m.id === state.currentUserId) || null)
+
+function onOrder(event, dishId) {
+  sparkleFromEvent(event, '🍚')
+  actions.order(dishId)
+}
 // 内置菜配料由 recipes.js 动态生成，一并纳入忌口匹配（香菜 / 蒜 / 花生这类才命中得到）
 const avoidHits = computed(() => {
   const r = getRecipe(props.dish)
@@ -58,7 +64,7 @@ const avoidHits = computed(() => {
       <div class="dish-foot">
         <button
           class="btn btn-soft btn-sm" :disabled="pending(`order:${dish.id}`)"
-          @click="actions.order(dish.id)"
+          @click="onOrder($event, dish.id)"
         >
           <span v-if="pending(`order:${dish.id}`)" class="btn-spinner" aria-hidden="true" />
           {{ pending(`order:${dish.id}`) ? '添加中' : '点这道' }}

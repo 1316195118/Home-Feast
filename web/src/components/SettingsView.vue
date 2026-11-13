@@ -4,6 +4,7 @@ import { api, setAccessCode } from '../api'
 import { isCuisineHidden, DEFAULT_MEALS, mealEndMinutes, normalizeMeals, mealIconChoices, WEEKDAYS } from '../utils'
 import { useModalBehavior } from '../modal'
 import { themeChoices, currentThemeMode, setThemeMode } from '../theme'
+import { shake, bounce } from '../feedback'
 
 const { state, actions, confirmDialog, pending } = inject('app')
 const familyName = ref(state.settings.familyName || '我们家')
@@ -42,12 +43,14 @@ loadBackups()
 
 watch(() => state.settings.familyName, (v) => { familyName.value = v || '我们家' })
 
-function saveName() {
+async function saveName() {
   if (!familyName.value.trim()) {
     actions.toast('家的名字不能为空', 'warn')
+    shake('input[aria-label="家的名字"]')
     return
   }
-  actions.saveSettings({ familyName: familyName.value.trim() })
+  const ok = await actions.saveSettings({ familyName: familyName.value.trim() })
+  if (ok) bounce('input[aria-label="家的名字"]')
 }
 
 // 菜系显示开关：关掉后，该菜系及其菜品在菜谱里不再出现（「全部」里也不会），随时可再打开。
@@ -132,7 +135,7 @@ const accessInput = ref('')
 const accessBusy = ref(false)
 async function saveAccess() {
   const code = accessInput.value.trim()
-  if (code.length < 4) { actions.toast('口令至少 4 个字符', 'warn'); return }
+  if (code.length < 4) { actions.toast('口令至少 4 个字符', 'warn'); shake('input[aria-label="访问口令"]'); return }
   accessBusy.value = true
   const ok = await actions.setWebAccessCode(code)
   accessBusy.value = false
@@ -206,9 +209,9 @@ async function saveMeals() {
   }))
   for (let i = 0; i < list.length; i++) {
     const m = list[i]
-    if (!m.label) { actions.toast(`第 ${i + 1} 餐还没起名字`, 'warn'); return }
+    if (!m.label) { actions.toast(`第 ${i + 1} 餐还没起名字`, 'warn'); shake(document.querySelectorAll('.meal-edit-label')[i]); return }
     const v = mealEndMinutes(m.end)
-    if (v < 0) { actions.toast(`第 ${i + 1} 餐的时间格式应为 HH:MM`, 'warn'); return }
+    if (v < 0) { actions.toast(`第 ${i + 1} 餐的时间格式应为 HH:MM`, 'warn'); shake(document.querySelectorAll('.meal-edit-time')[i]); return }
     if (i > 0 && v <= mealEndMinutes(list[i - 1].end)) {
       actions.toast(`第 ${i + 1} 餐的收起时间要晚于上一餐`, 'warn')
       return

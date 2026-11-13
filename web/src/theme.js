@@ -18,20 +18,28 @@ export function currentThemeMode() {
   }
 }
 
+let themeTimer = null
+
 export function setThemeMode(mode) {
   const v = MODES.includes(mode) ? mode : 'system'
   try { localStorage.setItem(KEY, v) } catch { /* 隐私模式忽略 */ }
-  applyTheme()
+  applyTheme(true)
   return v
 }
 
-export function applyTheme() {
+// animate=true 时短暂挂类让配色平滑过渡；首次加载 / 系统主题变化仍即时生效，避免开屏闪烁。
+export function applyTheme(animate = false) {
+  const html = document.documentElement
+  if (animate && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+    html.classList.add('theme-switching')
+    clearTimeout(themeTimer)
+    themeTimer = setTimeout(() => html.classList.remove('theme-switching'), 380)
+  }
   const mode = currentThemeMode()
   const dark = mode === 'dark' ||
     (mode === 'system' && !!window.matchMedia?.('(prefers-color-scheme: dark)').matches)
-  const root = document.documentElement
-  if (dark) root.dataset.theme = 'dark'
-  else delete root.dataset.theme
+  if (dark) html.dataset.theme = 'dark'
+  else delete html.dataset.theme
   const meta = document.querySelector('meta[name="theme-color"]')
   if (meta) meta.setAttribute('content', dark ? '#181410' : '#fbf6ee')
 }

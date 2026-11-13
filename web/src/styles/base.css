@@ -175,6 +175,25 @@ a { color: var(--brand); }
 .is-invalid { animation: shake-error var(--dur-base) var(--ease); border-color: var(--brand) !important; }
 .feedback-success { animation: success-bounce var(--dur-slow) var(--ease-spring); }
 .value-pop { animation: count-pop var(--dur-base) var(--ease-out); }
+
+/* 点击飘字：预置节点池，pointer-events:none，运行时零 DOM 增删 */
+#fx-layer { position: fixed; inset: 0; z-index: 9999; pointer-events: none; overflow: hidden; }
+@keyframes sparkle-rise {
+  0%   { opacity: 0; transform: translate(-50%, 6px) scale(0.6); }
+  22%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -58px) scale(1.12) rotate(14deg); }
+}
+.sparkle {
+  position: absolute; opacity: 0; font-size: 1.05rem; line-height: 1;
+}
+.sparkle::before { content: var(--fx-emoji, '✨'); }
+.sparkle.is-on { animation: sparkle-rise 0.9s var(--ease-out) forwards; }
+
+/* 主题切换：只在切换的 0.36s 内给主要容器加颜色过渡，日常 hover 不受影响 */
+html.theme-switching :where(body, .card, .panel, .today-hero, .modal, .btn, .chip, .input,
+  .tab-bar, .section-head, .setting-card, .dish-card, .order-row, .stat-item) {
+  transition: background-color 0.32s var(--ease), color 0.32s var(--ease), border-color 0.32s var(--ease);
+}
 /* 骰子 PK 结果：两颗骰子从两侧对撞入场 */
 @keyframes clash-left {
   from { opacity: 0; transform: translateX(-26px) rotate(-35deg); }
