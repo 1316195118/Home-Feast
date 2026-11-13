@@ -651,3 +651,10 @@ idx 001–033 共 33 张逐张下载校验，**全部 2400×1800、异常 0**；
 - 方案（用户选"综合优化"）：① `utils.js` 选菜改为「Top-24 候选内按分数带温度加权随机抽 limit 个」(`pickWeighted`, T=3, seeded by salt)，换一批真正能换；② 新增 `recentIds`：近 7 天(不含今天)点过的菜降权 -8，推动轮换；③ 展示数 `limit 3→6`；④ 冰箱命中权重 `2.6→1.2/样` 以拓宽选择面。
 - 验证(node 跑 utils.js 真实数据)：salt=0/1/2 三批仅 1 道重合(高分菜肉末茄子)，多样性大幅提升；把某 6 道设为近7天点过后降权 0/6 仍出现，轮换生效。
 - 部署：build.mjs→`index-5NuDLOgb.js`；交叉编译 `menu-linux`(md5 e2790930...)；SFTP→pct push→docker cp 每步 md5 一致后重启；远端 curl|md5sum 与本地一致(MATCH)，容器 healthy、ping ok。提交 `4bc5ee7` 推送 origin/main（utils.js/TodayView.vue/.gitignore）；含密码 deploy_menu4.py 已加 .gitignore 不入库。
+
+### 8. 全量升级 109 道内置菜手写做法步骤（用户："也把内置菜补上做法步骤"）
+- 纠偏：用户以为存在「内置菜但不在 INDEX」一批，实测 INDEX 有 157 键、**109 道内置菜全部在 INDEX**（内置且不在 INDEX = 0）；真正「不在 INDEX」的是上轮已补步骤的 75 道家庭私家菜(builtin=False)。所以内置菜本就有模板步骤，只是由"技法模板"生成、个别菜不贴切（如回锅肉走快炒模板）。用户确认意图为：把内置菜通用模板步骤升级成和 75 道同等质量的手写步骤。
+- 数据：`scripts/_cq/gen_howto_steps_builtin.py` 为 109 道内置菜各写 2–5 步手写做法，merge 进 `web/src/howto-steps.json`（保留原有 75 条不覆盖），最终 **184 条全量覆盖、与 howto-amounts.json 名字完全对齐、0 项缺步骤**；步骤为家常常识估算（2–3 人份）。
+- 接线：`recipes.js` `getRecipe` 改为 **`HOWTO_STEPS` 手写步骤优先，INDEX 技法模板仅作兜底**（某菜未补手写步骤时才回退）；内置菜与私家菜现统一走手写步骤，质量一致。旧模板分支仍保留作 fallback。
+- 部署：build.mjs→`index-CQxtzpxc.js`；交叉编译 `menu-linux`(md5 77572747...)；复用 deploy_menu4.py（改 JS 校验为远端 curl|md5sum 真比对，消除之前非 ASCII 字节导致的误报）；每步 md5 一致后重启；远端 md5 与本地 MATCH、容器 healthy、ping ok。线上抽检 东坡肉/佛跳墙/松鼠桂鱼/回锅肉/开水白菜 手写步骤均命中。提交 `6ff9014` 推送 origin/main（recipes.js/howto-steps.json/gen_howto_steps_builtin.py）。
+- 注意：勿用 `parse_howto_amounts.py` 覆盖这两个 json（会清空人工补全的 184 道克数/步骤）；HOWTO 与 HOWTO_STEPS 现在是 recipes.js 唯一数据来源。
