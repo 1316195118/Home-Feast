@@ -49,6 +49,7 @@
 /scripts/_cq/recover_menu.py
 /scripts/_cq/check_menu.py
 /scripts/_cq/deploy_menu3.py
+/scripts/_cq/deploy_menu4.py
 /scripts/_cq/_tmp/
 # 交叉编译产物（部署用，非源码）
 /menu-linux

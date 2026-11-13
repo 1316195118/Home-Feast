@@ -57,6 +57,21 @@ const suggestSalt = ref(0)
 const season = computed(() => seasonOf(state.today))
 const selfMember = computed(() => state.members.find((m) => m.id === state.currentUserId) || null)
 const pantryCount = computed(() => (state.settings.pantry || []).length)
+// 近 7 天(不含今天)点过的菜，推荐时降权，避免「来来回回就那几样」
+const recentIds = computed(() => {
+  const set = new Set()
+  const todayStr = state.today
+  if (!todayStr) return set
+  const todayT = new Date(todayStr + 'T12:00:00')
+  for (const p of (state.plans || [])) {
+    if (!p?.date || p.date >= todayStr) continue
+    const days = (todayT - new Date(p.date + 'T12:00:00')) / 86400000
+    if (days >= 1 && days <= 7) {
+      for (const o of (p.orders || [])) if (o.dishId) set.add(o.dishId)
+    }
+  }
+  return set
+})
 
 // 智能推荐：季节 + 冰箱食材 + 口味避雷 + 耗时 + 收藏，全是本地规则，不调用外部服务。
 // 内置菜的配料由 recipes.js 动态生成，必须经 getRecipe() 展开才能匹配冰箱食材。
@@ -68,8 +83,9 @@ function computeSuggestions(excludeIds = []) {
     hiddenCuisines: state.hiddenCuisines,
     orders: state.plan.orders || [],
     excludeIds,
+    recentIds: recentIds.value,
     salt: suggestSalt.value,
-    limit: 3,
+    limit: 6,
     ingredientsOf: (d) => getRecipe(d).ingredients || [],
   })
 }

@@ -371,17 +371,57 @@ function tinyHash(s) {
   return (h >>> 0) / 4294967295
 }
 
+// 确定性随机数：同样的 seed 永远产出同样的序列。
+// 用来让「换一批」(salt 变化) 结果会变、但同一 salt 下刷新页面不乱跳。
+function mulberry32(seed) {
+  let a = seed >>> 0
+  return function () {
+    a = (a + 0x6d2b79f5) | 0
+    let t = Math.imul(a ^ (a >>> 15), 1 | a)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+// 在候选里按分数做「带温度的加权随机」抽 limit 个（不重复）：
+// 分数越高的菜越容易被选中，但相近分数的菜之间会真正随机轮换，
+// 让「换一批」能跳出固定的 Top-N，又不把好菜完全埋没。
+function pickWeighted(pool, limit, salt) {
+  const n = pool.length
+  if (n <= limit) return pool.slice()
+  const rng = mulberry32((salt >>> 0) ^ 0x9e3779b9)
+  const maxS = pool[0].score
+  const T = 3 // 温度：越大越随机、越小越偏高分
+  const weights = pool.map((p) => Math.exp((p.score - maxS) / T))
+  const chosen = []
+  const avail = pool.map((_, i) => i)
+  while (chosen.length < limit && avail.length) {
+    const ws = avail.map((i) => weights[i])
+    const sum = ws.reduce((a, b) => a + b, 0)
+    let r = rng() * sum
+    let idx = 0
+    for (; idx < ws.length - 1; idx++) {
+      r -= ws[idx]
+      if (r <= 0) break
+    }
+    chosen.push(pool[avail[idx]])
+    avail.splice(idx, 1)
+  }
+  return chosen
+}
+
 // 本地规则推荐，不接外部 LLM：季节 + 冰箱食材 + 口味避雷 + 耗时 + 收藏。
 // salt 变化可以「换一批」，但同一盐值下结果稳定，刷新页面不会乱跳。
 export function smartSuggest(dishes, opts = {}) {
   const {
     today = '', pantry = [], member = null, hiddenCuisines = [],
-    orders = [], excludeIds = [], limit = 3, salt = 0,
+    orders = [], excludeIds = [], recentIds = [], limit = 3, salt = 0,
     ingredientsOf = null,
   } = opts
   const season = seasonOf(today)
   const picked = new Set([...(orders || []).map((o) => o.dishId), ...(excludeIds || [])])
   const scored = []
+  const rset = recentIds instanceof Set ? recentIds : new Set(Array.isArray(recentIds) ? recentIds : [])
 
   for (const d of dishes || []) {
     if (!d || picked.has(d.id) || isCuisineHidden(d.cuisine, hiddenCuisines)) continue
@@ -395,7 +435,7 @@ export function smartSuggest(dishes, opts = {}) {
     if (season.dislikes.includes(d.cuisine)) score -= 1.2
     const hits = pantryMatches(d, pantry, ingredientsOf).hits
     if (hits.length) {
-      score += Math.min(hits.length, 4) * 2.6
+      score += Math.min(hits.length, 4) * 1.2
       reasons.push(`用得上冰箱里的${hits.slice(0, 2).join('、')}`)
     } else if (season.likes.includes(d.cuisine)) {
       reasons.push(`${season.label}天吃${season.hint}`)
@@ -406,9 +446,14 @@ export function smartSuggest(dishes, opts = {}) {
     }
     if (d.minutes >= 60) score -= 0.8
     if (d.favorite) score += 0.9
+    // 近 7 天点过的菜降权，推动轮换：同一道不会连着被推，避免「来来回回就那几样」
+    if (rset.has(d.id)) score -= 8
     if (!reasons.length) reasons.push(`${season.label}天也合适`)
     scored.push({ dish: d, score, reasons: reasons.slice(0, 2) })
   }
   scored.sort((a, b) => b.score - a.score || String(a.dish.id).localeCompare(String(b.dish.id)))
-  return scored.slice(0, limit)
+  // 在 Top-K 候选里按分数做「带温度的加权随机」抽 limit 个：
+  // 高分菜更可能被选，但相近分数的菜之间会真正随机轮换，换一批才换得动。
+  const K = Math.min(24, scored.length)
+  return pickWeighted(scored.slice(0, K), limit, salt)
 }
