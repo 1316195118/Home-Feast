@@ -55,3 +55,6 @@
 
 # UI 审计输出（每次运行都会变，不入库）
 /scripts/_ui/audit-report.json
+
+# 效果图「加大」样图与生成原图（探索性产物，不入库）
+/scripts/_cq/sample_bigger/
