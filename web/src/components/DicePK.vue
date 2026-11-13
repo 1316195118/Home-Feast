@@ -2,6 +2,7 @@
 import { ref, computed, onUnmounted, inject, watch } from 'vue'
 import { useModalBehavior } from '../modal'
 import { isMuted, toggleMuted, playRoll, playWin, playLose, playSafe } from '../audio'
+import { vibrate } from '../feedback'
 
 const props = defineProps({ members: { type: Array, required: true } })
 const emit = defineEmits(['close', 'apply'])
@@ -122,6 +123,7 @@ function autoRerollTied() {
 function rollFor(id, force = false, onDone = null) {
   if (disposed || rollingId.value || (!force && !canRoll(id))) return
   playRoll() // 摇动过程音（合成，平局自动加摇时内部有节流）
+  vibrate(12) // 手机轻震一下，配合骰子摇动手感
   clearInterval(tickTimer)
   clearTimeout(stopTimer)
   rollingId.value = id
@@ -152,6 +154,7 @@ function playResultOnce() {
   if (id === chef.value?.id) playWin()        // 点最大 → 掌勺，欢快
   else if (id === washer.value?.id) playLose() // 点最小 → 洗碗
   else playSafe()                              // 安全过关，轻轻两声
+  vibrate([12, 35, 12])                       // 结果揭晓：短-停-短
   const next = [...shownIds.value, id]
   shownIds.value = next
   actions.saveDice({ pkShown: next })

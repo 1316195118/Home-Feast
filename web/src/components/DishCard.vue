@@ -2,7 +2,7 @@
 import { inject, computed } from 'vue'
 import { dishImage, cuisineName, cuisineIcon, spicyText, artStyle, avoidConflicts } from '../utils'
 import { getRecipe } from '../recipes'
-import { sparkleFromEvent } from '../feedback'
+import { sparkleFromEvent, celebrate, vibrate } from '../feedback'
 
 const props = defineProps({ dish: { type: Object, required: true } })
 defineEmits(['edit', 'open'])
@@ -12,9 +12,15 @@ const image = computed(() => dishImage(props.dish, state.cuisines))
 const cuisine = computed(() => cuisineName(props.dish.cuisine, state.cuisines))
 const selfMember = computed(() => state.members.find((m) => m.id === state.currentUserId) || null)
 
-function onOrder(event, dishId) {
-  sparkleFromEvent(event, '🍚')
-  actions.order(dishId)
+async function onOrder(event, dishId) {
+  const rect = event?.currentTarget?.getBoundingClientRect?.()
+  const at = rect ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 } : null
+  sparkleFromEvent(event, '🍚') // 点击即时反馈，先让手上有回应
+  const ok = await actions.order(dishId)
+  if (ok && at) {
+    celebrate(at.x, at.y)
+    vibrate(16)
+  }
 }
 // 内置菜配料由 recipes.js 动态生成，一并纳入忌口匹配（香菜 / 蒜 / 花生这类才命中得到）
 const avoidHits = computed(() => {

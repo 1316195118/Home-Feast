@@ -56,6 +56,29 @@ ws.addEventListener('message', (e) => {
 })
 await cdp('Page.enable')
 await cdp('Runtime.enable')
+// 在页面脚本执行前挂钩浏览器原生 API，记录调用次数；桌面 headless 无震动硬件时补一个 stub
+await cdp('Page.addScriptToEvaluateOnNewDocument', {
+  source: `
+    window.__vibrateCalls = [];
+    window.__viewTransitions = [];
+    try {
+      const nativeVibrate = typeof navigator.vibrate === 'function' ? navigator.vibrate.bind(navigator) : null;
+      Object.defineProperty(navigator, 'vibrate', {
+        configurable: true,
+        value: (p) => { window.__vibrateCalls.push(p); return nativeVibrate ? nativeVibrate(p) : true; },
+      });
+    } catch {}
+    try {
+      if (typeof document.startViewTransition === 'function') {
+        const nativeVT = document.startViewTransition.bind(document);
+        Object.defineProperty(document, 'startViewTransition', {
+          configurable: true,
+          value: (cb) => { window.__viewTransitions.push(1); return nativeVT(cb); },
+        });
+      }
+    } catch {}
+  `,
+})
 await cdp('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }] })
 await cdp('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true, screenWidth: 390, screenHeight: 844 })
 await cdp('Page.navigate', { url: `${BASE}/?v=${Date.now()}#today` })
@@ -64,32 +87,38 @@ await ev(`document.querySelector('.user-pick-item')?.click()`)
 await sleep(600)
 await ev(`document.querySelector('.toast')?.remove()`)
 
-console.log('预置飘字节点', await ev(`document.querySelectorAll('#fx-layer .sparkle').length`))
+console.log('预置特效节点', await ev(`JSON.stringify({sparkle:document.querySelectorAll('#fx-layer .sparkle').length,confetti:document.querySelectorAll('#fx-layer .confetti').length})`))
 
-// 1) 分工认领飘字
+// 1) 分工认领飘字 + 震动
 await ev(`document.querySelector('.duty-claim-chef')?.click()`)
 await sleep(150)
 console.log('认领飘字 is-on', await ev(`document.querySelectorAll('#fx-layer .sparkle.is-on').length`))
+console.log('认领震动调用', await ev(`window.__vibrateCalls.length`))
 await sleep(1100)
 await ev(`document.querySelector('.duty-claim-chef')?.click()`)
 await sleep(700)
 
-// 2) 推荐卡点菜飘字
+// 2) 推荐卡点菜：飘字（点击即时）+ 彩带与震动（保存成功后）
 await ev(`document.querySelector('.suggest-card')?.click()`)
 await sleep(150)
 console.log('点菜飘字 is-on', await ev(`document.querySelectorAll('#fx-layer .sparkle.is-on').length`))
-await sleep(1200)
+await sleep(900)
+console.log('点菜成功彩带', await ev(`JSON.stringify({on:document.querySelectorAll('#fx-layer .confetti.is-on').length,anim:getComputedStyle(document.querySelector('#fx-layer .confetti.is-on')||document.body).animationName})`))
+console.log('累计震动调用', await ev(`window.__vibrateCalls.length`))
+await sleep(500)
 
-// 3) 主题切换平滑过渡（设置页）
+// 3) 主题圆形扩散（设置页）；浏览器不支持 View Transitions 时应降级为平滑过渡
 await ev(`window.location.hash='#settings'`)
 await sleep(900)
+console.log('ViewTransitions 可用', await ev(`typeof document.startViewTransition === 'function'`))
 await ev(`[...document.querySelectorAll('.theme-choices .btn')].find(b=>b.textContent.includes('深色'))?.click()`)
-await sleep(80)
-console.log('主题过渡', await ev(`JSON.stringify({cls:document.documentElement.classList.contains('theme-switching'),theme:document.documentElement.dataset.theme||'light'})`))
-await sleep(500)
+await sleep(120)
+console.log('主题扩散调用', await ev(`JSON.stringify({vt:window.__viewTransitions.length,cls:document.documentElement.classList.contains('theme-switching'),theme:document.documentElement.dataset.theme||'light'})`))
+await sleep(700)
 console.log('过渡类已移除', await ev(`!document.documentElement.classList.contains('theme-switching')`))
 await ev(`[...document.querySelectorAll('.theme-choices .btn')].find(b=>b.textContent.includes('跟随系统'))?.click()`)
 await sleep(700)
+console.log('累计主题扩散调用', await ev(`window.__viewTransitions.length`))
 
 // 4) 保存成功弹跳（用原值保存，不改变配置）
 await ev(`document.querySelector('.sc-name .btn-primary')?.click()`)
@@ -133,6 +162,10 @@ await ev(`document.querySelectorAll('.cuisine-chip')[1]?.click()`)
 await sleep(700)
 const left2 = await ev(`(()=>{const g=document.querySelector('.dish-grid');return g?Math.round(g.getBoundingClientRect().left):-1})()`)
 console.log('网格起点', left1, '=>', left2)
+// 9) 系统「减少动效」偏好下浮层整体关闭（含彩带与飘字）
+await cdp('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] })
+await sleep(250)
+console.log('减少动效降级', await ev(`getComputedStyle(document.getElementById('fx-layer')).display === 'none'`))
 console.log('真实 JS 异常', errors.length, '| 已知 Transition 竞态', knownTransitionRace.length, '(上一版同样存在，不影响功能)')
 ws.close()
 proc.kill()

@@ -11,7 +11,12 @@ const familyName = ref(state.settings.familyName || '我们家')
 const importBusy = ref(false)
 const cuisineRoot = ref(null)
 const themeMode = ref(currentThemeMode())
-function chooseTheme(mode) { themeMode.value = setThemeMode(mode) }
+function chooseTheme(mode, event) {
+  const anchor = event && Number.isFinite(event.clientX)
+    ? { x: event.clientX, y: event.clientY }
+    : null
+  themeMode.value = setThemeMode(mode, anchor)
+}
 const realtimeText = computed(() => ({
   online: '🟢 已连接', connecting: '🟡 连接中', reconnecting: '🟡 断线重连中',
   unsupported: '⚪ 浏览器不支持', off: '⚪ 未开启',
@@ -340,7 +345,7 @@ async function saveRoster() {
           <button
             v-for="t in themeChoices" :key="t.key" class="btn btn-sm"
             :class="themeMode === t.key ? 'btn-primary' : 'btn-soft'"
-            :aria-pressed="themeMode === t.key" @click="chooseTheme(t.key)"
+            :aria-pressed="themeMode === t.key" @click="chooseTheme(t.key, $event)"
           >{{ t.label }}</button>
         </div>
       </div>

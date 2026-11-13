@@ -189,6 +189,30 @@ a { color: var(--brand); }
 .sparkle::before { content: var(--fx-emoji, '✨'); }
 .sparkle.is-on { animation: sparkle-rise 0.9s var(--ease-out) forwards; }
 
+/* 彩带：纯 CSS 色块自绘，不含任何图片素材；从触发点向外抛洒并带重力下坠 */
+@keyframes confetti-burst {
+  0%   { opacity: 1; transform: translate(-50%, -50%) rotate(0deg) scale(0.6); }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--cx, 0px)), calc(-50% + var(--cy, 0px)))
+               rotate(var(--cr, 360deg)) scale(1);
+  }
+}
+.confetti {
+  position: absolute; width: 6px; height: 10px; border-radius: 2px; opacity: 0;
+  background: var(--cc, #c25a3a);
+}
+.confetti.is-on { animation: confetti-burst 1s var(--ease-out) forwards; }
+
+/* 主题圆形扩散：交给 JS 的 Web Animations 做 clip-path，关掉 View Transitions
+   自带的交叉淡入，否则会和新旧两层叠加成一层灰雾 */
+::view-transition-old(root), ::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) { z-index: 1; }
+::view-transition-new(root) { z-index: 2; }
+
 /* 主题切换：只在切换的 0.36s 内给主要容器加颜色过渡，日常 hover 不受影响 */
 html.theme-switching :where(body, .card, .panel, .today-hero, .modal, .btn, .chip, .input,
   .tab-bar, .section-head, .setting-card, .dish-card, .order-row, .stat-item) {

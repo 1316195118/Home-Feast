@@ -526,3 +526,41 @@
 
 新增 `scripts/_ui/fx-verify.mjs`（温和时序）：预置节点 6、认领/点菜飘字各 3、主题过渡类出现并移除、保存弹跳 true、两处校验抖动 true、食材 ✓ `check-pop`、图片淡入、网格起点 14→14、`真实 JS 异常 0`。
 `go vet/test`、`api-test` 14/14、interaction/duty/round3/batch2/batch3(SSE)/pin/layout 全回归通过；双视口溢出 0、小控件 0、菜系切换 0 位移。
+
+## 十八、彩带 / 主题圆形扩散 / 震动三项特效 + 版权声明（2026-11-13 16:00）
+
+用户：「除了第一个（菜谱卡滚动入场淡入）其他都做，然后注意版权」。三项全部实现，且**不引入任何新的第三方依赖或素材**。
+
+### 1. 点菜成功彩带
+
+- `index.html` 的 `#fx-layer` 在原有 6 个 `.sparkle` 之外**预置 12 个 `.confetti` 节点**（延续上一节「零 DOM 增删」原则，杜绝 Vue `insertBefore` 竞态）。
+- `feedback.js` 新增 `celebrate(x, y)`：批量移除 `is-on` → **只强制重排一次** → 批量设置 `--cx/--cy/--cr/--cc` 与 `animationDelay` → 挂 `is-on`。12 个色块按圆周角抛洒、带重力下坠并旋转，1s 淡出。
+- `base.css` 的 `@keyframes confetti-burst`：纯 CSS 纯色小矩形（6×10px、2px 圆角），颜色取自项目自有品牌色系数组，**无图片 / 贴纸 / GIF / Lottie / 图标包**。
+- 触发时机改为**真正成功之后**：`DishCard.onOrder` / `TodayView.quickOrder` 改成 `async`，先 `sparkleFromEvent` 做点击即时反馈，再 `await actions.order()`，仅当返回真值才 `celebrate()` + `vibrate(16)`。失败只有 toast，不会误撒彩带。
+
+### 2. 深色主题圆形扩散
+
+- `theme.js` 新增 `circularThemeSwap(anchor, swap)`：浏览器原生 **View Transitions API** 的 `document.startViewTransition(() => applyTheme(false))`，在 `vt.ready` 后用 **Web Animations API** 对 `::view-transition-new(root)` 做 `clip-path: circle(0px) → circle(Rpx)`，`R = hypot(max(x, W-x), max(y, H-y))`，520ms ease-in-out。
+- `base.css` 关掉 View Transitions 自带的 cross-fade（`animation:none; mix-blend-mode:normal`），否则新旧两层叠成灰雾；给 old/new 指定 z-index。
+- `SettingsView.chooseTheme(mode, $event)` 把点击坐标传进去，扩散从按下的位置开始。
+- **降级链**：`prefers-reduced-motion: reduce` / 浏览器不支持 `startViewTransition` / 无坐标（如"跟随系统"自动切换）→ 回落到原来的 `theme-switching` 平滑配色过渡；圆形扩散时不叠加 `theme-switching`，避免两套动画打架。
+
+### 3. 手机轻震动
+
+- `feedback.js` 新增 `vibrate(pattern)`：浏览器原生 **Vibration API**（`navigator.vibrate`），`try/catch` 静默降级；尊重系统「减少动效」偏好，**并跟随站内音效静音开关**（`audio.js` 的 `isMuted()`），用户关了音效就不会再震。
+- 触发：认领掌勺/洗碗 `vibrate(12)`、点菜成功 `vibrate(16)`、骰子摇动 `vibrate(12)`、骰子结果揭晓 `vibrate([12,35,12])`（结果沿用 `pkShown` 每人只播一次，不重复震）。
+
+### 4. 版权声明（用户特别要求）
+
+`NOTICE.md` 两处补充：
+- 第 2 节明确「除表内依赖外没有引入任何其它库」，三项特效均为浏览器原生 Web API 或自写 CSS，未复制任何第三方动画库 / 动效模板 / 代码片段。
+- 第 4 节新增 4 条：飘字仅 Unicode emoji、彩带纯 CSS 色块、圆形扩散用原生 View Transitions + Web Animations、震动用原生 Vibration API、涟漪与各 keyframes 均为自写；全部不分发素材、不联网、遵循系统减少动效与站内静音，不支持时降级。
+`README.md` 的「即时反馈与动效」行同步更新并指向 `NOTICE.md`。
+
+### 5. 验收
+
+`scripts/_ui/fx-verify.mjs` 扩充：用 `Page.addScriptToEvaluateOnNewDocument` 挂钩原生 API 记录调用（桌面 headless 无震动硬件时补 stub）。
+实测：预置 6 sparkle + 12 confetti；认领飘字 3 / 震动 1；点菜飘字 3、成功彩带 **12 个 `confetti-burst`**、累计震动 2；`ViewTransitions 可用 true`、主题扩散 `vt:1`（`cls:false` 证明走的是圆形扩散而非降级）、切回累计 2；保存弹跳 / 两处校验抖动 / 食材 ✓ / 图片淡入全 true；网格起点 14→14；**减少动效时浮层 display:none**；真实 JS 异常 0。
+`go vet/test`、`api-test` 14/14、interaction/duty/round3/batch2/batch3(SSE)/pin/layout 全回归通过；双视口溢出 0、小控件 0、菜系切换 0 位移。
+
+**未做**：菜谱卡滚动入场淡入（用户明确跳过；69 张卡逐帧入场易晃，与既有「切换 0 位移」约束冲突）。

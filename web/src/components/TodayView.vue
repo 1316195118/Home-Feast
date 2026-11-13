@@ -2,7 +2,7 @@
 import { inject, computed, ref, watch, onUnmounted } from 'vue'
 import { friendlyDate, memberOf, dishImage, cuisineName, artStyle, isCuisineHidden, normalizeMeals, isMealExpired, rosterForDate, seasonOf, smartSuggest } from '../utils'
 import { getRecipe } from '../recipes'
-import { sparkleFromEvent } from '../feedback'
+import { sparkleFromEvent, celebrate, vibrate } from '../feedback'
 import DishDetail from './DishDetail.vue'
 import DicePK from './DicePK.vue'
 import ShoppingList from './ShoppingList.vue'
@@ -125,7 +125,10 @@ function claimRole(role, event) {
   }
   const isChef = role === 'chef'
   const already = isChef ? state.plan.chefId === me.id : state.plan.dishwasherId === me.id
-  if (!already) sparkleFromEvent(event, isChef ? '👨‍🍳' : '🧽')
+  if (!already) {
+    sparkleFromEvent(event, isChef ? '👨‍🍳' : '🧽')
+    vibrate(12)
+  }
   if (isChef) {
     if (already) actions.clearChef()
     else actions.setChef(me.id)
@@ -169,13 +172,19 @@ function isPicked(dish) {
 }
 
 // 点完菜保留当前这三张卡片，只标记「已点」，避免图片突然换掉让人以为点错了
-function quickOrder(dish, event) {
+async function quickOrder(dish, event) {
   if (isPicked(dish)) {
     actions.toast('这道已经在今日菜单啦', 'warn')
     return
   }
+  const rect = event?.currentTarget?.getBoundingClientRect?.()
+  const at = rect ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 } : null
   sparkleFromEvent(event, '🍚')
-  actions.order(dish.id, '', activeMeal.value)
+  const ok = await actions.order(dish.id, '', activeMeal.value)
+  if (ok && at) {
+    celebrate(at.x, at.y)
+    vibrate(16)
+  }
 }
 
 // 首屏速览：有菜时给一条「今天已点 N 道 · 前几道菜名」，点一下滚到今日菜单，

@@ -20,10 +20,44 @@ export function currentThemeMode() {
 
 let themeTimer = null
 
-export function setThemeMode(mode) {
+// 从点击处向外扩一圈圆形切换深浅色：用浏览器原生 View Transitions API +
+// Web Animations 的 clip-path，没有任何第三方依赖或素材。
+// 不支持该 API（Safari 旧版 / Firefox）或开了「减少动效」时，降级为原来的平滑配色过渡。
+function circularThemeSwap(anchor, swap) {
+  const reduce = !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  if (reduce || typeof document.startViewTransition !== 'function' ||
+      !anchor || !Number.isFinite(anchor.x) || !Number.isFinite(anchor.y)) return false
+  const { x, y } = anchor
+  const radius = Math.hypot(
+    Math.max(x, window.innerWidth - x),
+    Math.max(y, window.innerHeight - y),
+  )
+  try {
+    const vt = document.startViewTransition(() => swap())
+    vt.ready
+      .then(() => {
+        document.documentElement.animate(
+          {
+            clipPath: [
+              `circle(0px at ${x}px ${y}px)`,
+              `circle(${Math.ceil(radius)}px at ${x}px ${y}px)`,
+            ],
+          },
+          { duration: 520, easing: 'ease-in-out', pseudoElement: '::view-transition-new(root)' },
+        )
+      })
+      .catch(() => {}) // 被下一次切换打断时忽略
+    return true
+  } catch {
+    return false
+  }
+}
+
+export function setThemeMode(mode, anchor) {
   const v = MODES.includes(mode) ? mode : 'system'
   try { localStorage.setItem(KEY, v) } catch { /* 隐私模式忽略 */ }
-  applyTheme(true)
+  // 圆形扩散时不叠加 theme-switching 的配色过渡，避免两套动画打架
+  if (!circularThemeSwap(anchor, () => applyTheme(false))) applyTheme(true)
   return v
 }
 

@@ -20,6 +20,8 @@
 
 运行时依赖只有 Go 标准库；`npm` 依赖仅用于构建前端，产物为静态文件并嵌入二进制，运行镜像中不含 Node.js。
 
+除上表外**没有引入任何其它库**。深浅主题的圆形扩散、手机震动、点击涟漪、飘字与彩带分别使用浏览器自带的 View Transitions / Web Animations / Vibration API 与本项目自写的 CSS 动画，均为浏览器原生能力或本项目自写代码，未复制任何第三方动画库、动效模板或代码片段。
+
 ## 3. 菜品数据
 
 - 菜名、菜系归属属于通用事实信息与公共领域饮食文化常识，不受著作权保护。
@@ -38,6 +40,9 @@
 - 图标使用 Unicode emoji 与项目自写的 SVG / CSS 图形；字体使用操作系统自带字体栈，**不打包、不分发任何第三方字体或图标库文件**。
 - `web/index.html` 中的 favicon 为本项目自写的内联 SVG。
 - 骰子 PK 的音效由 `web/src/audio.js` 用浏览器原生 **Web Audio API 实时合成**（振荡器 + 带通白噪声 + 增益包络），**不含任何第三方音频文件、采样、音效库或在线音源**，也未引入任何新的第三方依赖；声音只在用户交互时于本机生成，不随项目分发。
+- 点击飘字与成功彩带（`web/index.html` 的 `#fx-layer` + `web/src/feedback.js` + `base.css`）：飘字仅用 **Unicode emoji**，彩带是**纯 CSS 绘制的纯色小矩形**配合 CSS keyframes 抛洒旋转，颜色取自项目自有配色。不含任何图片、贴纸、GIF、Lottie 文件、图标包或动效库；特效节点在页面加载时预置，运行时只改 CSS 变量与 class，不增删 DOM。
+- 深浅主题圆形扩散（`web/src/theme.js`）使用浏览器原生 **View Transitions API + Web Animations API** 的 `clip-path` 动画；手机轻震（`web/src/feedback.js`）使用浏览器原生 **Vibration API**。二者都不分发任何素材、不需要联网、不引入依赖，并在系统「减少动效」偏好或站内音效静音时自动关闭；不支持这些 API 的浏览器会降级为普通配色过渡 / 无震动。
+- 点按涟漪 `web/src/ripple.js`、校验抖动 / 成功弹跳 / 数字弹跳 / 骰子对撞等均为本项目自写的 CSS keyframes（`web/src/styles/base.css`），无第三方动效代码。
 
 ## 5. 商标
 
