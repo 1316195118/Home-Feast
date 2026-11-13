@@ -48,6 +48,8 @@
 /scripts/_cq/deploy_menu2.py
 /scripts/_cq/recover_menu.py
 /scripts/_cq/check_menu.py
+/scripts/_cq/deploy_menu3.py
+/scripts/_cq/_tmp/
 # 交叉编译产物（部署用，非源码）
 /menu-linux
 # 抓取的原始素材 / 中间快照：体积大且来源不对外发布

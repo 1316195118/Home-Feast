@@ -470,18 +470,27 @@ export function getRecipe(dish) {
   if (customIngredients.length || customSteps.length) {
     return { ingredients: customIngredients, steps: customSteps, custom: true, precise: false }
   }
+  const preciseList = HOWTO[dish?.name]
   const entry = INDEX[dish?.name]
+  // HowToCook 精确用量：命中同名菜时整表替换模板配料（步骤仍用本项目自写模板）。
+  // 购物清单里「盐 适量 / 生抽 1 勺」因此变成「盐 2 g / 生抽 15ml」，买菜重量有依据。
+  // 注意：精确用量优先级高于内置模板，且对「不在 INDEX 里的家庭私家菜」同样生效
+  //       （私家菜无内置步骤模板，故 steps 留空，页面仅展示克数表）。
+  if (preciseList && preciseList.length) {
+    let steps = []
+    if (entry) {
+      const [key, main, extra] = entry
+      const build = T[key] || T.kc
+      const auto = key === 'lb' || key === 'qc' ? { spicy: SPICY.has(dish.name) } : {}
+      steps = build(main, { ...auto, ...(extra || {}) }).steps
+    }
+    return { ingredients: preciseList.slice(), steps, custom: false, precise: true }
+  }
   if (!entry) return { ingredients: [], steps: [], custom: false, precise: false }
   const [key, main, extra] = entry
   const build = T[key] || T.kc
   const auto = key === 'lb' || key === 'qc' ? { spicy: SPICY.has(dish.name) } : {}
   const result = build(main, { ...auto, ...(extra || {}) })
-  // HowToCook 精确用量：命中同名菜时整表替换模板配料（步骤仍用本项目自写模板）。
-  // 购物清单里「盐 适量 / 生抽 1 勺」因此变成「盐 2 g / 生抽 15ml」，买菜重量有依据。
-  const preciseList = HOWTO[dish?.name]
-  if (preciseList && preciseList.length) {
-    return { ...result, ingredients: preciseList.slice(), custom: false, precise: true }
-  }
   return { ...result, ingredients: dedupe(result.ingredients), custom: false, precise: false }
 }
 

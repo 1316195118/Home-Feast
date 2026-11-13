@@ -615,3 +615,27 @@ idx 001–033 共 33 张逐张下载校验，**全部 2400×1800、异常 0**；
 `/api/ping` 正常；新 CSS/JS 含全部新增规则（`.meal-chips`/`.member-tags`/`width:fit-content`/`margin-top:auto`）已核验；16 张新图 HTTP 200；菜数 184。浏览器硬刷新即可看到（资源带 hash 自动换新版）。
 
 **版权/依赖**：仅 AI 图生图 + 项目自有统一底图，无第三方素材，沿用 NOTICE.md 第 4 节。
+
+## 二十一、菜谱克数补全（2026-11-13 22:0x）
+
+用户「把菜谱的菜g数补全」。范围：全部 109 道中缺精确克数的 86 道内置菜（其余 23 道已有 HowToCook 精确用量）。
+
+### 1. 关键侦察
+- `recipes.js` 里 `const HOWTO`（23 道）才是 `getRecipe` 真正消费源；`web/src/howto-amounts.json` 此前**未被任何前端代码 import**（仅是 `parse_howto_amounts.py` 产物），改它无效——这是本轮最易踩的坑。
+- `data/dishes.json` 共 109 道；86 道内置菜只走技法模板，配料显示「盐 适量 / 生抽 1 勺」。
+
+### 2. 数据生成
+- `scripts/_cq/gen_howto_missing.py` 为 86 道各写一份「食材 克数」清单（如 `麻婆豆腐:["嫩豆腐 400g","牛肉末 100g",...]`），合并进 `howto-amounts.json`，保留原 23 道，合计 109、0 项缺数字/单位。克数为家常常识估算，非 HowToCook 权威值。
+
+### 3. 接线（让数据真正生效）
+`recipes.js` 改为 `import HOWTO from './howto-amounts.json'`，删除内联 23 道常量，使 json 成为唯一来源（`scripts/_cq/wire_howto_json.py`）。`getRecipe` 仍用 `HOWTO[dish.name]` 整表替换模板配料，菜谱页与购物清单即显示具体克数。
+
+### 4. 部署与排障（重要经验）
+- 构建：`node scripts/build.mjs`（Vite→webapp/dist + menu.exe）；交叉编译 `GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o menu-linux ./cmd/menu`。新前端包 hash `index-CzyMltb7.js`。
+- **首部署翻车**：用 `pct exec 100 -- tee` 经 stdin 传二进制，结果文件被损坏（本地 md5 `ca64ecb1` ≠ 容器内 `47cf79af`），容器启动 exit 139（SIGSEGV）crash loop。已用部署前备份 `/usr/local/bin/menu.bak` 即时 `docker cp` 回滚，服务秒级恢复。
+- **正确通道**：SFTP 到 PVE 主机 `/tmp` → `pct push 100 /tmp/menu-linux /tmp/menu-linux` → `docker cp` 进 `family-menu:/usr/local/bin/menu` → `chmod 755` → `docker restart`。每步校验 md5 一致后再重启。最终 `Up healthy`、/api/ping 正常、`/assets/index-CzyMltb7.js` 含全部新增克数条目。
+
+### 5. 提交与边界
+- 提交 `73efaa0` 推送 origin/main（recipes.js / howto-amounts.json / 两个生成脚本 / .gitignore）。含 PVE 密码的部署脚本按仓库约定(.gitignore 第45-46行)不入库；menu-linux 亦忽略。
+- 遗留：线上 API 此前报菜数 184，本地 data/dishes.json 仅 109——约 75 道菜名本环境取不到（SSH 密码非交互受限），未覆盖；如需补全须提供菜名或开放 SSH。
+- 注意：勿直接用 `parse_howto_amounts.py` 覆盖 howto-amounts.json（会清空本轮人工补全的 86 道）。
