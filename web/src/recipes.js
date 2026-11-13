@@ -473,20 +473,22 @@ export function getRecipe(dish) {
   }
   const preciseList = HOWTO[dish?.name]
   const entry = INDEX[dish?.name]
-  // HowToCook 精确用量：命中同名菜时整表替换模板配料（步骤优先用本项目自写模板）。
+  // HowToCook 精确用量：命中同名菜时整表替换模板配料（步骤优先用手写步骤表）。
   // 购物清单里「盐 适量 / 生抽 1 勺」因此变成「盐 2 g / 生抽 15ml」，买菜重量有依据。
-  // 注意：精确用量优先级高于内置模板，且对「不在 INDEX 里的家庭私家菜」同样生效
-  //       （私家菜无内置步骤模板，步骤改从 howto-steps.json 取手工步骤）。
+  // 步骤优先级：手写 howto-steps.json > INDEX 技法模板（仅当某菜尚未补手写步骤时回退）。
+  // 内置菜与家庭私家菜现统一使用手写步骤，质量一致。
   if (preciseList && preciseList.length) {
+    // 手写步骤优先：内置菜与家庭私家菜统一走 howto-steps.json（手写质量），
+    // 仅当某道菜尚未补手写步骤时，才回退到 INDEX 技法模板生成的步骤。
+    const handSteps = HOWTO_STEPS[dish?.name]
     let steps = []
-    if (entry) {
+    if (handSteps && handSteps.length) {
+      steps = handSteps
+    } else if (entry) {
       const [key, main, extra] = entry
       const build = T[key] || T.kc
       const auto = key === 'lb' || key === 'qc' ? { spicy: SPICY.has(dish.name) } : {}
       steps = build(main, { ...auto, ...(extra || {}) }).steps
-    } else {
-      // 家庭私家菜（builtin=False）无内置步骤模板，取手工步骤
-      steps = HOWTO_STEPS[dish?.name] || []
     }
     return { ingredients: preciseList.slice(), steps, custom: false, precise: true }
   }
