@@ -658,3 +658,11 @@ idx 001–033 共 33 张逐张下载校验，**全部 2400×1800、异常 0**；
 - 接线：`recipes.js` `getRecipe` 改为 **`HOWTO_STEPS` 手写步骤优先，INDEX 技法模板仅作兜底**（某菜未补手写步骤时才回退）；内置菜与私家菜现统一走手写步骤，质量一致。旧模板分支仍保留作 fallback。
 - 部署：build.mjs→`index-CQxtzpxc.js`；交叉编译 `menu-linux`(md5 77572747...)；复用 deploy_menu4.py（改 JS 校验为远端 curl|md5sum 真比对，消除之前非 ASCII 字节导致的误报）；每步 md5 一致后重启；远端 md5 与本地 MATCH、容器 healthy、ping ok。线上抽检 东坡肉/佛跳墙/松鼠桂鱼/回锅肉/开水白菜 手写步骤均命中。提交 `6ff9014` 推送 origin/main（recipes.js/howto-steps.json/gen_howto_steps_builtin.py）。
 - 注意：勿用 `parse_howto_amounts.py` 覆盖这两个 json（会清空人工补全的 184 道克数/步骤）；HOWTO 与 HOWTO_STEPS 现在是 recipes.js 唯一数据来源。
+
+### 9. 巡查并修正 14 道菜步骤细节（用户："你巡查一下"）
+- 巡查方法：先脚本交叉比对「配料表 vs 步骤」捞疑似缺口，再人工通读全部 184 道过滤噪声（脚本误报多为佐料省略/同物异名）。
+- 修正（均写入 `web/src/howto-steps.json`）：
+  - **事实错误**：双皮奶「蛋黄」→「蛋清」（传统用蛋清，配料表亦为蛋清）。
+  - **漏关键主料/配料**：小炒黄牛肉补小米椒野山椒（辣味来源）、毛血旺补毛肚黄豆芽莴笋、鱼香肉丝补青椒、夫妻肺片/口水鸡补花生碎香菜、木须肉补黄瓜、黄山炖鸽补山药枸杞葱姜高汤、徽州一品锅补鸡肉火腿香菇豆腐、可乐鸡翅用上姜料酒糖、宫保鸡丁补莴笋丁。
+  - **火候/细节**：东坡肉 1.5h→1.5–2h 且补老抽上色、德州扒鸡 1h→1.5h、西湖醋鱼糖醋汁加淀粉勾薄芡。
+- 部署：build.mjs→`index-GucizVUo.js`；交叉编译 `menu-linux`(md5 e047f98b…)；deploy_menu4.py 每步 md5 一致后重启；远端 md5 与本地 MATCH、容器 healthy、ping ok；线上抽检 14 道全部命中。提交 `002bf10` 推送 origin/main（仅 howto-steps.json）。
