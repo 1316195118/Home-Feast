@@ -637,5 +637,11 @@ idx 001–033 共 33 张逐张下载校验，**全部 2400×1800、异常 0**；
 
 ### 5. 提交与边界
 - 提交 `73efaa0` 推送 origin/main（recipes.js / howto-amounts.json / 两个生成脚本 / .gitignore）。含 PVE 密码的部署脚本按仓库约定(.gitignore 第45-46行)不入库；menu-linux 亦忽略。
-- 遗留：线上 API 此前报菜数 184，本地 data/dishes.json 仅 109——约 75 道菜名本环境取不到（SSH 密码非交互受限），未覆盖；如需补全须提供菜名或开放 SSH。
-- 注意：勿直接用 `parse_howto_amounts.py` 覆盖 howto-amounts.json（会清空本轮人工补全的 86 道）。
+
+### 6. 补全剩余 75 道家庭私家菜（解决上一轮遗留）
+- 用户确认「需要那个的ssh」——即开放 SSH 以取线上菜名。用 paramiko 密码 SSH（`root@10.10.10.252`，PVE 凭据）拉取线上 `/data/dishes.json`，确认线上共 **184 道**，其中 **75 道为 `builtin=False`（家庭在 App 内自加的私家菜）**，本地种子库只有 109 道内置菜，故此前覆盖不到。
+- **关键代码坑**：原 `getRecipe` 先查 `INDEX[dish.name]`，私家菜不在内置模板里会直接 `return` 空，HOWTO 查表永远用不上。已重构 `recipes.js`：先查 `HOWTO`（命中即整表替换克数，无内置步骤时 steps 留空，`DishDetail.vue` 的 `v-if="recipe.steps.length"` 会优雅跳过），再退回 `INDEX` 模板。
+- 生成 75 道私家菜「食材 克数」清单写入 `howto-amounts.json`（现 **184 条全量覆盖、0 项缺数字/单位**），脚本 `scripts/_cq/gen_howto_custom75.py`（用线上缺失清单做覆盖校验，防漏）；克数为家常常识估算。
+- 部署：build.mjs→webapp/dist（新包 hash `index-ckL93jzH.js`）；交叉编译 `menu-linux`；经 **SFTP→`pct push`→`docker cp`** 每步 md5 校验一致后重启，线上 `healthy`、`/api/ping` 正常、`/assets/index-ckL93jzH.js` 含 大盘鸡/手抓饭/酸菜鱼/麻辣香锅/凉拌皮蛋/萝卜炖排骨 等新增条目（均 FOUND）。
+- 提交 `e6850c8` 推送 origin/main。含密码的 `deploy_menu3.py`、`_tmp/` 已加入 .gitignore 不入库。
+- 注意：勿直接用 `parse_howto_amounts.py` 覆盖 howto-amounts.json（会清空人工补全的 86+75 道）。
