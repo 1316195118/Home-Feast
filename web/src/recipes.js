@@ -459,6 +459,7 @@ const SPICY = new Set([
 // 运行时整表替换模板配料；做法步骤仍用本项目自写模板；用户自定义配料永远优先。
 // 注意：此文件是菜谱克数的唯一来源，勿直接用 parse_howto_amounts.py 覆盖（会清空人工补全部分）。
 import HOWTO from './howto-amounts.json'
+import HOWTO_STEPS from './howto-steps.json'
 
 /**
  * 取一道菜的做法。优先用用户自己编辑并保存的配料/步骤，
@@ -472,10 +473,10 @@ export function getRecipe(dish) {
   }
   const preciseList = HOWTO[dish?.name]
   const entry = INDEX[dish?.name]
-  // HowToCook 精确用量：命中同名菜时整表替换模板配料（步骤仍用本项目自写模板）。
+  // HowToCook 精确用量：命中同名菜时整表替换模板配料（步骤优先用本项目自写模板）。
   // 购物清单里「盐 适量 / 生抽 1 勺」因此变成「盐 2 g / 生抽 15ml」，买菜重量有依据。
   // 注意：精确用量优先级高于内置模板，且对「不在 INDEX 里的家庭私家菜」同样生效
-  //       （私家菜无内置步骤模板，故 steps 留空，页面仅展示克数表）。
+  //       （私家菜无内置步骤模板，步骤改从 howto-steps.json 取手工步骤）。
   if (preciseList && preciseList.length) {
     let steps = []
     if (entry) {
@@ -483,6 +484,9 @@ export function getRecipe(dish) {
       const build = T[key] || T.kc
       const auto = key === 'lb' || key === 'qc' ? { spicy: SPICY.has(dish.name) } : {}
       steps = build(main, { ...auto, ...(extra || {}) }).steps
+    } else {
+      // 家庭私家菜（builtin=False）无内置步骤模板，取手工步骤
+      steps = HOWTO_STEPS[dish?.name] || []
     }
     return { ingredients: preciseList.slice(), steps, custom: false, precise: true }
   }
