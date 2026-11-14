@@ -28,6 +28,16 @@ const backupBusy = ref(false)
 const showBackupModal = ref(false)
 const backupRoot = ref(null)
 useModalBehavior(() => { showBackupModal.value = false }, backupRoot, showBackupModal)
+
+// 关于与版权：说明文字较长，卡片只留摘要，完整素材与授权说明进二级弹窗
+const showAboutModal = ref(false)
+const aboutRoot = ref(null)
+useModalBehavior(() => { showAboutModal.value = false }, aboutRoot, showAboutModal)
+
+// 访问口令：改口令/关口令都是低频敏感操作，卡片只留状态，操作收进二级弹窗
+const showAccessModal = ref(false)
+const accessRoot = ref(null)
+useModalBehavior(() => { showAccessModal.value = false }, accessRoot, showAccessModal)
 const autoBackup = computed(() => state.settings.autoBackup !== false)
 const backupKeep = computed(() => state.settings.backupKeep || 7)
 async function loadBackups() {
@@ -268,7 +278,7 @@ async function saveRoster() {
     <div class="section-head">
       <div>
         <h2 class="section-title">⚙️ 设置</h2>
-        <div class="section-sub">数据都在你自己的设备里：家庭信息、菜系、时段、排班、备份与访问口令</div>
+        <div class="section-sub">数据都在你自己的设备里：家庭信息、菜系、时段、排班、口令与备份</div>
       </div>
     </div>
 
@@ -357,26 +367,17 @@ async function saveRoster() {
           </span>
         </div>
         <p class="setting-desc" v-if="state.accessEnvManaged">
-          当前由服务端环境变量 <code>MENU_ACCESS_CODE</code> 控制，请改 docker-compose.yml 后重建容器。
+          当前由服务端环境变量 <code>MENU_ACCESS_CODE</code> 控制，改 docker-compose.yml 后重建容器生效。
         </p>
         <template v-else>
           <p class="setting-desc">
-            开启后，其它设备打开网页要先输入口令。口令存在服务端数据目录，不会写进备份 zip；本机记住后无需重复输入。
+            {{ state.accessRequired ? '其它设备打开网页要先输口令；本机已记住，无需重复输入。' : '开启后，其它设备打开网页要先输口令才能点菜。' }}
           </p>
-          <div class="setting-row setting-row-inline">
-            <input
-              v-model="accessInput" class="input" type="password" maxlength="64"
-              placeholder="设置访问口令（至少 4 位）" autocomplete="new-password"
-              aria-label="访问口令" @keyup.enter="saveAccess"
-            />
-            <button class="btn btn-primary btn-sm" :disabled="accessBusy" @click="saveAccess">
-              {{ accessBusy ? '保存中' : (state.accessRequired ? '改口令' : '开启口令') }}
-            </button>
-          </div>
-          <div class="setting-actions mt-10" v-if="state.accessRequired">
-            <button class="btn btn-sm btn-ghost" :disabled="accessBusy" @click="clearAccess">关闭口令</button>
-            <button class="btn btn-sm btn-ghost" @click="forgetCode">本机重新输入</button>
-          </div>
+          <div class="setting-meta tiny muted">口令存在服务端数据目录，不会写进备份 zip</div>
+          <button class="btn btn-soft btn-sm cuisine-manage-btn" @click="showAccessModal = true">
+            管理访问口令
+            <span class="chev">›</span>
+          </button>
         </template>
       </div>
 
@@ -398,18 +399,16 @@ async function saveRoster() {
       </div>
 
       <div class="card setting-card sc-about">
-        <div class="setting-title">🎨 关于与版权</div>
-        <p class="setting-desc">插画由 AI 生成，文案自写，源码 MIT；未用第三方图库或模板。</p>
-        <details class="setting-details">
-          <summary>查看完整素材与授权说明</summary>
-          <p class="setting-desc">
-            界面里的菜品插画由 AI 绘制，属于本项目自生成素材；菜名与菜系是通用饮食常识，描述文字自写。未使用任何第三方图库照片、商业模板、字体或图标库。精确用量数值取自公共领域项目 HowToCook（Unlicense）。完整说明见仓库 <code>NOTICE.md</code>。
-          </p>
-        </details>
-        <div class="setting-actions">
-          <span class="tag tag-green">家里吃点啥 v{{ state.version }}</span>
-          <span class="tag">Go + Vue 3 · 单文件服务端</span>
+        <div class="setting-title">
+          🎨 关于与版权
+          <span class="tag setting-title-tag">v{{ state.version }}</span>
         </div>
+        <p class="setting-desc">插画由 AI 生成，文案自写，源码 MIT；未用第三方图库或模板。</p>
+        <div class="setting-meta tiny muted">Go + Vue 3 · 单文件服务端 · 数据全在本地</div>
+        <button class="btn btn-soft btn-sm cuisine-manage-btn" @click="showAboutModal = true">
+          查看素材与授权
+          <span class="chev">›</span>
+        </button>
       </div>
 
       <div class="card setting-card sc-meals">
@@ -426,6 +425,97 @@ async function saveRoster() {
     </div>
 
     <Teleport to="body">
+      <Transition name="modal">
+        <div v-if="showAccessModal" ref="accessRoot" class="modal-backdrop" @click.self="showAccessModal = false">
+          <div class="modal" role="dialog" aria-modal="true" aria-label="访问口令">
+            <div class="modal-head">
+              <h2>🔒 访问口令</h2>
+              <button class="icon-btn" aria-label="关闭" @click="showAccessModal = false">✕</button>
+            </div>
+            <p class="setting-desc">
+              开启后，其它设备打开网页要先输入口令。口令存在服务端数据目录，不会写进备份 zip；本机记住后无需重复输入。
+            </p>
+            <div class="setting-row setting-row-inline mt-12">
+              <input
+                v-model="accessInput" class="input" type="password" maxlength="64"
+                placeholder="设置访问口令（至少 4 位）" autocomplete="new-password"
+                aria-label="访问口令" @keyup.enter="saveAccess"
+              />
+              <button class="btn btn-primary btn-sm" :disabled="accessBusy" @click="saveAccess">
+                {{ accessBusy ? '保存中' : (state.accessRequired ? '改口令' : '开启口令') }}
+              </button>
+            </div>
+            <div class="setting-actions mt-10" v-if="state.accessRequired">
+              <button class="btn btn-sm btn-ghost" :disabled="accessBusy" @click="clearAccess">关闭口令</button>
+              <button class="btn btn-sm btn-ghost" @click="forgetCode">本机重新输入</button>
+            </div>
+            <div class="modal-foot">
+              <button class="btn btn-primary btn-sm" @click="showAccessModal = false">完成</button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+
+      <Transition name="modal">
+        <div v-if="showAboutModal" ref="aboutRoot" class="modal-backdrop" @click.self="showAboutModal = false">
+          <div class="modal" role="dialog" aria-modal="true" aria-label="关于与版权">
+            <div class="modal-head">
+              <h2>🎨 关于与版权</h2>
+              <button class="icon-btn" aria-label="关闭" @click="showAboutModal = false">✕</button>
+            </div>
+
+            <div class="about-list">
+              <div class="about-item">
+                <span class="about-ico">🖼️</span>
+                <div>
+                  <div class="about-label">菜品插画</div>
+                  <div class="about-text">界面里的菜品图由 AI 绘制，属本项目自生成素材，可随项目一同使用。</div>
+                </div>
+              </div>
+              <div class="about-item">
+                <span class="about-ico">📝</span>
+                <div>
+                  <div class="about-label">菜名与文案</div>
+                  <div class="about-text">菜名与菜系属通用饮食常识；菜品描述、推荐理由、页面文案均为自写。</div>
+                </div>
+              </div>
+              <div class="about-item">
+                <span class="about-ico">📐</span>
+                <div>
+                  <div class="about-label">精确用量</div>
+                  <div class="about-text">克数换算取自公共领域项目 HowToCook（Unlicense），按其许可自由使用。</div>
+                </div>
+              </div>
+              <div class="about-item">
+                <span class="about-ico">🚫</span>
+                <div>
+                  <div class="about-label">未使用的素材</div>
+                  <div class="about-text">未使用任何第三方图库照片、商业模板、外部字体或图标库。</div>
+                </div>
+              </div>
+              <div class="about-item">
+                <span class="about-ico">📄</span>
+                <div>
+                  <div class="about-label">授权与完整说明</div>
+                  <div class="about-text">源码以 MIT 授权；完整素材清单见仓库根目录 <code>NOTICE.md</code>。</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="about-stack">
+              <span class="tag tag-green">家里吃点啥 v{{ state.version }}</span>
+              <span class="tag">Go + Vue 3</span>
+              <span class="tag">单文件服务端</span>
+              <span class="tag">数据全在本地</span>
+            </div>
+
+            <div class="modal-foot">
+              <button class="btn btn-primary btn-sm" @click="showAboutModal = false">知道了</button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+
       <Transition name="modal">
         <div v-if="showBackupModal" ref="backupRoot" class="modal-backdrop" @click.self="showBackupModal = false">
           <div class="modal modal-wide" role="dialog" aria-modal="true" aria-label="备份与恢复">

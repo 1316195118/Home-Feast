@@ -358,13 +358,13 @@
    不能用 grid-auto-rows:1fr，否则下面那张通栏的「用餐时段」会把所有行一起撑高。 */
 /* 设置页所有卡片统一：同宽、同内边距、同最小高度，操作区一律贴底 */
 .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 16px; grid-auto-rows: 1fr; }
-/* 设置卡按使用动线排序：日常基础 → 偏好 → 安全 → 数据备份三连 → 关于。
+/* 设置卡按使用动线排序：日常偏好 → 内容与安全管理 → 数据与信息。
    用 CSS order 而非挪 DOM，键盘 Tab 顺序仍按模板，读屏连贯。 */
 .settings-grid .sc-name { order: 1; }
-.settings-grid .sc-meals { order: 2; }
-.settings-grid .sc-cuisine { order: 3; }
-.settings-grid .sc-roster { order: 4; }
-.settings-grid .sc-theme { order: 5; }
+.settings-grid .sc-theme { order: 2; }
+.settings-grid .sc-meals { order: 3; }
+.settings-grid .sc-cuisine { order: 4; }
+.settings-grid .sc-roster { order: 5; }
 .settings-grid .sc-access { order: 6; }
 .settings-grid .sc-backup { order: 7; }
 .settings-grid .sc-storage { order: 8; }
@@ -377,6 +377,22 @@
 .setting-details { margin-top: 8px; }
 .setting-details summary { font-size: 0.8rem; font-weight: 700; color: var(--brand); cursor: pointer; padding: 4px 0; }
 .setting-details[open] summary { margin-bottom: 6px; }
+/* 卡片底部基线统一：输入行、状态行也落在与其他卡按钮相同的基线上，
+   否则「家的名字」输入框紧贴描述、「数据与配置」状态吊在中间，9 张卡的下沿看起来参差 */
+.sc-name .setting-row-inline { margin-top: auto; padding-top: 14px; }
+.sc-storage .setting-meta { margin-top: auto; padding-top: 12px; }
+
+/* ---------- 关于与版权（二级弹窗）：素材来源逐条列清 ---------- */
+.about-list { display: flex; flex-direction: column; gap: 2px; margin: 4px 0 2px; }
+.about-item {
+  display: flex; align-items: flex-start; gap: 11px;
+  padding: 11px 2px; border-bottom: 1px dashed var(--line);
+}
+.about-item:last-child { border-bottom: 0; }
+.about-ico { flex: none; font-size: 1.05rem; line-height: 1.35; }
+.about-label { font-size: 0.86rem; font-weight: 800; color: var(--ink); margin-bottom: 2px; }
+.about-text { font-size: 0.8rem; color: var(--muted); line-height: 1.6; }
+.about-stack { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
 
 /* ---------- 用餐时段编辑（放在弹窗里，卡片本身与其它设置卡一样大） ---------- */
 .setting-title-tag { margin-left: 8px; font-size: 0.7rem; font-weight: 800; vertical-align: middle; }
