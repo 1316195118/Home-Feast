@@ -12,8 +12,13 @@ import (
 	"familymenu/internal/store"
 )
 
-// Version 会显示在界面设置页与 /api/ping 中。
-const Version = "0.1.0"
+// Version / ReleaseNote / BuildTime 由 scripts/release.py 在编译前写进
+// version_gen.go（四段式版本号，末位满 10 进位），这里只留开发态默认值。
+var (
+	Version     = "dev"
+	ReleaseNote = "开发版（未经过 release 脚本）"
+	BuildTime   = ""
+)
 
 // Server 持有一个 JSON 存储实例和构建时嵌入的前端文件系统。
 type Server struct {
@@ -21,11 +26,12 @@ type Server struct {
 	web     fs.FS
 	envCode string       // MENU_ACCESS_CODE 环境变量；非空时优先于网页里设置的口令
 	events  *eventBroker // SSE 广播器，写操作成功后通知所有在线设备
+	limit   *failLimiter // 口令 / PIN 的失败退避
 }
 
 // New 组装全部路由。网页里也能设置访问口令，见 updateSettings。
 func New(st *store.Store, web fs.FS, envCode string) http.Handler {
-	s := &Server{st: st, web: web, envCode: envCode, events: newEventBroker()}
+	s := &Server{st: st, web: web, envCode: envCode, events: newEventBroker(), limit: newFailLimiter()}
 
 	api := http.NewServeMux()
 	api.HandleFunc("GET /api/ping", s.ping)
@@ -85,11 +91,15 @@ func (s *Server) protect(next http.Handler) http.Handler {
 		// EventSource 无法带自定义请求头，事件流与 ping/config 一样跳过校验；
 		// 它只推版本号，不含任何业务数据。
 		if code := s.effectiveCode(); code != "" && !publicAPIPath(r.URL.Path) {
+			key := "code:" + clientIP(r)
+			s.limit.wait(key) // 连续输错后逐步变慢，压制口令爆破
 			given := r.Header.Get("X-Access-Code")
 			if subtle.ConstantTimeCompare([]byte(given), []byte(code)) != 1 {
+				s.limit.Fail(key)
 				jsonErr(w, http.StatusUnauthorized, "需要访问口令")
 				return
 			}
+			s.limit.Reset(key)
 		}
 		sw := &statusWriter{ResponseWriter: w}
 		next.ServeHTTP(sw, r)
@@ -130,7 +140,7 @@ func sameOrigin(r *http.Request) bool {
 
 func (s *Server) ping(w http.ResponseWriter, r *http.Request) {
 	jsonOK(w, map[string]any{
-		"ok": true, "version": Version,
+		"ok": true, "version": Version, "releaseNote": ReleaseNote, "buildTime": BuildTime,
 		"time": time.Now().Format(time.RFC3339),
 	})
 }
@@ -138,6 +148,8 @@ func (s *Server) ping(w http.ResponseWriter, r *http.Request) {
 func (s *Server) config(w http.ResponseWriter, r *http.Request) {
 	jsonOK(w, map[string]any{
 		"version":          Version,
+		"releaseNote":      ReleaseNote,
+		"buildTime":        BuildTime,
 		"accessRequired":   s.effectiveCode() != "",
 		"accessEnvManaged": s.envCode != "", // 环境变量控制时，网页里不能改
 	})
