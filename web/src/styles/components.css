@@ -149,6 +149,7 @@
   max-height: min(86vh, 800px);
   max-height: min(86dvh, 800px);
   overflow: auto;
+  overscroll-behavior: contain; /* 窗口内滚到底不再带动背后的页面滚动 */
   background: var(--surface);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);

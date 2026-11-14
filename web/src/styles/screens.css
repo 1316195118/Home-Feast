@@ -249,10 +249,22 @@
 .search-box::before { content: "🔍"; position: absolute; left: 11px; top: 50%; transform: translateY(-50%); font-size: 0.85rem; opacity: 0.65; }
 
 .dish-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(212px, 1fr)); gap: 16px; }
-/* 切换分类时网格整体淡入一次，避免「瞬间换一批」的生硬 */
-.dish-grid.grid-in { animation: grid-fade-in 0.26s var(--ease); }
-@keyframes grid-fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { .dish-grid.grid-in { animation: none; } }
+/* 切换分类时前 12 张卡片错峰淡入；fill-mode backwards 保证动画结束后 hover 抬升不受影响 */
+@keyframes card-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.dish-grid.grid-in .dish-card { animation: card-in 0.26s var(--ease) backwards; }
+.dish-grid.grid-in .dish-card:nth-child(1) { animation-delay: 0s; }
+.dish-grid.grid-in .dish-card:nth-child(2) { animation-delay: 0.02s; }
+.dish-grid.grid-in .dish-card:nth-child(3) { animation-delay: 0.04s; }
+.dish-grid.grid-in .dish-card:nth-child(4) { animation-delay: 0.06s; }
+.dish-grid.grid-in .dish-card:nth-child(5) { animation-delay: 0.08s; }
+.dish-grid.grid-in .dish-card:nth-child(6) { animation-delay: 0.1s; }
+.dish-grid.grid-in .dish-card:nth-child(7) { animation-delay: 0.12s; }
+.dish-grid.grid-in .dish-card:nth-child(8) { animation-delay: 0.14s; }
+.dish-grid.grid-in .dish-card:nth-child(9) { animation-delay: 0.16s; }
+.dish-grid.grid-in .dish-card:nth-child(10) { animation-delay: 0.18s; }
+.dish-grid.grid-in .dish-card:nth-child(11) { animation-delay: 0.2s; }
+.dish-grid.grid-in .dish-card:nth-child(12) { animation-delay: 0.22s; }
+@media (prefers-reduced-motion: reduce) { .dish-grid.grid-in .dish-card { animation: none; } }
 .dish-card { overflow: hidden; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease), border-color 0.2s var(--ease); }
 /* 触屏没有真 hover，避免点按后卡片「粘」在抬起状态 */
 @media (hover: hover) {
@@ -933,6 +945,9 @@
   .modal-enter-active .modal { animation: sheet-up 0.3s var(--ease); }
   .modal-leave-active .modal { animation: sheet-down 0.2s var(--ease) forwards; }
   .modal-head { margin-bottom: 12px; }
+  /* 手机端抽屉内不显示滚动条，滑动更干净（内容仍可滚） */
+  .modal { scrollbar-width: none; }
+  .modal::-webkit-scrollbar { display: none; }
   /* 骰子 PK 内容多，别让标题贴住抽屉上沿：多留顶部内边距 + 降低整体高度离屏幕顶更远 */
   .pk-modal { max-height: 82vh; max-height: 82dvh; padding-top: 20px; }
   .pk-modal .modal-head { padding-top: 2px; }
@@ -1110,6 +1125,36 @@
 .pill.active { background: var(--brand); border-color: var(--brand); color: #fff; }
 .meal-set-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 9px; margin-top: 10px; }
 .meal-set-actions { display: flex; gap: 8px; margin-top: 10px; }
+
+/* 首页小吃专区 */
+.snack-strip { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--line-strong); }
+.snack-strip-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.snack-strip-title { font-weight: 800; font-size: 0.9rem; color: var(--brand-dark); }
+.snack-picks { display: flex; flex-wrap: wrap; gap: 8px; }
+.snack-pick {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 10px 6px 12px; border-radius: 999px;
+  border: 1px solid var(--line-strong); background: var(--surface);
+  font-size: 0.8rem; font-weight: 600; color: var(--ink); cursor: pointer;
+  transition: all 0.15s var(--ease);
+}
+.snack-pick:hover { border-color: var(--brand); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+.snack-pick.picked { border-color: var(--green); color: var(--green-ink); background: var(--green-soft); }
+.snack-pick-plus { font-size: 0.78rem; color: var(--brand-dark); }
+.snack-pick.picked .snack-pick-plus { color: var(--green-ink); }
+
+/* 长列表回到顶部 */
+.back-top {
+  position: fixed; right: 18px; bottom: calc(84px + env(safe-area-inset-bottom));
+  z-index: 40; width: 44px; height: 44px; padding: 0;
+  border: 1px solid var(--line-strong); border-radius: 50%;
+  background: var(--surface); color: var(--brand-dark);
+  font-size: 1.15rem; font-weight: 800; line-height: 1;
+  box-shadow: var(--shadow); cursor: pointer;
+  display: grid; place-items: center;
+  transition: transform 0.15s var(--ease), box-shadow 0.15s var(--ease);
+}
+.back-top:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
 
 /* 历史趋势图：近 14 天点菜量柱状 + 菜系分布横条（纯 CSS，无图表库） */
 .trend-card, .dist-card { padding: 14px 16px; margin-bottom: 14px; }

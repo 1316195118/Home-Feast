@@ -1,5 +1,5 @@
 <script setup>
-import { inject, ref, computed, watch } from 'vue'
+import { inject, ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import DishCard from './DishCard.vue'
 import DishEditor from './DishEditor.vue'
 import DishDetail from './DishDetail.vue'
@@ -22,12 +22,20 @@ const visibleCuisines = computed(() =>
   (state.cuisines || []).filter((c) => !isCuisineHidden(c.key, state.hiddenCuisines))
 )
 
+// 「小吃」独立成栏：按标签横切聚合。剥离后小吃只出现在「全部」和「小吃」，
+// 不再掺在地域菜系里，地域菜系的计数也同步扣掉，避免「川菜 10 道点进去只有 8 道」。
+const SNACK_TAGS = ['小吃', '点心']
+const isSnack = (d) => (d.tags || []).some((t) => SNACK_TAGS.includes(String(t)))
+const snackCount = computed(() => state.dishes.filter(
+  (d) => !isCuisineHidden(d.cuisine, state.hiddenCuisines) && isSnack(d),
+).length)
+
 const counts = computed(() => {
   const map = {}
   for (const d of state.dishes) {
-    if (!isCuisineHidden(d.cuisine, state.hiddenCuisines)) {
-      map[d.cuisine] = (map[d.cuisine] || 0) + 1
-    }
+    if (isCuisineHidden(d.cuisine, state.hiddenCuisines)) continue
+    if (isSnack(d)) continue // 小吃单独成栏，不重复计入地域菜系
+    map[d.cuisine] = (map[d.cuisine] || 0) + 1
   }
   return map
 })
@@ -35,14 +43,6 @@ const counts = computed(() => {
 const visibleDishCount = computed(() =>
   state.dishes.filter((d) => !isCuisineHidden(d.cuisine, state.hiddenCuisines)).length
 )
-
-// 「小吃」独立成栏：不改变菜品原菜系（干炸响铃仍属浙菜），只按标签聚合，
-// 这样地域菜系保持完整，小吃又能一栏找齐，不丢归属也不重复维护数据。
-const SNACK_TAGS = ['小吃', '点心']
-const isSnack = (d) => (d.tags || []).some((t) => SNACK_TAGS.includes(String(t)))
-const snackCount = computed(() => state.dishes.filter(
-  (d) => !isCuisineHidden(d.cuisine, state.hiddenCuisines) && isSnack(d),
-).length)
 
 // 「优先推荐」：按冰箱已选主料的命中数实时重排，佐料不参与；
 // 命中数相同保持菜谱原顺序，勾选食材后 computed 自动重算，无需刷新。
@@ -63,7 +63,10 @@ const filtered = computed(() => {
     if (isCuisineHidden(d.cuisine, state.hiddenCuisines)) return false
     if (activeCuisine.value === 'snack') {
       if (!isSnack(d)) return false
-    } else if (activeCuisine.value !== 'all' && d.cuisine !== activeCuisine.value) return false
+    } else if (activeCuisine.value !== 'all') {
+      if (d.cuisine !== activeCuisine.value) return false
+      if (isSnack(d)) return false // 小吃已独立成栏，地域菜系里不再重复出现
+    }
     if (onlyFavorite.value && !d.favorite) return false
     if (!q) return true
     return [d.name, d.desc, ...(d.tags || [])].join(' ').toLowerCase().includes(q)
@@ -85,6 +88,13 @@ function randomDish() {
   if (!pool.length) return
   detailId.value = pool[Math.floor(Math.random() * pool.length)].id
 }
+
+// 菜谱很长时提供「回到顶部」：滚动超过 420px 才出现，避免干扰首屏
+const showTop = ref(false)
+function onScroll() { showTop.value = (window.scrollY || 0) > 420 }
+function scrollTop() { window.scrollTo({ top: 0, behavior: 'smooth' }) }
+onMounted(() => window.addEventListener('scroll', onScroll, { passive: true }))
+onUnmounted(() => window.removeEventListener('scroll', onScroll))
 
 // 当前选中的分类若是被隐藏了，自动退回「全部」
 watch(
@@ -249,6 +259,10 @@ async function savePantry() {
     </Transition>
     <Transition name="modal">
       <DishEditor v-if="editorOpen" :dish="editorDish" @close="editorOpen = false" />
+    </Transition>
+
+    <Transition name="pop">
+      <button v-if="showTop" class="back-top" type="button" aria-label="回到顶部" @click="scrollTop">↑</button>
     </Transition>
 
     <Transition name="modal">

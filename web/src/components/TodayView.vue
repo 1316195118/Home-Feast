@@ -114,6 +114,27 @@ function shuffle() {
   suggestions.value = computeSuggestions(exclude)
 }
 
+// 首页小吃专区：从「小吃/点心」标签的菜里挑 3 道，换一批可刷新
+const SNACK_TAGS = ['小吃', '点心']
+const snackSalt = ref(0)
+const snackPicks = computed(() => {
+  const pool = state.dishes.filter((d) =>
+    (d.tags || []).some((t) => SNACK_TAGS.includes(String(t)))
+    && !isCuisineHidden(d.cuisine, state.hiddenCuisines))
+  if (!pool.length) return []
+  return smartSuggest(pool, {
+    today: state.today,
+    pantry: state.settings.pantry || [],
+    member: selfMember.value,
+    hiddenCuisines: state.hiddenCuisines,
+    orders: state.plan.orders || [],
+    salt: snackSalt.value,
+    limit: 3,
+    ingredientsOf: (d) => getRecipe(d).ingredients || [],
+  })
+})
+function shuffleSnacks() { snackSalt.value += 1 }
+
 // 「本周菜单」：按人数配「荤 + 素 + 汤（+ 主食）」，整周不重样，可导出图片
 const weekOpen = ref(false)
 
@@ -460,6 +481,24 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
             <span class="suggest-reasons">{{ s.reasons.join(' · ') }}</span>
           </div>
         </TransitionGroup>
+
+        <div class="snack-strip" v-if="snackPicks.length">
+          <div class="snack-strip-head">
+            <span class="snack-strip-title">🍢 来点小吃解馋</span>
+            <button class="btn btn-ghost btn-sm" type="button" @click="shuffleSnacks">换一批</button>
+          </div>
+          <div class="snack-picks">
+            <button
+              v-for="s in snackPicks" :key="s.dish.id" type="button"
+              class="snack-pick" :class="{ picked: isPicked(s.dish) }"
+              :aria-label="`点这道：${s.dish.name}`"
+              @click="quickOrder(s.dish, $event)"
+            >
+              <span class="snack-pick-name">{{ s.dish.name }}</span>
+              <span class="snack-pick-plus" aria-hidden="true">{{ isPicked(s.dish) ? '✓' : '＋' }}</span>
+            </button>
+          </div>
+        </div>
 
         <div class="meal-plan">
           <div class="meal-plan-bar">
