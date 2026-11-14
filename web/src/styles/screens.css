@@ -6,7 +6,7 @@
    它们会让本元素成为 fixed 后代的包含块，导致手机端 .tabs 的 bottom:0
    相对顶栏而非视口计算，底部导航会跑到页面顶部。毛玻璃改由 .tabs 自己承担。 */
 .topbar {
-  position: sticky; top: 0; z-index: 30;
+  position: sticky; top: 0; z-index: var(--z-sticky);
   background: rgba(251, 246, 238, 0.97);
   border-bottom: 1px solid var(--line);
 }
@@ -65,7 +65,7 @@
 .main { width: 100%; max-width: 1180px; margin: 0 auto; padding: 24px 22px 40px; flex: 1; overflow-x: clip; }
 .footer { text-align: center; padding: 6px 20px 26px; font-size: 0.78rem; color: var(--muted); }
 
-.section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin: 26px 0 14px; }
+.section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-gap); margin: var(--space-page) 0 var(--space-card); }
 .section-head:first-child { margin-top: 0; }
 .section-title { font-size: 1.12rem; font-weight: 800; }
 .section-sub { font-size: 0.82rem; color: var(--muted); margin-top: 2px; }
@@ -161,8 +161,8 @@
 
 /* 右列要放得下三张推荐卡片，别让它们挤成 2+1 两排 */
 .today-cols { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 20px; margin-top: 24px; align-items: start; }
-.panel { padding: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
-.panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+.panel { padding: var(--space-section); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
+.panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: var(--space-card); }
 .panel-title { font-size: 1.02rem; font-weight: 800; }
 
 .order-list { display: flex; flex-direction: column; gap: 9px; }
@@ -481,7 +481,7 @@
 .meal-icon-trigger { width: 62px; text-align: center; font-size: 1.1rem; cursor: pointer; }
 .meal-icon-trigger[aria-expanded="true"] { border-color: var(--brand); background: var(--brand-soft); }
 .meal-icon-panel {
-  position: absolute; z-index: 5; top: calc(100% + 6px); left: 0;
+  position: absolute; z-index: var(--z-dropdown); top: calc(100% + 6px); left: 0;
   width: min(232px, calc(100vw - 60px));
   padding: 8px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px;
   background: var(--surface); border: 1px solid var(--line-strong);
@@ -657,7 +657,7 @@
   display: flex; flex-direction: column; align-items: center; gap: 10px;
 }
 /* ---------- 首次打开：选择「我是谁」 ---------- */
-.user-pick-backdrop { z-index: 70; }
+.user-pick-backdrop { z-index: var(--z-confirm); }
 .user-pick-modal { max-width: 400px; text-align: center; }
 .user-pick-head { padding: 4px 0 6px; }
 .user-pick-emoji { display: block; font-size: 2.4rem; line-height: 1.2; animation: result-pop 0.4s var(--ease); }
@@ -816,7 +816,7 @@
 
   /* 底部导航：大触摸区、选中指示条、安全区 */
   .tabs {
-    position: fixed; left: 0; right: 0; bottom: 0; top: auto; z-index: 40;
+    position: fixed; left: 0; right: 0; bottom: 0; top: auto; z-index: var(--z-fab);
     gap: 2px;
     padding: 5px 6px calc(5px + env(safe-area-inset-bottom));
     background: var(--badge-bg-strong);
@@ -1037,7 +1037,7 @@
 }
 
 /* ---------- 成员密码 ---------- */
-.pin-backdrop { z-index: 200; } /* 要盖住「首次选人」弹窗 */
+.pin-backdrop { z-index: var(--z-pin); } /* 要盖住「首次选人」弹窗 */
 .pin-modal { max-width: 420px; }
 .pin-modal .field { margin-top: 12px; }
 .pin-modal .setting-desc { margin-top: 0; }
@@ -1070,7 +1070,7 @@
   background: linear-gradient(90deg, var(--brand) 0%, var(--brand-dark) 100%);
   color: #fff; font-size: 0.84rem; font-weight: 600;
   box-shadow: 0 4px 14px rgba(150, 70, 45, 0.22);
-  position: relative; z-index: 60;
+  position: relative; z-index: var(--z-banner);
 }
 .update-dot { font-size: 1rem; line-height: 1; }
 .update-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1146,7 +1146,7 @@
 /* 长列表回到顶部 */
 .back-top {
   position: fixed; right: 18px; bottom: calc(84px + env(safe-area-inset-bottom));
-  z-index: 40; width: 44px; height: 44px; padding: 0;
+  z-index: var(--z-fab); width: 44px; height: 44px; padding: 0;
   border: 1px solid var(--line-strong); border-radius: 50%;
   background: var(--surface); color: var(--brand-dark);
   font-size: 1.15rem; font-weight: 800; line-height: 1;

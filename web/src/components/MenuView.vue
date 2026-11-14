@@ -247,8 +247,9 @@ async function savePantry() {
     </div>
     <Transition name="pop" mode="out-in">
       <div v-if="!filtered.length" key="empty" class="empty">
-        <span class="empty-icon">🥕</span>
-        没找到合适的菜，换个词试试，或者自己加一道
+        <span class="empty-icon">{{ onlyFavorite && !keyword.trim() ? '⭐' : '🥕' }}</span>
+        <template v-if="onlyFavorite && !keyword.trim()">还没有收藏的菜，点菜品卡片右上角的 ☆ 试试</template>
+        <template v-else>没找到合适的菜，换个词试试，或者自己加一道</template>
       </div>
     </Transition>
 

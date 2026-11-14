@@ -179,7 +179,7 @@ a { color: var(--brand); }
 .value-pop { display: inline-block; animation: count-pop var(--dur-base) var(--ease-out); }
 
 /* 点击飘字：预置节点池，pointer-events:none，运行时零 DOM 增删 */
-#fx-layer { position: fixed; inset: 0; z-index: 9999; pointer-events: none; overflow: hidden; }
+#fx-layer { position: fixed; inset: 0; z-index: var(--z-fx); pointer-events: none; overflow: hidden; }
 @keyframes sparkle-rise {
   0%   { opacity: 0; transform: translate(-50%, 6px) scale(0.6); }
   22%  { opacity: 1; }
@@ -320,7 +320,7 @@ html.theme-switching :where(body, .card, .panel, .today-hero, .modal, .btn, .chi
 
 /* ---------- 忙碌指示 ---------- */
 .busy-bar {
-  position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 100;
+  position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: var(--z-progress);
   overflow: hidden; pointer-events: none;
   background: rgba(192, 90, 60, 0.12);
 }
