@@ -465,14 +465,21 @@ import HOWTO_STEPS from './howto-steps.json'
  * 取一道菜的做法。优先用用户自己编辑并保存的配料/步骤，
  * 否则按菜名查内置参考做法。返回 { ingredients, steps, custom }。
  */
+// 菜名改过之后，内置库仍按旧名索引：这里做一层别名，避免每改一次名就复制一份菜谱数据。
+const ALIAS = {
+  '家常烤肉': '烤肉',
+  '山东炒鸡': '炒鸡',
+}
+
 export function getRecipe(dish) {
   const customIngredients = Array.isArray(dish?.ingredients) ? dish.ingredients.filter(Boolean) : []
   const customSteps = Array.isArray(dish?.steps) ? dish.steps.filter(Boolean) : []
   if (customIngredients.length || customSteps.length) {
     return { ingredients: customIngredients, steps: customSteps, custom: true, precise: false }
   }
-  const preciseList = HOWTO[dish?.name]
-  const entry = INDEX[dish?.name]
+  const name = ALIAS[dish?.name] || dish?.name
+  const preciseList = HOWTO[name]
+  const entry = INDEX[name]
   // HowToCook 精确用量：命中同名菜时整表替换模板配料（步骤优先用手写步骤表）。
   // 购物清单里「盐 适量 / 生抽 1 勺」因此变成「盐 2 g / 生抽 15ml」，买菜重量有依据。
   // 步骤优先级：手写 howto-steps.json > INDEX 技法模板（仅当某菜尚未补手写步骤时回退）。
@@ -480,14 +487,14 @@ export function getRecipe(dish) {
   if (preciseList && preciseList.length) {
     // 手写步骤优先：内置菜与家庭私家菜统一走 howto-steps.json（手写质量），
     // 仅当某道菜尚未补手写步骤时，才回退到 INDEX 技法模板生成的步骤。
-    const handSteps = HOWTO_STEPS[dish?.name]
+    const handSteps = HOWTO_STEPS[name]
     let steps = []
     if (handSteps && handSteps.length) {
       steps = handSteps
     } else if (entry) {
       const [key, main, extra] = entry
       const build = T[key] || T.kc
-      const auto = key === 'lb' || key === 'qc' ? { spicy: SPICY.has(dish.name) } : {}
+      const auto = key === 'lb' || key === 'qc' ? { spicy: SPICY.has(name) } : {}
       steps = build(main, { ...auto, ...(extra || {}) }).steps
     }
     return { ingredients: preciseList.slice(), steps, custom: false, precise: true }
@@ -495,7 +502,7 @@ export function getRecipe(dish) {
   if (!entry) return { ingredients: [], steps: [], custom: false, precise: false }
   const [key, main, extra] = entry
   const build = T[key] || T.kc
-  const auto = key === 'lb' || key === 'qc' ? { spicy: SPICY.has(dish.name) } : {}
+  const auto = key === 'lb' || key === 'qc' ? { spicy: SPICY.has(name) } : {}
   const result = build(main, { ...auto, ...(extra || {}) })
   return { ...result, ingredients: dedupe(result.ingredients), custom: false, precise: false }
 }
