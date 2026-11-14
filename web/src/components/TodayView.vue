@@ -244,12 +244,6 @@ async function quickOrder(dish, event) {
   }
 }
 
-// 首屏速览：有菜时给一条「今天已点 N 道 · 前几道菜名」，点一下滚到今日菜单，
-// 解决手机端首屏被分工流程占满、看不到今天到底吃什么的问题。
-const orderPreview = computed(() => orders.value.slice(0, 3).map((o) => o.dishName))
-function scrollToMenu() {
-  document.getElementById('today-menu-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-}
 
 const doneCount = computed(() => orders.value.filter((o) => o.done).length)
 const peopleCount = computed(() => new Set(orders.value.map((o) => o.userId)).size)
@@ -264,34 +258,162 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
     <div class="today-hero">
       <span class="hero-deco">🍲</span>
       <div class="hero-label">今日份 · {{ friendlyDate(state.today) }}</div>
-      <h1 class="hero-title">
-        <template v-if="chef || washer">
-          <span>{{ chef ? `${chef.avatar} ${chef.name} 掌勺` : '掌勺待定' }}</span>
-          <span class="hero-sep">·</span>
-          <span>{{ washer ? `${washer.avatar} ${washer.name} 洗碗` : '洗碗待定' }}</span>
-        </template>
-        <template v-else>今天谁做饭、谁洗碗呀？</template>
-      </h1>
+      <h1 class="hero-title"><span>今天已点 {{ orders.length }} 道</span></h1>
       <p class="hero-sub">
-        已经点了 {{ orders.length }} 道菜{{ doneCount ? `，上桌 ${doneCount} 道` : '' }}，
-        {{ orders.length ? '就等开饭啦' : '先点几个，别让掌勺的人猜' }}
+        <template v-if="chef || washer">
+          {{ chef ? `${chef.avatar} ${chef.name} 掌勺` : '掌勺待定' }}<span class="hero-sep">·</span>{{ washer ? `${washer.avatar} ${washer.name} 洗碗` : '洗碗待定' }}<span class="hero-sep">·</span>
+        </template>
+        {{ doneCount ? `已上桌 ${doneCount} 道，` : '' }}{{ orders.length ? '就等开饭啦' : '先点几个，别让掌勺的人猜' }}
       </p>
+    </div>
 
-      <div class="meal-switch" role="group" aria-label="点的是哪一餐">
-        <span class="meal-switch-label">点的是</span>
-        <div class="meal-chips" ref="chipsEl">
-          <button
-            v-for="m in meals" :key="m.key" type="button"
-            class="meal-chip"
-            :class="{ active: activeMeal === m.key, 'is-past': isMealExpired(m.key, state.now, state.meals) }"
-            :aria-pressed="activeMeal === m.key"
-            :title="`${m.label} · ${m.end} 前；${isMealExpired(m.key, state.now, state.meals) ? '已过饭点，选它属于补记' : '接下来点的菜归到这一餐'}${state.mealPick === m.key ? '（再点一次跟随时间）' : ''}`"
-            @click="selectMeal(m.key)"
-          >{{ m.icon }} {{ m.label }}</button>
-          <span class="meal-indicator" ref="indicator" aria-hidden="true"></span>
+    <div class="stat-strip">
+      <div class="stat-item"><span class="stat-num value-pop" :key="`dishes-${orders.length}`">{{ orders.length }}</span> 道菜</div>
+      <div class="stat-item"><span class="stat-num value-pop" :key="`people-${peopleCount}`">{{ peopleCount }}</span> 人点菜</div>
+      <div class="stat-item"><span class="stat-num value-pop" :key="`minutes-${totalMinutes}`">{{ totalMinutes }}</span> 分钟预计耗时</div>
+    </div>
+
+    <div class="today-cols">
+      <div id="today-menu-panel" class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">🍽️ 今日菜单</div>
+            <div class="section-sub">谁点的、做没做好，一眼看清</div>
+          </div>
+          <div class="panel-head-actions">
+            <button class="btn btn-soft btn-sm" @click="shoppingOpen = true">🛒 购物清单</button>
+            <button class="btn btn-soft btn-sm" @click="state.tab = 'menu'">去点菜 ＋</button>
+          </div>
+        </div>
+
+        <div v-if="orders.length" class="meal-groups">
+          <template v-for="m in mealGroups" :key="m.key">
+            <!-- 只显示真正点了菜的那一餐：已过饭点或没点的分组不占版面 -->
+            <div v-if="grouped[m.key].length" class="meal-group" :class="{ 'is-current': m.key === state.meal }">
+              <div class="meal-group-head">
+                <span class="meal-group-title">{{ m.icon }} {{ m.label }}</span>
+                <span v-if="m.key === state.meal" class="meal-group-now">现在这顿</span>
+                <span class="meal-group-count">{{ grouped[m.key].length }} 道</span>
+              </div>
+              <TransitionGroup name="list" tag="div" class="order-list">
+                <div v-for="o in grouped[m.key]" :key="o.id" class="order-row" :class="{ done: o.done }">
+                  <div class="order-thumb">
+                    <img :src="dishImage(o, state.cuisines, state.dishes)" :alt="o.dishName" :style="artStyle(o, state.dishes)" loading="lazy" class="img-fade" />
+                  </div>
+                  <div class="order-main">
+                    <div class="order-name">{{ o.dishName }}</div>
+                    <div class="order-meta">
+                      <span>{{ o.userAvatar }} {{ o.userName }}</span>
+                      <span>{{ cuisineName(o.dishCuisine, state.cuisines) }}</span>
+                      <span v-if="o.note">「{{ o.note }}」</span>
+                    </div>
+                  </div>
+                  <div class="order-actions">
+                    <button
+                      class="icon-btn" :aria-label="o.done ? '标记为还没做' : '标记已上桌'"
+                      :title="o.done ? '标记为还没做' : '标记已上桌'"
+                      :disabled="pending(`toggle:${o.id}`)" @click="actions.toggleOrder(o.id)"
+                    >
+                      {{ o.done ? '✅' : '⭕' }}
+                    </button>
+                    <button
+                      class="icon-btn icon-btn-danger" aria-label="撤掉这道" title="撤掉这道"
+                      :disabled="pending(`remove:${o.id}`)" @click="actions.removeOrder(o.id)"
+                    >✕</button>
+                  </div>
+                </div>
+              </TransitionGroup>
+            </div>
+          </template>
+        </div>
+        <div v-else class="empty">
+          <span class="empty-icon">🥢</span>
+          今天还没人点菜，去菜谱挑几道吧
         </div>
       </div>
 
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">💡 今天吃啥</div>
+            <div class="section-sub">{{ season.label }}天 · 按季节{{ pantryCount ? '、冰箱里的 ' + pantryCount + ' 样食材' : '' }}和口味避雷挑的</div>
+          </div>
+          <button class="btn btn-sm" @click="shuffle" aria-label="换一批推荐">🔄 换一批</button>
+        </div>
+
+        <div class="meal-switch" role="group" aria-label="点的是哪一餐">
+          <span class="meal-switch-label">点的是</span>
+          <div class="meal-chips" ref="chipsEl">
+            <button
+              v-for="m in meals" :key="m.key" type="button"
+              class="meal-chip"
+              :class="{ active: activeMeal === m.key, 'is-past': isMealExpired(m.key, state.now, state.meals) }"
+              :aria-pressed="activeMeal === m.key"
+              :title="`${m.label} · ${m.end} 前；${isMealExpired(m.key, state.now, state.meals) ? '已过饭点，选它属于补记' : '接下来点的菜归到这一餐'}${state.mealPick === m.key ? '（再点一次跟随时间）' : ''}`"
+              @click="selectMeal(m.key)"
+            >{{ m.icon }} {{ m.label }}</button>
+            <span class="meal-indicator" ref="indicator" aria-hidden="true"></span>
+          </div>
+        </div>
+
+        <TransitionGroup name="swap" tag="div" class="suggest-grid">
+          <div
+            v-for="s in suggestions" :key="s.dish.id" class="suggest-card"
+            :class="{ picked: isPicked(s.dish) }"
+            role="button" tabindex="0" :aria-label="`点这道：${s.dish.name}`"
+            :aria-disabled="pending(`order:${s.dish.id}`)"
+            @click="quickOrder(s.dish, $event)" @keydown.enter="quickOrder(s.dish, $event)" @keydown.space.prevent="quickOrder(s.dish, $event)"
+          >
+            <div class="suggest-photo">
+              <img :src="dishImage(s.dish, state.cuisines)" :alt="s.dish.name" :style="artStyle(s.dish, state.dishes)" loading="lazy" class="img-fade" />
+              <button class="suggest-recipe" title="看做法" aria-label="看做法" @click.stop="detailId = s.dish.id"><span class="badge-ico">📖</span></button>
+              <span v-if="isPicked(s.dish)" class="suggest-picked">✓ 已点</span>
+              <span v-else-if="pending(`order:${s.dish.id}`)" class="suggest-adding">加菜中…</span>
+              <span v-else class="suggest-add" aria-hidden="true"><span class="badge-ico">＋</span></span>
+            </div>
+            <span class="suggest-name">{{ s.dish.name }}</span>
+            <span class="suggest-reasons">{{ s.reasons.join(' · ') }}</span>
+          </div>
+        </TransitionGroup>
+
+        <div class="snack-strip" v-if="snackPicks.length">
+          <div class="snack-strip-head">
+            <span class="snack-strip-title">🍢 来点小吃解馋</span>
+            <button class="btn btn-ghost btn-sm" type="button" @click="shuffleSnacks">换一批</button>
+          </div>
+          <div class="snack-picks">
+            <button
+              v-for="s in snackPicks" :key="s.dish.id" type="button"
+              class="snack-pick" :class="{ picked: isPicked(s.dish) }"
+              :aria-label="`点这道：${s.dish.name}`"
+              @click="quickOrder(s.dish, $event)"
+            >
+              <span class="snack-pick-name">{{ s.dish.name }}</span>
+              <span class="snack-pick-plus" aria-hidden="true">{{ isPicked(s.dish) ? '✓' : '＋' }}</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="meal-plan">
+          <div class="meal-plan-bar">
+            <span class="meal-plan-title">🗓️ 本周菜单</span>
+            <span class="tiny muted">按人数配荤素汤，整周不重样，可导出图片</span>
+            <span class="grow"></span>
+            <button class="btn btn-soft btn-sm" type="button" @click="weekOpen = true">生成一周菜单</button>
+          </div>
+        </div>
+
+        <hr class="divider" />
+      </div>
+    </div>
+
+    <div class="panel duty-panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">🧑‍🍳 今天的安排</div>
+          <div class="section-sub">谁掌勺、谁洗碗，还有想说的话</div>
+        </div>
+      </div>
       <div v-if="rosterToday && rosterNames" class="roster-hint" :class="{ 'is-done': !rosterDiff }">
         <span class="roster-hint-icon">{{ rosterDiff ? '📅' : '✅' }}</span>
         <span class="roster-hint-text">
@@ -380,136 +502,6 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
           <span v-if="pending('note')" class="btn-spinner" aria-hidden="true" />
           {{ pending('note') ? '保存中' : (noteSaved ? '✓ 已存好' : '保存留言') }}
         </button>
-      </div>
-    </div>
-
-    <div class="stat-strip">
-      <div class="stat-item"><span class="stat-num value-pop" :key="`dishes-${orders.length}`">{{ orders.length }}</span> 道菜</div>
-      <div class="stat-item"><span class="stat-num value-pop" :key="`people-${peopleCount}`">{{ peopleCount }}</span> 人点菜</div>
-      <div class="stat-item"><span class="stat-num value-pop" :key="`minutes-${totalMinutes}`">{{ totalMinutes }}</span> 分钟预计耗时</div>
-    </div>
-
-    <button v-if="orders.length" type="button" class="today-peek" @click="scrollToMenu">
-      <span class="today-peek-label">🍽️ 今天已点 <span class="value-pop" :key="orders.length">{{ orders.length }}</span> 道</span>
-      <span class="today-peek-names">{{ orderPreview.join('、') }}{{ orders.length > 3 ? '…' : '' }}</span>
-      <span class="today-peek-go">查看菜单 ›</span>
-    </button>
-
-    <div class="today-cols">
-      <div id="today-menu-panel" class="panel">
-        <div class="panel-head">
-          <div>
-            <div class="panel-title">🍽️ 今日菜单</div>
-            <div class="section-sub">谁点的、做没做好，一眼看清</div>
-          </div>
-          <div class="panel-head-actions">
-            <button class="btn btn-soft btn-sm" @click="shoppingOpen = true">🛒 购物清单</button>
-            <button class="btn btn-soft btn-sm" @click="state.tab = 'menu'">去点菜 ＋</button>
-          </div>
-        </div>
-
-        <div v-if="orders.length" class="meal-groups">
-          <template v-for="m in mealGroups" :key="m.key">
-            <!-- 只显示真正点了菜的那一餐：已过饭点或没点的分组不占版面 -->
-            <div v-if="grouped[m.key].length" class="meal-group" :class="{ 'is-current': m.key === state.meal }">
-              <div class="meal-group-head">
-                <span class="meal-group-title">{{ m.icon }} {{ m.label }}</span>
-                <span v-if="m.key === state.meal" class="meal-group-now">现在这顿</span>
-                <span class="meal-group-count">{{ grouped[m.key].length }} 道</span>
-              </div>
-              <TransitionGroup name="list" tag="div" class="order-list">
-                <div v-for="o in grouped[m.key]" :key="o.id" class="order-row" :class="{ done: o.done }">
-                  <div class="order-thumb">
-                    <img :src="dishImage(o, state.cuisines, state.dishes)" :alt="o.dishName" :style="artStyle(o, state.dishes)" loading="lazy" class="img-fade" />
-                  </div>
-                  <div class="order-main">
-                    <div class="order-name">{{ o.dishName }}</div>
-                    <div class="order-meta">
-                      <span>{{ o.userAvatar }} {{ o.userName }}</span>
-                      <span>{{ cuisineName(o.dishCuisine, state.cuisines) }}</span>
-                      <span v-if="o.note">「{{ o.note }}」</span>
-                    </div>
-                  </div>
-                  <div class="order-actions">
-                    <button
-                      class="icon-btn" :aria-label="o.done ? '标记为还没做' : '标记已上桌'"
-                      :title="o.done ? '标记为还没做' : '标记已上桌'"
-                      :disabled="pending(`toggle:${o.id}`)" @click="actions.toggleOrder(o.id)"
-                    >
-                      {{ o.done ? '✅' : '⭕' }}
-                    </button>
-                    <button
-                      class="icon-btn icon-btn-danger" aria-label="撤掉这道" title="撤掉这道"
-                      :disabled="pending(`remove:${o.id}`)" @click="actions.removeOrder(o.id)"
-                    >✕</button>
-                  </div>
-                </div>
-              </TransitionGroup>
-            </div>
-          </template>
-        </div>
-        <div v-else class="empty">
-          <span class="empty-icon">🥢</span>
-          今天还没人点菜，去菜谱挑几道吧
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-head">
-          <div>
-            <div class="panel-title">💡 今天吃啥</div>
-            <div class="section-sub">{{ season.label }}天 · 按季节{{ pantryCount ? '、冰箱里的 ' + pantryCount + ' 样食材' : '' }}和口味避雷挑的</div>
-          </div>
-          <button class="btn btn-sm" @click="shuffle" aria-label="换一批推荐">🔄 换一批</button>
-        </div>
-        <TransitionGroup name="swap" tag="div" class="suggest-grid">
-          <div
-            v-for="s in suggestions" :key="s.dish.id" class="suggest-card"
-            :class="{ picked: isPicked(s.dish) }"
-            role="button" tabindex="0" :aria-label="`点这道：${s.dish.name}`"
-            :aria-disabled="pending(`order:${s.dish.id}`)"
-            @click="quickOrder(s.dish, $event)" @keydown.enter="quickOrder(s.dish, $event)" @keydown.space.prevent="quickOrder(s.dish, $event)"
-          >
-            <div class="suggest-photo">
-              <img :src="dishImage(s.dish, state.cuisines)" :alt="s.dish.name" :style="artStyle(s.dish, state.dishes)" loading="lazy" class="img-fade" />
-              <button class="suggest-recipe" title="看做法" aria-label="看做法" @click.stop="detailId = s.dish.id"><span class="badge-ico">📖</span></button>
-              <span v-if="isPicked(s.dish)" class="suggest-picked">✓ 已点</span>
-              <span v-else-if="pending(`order:${s.dish.id}`)" class="suggest-adding">加菜中…</span>
-              <span v-else class="suggest-add" aria-hidden="true"><span class="badge-ico">＋</span></span>
-            </div>
-            <span class="suggest-name">{{ s.dish.name }}</span>
-            <span class="suggest-reasons">{{ s.reasons.join(' · ') }}</span>
-          </div>
-        </TransitionGroup>
-
-        <div class="snack-strip" v-if="snackPicks.length">
-          <div class="snack-strip-head">
-            <span class="snack-strip-title">🍢 来点小吃解馋</span>
-            <button class="btn btn-ghost btn-sm" type="button" @click="shuffleSnacks">换一批</button>
-          </div>
-          <div class="snack-picks">
-            <button
-              v-for="s in snackPicks" :key="s.dish.id" type="button"
-              class="snack-pick" :class="{ picked: isPicked(s.dish) }"
-              :aria-label="`点这道：${s.dish.name}`"
-              @click="quickOrder(s.dish, $event)"
-            >
-              <span class="snack-pick-name">{{ s.dish.name }}</span>
-              <span class="snack-pick-plus" aria-hidden="true">{{ isPicked(s.dish) ? '✓' : '＋' }}</span>
-            </button>
-          </div>
-        </div>
-
-        <div class="meal-plan">
-          <div class="meal-plan-bar">
-            <span class="meal-plan-title">🗓️ 本周菜单</span>
-            <span class="tiny muted">按人数配荤素汤，整周不重样，可导出图片</span>
-            <span class="grow"></span>
-            <button class="btn btn-soft btn-sm" type="button" @click="weekOpen = true">生成一周菜单</button>
-          </div>
-        </div>
-
-        <hr class="divider" />
       </div>
     </div>
 

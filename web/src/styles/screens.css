@@ -184,6 +184,11 @@
 
 /* 点菜餐别切换：早 / 中 / 晚，决定新点的菜归哪一顿 */
 .meal-switch { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; margin-top: 14px; }
+/* 首页重构：餐别切换并入点菜面板，紧贴推荐区上方 */
+.panel .meal-switch { margin-top: 0; margin-bottom: 12px; }
+/* 「今天的安排」：分工/排班/摇骰子/留言从 hero 移出，独立成底部面板 */
+.duty-panel { margin-top: 20px; }
+.duty-panel .duty-claim-grid { margin-top: 0; }
 .meal-switch-label { font-size: 0.76rem; font-weight: 800; letter-spacing: 0.06em; color: var(--brand-dark); }
 .meal-chips { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; position: relative; }
 .meal-chip {
@@ -529,15 +534,6 @@
 
 /* ---------- 购物清单 ---------- */
 .panel-head-actions { display: flex; gap: 6px; flex-wrap: nowrap; flex: none; }
-/* 今日菜单速览：首屏就能看到「今天点了什么」，点一下滚到完整菜单 */
-.today-peek {
-  display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
-  margin-top: 12px; padding: 11px 14px; min-height: 46px;
-  background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--radius);
-}
-.today-peek-label { flex: none; font-weight: 800; font-size: 0.84rem; color: var(--brand-dark); }
-.today-peek-names { flex: 1; min-width: 0; font-size: 0.82rem; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.today-peek-go { flex: none; font-size: 0.78rem; font-weight: 700; color: var(--brand); }
 .shopping-list { display: flex; flex-direction: column; gap: 6px; max-height: 46vh; max-height: 46dvh; overflow-y: auto; margin-top: 12px; }
 .shopping-item {
   display: flex; align-items: center; gap: 9px; padding: 8px 10px;
