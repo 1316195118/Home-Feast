@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net/http"
 	"regexp"
-	"strings"
 
 	"familymenu/internal/store"
 )
@@ -149,9 +148,14 @@ func normalizeMember(in memberInput, index int) (store.Member, error) {
 	}, nil
 }
 
+// 头像只放行：文字、数字、下划线、短横线、空格、emoji（So/Sk），
+// 以及组合 emoji 必需的 ZWJ 与变体选择符。引号/尖括号/分号一律回退默认表情，
+// 这样即使以后前端改成把头像拼进属性或 HTML，也没有注入面。
+var avatarPattern = regexp.MustCompile(`^[\p{L}\p{N}_\-\s\p{So}\p{Sk}\x{200d}\x{fe0f}]{1,8}$`)
+
 func cleanAvatar(v string) string {
 	v = trimmed(v, 8)
-	if v == "" || strings.ContainsAny(v, "<>{}") {
+	if v == "" || !avatarPattern.MatchString(v) {
 		return "🙂"
 	}
 	return v

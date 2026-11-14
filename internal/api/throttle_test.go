@@ -109,3 +109,22 @@ func TestVersionDefaults(t *testing.T) {
 		t.Fatal("Version 不应为空")
 	}
 }
+
+func TestCleanAvatarWhitelist(t *testing.T) {
+	cases := []struct{ in, want string }{
+		{"👨‍👩‍👧‍👦", "👨‍👩‍👧‍👦"}, // 组合 emoji（含 ZWJ）必须保留
+		{"🙂", "🙂"},
+		{"A", "A"},
+		{"小", "小"},
+		{"🧑‍🍳", "🧑‍🍳"},
+		{"\"'; DROP", "🙂"},   // 引号/分号 → 回退
+		{"<img>", "🙂"},        // 尖括号 → 回退
+		{"a b", "a b"},        // 空格允许（如「小 徐」）
+		{"", "🙂"},
+	}
+	for _, c := range cases {
+		if got := cleanAvatar(c.in); got != c.want {
+			t.Fatalf("cleanAvatar(%q) = %q，期望 %q", c.in, got, c.want)
+		}
+	}
+}
