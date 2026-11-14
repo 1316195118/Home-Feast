@@ -58,9 +58,6 @@ const grouped = computed(() => {
 })
 const chef = computed(() => memberOf(state.plan.chefId, state.members))
 const washer = computed(() => memberOf(state.plan.dishwasherId, state.members))
-const samePerson = computed(() =>
-  !!(state.plan.chefId && state.plan.dishwasherId === state.plan.chefId)
-)
 const noteText = ref(state.plan.note || '')
 const noteSaved = ref(false)
 const noteDirty = computed(() => noteText.value !== (state.plan.note || ''))
@@ -170,35 +167,15 @@ watch(
   { immediate: true },
 )
 
-// 分工：两个按钮就是给「当前身份」认领角色用的——点「我来掌勺」= 把自己定为掌勺，
-// 再点一次取消。别人已认领时点它会接管（改主意），按钮上始终显示当前认领人。
-const dutyPulse = ref('')
-let dutyPulseTimer = null
-function claimRole(role, event) {
-  const me = selfMember.value
-  if (!me) {
-    actions.toast('先在右上角选一下「我是谁」', 'warn')
-    return
-  }
-  const isChef = role === 'chef'
-  const already = isChef ? state.plan.chefId === me.id : state.plan.dishwasherId === me.id
-  if (!already) {
-    sparkleFromEvent(event, isChef ? '👨‍🍳' : '🧽')
-    vibrate(12)
-  }
-  if (isChef) {
-    if (already) actions.clearChef()
-    else actions.setChef(me.id)
-  } else {
-    if (already) actions.clearDishwasher()
-    else actions.setDishwasher(me.id)
-  }
-  const verb = isChef ? '掌勺' : '洗碗'
-  dutyPulse.value = { id: me.id, text: already ? `已取消${verb}` : `${me.avatar} ${me.name} 来${verb}啦！` }
-  clearTimeout(dutyPulseTimer)
-  dutyPulseTimer = setTimeout(() => { dutyPulse.value = '' }, 2400)
+// 分工：点头像直接定人（点自己=认领，点别人=帮家人指派），再点一次取消
+function pickChef(m) {
+  if (state.plan.chefId === m.id) actions.clearChef()
+  else actions.setChef(m.id)
 }
-onUnmounted(() => clearTimeout(dutyPulseTimer))
+function pickWash(m) {
+  if (state.plan.dishwasherId === m.id) actions.clearDishwasher()
+  else actions.setDishwasher(m.id)
+}
 
 // 骰子 PK：全员掷骰，点大的掌勺、点小的洗碗
 function openPK() {
@@ -265,6 +242,47 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
         </template>
         {{ doneCount ? `已上桌 ${doneCount} 道，` : '' }}{{ orders.length ? '就等开饭啦' : '先点几个，别让掌勺的人猜' }}
       </p>
+
+      <div class="duty-bar">
+        <div class="duty-slot">
+          <span class="duty-slot-label">👨‍🍳 {{ chef ? chef.name : '谁掌勺' }}</span>
+          <div class="duty-avatars">
+            <button
+              v-for="m in state.members" :key="`chef-${m.id}`" type="button"
+              class="duty-avatar" :class="{ active: chef && chef.id === m.id }"
+              :style="{ background: m.color }" :aria-pressed="!!(chef && chef.id === m.id)"
+              :title="chef && chef.id === m.id ? `取消 ${m.name} 掌勺` : `让 ${m.name} 掌勺`"
+              @click="pickChef(m)"
+            >{{ m.avatar }}</button>
+          </div>
+        </div>
+        <div class="duty-slot">
+          <span class="duty-slot-label">🧽 {{ washer ? washer.name : '谁洗碗' }}</span>
+          <div class="duty-avatars">
+            <button
+              v-for="m in state.members" :key="`wash-${m.id}`" type="button"
+              class="duty-avatar" :class="{ active: washer && washer.id === m.id }"
+              :style="{ background: m.color }" :aria-pressed="!!(washer && washer.id === m.id)"
+              :title="washer && washer.id === m.id ? `取消 ${m.name} 洗碗` : `让 ${m.name} 洗碗`"
+              @click="pickWash(m)"
+            >{{ m.avatar }}</button>
+          </div>
+        </div>
+        <button class="btn btn-soft btn-sm duty-roll" type="button" title="全员掷骰，点大的掌勺、点小的洗碗" @click="openPK">🎲 摇骰子</button>
+      </div>
+
+      <div v-if="rosterToday && rosterNames" class="roster-hint" :class="{ 'is-done': !rosterDiff }">
+        <span class="roster-hint-icon">{{ rosterDiff ? '📅' : '✅' }}</span>
+        <span class="roster-hint-text">
+          <template v-if="rosterDiff">
+            按每周排班，今天该
+            <b v-if="rosterNames.chef">{{ rosterNames.chef.avatar }} {{ rosterNames.chef.name }} 掌勺</b><b v-if="rosterNames.chef && rosterNames.wash">、</b><b v-if="rosterNames.wash">{{ rosterNames.wash.avatar }} {{ rosterNames.wash.name }} 洗碗</b>
+          </template>
+          <template v-else>今天的分工和排班一致</template>
+        </span>
+        <button v-if="rosterDiff" class="btn btn-primary btn-sm" :disabled="pending('duty')" @click="applyRoster">一键套用</button>
+      </div>
+
     </div>
 
     <div class="stat-strip">
@@ -407,85 +425,7 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
       </div>
     </div>
 
-    <div class="panel duty-panel">
-      <div class="panel-head">
-        <div>
-          <div class="panel-title">🧑‍🍳 今天的安排</div>
-          <div class="section-sub">谁掌勺、谁洗碗，还有想说的话</div>
-        </div>
-      </div>
-      <div v-if="rosterToday && rosterNames" class="roster-hint" :class="{ 'is-done': !rosterDiff }">
-        <span class="roster-hint-icon">{{ rosterDiff ? '📅' : '✅' }}</span>
-        <span class="roster-hint-text">
-          <template v-if="rosterDiff">
-            按每周排班，今天该
-            <b v-if="rosterNames.chef">{{ rosterNames.chef.avatar }} {{ rosterNames.chef.name }} 掌勺</b><b v-if="rosterNames.chef && rosterNames.wash">、</b><b v-if="rosterNames.wash">{{ rosterNames.wash.avatar }} {{ rosterNames.wash.name }} 洗碗</b>
-          </template>
-          <template v-else>今天的分工和排班一致</template>
-        </span>
-        <button v-if="rosterDiff" class="btn btn-primary btn-sm" :disabled="pending('duty')" @click="applyRoster">一键套用</button>
-      </div>
-
-      <!-- 骰子 PK 独立成一条醒目 CTA：以前挤在「谁洗碗」标题里，很容易被当成标题的一部分 -->
-      <div class="pk-cta">
-        <span class="pk-cta-icon">🎲</span>
-        <div class="pk-cta-text">
-          <b>摇骰子，一把定分工</b>
-          <span class="tiny muted pk-cta-hint">全员掷骰，点大的掌勺、点小的洗碗</span>
-        </div>
-        <button class="btn btn-primary pk-cta-btn" @click="openPK">摇骰子</button>
-      </div>
-
-      <!-- 两个按钮就是给当前身份认领：点一下「我来」，再点取消；谁认领了一眼看到 -->
-      <div class="duty-claim-grid">
-        <button
-          type="button" class="duty-claim duty-claim-chef"
-          :class="{ active: chef && chef.id === state.currentUserId, taken: !!chef }"
-          :disabled="pending('duty')" @click="claimRole('chef', $event)"
-        >
-          <span class="duty-claim-emoji">👨‍🍳</span>
-          <span class="duty-claim-text">
-            <b>我来掌勺</b>
-            <span class="duty-claim-status">
-              <template v-if="chef">
-                <span class="avatar avatar-sm" :style="{ background: chef.color }">{{ chef.avatar }}</span>
-                {{ chef.id === state.currentUserId ? '是你 · 再点取消' : chef.name + ' 已认领' }}
-              </template>
-              <template v-else>点一下认领</template>
-            </span>
-          </span>
-          <span v-if="chef && chef.id === state.currentUserId" class="duty-claim-check">✓</span>
-        </button>
-        <button
-          type="button" class="duty-claim duty-claim-wash"
-          :class="{ active: washer && washer.id === state.currentUserId, taken: !!washer }"
-          :disabled="pending('duty')" @click="claimRole('wash', $event)"
-        >
-          <span class="duty-claim-emoji">🧽</span>
-          <span class="duty-claim-text">
-            <b>我来洗碗</b>
-            <span class="duty-claim-status">
-              <template v-if="washer">
-                <span class="avatar avatar-sm" :style="{ background: washer.color }">{{ washer.avatar }}</span>
-                {{ washer.id === state.currentUserId ? '是你 · 再点取消' : washer.name + ' 已认领' }}
-              </template>
-              <template v-else>点一下认领</template>
-            </span>
-          </span>
-          <span v-if="washer && washer.id === state.currentUserId" class="duty-claim-check">✓</span>
-        </button>
-        <Transition name="duty-pop">
-          <div v-if="dutyPulse" :key="dutyPulse.text" class="duty-pulse" aria-live="polite">{{ dutyPulse.text }}</div>
-        </Transition>
-      </div>
-
-      <p class="duty-summary" :class="{ muted: !chef || !washer }">
-        <template v-if="samePerson">{{ chef?.name }} 又做饭又洗碗，辛苦啦 🥲</template>
-        <template v-else-if="chef && washer">分工已定，就等开饭啦 🍚</template>
-        <template v-else-if="!chef && !washer">分工还没定</template>
-        <template v-else>{{ !chef ? '还差掌勺的人' : '还差洗碗的人' }}没定</template>
-      </p>
-
+    <div class="note-strip">
       <div class="note-row" :class="{ 'is-dirty': noteDirty, 'is-saved': noteSaved }">
         <div class="note-input-wrap">
           <input

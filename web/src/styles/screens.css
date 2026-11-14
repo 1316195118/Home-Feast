@@ -1106,6 +1106,25 @@
   .suggest-photo, .dish-photo { animation: none; background-position: 0 0; }
 }
 
+/* 首页分工条：点头像直接定人（点自己=认领，点别人=帮家人指派），再点一次取消 */
+.duty-bar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 12px; }
+.duty-slot { display: flex; align-items: center; gap: 8px; }
+.duty-slot-label { flex: none; font-weight: 800; font-size: 0.8rem; color: var(--brand-dark); }
+.duty-avatars { display: flex; gap: 5px; }
+.duty-avatar {
+  width: 32px; height: 32px; padding: 0; border-radius: 50%;
+  border: 2px solid transparent; cursor: pointer;
+  font-size: 0.95rem; line-height: 1;
+  display: grid; place-items: center;
+  opacity: 0.62; transition: all 0.15s var(--ease);
+}
+.duty-avatar:hover { opacity: 1; transform: translateY(-2px); }
+.duty-avatar.active { opacity: 1; border-color: var(--brand); box-shadow: 0 2px 8px rgba(192, 90, 60, 0.35); transform: scale(1.08); }
+.duty-roll { flex: none; margin-left: auto; }
+/* 留言条：放在页面底部一条 */
+.note-strip { margin-top: 20px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.note-strip .note-row { margin-top: 0; }
+
 /* 「配齐一餐」：按人数生成 N 道，卡片复用 .suggest-card，网格自适应列数 */
 .meal-plan { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--line-strong); }
 .meal-plan-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
