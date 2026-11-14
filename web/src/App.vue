@@ -525,7 +525,7 @@ onUnmounted(() => {
     <div v-else-if="!state.locked" class="loading">
       <div v-if="state.bootError">
         <p>😵 {{ state.bootError }}</p>
-        <button class="btn btn-primary" style="margin-top: 12px" @click="boot">再试一次</button>
+        <button class="btn btn-primary mt-12" @click="boot">再试一次</button>
       </div>
       <div v-else class="boot-skeleton" role="status" aria-label="正在摆碗筷">
         <div></div><div></div><div></div>
@@ -555,15 +555,15 @@ onUnmounted(() => {
       <div v-if="state.locked" ref="lockRoot" class="modal-backdrop">
         <div class="modal">
           <div class="modal-head"><h2>🔒 需要访问口令</h2></div>
-          <p class="muted" style="font-size: 0.88rem">
+          <p class="muted fs-88">
             这台设备设置了访问口令。输入后会记在本机浏览器里，之后不用重复输入。
           </p>
           <input
-            v-model="codeInput" class="input" type="password" placeholder="访问口令"
-            style="margin-top: 14px" @keyup.enter="actions.unlock(codeInput)"
+            v-model="codeInput" class="input mt-14" type="password" placeholder="访问口令"
+            @keyup.enter="actions.unlock(codeInput)"
           />
           <div class="modal-foot">
-            <button class="btn btn-primary" @click="actions.unlock(codeInput)">进入</button>
+            <button class="btn btn-primary btn-lg" @click="actions.unlock(codeInput)">进入</button>
           </div>
         </div>
       </div>

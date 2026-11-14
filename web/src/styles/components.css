@@ -33,12 +33,15 @@
 .btn-primary { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
 .btn-primary:hover { background: var(--brand-dark); }
 .btn-soft { background: var(--brand-soft); border-color: transparent; color: var(--brand-dark); }
-.btn-green { background: var(--green-soft); border-color: transparent; color: #42674e; }
+.btn-green { background: var(--green-soft); border-color: transparent; color: var(--green-ink); }
 .btn-ghost { background: transparent; border-color: transparent; color: var(--ink-soft); }
 .btn-ghost:hover { background: var(--paper-deep); }
-.btn-danger { background: transparent; border-color: transparent; color: #a9483c; }
-.btn-danger:hover { background: #f9e6e2; }
+.btn-danger { background: transparent; border-color: transparent; color: var(--error); }
+.btn-danger:hover { background: var(--error-soft); }
 .btn-sm { padding: 8px 14px; min-height: 38px; font-size: 0.84rem; }
+/* 双类选择器提升特异性：手机端断点里有 .btn { min-height: 44px }，
+   单类 .btn-lg 会被它覆盖，写成 .btn.btn-lg 才能保证大按钮在手机端仍是 50px。 */
+.btn.btn-lg { padding: 12px 24px; min-height: 50px; font-size: 1rem; border-radius: 999px; }
 .btn-block { width: 100%; }
 
 .icon-btn {
@@ -52,7 +55,7 @@
 .icon-btn:hover { background: var(--paper-deep); color: var(--ink); }
 .icon-btn:active { transform: scale(0.86); }
 .icon-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-.icon-btn-danger:hover { background: #f9e6e2; color: #a9483c; }
+.icon-btn-danger:hover { background: var(--error-soft); color: var(--error); }
 
 .card {
   background: var(--surface);
@@ -89,7 +92,7 @@
   line-height: 1.7;
 }
 .tag-spicy { background: var(--brand-soft); color: var(--brand-dark); }
-.tag-green { background: var(--green-soft); color: #42674e; }
+.tag-green { background: var(--green-soft); color: var(--green-ink); }
 
 .avatar {
   display: inline-flex; align-items: center; justify-content: center;
@@ -117,11 +120,18 @@
   border-radius: var(--radius-sm);
   background: var(--surface);
   outline: none;
-  transition: border-color 0.15s var(--ease), box-shadow 0.15s var(--ease);
+  transition: border-color 0.18s var(--ease), box-shadow 0.18s var(--ease), transform 0.18s var(--ease);
 }
 .input:focus, .select:focus, .textarea:focus {
   border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgba(192, 90, 60, 0.12);
+  /* 聚焦时边框亮起 + 一圈柔和品牌色光晕，比纯描边更有「被点亮」的反馈 */
+  box-shadow: 0 0 0 3px rgba(192, 90, 60, 0.14), 0 1px 8px rgba(192, 90, 60, 0.1);
+}
+/* 错误态：统一用 --error 语义色，不再复用品牌红棕；同时给淡红底光晕 */
+.input.is-invalid, .select.is-invalid, .textarea.is-invalid,
+.input:invalid.is-touched, .select:invalid.is-touched, .textarea:invalid.is-touched {
+  border-color: var(--error) !important;
+  box-shadow: 0 0 0 3px var(--error-soft) !important;
 }
 .textarea { resize: vertical; min-height: 74px; }
 .select { appearance: none; padding-right: 30px; background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%; background-size: 5px 5px; background-repeat: no-repeat; }
@@ -135,7 +145,9 @@
 }
 .modal {
   width: min(520px, 100%);
+  /* 老浏览器用 vh 回退；支持 dvh 的浏览器跟随地址栏伸缩，键盘弹起时不再被裁 */
   max-height: min(86vh, 800px);
+  max-height: min(86dvh, 800px);
   overflow: auto;
   background: var(--surface);
   border-radius: var(--radius-lg);
@@ -161,6 +173,8 @@
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .form-grid .span-2 { grid-column: span 2; }
 
+/* toast 有意用固定的深底 + 白字：它是跨主题通用的「实心胶囊」，
+   不跟随深浅主题切换，两种模式下对比度都稳定，故不走语义色令牌。 */
 .toast {
   position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%);
   z-index: 90;

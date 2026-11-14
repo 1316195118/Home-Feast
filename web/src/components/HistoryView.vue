@@ -23,10 +23,10 @@ const thisMonth = computed(() => {
       </div>
     </div>
 
-    <div class="stat-strip" style="margin: 0 0 18px">
-      <div class="stat-item"><span class="stat-num">{{ plans.length }}</span> 天有记录</div>
-      <div class="stat-item"><span class="stat-num">{{ totalDishes }}</span> 道菜累计</div>
-      <div class="stat-item"><span class="stat-num">{{ thisMonth }}</span> 道本月</div>
+    <div class="stat-strip mt-0 mb-18">
+      <div class="stat-item"><span class="stat-num value-pop" :key="`days-${plans.length}`">{{ plans.length }}</span> 天有记录</div>
+      <div class="stat-item"><span class="stat-num value-pop" :key="`all-${totalDishes}`">{{ totalDishes }}</span> 道菜累计</div>
+      <div class="stat-item"><span class="stat-num value-pop" :key="`month-${thisMonth}`">{{ thisMonth }}</span> 道本月</div>
     </div>
 
     <div v-if="plans.length" class="history-list">
@@ -55,7 +55,7 @@ const thisMonth = computed(() => {
             <span class="muted tiny">{{ o.userName }}</span>
           </span>
         </div>
-        <p v-if="p.note" class="tiny muted" style="margin-top: 9px">📝 {{ p.note }}</p>
+        <p v-if="p.note" class="tiny muted mt-9">📝 {{ p.note }}</p>
       </article>
     </div>
     <div v-else class="empty">

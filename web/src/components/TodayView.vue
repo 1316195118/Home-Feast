@@ -348,7 +348,7 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
     </div>
 
     <button v-if="orders.length" type="button" class="today-peek" @click="scrollToMenu">
-      <span class="today-peek-label">🍽️ 今天已点 {{ orders.length }} 道</span>
+      <span class="today-peek-label">🍽️ 今天已点 <span class="value-pop" :key="orders.length">{{ orders.length }}</span> 道</span>
       <span class="today-peek-names">{{ orderPreview.join('、') }}{{ orders.length > 3 ? '…' : '' }}</span>
       <span class="today-peek-go">查看菜单 ›</span>
     </button>

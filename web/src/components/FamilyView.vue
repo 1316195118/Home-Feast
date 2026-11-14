@@ -164,9 +164,9 @@ async function savePin() {
     </div>
     <div class="panel">
       <div v-if="state.plans.length" class="history-list">
-        <div v-for="p in state.plans.slice(0, 6)" :key="p.date" class="spread" style="font-size: 0.88rem">
+        <div v-for="p in state.plans.slice(0, 6)" :key="p.date" class="spread fs-88">
           <span class="muted">{{ friendlyDate(p.date) }}</span>
-          <span class="row" style="gap: 10px; flex-wrap: wrap">
+          <span class="row wrap">
             <span v-if="memberOf(p.chefId, state.members)">
               👨‍🍳 {{ memberOf(p.chefId, state.members).name }}
             </span>
@@ -177,7 +177,7 @@ async function savePin() {
           </span>
         </div>
       </div>
-      <div v-else class="empty" style="padding: 18px"><span class="empty-icon">📝</span>还没有记录</div>
+      <div v-else class="empty pad-18"><span class="empty-icon">📝</span>还没有记录</div>
     </div>
 
     <Transition name="modal">
@@ -191,7 +191,7 @@ async function savePin() {
           <label for="member-name">怎么称呼</label>
           <input id="member-name" v-model="form.name" class="input" maxlength="20" placeholder="例如：爸爸、奶奶、小宝" />
         </div>
-        <div class="field" style="margin-top: 14px">
+        <div class="field mt-14">
           <label>挑个头像</label>
           <div class="avatar-picker avatar-picker-grouped">
             <div v-for="g in avatarGroups" :key="g.label" class="avatar-group">
@@ -205,7 +205,7 @@ async function savePin() {
             </div>
           </div>
         </div>
-        <div class="field" style="margin-top: 14px">
+        <div class="field mt-14">
           <label>挑个颜色</label>
           <div class="color-picker">
             <button
@@ -214,7 +214,7 @@ async function savePin() {
             ></button>
           </div>
         </div>
-        <div class="field" style="margin-top: 14px">
+        <div class="field mt-14">
           <label>口味避雷（点菜时会提示）</label>
           <div class="avoid-picker">
             <button

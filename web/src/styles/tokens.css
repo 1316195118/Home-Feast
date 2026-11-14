@@ -46,6 +46,19 @@
   --glass-bg: rgba(255, 253, 249, 0.82);
   --input-bg: rgba(255, 253, 249, 0.85);
   --on-brand: #fff;
+
+  /* 语义扩展色：错误、强调绿字、冰箱标签、hero 渐变。统一收口，
+     深色模式只需在下方 html[data-theme="dark"] 覆盖，组件不逐个写死。 */
+  --error: #a9462e;
+  --error-soft: #f7e3dc;
+  --green-ink: #42674e;
+  --green-dark: #4e7a5a;
+  --green-dark-bg: #eef6ef;
+  --pantry-ink: #3d6b60;
+  --pantry-bg: #dceae6;
+  --hero-1: #f7e6d2;
+  --hero-2: #fbf3e7;
+  --hero-3: #e9efe4;
 }
 
 /* 深色主题：暖深棕底 + 提亮的番茄红，保持与浅色同一套视觉语言 */
@@ -80,6 +93,18 @@ html[data-theme="dark"] {
   --input-bg: rgba(38, 32, 25, 0.86);
   --on-brand: #20180f;
   color-scheme: dark;
+
+  /* 深色模式下的语义扩展色：整体提亮，保证在深底上仍有足够对比度 */
+  --error: #f0987a;
+  --error-soft: #4a2b22;
+  --green-ink: #a9d6b6;
+  --green-dark: #8fc7a0;
+  --green-dark-bg: #243a2c;
+  --pantry-ink: #8fc7b6;
+  --pantry-bg: #233a35;
+  --hero-1: #3a2c1f;
+  --hero-2: #2c241b;
+  --hero-3: #2a322a;
 }
 
 @media (prefers-reduced-motion: reduce) {

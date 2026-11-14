@@ -117,7 +117,7 @@ async function remove() {
       <div class="form-grid">
         <div class="span-2">
           <div class="preview-photo"><img :src="preview" alt="菜品效果预览" /></div>
-          <div class="row" style="margin-top: 8px">
+          <div class="row mt-8">
             <label class="btn btn-sm" :class="{ 'btn-soft': !uploading, 'is-busy': uploading }">
               <span v-if="uploading" class="btn-spinner" aria-hidden="true" />
               {{ uploading ? '上传中…' : '📷 上传自己的照片' }}

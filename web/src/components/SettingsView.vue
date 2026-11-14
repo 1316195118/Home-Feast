@@ -314,7 +314,7 @@ async function saveRoster() {
               <span class="muted">{{ (b.size / 1024 / 1024).toFixed(1) }} MB</span>
             </div>
           </div>
-          <div class="tiny muted">共 {{ backups.length }} 份备份</div>
+          <div class="tiny muted">共 <span class="value-pop" :key="backups.length">{{ backups.length }}</span> 份备份</div>
         </div>
       </div>
 
@@ -386,7 +386,7 @@ async function saveRoster() {
               {{ accessBusy ? '保存中' : (state.accessRequired ? '改口令' : '开启口令') }}
             </button>
           </div>
-          <div class="setting-actions" v-if="state.accessRequired" style="margin-top: 10px">
+          <div class="setting-actions mt-10" v-if="state.accessRequired">
             <button class="btn btn-sm btn-ghost" :disabled="accessBusy" @click="clearAccess">关闭口令</button>
             <button class="btn btn-sm btn-ghost" @click="forgetCode">本机重新输入</button>
           </div>
@@ -398,11 +398,11 @@ async function saveRoster() {
         <p class="setting-desc">
           两个平级目录，都是纯文本、不依赖数据库；换机器时挂回去即可，无需迁移：
         </p>
-        <div class="dish-tags" style="margin-top: 10px">
+        <div class="dish-tags mt-10">
           <span class="tag">data/ · dishes / members / plans / pins / uploads / backups</span>
           <span class="tag">config/ · settings.json</span>
         </div>
-        <p class="setting-desc" style="margin-top: 8px">
+        <p class="setting-desc mt-8">
           🔄 多人实时同步：<b>{{ realtimeText }}</b>。几台设备同时打开时，谁改了菜单其它设备会自动更新。
         </p>
       </div>

@@ -248,7 +248,7 @@ async function saveToAlbum() {
           </template>
         </div>
       </div>
-      <div v-else class="empty" style="padding: 18px">
+      <div v-else class="empty pad-18">
         <span class="empty-icon">🧺</span>今天还没点菜，或者这些菜还没填配料
       </div>
       <div class="setting-actions">

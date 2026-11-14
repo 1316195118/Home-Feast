@@ -47,7 +47,7 @@ a { color: var(--brand); }
 ::selection { background: var(--brand-soft); }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { background: #e0d2bd; border-radius: 10px; border: 3px solid var(--paper); }
+::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 10px; border: 3px solid var(--paper); }
 ::-webkit-scrollbar-track { background: transparent; }
 
 .muted { color: var(--muted); }
@@ -172,9 +172,11 @@ a { color: var(--brand); }
 
 /* 统一即时反馈：组件按需挂类，时长/缓动全部取自 tokens.css；
    tokens.css 的 prefers-reduced-motion 会把这些动画统一降到几乎不可见。 */
-.is-invalid { animation: shake-error var(--dur-base) var(--ease); border-color: var(--brand) !important; }
+.is-invalid { animation: shake-error var(--dur-base) var(--ease); border-color: var(--error) !important; }
 .feedback-success { animation: success-bounce var(--dur-slow) var(--ease-spring); }
-.value-pop { animation: count-pop var(--dur-base) var(--ease-out); }
+/* count-pop 带 transform（位移+缩放），对纯 inline 的 <span> 不生效；
+   inline-block 让数字滚动的弹跳真正可见，且不影响文档流布局。 */
+.value-pop { display: inline-block; animation: count-pop var(--dur-base) var(--ease-out); }
 
 /* 点击飘字：预置节点池，pointer-events:none，运行时零 DOM 增删 */
 #fx-layer { position: fixed; inset: 0; z-index: 9999; pointer-events: none; overflow: hidden; }
@@ -200,7 +202,7 @@ a { color: var(--brand); }
 }
 .confetti {
   position: absolute; width: 6px; height: 10px; border-radius: 2px; opacity: 0;
-  background: var(--cc, #c25a3a);
+  background: var(--cc, var(--brand));
 }
 .confetti.is-on { animation: confetti-burst 1s var(--ease-out) forwards; }
 
@@ -229,15 +231,17 @@ html.theme-switching :where(body, .card, .panel, .today-hero, .modal, .btn, .chi
 }
 
 /* ---------- 页面切换 ----------
-   按页签左右方向：向右切换内容从右滑入，返回时从左滑入。离场略快、进场略缓。 */
-.page-enter-active { transition: opacity 0.26s var(--ease), transform 0.26s var(--ease); }
-.page-leave-active { transition: opacity 0.13s var(--ease), transform 0.13s var(--ease); }
-.page-enter-from { opacity: 0; transform: translateY(10px); }
-.page-leave-to { opacity: 0; transform: translateY(-8px); }
-.page-back-enter-active { transition: opacity 0.26s var(--ease), transform 0.26s var(--ease); }
-.page-back-leave-active { transition: opacity 0.13s var(--ease), transform 0.13s var(--ease); }
-.page-back-enter-from { opacity: 0; transform: translateY(-10px); }
-.page-back-leave-to { opacity: 0; transform: translateY(8px); }
+   利用 App.vue 算出的 page / page-back 方向，做真正的左右位移：前进时新页从右滑入、
+   旧页向左退场；返回则相反。离场略快、进场略缓，方向感让层级更好理解。
+   水平位移可能短暂超出容器，故 .main 加了 overflow-x: clip 兜底。 */
+.page-enter-active { transition: opacity 0.3s var(--ease-out), transform 0.3s var(--ease-out); }
+.page-leave-active { transition: opacity 0.16s var(--ease), transform 0.16s var(--ease); }
+.page-enter-from { opacity: 0; transform: translateX(26px); }
+.page-leave-to { opacity: 0; transform: translateX(-18px); }
+.page-back-enter-active { transition: opacity 0.3s var(--ease-out), transform 0.3s var(--ease-out); }
+.page-back-leave-active { transition: opacity 0.16s var(--ease), transform 0.16s var(--ease); }
+.page-back-enter-from { opacity: 0; transform: translateX(-26px); }
+.page-back-leave-to { opacity: 0; transform: translateX(18px); }
 
 /* ---------- 列表 / 网格增删 ---------- */
 .list-enter-active, .list-leave-active, .list-move,

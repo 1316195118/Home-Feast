@@ -197,7 +197,7 @@ async function savePantry() {
         @click="togglePriority"
       >🥬 优先推荐</button>
       <span v-if="priorityPantry && !(state.settings.pantry || []).length" class="tiny muted">先点「🧊 冰箱食材」选几样</span>
-      <span v-if="hasFilter" class="tiny muted">找到 {{ filtered.length }} 道</span>
+      <span v-if="hasFilter" class="tiny muted">找到 <span class="value-pop" :key="filtered.length">{{ filtered.length }}</span> 道</span>
     </div>
 
     <!-- 不用 TransitionGroup：切换菜系时整片卡片进出场 + move 会让画面明显晃一下。
