@@ -67,3 +67,12 @@
 
 # 效果图「加大」样图与生成原图（探索性产物，不入库）
 /scripts/_cq/sample_bigger/
+
+# 配图巡查：174 张原图副本与 ImageGen 原始 png 体积过大，不入库；
+# 只保留清单 json、8 版目视拼版与 docs/配图巡查清单.md
+/scripts/_cq/_img/audit/
+/scripts/_cq/_img/*.png
+/scripts/_cq/_img/*.webp
+/scripts/_cq/_img/ready/*.webp
+/scripts/_cq/_img/ready/_*
+/scripts/_cq/_img/_*
