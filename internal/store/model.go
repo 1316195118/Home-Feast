@@ -159,7 +159,9 @@ var Cuisines = []Cuisine{
 	{"xinjiang", "新疆菜", "🍢", "/dishes/xinjiang.jpg", "豪迈香辣，西域风味", "#e8d5b8"},
 	{"cantonese", "粤菜", "🥢", "/dishes/cantonese.jpg", "清鲜精致，讲究火候", "#dce9dd"},
 	{"shandong", "鲁菜", "🐟", "/dishes/shandong.jpg", "咸鲜醇厚，擅用高汤", "#f0e2c8"},
+	{"dongbei", "东北菜", "🥘", "/dishes/dongbei.jpg", "量大实在，咸鲜下饭", "#efe3d0"},
 	{"jiangsu", "苏菜", "🍶", "/dishes/jiangsu.jpg", "清雅细腻，刀工见长", "#e3e0f0"},
+	{"benbang", "本帮菜", "🍜", "/dishes/benbang.jpg", "浓油赤酱，甜咸适口", "#f0ddd3"},
 	{"zhejiang", "浙菜", "🍃", "/dishes/zhejiang.jpg", "清爽软嫩，原味为本", "#dceadf"},
 	{"fujian", "闽菜", "🍲", "/dishes/fujian.jpg", "汤鲜味醇，山海相融", "#f4dfcd"},
 	{"hunan", "湘菜", "🔥", "/dishes/hunan.jpg", "香辣浓烈，下饭首选", "#f5d5cb"},
@@ -175,11 +177,17 @@ var Cuisines = []Cuisine{
 }
 
 // CuisineByKey 返回分类定义，未知分类回退到家常菜。
+// 这里按 key 找而不是写死下标：以前用 Cuisines[8]，新增分类后下标错位会回退成徽菜。
 func CuisineByKey(key string) Cuisine {
 	for _, c := range Cuisines {
 		if c.Key == key {
 			return c
 		}
 	}
-	return Cuisines[8]
+	for _, c := range Cuisines {
+		if c.Key == "homestyle" {
+			return c
+		}
+	}
+	return Cuisines[0]
 }
