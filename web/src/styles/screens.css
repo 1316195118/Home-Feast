@@ -214,10 +214,10 @@
 
 /* 固定三列一排：只显示 3 张，一行排满，不横滑、不截断 */
 .suggest-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
-.suggest-card { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--surface); text-align: left; padding: 0; transition: transform 0.16s var(--ease), box-shadow 0.16s var(--ease); }
+.suggest-card { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--surface); text-align: left; padding: 0; display: flex; flex-direction: column; transition: transform 0.16s var(--ease), box-shadow 0.16s var(--ease); }
 .suggest-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
-.suggest-photo { width: 100%; aspect-ratio: 4 / 3; overflow: hidden; background: var(--paper-deep); }
-.suggest-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.suggest-photo { width: 100%; aspect-ratio: 4 / 3; flex: 0 0 auto; min-height: 80px; overflow: hidden; background: var(--paper-deep); }
+.suggest-photo img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
 .suggest-name { display: block; padding: 8px 9px; font-size: 0.82rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* 常驻的「＋」让「点一下就加菜」一眼可见；外观统一走下方「图片角标」规则 */
 /* 推荐卡角标「吸附在边上」：负偏移让 24px 视觉圆点正好贴住图片的两条边，
@@ -442,8 +442,9 @@
 .roster-hint-text { flex: 1; min-width: 0; line-height: 1.5; }
 .roster-hint .btn { flex: none; }
 .suggest-reasons {
-  display: block; padding: 0 9px 9px; font-size: 0.7rem; line-height: 1.4;
-  color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+  padding: 0 9px 9px; font-size: 0.7rem; line-height: 1.4; min-height: 2.8em;
+  color: var(--muted); overflow: hidden; text-overflow: ellipsis;
 }
 .meal-edit-list { display: flex; flex-direction: column; gap: 9px; margin-top: 12px; }
 .meal-edit-row {
@@ -997,7 +998,7 @@
   .roster-hint { font-size: 0.8rem; padding: 9px 11px; gap: 8px; }
   .roster-hint-text { flex-basis: calc(100% - 34px); }
   .roster-hint .btn { margin-left: 30px; }
-  .suggest-reasons { font-size: 0.66rem; white-space: normal; }
+  .suggest-reasons { font-size: 0.66rem; }
 }
 @media (max-width: 430px) {
   .roster-row { grid-template-columns: 40px minmax(0, 1fr) minmax(0, 1fr) 44px; gap: 4px; }
