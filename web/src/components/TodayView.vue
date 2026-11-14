@@ -6,6 +6,7 @@ import { sparkleFromEvent, celebrate, vibrate } from '../feedback'
 import DishDetail from './DishDetail.vue'
 import DicePK from './DicePK.vue'
 import ShoppingList from './ShoppingList.vue'
+import WeekMenu from './WeekMenu.vue'
 
 const { state, actions, pending } = inject('app')
 const detailId = ref(null)
@@ -113,22 +114,8 @@ function shuffle() {
   suggestions.value = computeSuggestions(exclude)
 }
 
-// 「配齐一餐」：按人数生成 N 道（2 人≈2 道、4 人≈4 道），智能凑齐不重样
-const mealPeople = ref(Math.max(2, Math.min(6, (state.members?.length || 0) || 3)))
-const mealPeopleOptions = [2, 3, 4, 5, 6]
-const mealSet = ref([])
-function genMealSet() { mealSet.value = computeSuggestions([], mealPeople.value) }
-async function addMealSet() {
-  let added = 0
-  for (const s of mealSet.value) {
-    if (!isPicked(s.dish)) {
-      await actions.order(s.dish.id, '', activeMeal.value)
-      added++
-    }
-  }
-  if (added) actions.toast(`已加入 ${added} 道到今日菜单`, 'success')
-  else actions.toast('这些菜都已经在菜单里了', 'warn')
-}
+// 「本周菜单」：按人数配「荤 + 素 + 汤（+ 主食）」，整周不重样，可导出图片
+const weekOpen = ref(false)
 
 // 每周排班提醒：只在「排班已开启 + 今天有安排 + 当前分工不一致」时出现，可一键套用。
 const rosterToday = computed(() => rosterForDate(state.settings.roster, state.today))
@@ -476,36 +463,10 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
 
         <div class="meal-plan">
           <div class="meal-plan-bar">
-            <span class="meal-plan-title">🍱 配齐一餐</span>
-            <div class="people-pick">
-              <span class="tiny muted">人数</span>
-              <button
-                v-for="n in mealPeopleOptions" :key="n" type="button"
-                class="pill" :class="{ active: mealPeople === n }"
-                @click="mealPeople = n"
-              >{{ n }}人</button>
-            </div>
-            <button class="btn btn-soft btn-sm" type="button" @click="genMealSet">生成 {{ mealPeople }} 道</button>
-          </div>
-          <TransitionGroup v-if="mealSet.length" name="list" tag="div" class="meal-set-grid">
-            <div
-              v-for="s in mealSet" :key="s.dish.id"
-              class="suggest-card" :class="{ picked: isPicked(s.dish) }"
-              role="button" tabindex="0"
-              @click="quickOrder(s.dish, $event)" @keydown.enter="quickOrder(s.dish, $event)" @keydown.space.prevent="quickOrder(s.dish, $event)"
-            >
-              <div class="suggest-photo">
-                <img :src="dishImage(s.dish, state.cuisines)" :alt="s.dish.name" loading="lazy" class="img-fade" />
-                <span v-if="isPicked(s.dish)" class="suggest-picked">✓ 已点</span>
-                <span v-else class="suggest-add" aria-hidden="true"><span class="badge-ico">＋</span></span>
-              </div>
-              <span class="suggest-name">{{ s.dish.name }}</span>
-              <span class="suggest-reasons">{{ s.reasons.join(' · ') }}</span>
-            </div>
-          </TransitionGroup>
-          <div v-if="mealSet.length" class="meal-set-actions">
-            <button class="btn btn-primary btn-sm" type="button" @click="addMealSet">全部加入今日菜单</button>
-            <button class="btn btn-ghost btn-sm" type="button" @click="mealSet = []">重选</button>
+            <span class="meal-plan-title">🗓️ 本周菜单</span>
+            <span class="tiny muted">按人数配荤素汤，整周不重样，可导出图片</span>
+            <span class="grow"></span>
+            <button class="btn btn-soft btn-sm" type="button" @click="weekOpen = true">生成一周菜单</button>
           </div>
         </div>
 
@@ -521,6 +482,9 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
     </Transition>
     <Transition name="modal">
       <ShoppingList v-if="shoppingOpen" @close="shoppingOpen = false" />
+    </Transition>
+    <Transition name="modal">
+      <WeekMenu v-if="weekOpen" @close="weekOpen = false" />
     </Transition>
   </section>
 </template>

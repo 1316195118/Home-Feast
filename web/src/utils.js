@@ -230,6 +230,98 @@ export function shoppingGroups(list) {
   ]
 }
 
+// ---------- 配餐分类：荤 / 素 / 汤 / 主食 / 甜品 ----------
+// 判定顺序刻意如此：先主食（汤面也归主食，避免一餐两道主食），再汤，再素/荤。
+// 标签（dish.tags）是人工维护的，优先采信；没有标签信息时再看配料里的肉类关键词。
+const STAPLE_WORDS = ['饭', '面', '粉', '粥', '饺', '包', '饼', '馍', '馒头', '意面', '米线', '河粉', '馄饨', '烧麦', '汤圆', '年糕', '披萨', '匹萨']
+const SOUP_WORDS = ['汤', '羹', '煲']
+// 明确的荤料词：可出现在菜名或配料里。特意不含单字「鸡/鸭/鱼/牛」，
+// 否则「鸡蛋」「鱼香茄子」「牛奶」会被误判成荤。
+const MEAT_STRONG = [
+  '肉', '排骨', '五花', '里脊', '培根', '香肠', '腊肠', '火腿', '腊肉', '毛肚', '牛腩', '肥肠',
+  '猪蹄', '鸡腿', '鸡翅', '鸡胸', '鸡丁', '鸡块', '鸡肉', '烤鸭', '鸭腿', '鸭肉', '盐水鸭',
+  '鱼片', '鱼块', '鲈鱼', '草鱼', '黄鱼', '带鱼', '鲫鱼', '鲳鱼', '虾仁', '虾', '蟹', '蛤', '蚝',
+  '鱿鱼', '海参', '鲍鱼', '鳝', '牛腱', '牛肚', '猪肝', '腰花', '肉丸', '午餐肉', '鸭血',
+  '干贝', '扇贝', '蛏', '螺', // 海鲜类，避免像「扳指干贝」被「素菜」标签误判
+]
+// 菜名本身就是荤菜（单字「鸡/鸭」只在完整菜名里采信）
+const MEAT_NAME = ['扒鸡', '烧鸡', '白切鸡', '口水鸡', '辣子鸡', '三杯鸡', '大盘鸡', '盐焗鸡', '香菇滑鸡', '啤酒鸭', '姜母鸭', '烤鱼', '水煮鱼', '酸菜鱼', '松鼠鱼', '剁椒鱼头', '清蒸鱼']
+// 甜品 / 饮品 / 早餐杯：不参与正餐配菜，直接排除
+const DESSERT_NAME = ['酸奶', '奶昔', '燕麦杯', '水果杯', '豆浆', '果汁', '咖啡', '奶茶', '布丁', '双皮奶', '蛋糕', '糖水', '冰淇淋', '西米露', '银耳羹']
+// 调味词先剔除再判荤素：否则「蚝油」→蚝、「虾皮」→虾、「蟹味菇」→蟹 会把素菜误判成荤
+const NON_MEAT = ['蚝油', '虾皮', '蟹味菇', '鱼露', '鸡精', '鸡粉', '鲍汁', '牛油', '猪油', '鸡油', '瑶柱', '虾酱', '鱼香']
+const stripNonMeat = (s) => NON_MEAT.reduce((acc, w) => acc.split(w).join(''), s)
+
+export function classifyDish(dish, ingredients = null) {
+  const tags = (dish?.tags || []).map(String)
+  const name = String(dish?.name || '')
+  const hasTag = (keys) => keys.some((k) => tags.some((x) => x.includes(k)))
+  if (hasTag(['甜品']) || DESSERT_NAME.some((w) => name.includes(w))) return 'dessert'
+  // 主食优先：汤面（沙茶面/番茄鸡蛋面）也归主食，避免一餐两道主食
+  if (hasTag(['主食', '面食', '汤面', '炒饭', '意面', '点心']) || STAPLE_WORDS.some((w) => name.includes(w))) return 'staple'
+  // 汤在荤之前：让「冬瓜排骨汤」归汤而不是荤菜
+  if (hasTag(['汤菜']) || SOUP_WORDS.some((w) => name.includes(w))) return 'soup'
+  // 明确的荤料/荤菜名优先于「素菜」标签（修「扳指干贝」这类误标）
+  const ings = Array.isArray(ingredients) ? ingredients : (dish?.ingredients || [])
+  const text = stripNonMeat(`${name} ${ings.join(' ')}`)
+  if (MEAT_STRONG.some((w) => text.includes(w)) || MEAT_NAME.some((w) => name.includes(w)) || hasTag(['荤菜', '硬菜', '海鲜', '腊味'])) return 'meat'
+  if (hasTag(['素菜'])) return 'veg'
+  return 'veg'
+}
+
+// ---------- 一周菜单：按人数配出「荤 + 素 + 汤（+ 主食）」，整周不重样 ----------
+// 人数 → 结构：2人 1荤1素；3人 +1汤；4人 2荤1素1汤；5人 2荤2素1汤；6人再加1主食。
+// 排序/取舍复用 smartSuggest 的季节、冰箱、口味避雷、近 7 天降权打分。
+export function planWeekMenu(dishes, opts = {}) {
+  const {
+    people = 3, days = 7, today = '', salt = 0,
+    ingredientsOf = null, ...suggestOpts
+  } = opts
+  const ingsOf = (d) => (typeof ingredientsOf === 'function' ? ingredientsOf(d) : (d?.ingredients || []))
+  const buckets = { meat: [], veg: [], soup: [], staple: [] }
+  for (const d of dishes || []) {
+    const kind = classifyDish(d, ingsOf(d))
+    if (buckets[kind]) buckets[kind].push(d)
+  }
+  const soupN = people >= 3 ? 1 : 0
+  const stapleN = people >= 6 ? 1 : 0
+  const rest = Math.max(1, people - soupN - stapleN)
+  const meatN = Math.max(1, Math.ceil(rest / 2))
+  const vegN = Math.max(0, rest - meatN)
+  const base = today ? new Date(`${today}T12:00:00`) : new Date()
+  const used = new Set()
+  const out = []
+  const p2 = (n) => String(n).padStart(2, '0')
+  for (let i = 0; i < days; i++) {
+    const dt = new Date(base)
+    dt.setDate(base.getDate() + i)
+    const date = `${dt.getFullYear()}-${p2(dt.getMonth() + 1)}-${p2(dt.getDate())}`
+    const pick = (kind, n) => {
+      if (!n) return []
+      let pool = buckets[kind].filter((d) => !used.has(d.id))
+      if (pool.length < n) pool = buckets[kind].slice() // 该类菜不够时兜底，允许跨周重复
+      if (!pool.length) return []
+      const chosen = smartSuggest(pool, {
+        today: date, limit: n, salt: salt + i * 17 + kind.length * 3, ingredientsOf, ...suggestOpts,
+      }).map((x) => x.dish)
+      for (const d of chosen) used.add(d.id)
+      return chosen
+    }
+    out.push({
+      date,
+      label: `${dt.getMonth() + 1}/${dt.getDate()}`,
+      weekday: ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][dt.getDay()],
+      dishes: [
+        ...pick('meat', meatN),
+        ...pick('veg', vegN),
+        ...pick('soup', soupN),
+        ...pick('staple', stapleN),
+      ],
+    })
+  }
+  return out
+}
+
 // 用餐时段预设图标：点一下就选，仍可在面板底部的输入框里自定义
 export const mealIconChoices = [
   '🌅', '☀️', '🌙', '🍽️', '🥐', '🍚',
