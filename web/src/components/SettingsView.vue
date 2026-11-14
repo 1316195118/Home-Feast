@@ -25,6 +25,9 @@ const realtimeText = computed(() => ({
 // ---------- 自动备份 ----------
 const backups = ref([])
 const backupBusy = ref(false)
+const showBackupModal = ref(false)
+const backupRoot = ref(null)
+useModalBehavior(() => { showBackupModal.value = false }, backupRoot, showBackupModal)
 const autoBackup = computed(() => state.settings.autoBackup !== false)
 const backupKeep = computed(() => state.settings.backupKeep || 7)
 async function loadBackups() {
@@ -290,32 +293,16 @@ async function saveRoster() {
           </span>
         </div>
         <p class="setting-desc">
-          自动备份每天 03:30 把四份数据和图片打包到 <code>backups/</code>，保留最近 {{ backupKeep }} 份；也可随时手动导出 / 恢复。恢复会覆盖当前数据，操作前会再确认。
+          每天 03:30 自动打包数据与图片，保留最近 {{ backupKeep }} 份；也可随时导出 / 恢复。
         </p>
-        <div class="backup-merged">
-          <label class="switch-row">
-            <input type="checkbox" :checked="autoBackup" @change="toggleAutoBackup" />
-            <span>每天自动备份</span>
-          </label>
-          <div class="setting-actions">
-            <button class="btn btn-primary btn-sm" :disabled="backupBusy" @click="runBackup">
-              {{ backupBusy ? '备份中…' : '⏱ 立即备份' }}
-            </button>
-            <button class="btn btn-soft btn-sm" @click="doExport">⬇️ 导出 zip</button>
-            <button class="btn btn-soft btn-sm" @click="doExportExcel">📊 导出 Excel</button>
-            <label class="btn btn-soft btn-sm" :class="{ 'btn-ghost': importBusy }">
-              {{ importBusy ? '恢复中…' : '⬆️ 从备份恢复' }}
-              <input type="file" accept=".zip,application/zip" hidden @change="doImport" />
-            </label>
-          </div>
-          <div v-if="backups.length" class="backup-list">
-            <div v-for="b in backups.slice(0, 3)" :key="b.name" class="backup-row tiny">
-              <span>{{ b.at }}</span>
-              <span class="muted">{{ (b.size / 1024 / 1024).toFixed(1) }} MB</span>
-            </div>
-          </div>
-          <div class="tiny muted">共 <span class="value-pop" :key="backups.length">{{ backups.length }}</span> 份备份</div>
+        <div class="setting-meta tiny muted">
+          共 <span class="value-pop" :key="backups.length">{{ backups.length }}</span> 份备份<template v-if="backups.length"> · 最近 {{ backups[0].at }}</template>
         </div>
+        <button class="btn btn-soft btn-sm cuisine-manage-btn" @click="showBackupModal = true">
+          管理备份
+          <span class="cuisine-count">{{ backups.length }} 份</span>
+          <span class="chev">›</span>
+        </button>
       </div>
 
       <div class="card setting-card sc-roster">
@@ -396,15 +383,18 @@ async function saveRoster() {
       <div class="card setting-card sc-storage">
         <div class="setting-title">📂 数据与配置在哪</div>
         <p class="setting-desc">
-          两个平级目录，都是纯文本、不依赖数据库；换机器时挂回去即可，无需迁移：
+          两个平级目录，都是纯文本、不依赖数据库；换机器时挂回去即可，无需迁移。
         </p>
-        <div class="dish-tags mt-10">
-          <span class="tag">data/ · dishes / members / plans / pins / uploads / backups</span>
-          <span class="tag">config/ · settings.json</span>
+        <details class="setting-details">
+          <summary>查看目录结构</summary>
+          <div class="dish-tags mt-8">
+            <span class="tag">data/ · dishes / members / plans / pins / uploads / backups</span>
+            <span class="tag">config/ · settings.json</span>
+          </div>
+        </details>
+        <div class="setting-meta tiny muted">
+          🔄 多人实时同步：<b>{{ realtimeText }}</b>
         </div>
-        <p class="setting-desc mt-8">
-          🔄 多人实时同步：<b>{{ realtimeText }}</b>。几台设备同时打开时，谁改了菜单其它设备会自动更新。
-        </p>
       </div>
 
       <div class="card setting-card sc-about">
@@ -436,6 +426,45 @@ async function saveRoster() {
     </div>
 
     <Teleport to="body">
+      <Transition name="modal">
+        <div v-if="showBackupModal" ref="backupRoot" class="modal-backdrop" @click.self="showBackupModal = false">
+          <div class="modal modal-wide" role="dialog" aria-modal="true" aria-label="备份与恢复">
+            <div class="modal-head">
+              <h2>💾 备份与恢复</h2>
+              <button class="icon-btn" aria-label="关闭" @click="showBackupModal = false">✕</button>
+            </div>
+            <p class="setting-desc">
+              自动备份每天 03:30 把四份数据和图片打包到 <code>backups/</code>，保留最近 {{ backupKeep }} 份；恢复会覆盖当前数据，操作前会再确认。
+            </p>
+            <label class="switch-row">
+              <input type="checkbox" :checked="autoBackup" @change="toggleAutoBackup" />
+              <span>每天自动备份</span>
+            </label>
+            <div class="setting-actions">
+              <button class="btn btn-primary btn-sm" :disabled="backupBusy" @click="runBackup">
+                {{ backupBusy ? '备份中…' : '⏱ 立即备份' }}
+              </button>
+              <button class="btn btn-soft btn-sm" @click="doExport">⬇️ 导出 zip</button>
+              <button class="btn btn-soft btn-sm" @click="doExportExcel">📊 导出 Excel</button>
+              <label class="btn btn-soft btn-sm" :class="{ 'btn-ghost': importBusy }">
+                {{ importBusy ? '恢复中…' : '⬆️ 从备份恢复' }}
+                <input type="file" accept=".zip,application/zip" hidden @change="doImport" />
+              </label>
+            </div>
+            <div v-if="backups.length" class="backup-list">
+              <div v-for="b in backups" :key="b.name" class="backup-row tiny">
+                <span>{{ b.at }}</span>
+                <span class="muted">{{ (b.size / 1024 / 1024).toFixed(1) }} MB</span>
+              </div>
+            </div>
+            <div v-else class="tiny muted mt-10">还没有备份，点「立即备份」生成第一份。</div>
+            <div class="modal-foot">
+              <button class="btn btn-primary btn-sm" @click="showBackupModal = false">完成</button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+
       <Transition name="modal">
         <div v-if="showRosterModal" ref="rosterRoot" class="modal-backdrop" @click.self="showRosterModal = false">
           <div class="modal modal-wide" role="dialog" aria-modal="true" aria-label="每周掌勺排班">
