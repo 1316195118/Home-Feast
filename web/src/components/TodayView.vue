@@ -415,6 +415,7 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
       <div class="panel">
         <div class="panel-head">
           <div>
+            <p class="tiny muted suggest-hint">点一下卡片直接加进今日菜单，右上角 📖 看做法。推荐只看季节、冰箱食材和家人口味，不把数据发到外面。</p>
             <div class="panel-title">💡 今天吃啥</div>
             <div class="section-sub">{{ season.label }}天 · 按季节{{ pantryCount ? '、冰箱里的 ' + pantryCount + ' 样食材' : '' }}和口味避雷挑的</div>
           </div>
@@ -440,9 +441,6 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
           </div>
         </TransitionGroup>
         <hr class="divider" />
-        <p class="tiny muted">
-          点一下卡片直接加进今日菜单，右上角 📖 看做法。推荐只看季节、冰箱食材和家人口味，不把数据发到外面。
-        </p>
       </div>
     </div>
 

@@ -215,6 +215,7 @@
 /* 固定三列一排：只显示 3 张，一行排满，不横滑、不截断 */
 .suggest-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
 .suggest-card { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--surface); text-align: left; padding: 0; transition: transform 0.16s var(--ease), box-shadow 0.16s var(--ease); }
+.suggest-hint { margin: 0 0 10px; }
 .suggest-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
 .suggest-photo { width: 100%; aspect-ratio: 4 / 3; overflow: hidden; background: var(--paper-deep); }
 .suggest-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
