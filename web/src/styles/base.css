@@ -215,10 +215,10 @@ a { color: var(--brand); }
 ::view-transition-old(root) { z-index: 1; }
 ::view-transition-new(root) { z-index: 2; }
 
-/* 主题切换：只在切换的 0.36s 内给主要容器加颜色过渡，日常 hover 不受影响 */
+/* 主题切换：只在切换的 var(--dur-pop) 内给主要容器加颜色过渡，日常 hover 不受影响 */
 html.theme-switching :where(body, .card, .panel, .today-hero, .modal, .btn, .chip, .input,
   .tab-bar, .section-head, .setting-card, .dish-card, .order-row, .stat-item) {
-  transition: background-color 0.32s var(--ease), color 0.32s var(--ease), border-color 0.32s var(--ease);
+  transition: background-color var(--dur-pop) var(--ease), color var(--dur-pop) var(--ease), border-color var(--dur-pop) var(--ease);
 }
 /* 骰子 PK 结果：两颗骰子从两侧对撞入场 */
 @keyframes clash-left {
@@ -234,12 +234,12 @@ html.theme-switching :where(body, .card, .panel, .today-hero, .modal, .btn, .chi
    利用 App.vue 算出的 page / page-back 方向，做真正的左右位移：前进时新页从右滑入、
    旧页向左退场；返回则相反。离场略快、进场略缓，方向感让层级更好理解。
    水平位移可能短暂超出容器，故 .main 加了 overflow-x: clip 兜底。 */
-.page-enter-active { transition: opacity 0.3s var(--ease-out), transform 0.3s var(--ease-out); }
-.page-leave-active { transition: opacity 0.16s var(--ease), transform 0.16s var(--ease); }
+.page-enter-active { transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out); }
+.page-leave-active { transition: opacity var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease); }
 .page-enter-from { opacity: 0; transform: translateX(26px); }
 .page-leave-to { opacity: 0; transform: translateX(-18px); }
-.page-back-enter-active { transition: opacity 0.3s var(--ease-out), transform 0.3s var(--ease-out); }
-.page-back-leave-active { transition: opacity 0.16s var(--ease), transform 0.16s var(--ease); }
+.page-back-enter-active { transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out); }
+.page-back-leave-active { transition: opacity var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease); }
 .page-back-enter-from { opacity: 0; transform: translateX(-26px); }
 .page-back-leave-to { opacity: 0; transform: translateX(18px); }
 
@@ -247,7 +247,7 @@ html.theme-switching :where(body, .card, .panel, .today-hero, .modal, .btn, .chi
 .list-enter-active, .list-leave-active, .list-move,
 .grid-enter-active, .grid-leave-active, .grid-move,
 .swap-enter-active, .swap-leave-active, .swap-move {
-  transition: opacity 0.3s var(--ease), transform 0.3s var(--ease);
+  transition: opacity var(--dur-base) var(--ease), transform var(--dur-base) var(--ease);
 }
 .list-enter-from, .grid-enter-from, .swap-enter-from { opacity: 0; transform: translateY(-10px) scale(0.98); }
 .list-leave-to, .grid-leave-to, .swap-leave-to { opacity: 0; transform: translateX(24px) scale(0.96); }
@@ -256,30 +256,30 @@ html.theme-switching :where(body, .card, .panel, .today-hero, .modal, .btn, .chi
 :is(.order-list, .dish-grid, .suggest-grid) { position: relative; }
 
 /* 小范围出现/消失（空状态、勾选标记等） */
-.pop-enter-active { transition: opacity 0.24s var(--ease), transform 0.24s var(--ease); }
-.pop-leave-active { transition: opacity 0.16s var(--ease), transform 0.16s var(--ease); }
+.pop-enter-active { transition: opacity var(--dur-mid) var(--ease), transform var(--dur-mid) var(--ease); }
+.pop-leave-active { transition: opacity var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease); }
 .pop-enter-from, .pop-leave-to { opacity: 0; transform: scale(0.94); }
 
 /* ---------- toast / 进度条 ---------- */
-.toast-enter-active { transition: opacity 0.28s var(--ease), transform 0.28s var(--ease); }
-.toast-leave-active { transition: opacity 0.2s var(--ease), transform 0.2s var(--ease); }
+.toast-enter-active { transition: opacity var(--dur-base) var(--ease), transform var(--dur-base) var(--ease); }
+.toast-leave-active { transition: opacity var(--dur-mid) var(--ease), transform var(--dur-mid) var(--ease); }
 .toast-enter-from { opacity: 0; transform: translate(-50%, 18px) scale(0.94); }
 .toast-leave-to { opacity: 0; transform: translate(-50%, -8px) scale(0.97); }
-.progress-enter-active, .progress-leave-active { transition: opacity 0.2s var(--ease); }
+.progress-enter-active, .progress-leave-active { transition: opacity var(--dur-mid) var(--ease); }
 .progress-enter-from, .progress-leave-to { opacity: 0; }
 
 /* 成组入场：只给「进入页面时成组出现」的容器。
    菜谱/推荐网格已交给 TransitionGroup，这里不能再叠一套 fade-up，否则两套动画打架。 */
-:is(.enter-stagger, .settings-grid) > * { animation: fade-up 0.4s var(--ease) backwards; }
-:is(.enter-stagger, .settings-grid) > *:nth-child(1) { animation-delay: 0.02s; }
-:is(.enter-stagger, .settings-grid) > *:nth-child(2) { animation-delay: 0.06s; }
+:is(.enter-stagger, .settings-grid) > * { animation: fade-up var(--dur-slow) var(--ease) backwards; }
+:is(.enter-stagger, .settings-grid) > *:nth-child(1) { animation-delay: var(--dur-instant); }
+:is(.enter-stagger, .settings-grid) > *:nth-child(2) { animation-delay: var(--dur-instant); }
 :is(.enter-stagger, .settings-grid) > *:nth-child(3) { animation-delay: 0.10s; }
-:is(.enter-stagger, .settings-grid) > *:nth-child(4) { animation-delay: 0.14s; }
-:is(.enter-stagger, .settings-grid) > *:nth-child(5) { animation-delay: 0.18s; }
-:is(.enter-stagger, .settings-grid) > *:nth-child(6) { animation-delay: 0.22s; }
-:is(.enter-stagger, .settings-grid) > *:nth-child(7) { animation-delay: 0.26s; }
+:is(.enter-stagger, .settings-grid) > *:nth-child(4) { animation-delay: var(--dur-fast); }
+:is(.enter-stagger, .settings-grid) > *:nth-child(5) { animation-delay: var(--dur-mid); }
+:is(.enter-stagger, .settings-grid) > *:nth-child(6) { animation-delay: var(--dur-mid); }
+:is(.enter-stagger, .settings-grid) > *:nth-child(7) { animation-delay: var(--dur-base); }
 :is(.enter-stagger, .settings-grid) > *:nth-child(8) { animation-delay: 0.30s; }
-:is(.enter-stagger, .settings-grid) > *:nth-child(n+9) { animation-delay: 0.34s; }
+:is(.enter-stagger, .settings-grid) > *:nth-child(n+9) { animation-delay: var(--dur-pop); }
 
 /* 图片加载完成时淡入，避免懒加载图片突然蹦出来 */
 .img-fade { animation: img-reveal 0.42s var(--ease) both; }
@@ -310,7 +310,7 @@ html.theme-switching :where(body, .card, .panel, .today-hero, .modal, .btn, .chi
 }
 :is(.btn, .icon-btn, .chip, .tab, .duty-claim, .user-pick-item).is-tapped {
   box-shadow: 0 0 0 2px var(--brand-soft), 0 0 0 4px rgba(192, 90, 60, 0.16);
-  transition: box-shadow 0.18s var(--ease-out);
+  transition: box-shadow var(--dur-mid) var(--ease-out);
 }
 /* 键盘可达性：焦点环同样是「指向」反馈的一种 */
 :where(.btn, .icon-btn, .chip, .tab, .duty-claim, .input, .select, .avatar-picker button):focus-visible {

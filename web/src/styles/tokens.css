@@ -28,7 +28,9 @@
   /* 动效令牌：时长 / 缓动分级，组件统一引用，避免散落的魔法数字 */
   --dur-instant: 90ms;
   --dur-fast: 160ms;
+  --dur-mid: 200ms;
   --dur-base: 260ms;
+  --dur-pop: 340ms;
   --dur-slow: 420ms;
   --dur-loop: 1.6s;
   --ease: cubic-bezier(0.22, 0.68, 0.32, 1);
