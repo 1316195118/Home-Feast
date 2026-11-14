@@ -17,15 +17,16 @@ const editorDish = ref(null)
 const detailId = ref(null)
 const detailDish = computed(() => state.dishes.find((d) => d.id === detailId.value) || null)
 
-// 只展示没有被隐藏的菜系
+// 只展示没有被隐藏的菜系；snack 在下面用手动 chip 单独渲染，这里排除避免重复
 const visibleCuisines = computed(() =>
-  (state.cuisines || []).filter((c) => !isCuisineHidden(c.key, state.hiddenCuisines))
+  (state.cuisines || []).filter((c) => !isCuisineHidden(c.key, state.hiddenCuisines) && c.key !== 'snack')
 )
 
 // 「小吃」独立成栏：按标签横切聚合。剥离后小吃只出现在「全部」和「小吃」，
 // 不再掺在地域菜系里，地域菜系的计数也同步扣掉，避免「川菜 10 道点进去只有 8 道」。
 const SNACK_TAGS = ['小吃', '点心']
-const isSnack = (d) => (d.tags || []).some((t) => SNACK_TAGS.includes(String(t)))
+// 数据层已把小吃菜 cuisine 迁为 snack；标签兜底保证老数据/新加的菜也能进这一栏
+const isSnack = (d) => d.cuisine === 'snack' || (d.tags || []).some((t) => SNACK_TAGS.includes(String(t)))
 const snackCount = computed(() => state.dishes.filter(
   (d) => !isCuisineHidden(d.cuisine, state.hiddenCuisines) && isSnack(d),
 ).length)
@@ -209,7 +210,7 @@ async function savePantry() {
         title="干炸响铃、虾饺、小笼包这类解馋小食"
         @click="activeCuisine = 'snack'"
       >
-        🍢 小吃 <span class="tiny">{{ snackCount }}</span>
+        🥟 小吃 <span class="tiny">{{ snackCount }}</span>
       </button>
       <button
         v-for="c in visibleCuisines" :key="c.key"

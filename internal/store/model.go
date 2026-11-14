@@ -168,6 +168,7 @@ var Cuisines = []Cuisine{
 	{"soup", "汤羹", "🥣", "/dishes/soup.jpg", "一碗热汤，饭才圆满", "#dfe9ec"},
 	{"staple", "主食", "🍚", "/dishes/staple.jpg", "米面馒头，管饱担当", "#eee4cf"},
 	{"cold", "凉菜", "🥗", "/dishes/cold.jpg", "爽口开胃，先上桌", "#e1ebd8"},
+	{"snack", "小吃", "🥟", "/dishes/snack.jpg", "解馋小食，随手一口", "#f3e6d0"},
 	{"breakfast", "早餐", "🥞", "/dishes/breakfast.jpg", "一天从好好吃饭开始", "#f7e7d2"},
 	{"dessert", "甜品饮品", "🍰", "/dishes/dessert.jpg", "饭后那口甜", "#f2dce2"},
 	{"western", "西餐烘焙", "🍝", "/dishes/western.jpg", "偶尔换换口味", "#e4e2ee"},
