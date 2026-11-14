@@ -1083,3 +1083,19 @@
 @media (prefers-reduced-motion: reduce) {
   .suggest-photo, .dish-photo { animation: none; background-position: 0 0; }
 }
+
+/* 「配齐一餐」：按人数生成 N 道，卡片复用 .suggest-card，网格自适应列数 */
+.meal-plan { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--line-strong); }
+.meal-plan-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.meal-plan-title { font-weight: 800; font-size: 0.9rem; color: var(--brand-dark); }
+.people-pick { display: flex; align-items: center; gap: 5px; }
+.people-pick .tiny { font-size: 0.72rem; }
+.pill {
+  border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink-soft);
+  border-radius: 999px; padding: 4px 11px; font-size: 0.76rem; font-weight: 700; cursor: pointer;
+  transition: all 0.15s var(--ease);
+}
+.pill:hover { border-color: var(--brand); }
+.pill.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+.meal-set-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 9px; margin-top: 10px; }
+.meal-set-actions { display: flex; gap: 8px; margin-top: 10px; }
