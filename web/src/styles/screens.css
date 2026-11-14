@@ -1099,3 +1099,22 @@
 .pill.active { background: var(--brand); border-color: var(--brand); color: #fff; }
 .meal-set-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 9px; margin-top: 10px; }
 .meal-set-actions { display: flex; gap: 8px; margin-top: 10px; }
+
+/* 历史趋势图：近 14 天点菜量柱状 + 菜系分布横条（纯 CSS，无图表库） */
+.trend-card, .dist-card { padding: 14px 16px; margin-bottom: 14px; }
+.trend-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.trend-title { font-weight: 800; font-size: 0.88rem; color: var(--brand-dark); }
+.trend-chart { display: flex; align-items: flex-end; gap: 4px; height: 92px; }
+.trend-bar {
+  flex: 1; min-width: 0; min-height: 3px;
+  border-radius: 4px 4px 2px 2px; background: var(--brand);
+  transition: height 0.3s var(--ease);
+}
+.trend-bar.zero { background: var(--line-strong); opacity: 0.55; }
+.trend-axis { display: flex; justify-content: space-between; margin-top: 6px; font-size: 0.62rem; color: var(--muted); }
+.dist-card { display: flex; flex-direction: column; gap: 8px; }
+.dist-row { display: flex; align-items: center; gap: 9px; }
+.dist-name { flex: none; min-width: 84px; font-size: 0.78rem; font-weight: 700; }
+.dist-track { flex: 1; height: 8px; border-radius: 999px; background: var(--paper-deep); overflow: hidden; }
+.dist-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--brand), var(--brand-dark)); transition: width 0.3s var(--ease); }
+.dist-pct { flex: none; width: 38px; text-align: right; font-size: 0.72rem; font-weight: 700; color: var(--ink-soft); }
