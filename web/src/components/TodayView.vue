@@ -61,9 +61,6 @@ const washer = computed(() => memberOf(state.plan.dishwasherId, state.members))
 const noteText = ref(state.plan.note || '')
 const noteSaved = ref(false)
 const noteDirty = computed(() => noteText.value !== (state.plan.note || ''))
-const noteBtnClass = computed(() =>
-  noteSaved.value ? 'btn-green' : noteDirty.value ? 'btn-primary' : 'btn-soft'
-)
 let noteTimer = null
 onUnmounted(() => clearTimeout(noteTimer))
 const suggestions = ref([])
@@ -283,6 +280,18 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
         <button v-if="rosterDiff" class="btn btn-primary btn-sm" :disabled="pending('duty')" @click="applyRoster">一键套用</button>
       </div>
 
+      <div class="note-line" :class="{ 'is-dirty': noteDirty, 'is-saved': noteSaved }">
+        <span class="note-line-icon" aria-hidden="true">💬</span>
+        <input
+          v-model="noteText" class="note-line-input" maxlength="200"
+          placeholder="给今天留句话：想吃点清淡的、晚点开饭…"
+          aria-label="今日留言"
+          @blur="saveNote" @keyup.enter="$event.target.blur()"
+        />
+        <span v-if="pending('note')" class="note-line-hint">保存中…</span>
+        <span v-else-if="noteSaved" class="note-line-saved">✓ 已存</span>
+        <span v-else-if="noteDirty" class="note-line-hint">失焦自动保存</span>
+      </div>
     </div>
 
     <div class="stat-strip">
@@ -422,26 +431,6 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
         </div>
 
         <hr class="divider" />
-      </div>
-    </div>
-
-    <div class="note-strip">
-      <div class="note-row" :class="{ 'is-dirty': noteDirty, 'is-saved': noteSaved }">
-        <div class="note-input-wrap">
-          <input
-            v-model="noteText" class="input" maxlength="200"
-            placeholder="留句话，例如：想吃点清淡的…"
-            @blur="saveNote" @keyup.enter="$event.target.blur()"
-          />
-          <Transition name="page"><span v-if="noteSaved" class="note-check">✓</span></Transition>
-        </div>
-        <button
-          class="btn btn-sm note-save-btn" :class="noteBtnClass"
-          :disabled="!noteDirty || pending('note')" @click="saveNote"
-        >
-          <span v-if="pending('note')" class="btn-spinner" aria-hidden="true" />
-          {{ pending('note') ? '保存中' : (noteSaved ? '✓ 已存好' : '保存留言') }}
-        </button>
       </div>
     </div>
 
