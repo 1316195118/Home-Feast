@@ -86,58 +86,6 @@
 .hero-sub { font-size: 0.86rem; color: var(--ink-soft); margin-top: 4px; }
 .hero-deco { position: absolute; right: 12px; top: -18px; font-size: 7rem; opacity: 0.13; pointer-events: none; transform: rotate(-14deg); animation: float-soft 7s ease-in-out infinite; }
 
-/* ---------- 分工认领：我来掌勺 / 我来洗碗 两个按钮 ---------- */
-.duty-claim-grid { position: relative; display: flex; gap: 10px; margin-top: 10px; }
-.duty-claim { flex: 0 1 320px; }
-.duty-claim {
-  display: flex; align-items: center; gap: 10px; text-align: left; position: relative;
-  padding: 12px 14px; min-height: 76px;
-  background: var(--glass-bg); border: 1.5px solid var(--line);
-  border-radius: var(--radius); transition: all var(--dur-mid) var(--ease);
-}
-.duty-claim:hover:not(:disabled) { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
-.duty-claim:active:not(:disabled) { transform: scale(0.98); }
-.duty-claim-emoji { font-size: 1.5rem; line-height: 1; flex: none; }
-.duty-claim-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.duty-claim-text b { font-weight: 800; font-size: 0.95rem; }
-.duty-claim-status { display: flex; align-items: center; gap: 5px; font-size: 0.78rem; color: var(--muted); font-weight: 600; }
-.duty-claim-status .avatar-sm { width: 22px; height: 22px; font-size: 0.8rem; }
-.duty-claim-check { position: absolute; right: 10px; top: 10px; font-weight: 900; font-size: 0.9rem; }
-.duty-claim-chef.taken { border-color: var(--brand); }
-.duty-claim-chef.active { border-color: var(--brand); background: var(--brand-soft); }
-.duty-claim-chef.active .duty-claim-status { color: var(--brand-dark); }
-.duty-claim-chef .duty-claim-check { color: var(--brand); }
-.duty-claim-wash.taken { border-color: var(--green); }
-.duty-claim-wash.active { border-color: var(--green); background: var(--green-soft); }
-.duty-claim-wash.active .duty-claim-status { color: var(--green-dark, var(--green)); }
-.duty-claim-wash .duty-claim-check { color: var(--green); }
-.duty-pulse {
-  position: absolute; left: 50%; bottom: -6px; transform: translateX(-50%);
-  white-space: nowrap; padding: 5px 12px;
-  font-size: 0.82rem; font-weight: 800; color: var(--brand-dark);
-  background: var(--surface-solid); border: 1px solid var(--line-strong); border-radius: 999px;
-  box-shadow: var(--shadow); pointer-events: none; z-index: 2;
-}
-.duty-pop-enter-active { animation: pop-spring var(--dur-pop) var(--ease); }
-.duty-pop-leave-active { transition: opacity var(--dur-mid) var(--ease); }
-.duty-pop-leave-to { opacity: 0; }
-
-/* 骰子 PK 独立 CTA：不再挤在「谁洗碗」标题里 */
-.pk-cta {
-  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-  width: fit-content; max-width: 100%;
-  margin: 0 0 10px; padding: 9px 14px;
-  background: var(--brand-soft); border: 1px solid var(--line-strong);
-  border-radius: var(--radius-lg);
-}
-.pk-cta-icon { font-size: 1.8rem; flex: none; line-height: 1; }
-.pk-cta-text { min-width: 0; display: flex; flex-direction: column; gap: 2px; line-height: 1.45; }
-.pk-cta-text b { font-size: 0.94rem; }
-.pk-cta-btn { flex: none; min-height: 44px; padding-left: 18px; padding-right: 18px; }
-
-.duty-summary { margin-top: 8px; font-size: 0.82rem; color: var(--ink-soft); }
-.duty-summary strong { color: var(--green); }
-
 .stat-strip { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 11px; }
 .stat-item {
   display: flex; align-items: baseline; gap: 6px;
@@ -174,9 +122,6 @@
 .meal-switch { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; margin-top: 14px; }
 /* 首页重构：餐别切换并入点菜面板，紧贴推荐区上方 */
 .panel .meal-switch { margin-top: 0; margin-bottom: 12px; }
-/* 「今天的安排」：分工/排班/摇骰子/留言从 hero 移出，独立成底部面板 */
-.duty-panel { margin-top: 20px; }
-.duty-panel .duty-claim-grid { margin-top: 0; }
 .meal-switch-label { font-size: 0.76rem; font-weight: 800; letter-spacing: 0.06em; color: var(--brand-dark); }
 .meal-chips { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; position: relative; }
 .meal-chip {
@@ -242,6 +187,9 @@
 .search-box::before { content: "🔍"; position: absolute; left: 11px; top: 50%; transform: translateY(-50%); font-size: 0.85rem; opacity: 0.65; }
 
 .dish-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(212px, 1fr)); gap: 16px; }
+/* 分批渲染的哨兵与提示：滚到附近自动补下一批，到底后弱化显示 */
+.grid-more { margin: 18px 0 4px; text-align: center; font-size: 0.76rem; color: var(--muted); }
+.grid-more.is-done { opacity: 0.65; }
 /* 切换分类时前 12 张卡片错峰淡入；fill-mode backwards 保证动画结束后 hover 抬升不受影响 */
 @keyframes card-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .dish-grid.grid-in .dish-card { animation: card-in var(--dur-base) var(--ease) backwards; }
@@ -454,9 +402,6 @@
 
 /* ---------- 第二批：每周排班 / 智能推荐 ---------- */
 .roster-manage-btn { margin-top: auto; }
-.backup-merged .setting-actions { flex-wrap: wrap; gap: 7px; margin: 0; }
-.backup-merged .switch-row { margin: 8px 0 10px; }
-.backup-merged .backup-list { margin: 10px 0 4px; }
 .backup-list { display: flex; flex-direction: column; gap: 4px; margin-top: 2px; }
 .backup-row { display: flex; justify-content: space-between; gap: 8px; padding: 4px 8px; background: var(--surface-soft); border-radius: 6px; }
 .switch-row { display: inline-flex; align-items: center; gap: 8px; margin: 10px 0 12px; font-size: 0.88rem; font-weight: 600; cursor: pointer; }
@@ -782,7 +727,6 @@
 .pk-clash-a { animation: clash-left var(--dur-slow) var(--ease-out); }
 .pk-clash-b { animation: clash-right var(--dur-slow) var(--ease-out); }
 .pk-restart-btn { display: block; margin: 10px auto 0; }
-.pk-foot { justify-content: space-between; }
 
 /* ---------- 编辑器小组件 ---------- */
 .preview-photo { width: 100%; aspect-ratio: 4 / 3; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); background: var(--paper-deep); }
@@ -881,16 +825,6 @@
   }
   .stat-strip::-webkit-scrollbar { display: none; }
   .stat-item { flex: none; }
-  /* 分工认领按钮手机端：两卡并排收紧，保持 44px 热区 */
-  .duty-claim-grid { gap: 8px; margin-top: 12px; }
-  .duty-claim { flex: 1 1 0; }
-  .duty-claim { padding: 10px; min-height: 70px; gap: 7px; }
-  .duty-claim-emoji { font-size: 1.25rem; }
-  .duty-claim-text b { font-size: 0.86rem; }
-  .duty-claim-status { font-size: 0.72rem; }
-  .duty-claim-check { right: 7px; top: 7px; }
-  .duty-pulse { font-size: 0.76rem; padding: 5px 10px; }
-  .duty-summary { font-size: 0.78rem; margin-top: 9px; }
   .panel { padding: 14px; }
   /* 面板头：标题与副标题占满整行，按钮组移到下一行（两个按钮仍同行），
      避免副标题被右侧按钮挤到只剩「清」「的」这种孤字 */
@@ -1000,9 +934,6 @@
   .suggest-name { font-size: 0.76rem; padding: 7px; }
   .tab { font-size: 0.66rem; }
   .hero-title { font-size: 1.18rem; }
-  /* 极窄屏成员按钮只留头像，避免横滑格太宽 */
-  .duty-claim { padding: 8px; gap: 5px; }
-  .duty-claim-emoji { font-size: 1.1rem; }
   .stat-item { padding: 7px 10px; }
   .section-sub { font-size: 0.78rem; }
   .hero-sep { margin: 0 4px; }
@@ -1027,12 +958,6 @@
   .pantry-grid { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 7px; }
   .pantry-modal { max-height: 90vh; max-height: 90dvh; }
   .pantry-art-icon { font-size: 1.6rem; }
-  /* 骰子 CTA 收紧成一条：按钮与标题同行，不再独占整行把菜单挤出首屏 */
-  .pk-cta { padding: 9px 12px; gap: 9px; }
-  .pk-cta-icon { font-size: 1.3rem; }
-  .pk-cta-text b { font-size: 0.86rem; }
-  .pk-cta-hint { display: none; }
-  .pk-cta-btn { width: auto; margin-top: 0; min-height: 42px; padding-left: 14px; padding-right: 14px; }
   .roster-row { grid-template-columns: 46px minmax(0, 1fr) minmax(0, 1fr) 44px; gap: 5px; }
   .roster-select { font-size: 16px; padding: 5px 4px; min-height: 44px; }
   .roster-clear { min-height: 40px; min-width: 44px; }
@@ -1163,8 +1088,6 @@
 .meal-plan { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--line-strong); }
 .meal-plan-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .meal-plan-title { font-weight: 800; font-size: 0.9rem; color: var(--brand-dark); }
-.people-pick { display: flex; align-items: center; gap: 5px; }
-.people-pick .tiny { font-size: 0.72rem; }
 .pill {
   border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink-soft);
   border-radius: 999px; padding: 4px 11px; font-size: 0.76rem; font-weight: 700; cursor: pointer;
@@ -1172,8 +1095,6 @@
 }
 .pill:hover { border-color: var(--brand); }
 .pill.active { background: var(--brand); border-color: var(--brand); color: #fff; }
-.meal-set-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 9px; margin-top: 10px; }
-.meal-set-actions { display: flex; gap: 8px; margin-top: 10px; }
 
 /* 首页小吃专区 */
 .snack-strip { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--line-strong); }
