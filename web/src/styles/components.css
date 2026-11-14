@@ -33,7 +33,6 @@
 .btn-primary { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
 .btn-primary:hover { background: var(--brand-dark); }
 .btn-soft { background: var(--brand-soft); border-color: transparent; color: var(--brand-dark); }
-.btn-green { background: var(--green-soft); border-color: transparent; color: var(--green-ink); }
 .btn-ghost { background: transparent; border-color: transparent; color: var(--ink-soft); }
 .btn-ghost:hover { background: var(--paper-deep); }
 .btn-danger { background: transparent; border-color: transparent; color: var(--error); }
@@ -42,7 +41,6 @@
 /* 双类选择器提升特异性：手机端断点里有 .btn { min-height: 44px }，
    单类 .btn-lg 会被它覆盖，写成 .btn.btn-lg 才能保证大按钮在手机端仍是 50px。 */
 .btn.btn-lg { padding: 12px 24px; min-height: 50px; font-size: 1rem; border-radius: 999px; }
-.btn-block { width: 100%; }
 
 .icon-btn {
   width: 44px; height: 44px;
@@ -128,8 +126,7 @@
   box-shadow: 0 0 0 3px rgba(192, 90, 60, 0.14), 0 1px 8px rgba(192, 90, 60, 0.1);
 }
 /* 错误态：统一用 --error 语义色，不再复用品牌红棕；同时给淡红底光晕 */
-.input.is-invalid, .select.is-invalid, .textarea.is-invalid,
-.input:invalid.is-touched, .select:invalid.is-touched, .textarea:invalid.is-touched {
+.input.is-invalid, .select.is-invalid, .textarea.is-invalid {
   border-color: var(--error) !important;
   box-shadow: 0 0 0 3px var(--error-soft) !important;
 }

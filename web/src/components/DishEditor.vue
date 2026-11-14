@@ -50,13 +50,54 @@ const cuisineOptions = computed(() => {
 
 const preview = computed(() => form.image || dishImage({ cuisine: form.cuisine }, state.cuisines))
 
+// 上传前先压一道：手机原图常有 3~5MB，长边压到 1600 后通常只剩 200~400KB。
+// 压缩失败（老浏览器/异常解码）一律退回原图，绝不能因为优化导致传不了。
+const MAX_SIDE = 1600
+const QUALITY = 0.85
+
+function loadImage(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const img = new Image()
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img) }
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('decode failed')) }
+    img.src = url
+  })
+}
+
+function canvasToBlob(canvas, type, quality) {
+  return new Promise((resolve) => canvas.toBlob(resolve, type, quality))
+}
+
+async function compressImage(file) {
+  if (!file.type.startsWith('image/') || file.type === 'image/gif') return file
+  if (file.size < 400 * 1024) return file // 本来就不大，没必要二次编码掉画质
+  try {
+    const img = await loadImage(file)
+    const scale = Math.min(1, MAX_SIDE / Math.max(img.naturalWidth, img.naturalHeight))
+    const w = Math.round(img.naturalWidth * scale)
+    const h = Math.round(img.naturalHeight * scale)
+    const canvas = document.createElement('canvas')
+    canvas.width = w
+    canvas.height = h
+    canvas.getContext('2d').drawImage(img, 0, 0, w, h)
+    // 先试 webp；Safari 16 之前不支持编码，会悄悄回退成 png，这里再换 jpeg 压一次
+    let blob = await canvasToBlob(canvas, 'image/webp', QUALITY)
+    if (!blob || blob.type !== 'image/webp') blob = await canvasToBlob(canvas, 'image/jpeg', QUALITY)
+    if (!blob || blob.size >= file.size) return file
+    return new File([blob], `dish-${Date.now()}.${blob.type === 'image/webp' ? 'webp' : 'jpg'}`, { type: blob.type })
+  } catch {
+    return file
+  }
+}
+
 async function onFile(event) {
   const file = event.target.files?.[0]
   if (!file) return
-  const data = new FormData()
-  data.append('file', file)
   uploading.value = true
   try {
+    const data = new FormData()
+    data.append('file', await compressImage(file))
     const result = await api.upload(data)
     form.image = result.url
     actions.toast('照片已上传', 'success')

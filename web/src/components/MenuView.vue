@@ -1,5 +1,5 @@
 <script setup>
-import { inject, ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { inject, ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import DishCard from './DishCard.vue'
 import DishEditor from './DishEditor.vue'
 import DishDetail from './DishDetail.vue'
@@ -85,6 +85,28 @@ const filtered = computed(() => {
 // 切换分类时让网格整体淡入一次（只按分类触发，搜索输入时列表保持不重建）
 const gridKey = computed(() => activeCuisine.value)
 
+// 分批渲染：184 道菜全量铺开会堆出 3000+ DOM 节点，低端机滚动发涩。
+// 首批 48 张，滚到接近底部再补 48 张；筛选条件一变就回到首批。
+const PAGE = 48
+const visibleCount = ref(PAGE)
+const visibleDishes = computed(() => filtered.value.slice(0, visibleCount.value))
+const hasMore = computed(() => visibleCount.value < filtered.value.length)
+const loadMoreEl = ref(null)
+
+function maybeLoadMore() {
+  if (!hasMore.value) return
+  const el = loadMoreEl.value
+  if (el && el.getBoundingClientRect().top < window.innerHeight + 600) {
+    visibleCount.value = Math.min(visibleCount.value + PAGE, filtered.value.length)
+  }
+}
+
+watch(
+  () => [activeCuisine.value, keyword.value, onlyFavorite.value, state.hiddenCuisines],
+  () => { visibleCount.value = PAGE }
+)
+watch([filtered, visibleCount], () => nextTick(maybeLoadMore))
+
 // 选择困难时「随便来一道」：在当前筛选结果里随机挑一道，直接打开详情
 function randomDish() {
   const pool = filtered.value.length ? filtered.value : state.dishes
@@ -94,7 +116,10 @@ function randomDish() {
 
 // 菜谱很长时提供「回到顶部」：滚动超过 420px 才出现，避免干扰首屏
 const showTop = ref(false)
-function onScroll() { showTop.value = (window.scrollY || 0) > 420 }
+function onScroll() {
+  showTop.value = (window.scrollY || 0) > 420
+  maybeLoadMore()
+}
 function scrollTop() { window.scrollTo({ top: 0, behavior: 'smooth' }) }
 onMounted(() => window.addEventListener('scroll', onScroll, { passive: true }))
 onUnmounted(() => window.removeEventListener('scroll', onScroll))
@@ -245,7 +270,12 @@ async function savePantry() {
     <!-- 不用 TransitionGroup：切换菜系时整片卡片进出场 + move 会让画面明显晃一下。
          增删菜品是低频操作，稳定的静态网格比 0.3s 动画更重要。 -->
     <div v-if="filtered.length" :key="gridKey" class="dish-grid grid-in">
-      <DishCard v-for="d in filtered" :key="d.id" :dish="d" @edit="openEdit" @open="openDetail" />
+      <DishCard v-for="d in visibleDishes" :key="d.id" :dish="d" @edit="openEdit" @open="openDetail" />
+    </div>
+    <!-- 分批渲染的哨兵：滚动到附近就自动补下一批，不打断浏览 -->
+    <div v-if="filtered.length" ref="loadMoreEl" class="grid-more" :class="{ 'is-done': !hasMore }">
+      <template v-if="hasMore">正在加载更多…（{{ visibleCount }} / {{ filtered.length }}）</template>
+      <template v-else>共 {{ filtered.length }} 道，已经到底啦</template>
     </div>
     <Transition name="pop" mode="out-in">
       <div v-if="!filtered.length" key="empty" class="empty">

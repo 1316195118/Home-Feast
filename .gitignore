@@ -75,4 +75,6 @@
 /scripts/_cq/_img/*.webp
 /scripts/_cq/_img/ready/*.webp
 /scripts/_cq/_img/ready/_*
+/scripts/_cq/_img/resized/*.webp
+/scripts/_cq/_img/resized/_*
 /scripts/_cq/_img/_*

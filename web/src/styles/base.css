@@ -217,7 +217,7 @@ a { color: var(--brand); }
 
 /* 主题切换：只在切换的 var(--dur-pop) 内给主要容器加颜色过渡，日常 hover 不受影响 */
 html.theme-switching :where(body, .card, .panel, .today-hero, .modal, .btn, .chip, .input,
-  .tab-bar, .section-head, .setting-card, .dish-card, .order-row, .stat-item) {
+  .section-head, .setting-card, .dish-card, .order-row, .stat-item) {
   transition: background-color var(--dur-pop) var(--ease), color var(--dur-pop) var(--ease), border-color var(--dur-pop) var(--ease);
 }
 /* 骰子 PK 结果：两颗骰子从两侧对撞入场 */
@@ -245,13 +245,12 @@ html.theme-switching :where(body, .card, .panel, .today-hero, .modal, .btn, .chi
 
 /* ---------- 列表 / 网格增删 ---------- */
 .list-enter-active, .list-leave-active, .list-move,
-.grid-enter-active, .grid-leave-active, .grid-move,
 .swap-enter-active, .swap-leave-active, .swap-move {
   transition: opacity var(--dur-base) var(--ease), transform var(--dur-base) var(--ease);
 }
-.list-enter-from, .grid-enter-from, .swap-enter-from { opacity: 0; transform: translateY(-10px) scale(0.98); }
-.list-leave-to, .grid-leave-to, .swap-leave-to { opacity: 0; transform: translateX(24px) scale(0.96); }
-.list-leave-active, .grid-leave-active, .swap-leave-active { position: absolute; }
+.list-enter-from, .swap-enter-from { opacity: 0; transform: translateY(-10px) scale(0.98); }
+.list-leave-to, .swap-leave-to { opacity: 0; transform: translateX(24px) scale(0.96); }
+.list-leave-active, .swap-leave-active { position: absolute; }
 /* 给父容器相对定位，离场元素脱离文档流时其余项才能平滑补位 */
 :is(.order-list, .dish-grid, .suggest-grid) { position: relative; }
 
@@ -270,16 +269,16 @@ html.theme-switching :where(body, .card, .panel, .today-hero, .modal, .btn, .chi
 
 /* 成组入场：只给「进入页面时成组出现」的容器。
    菜谱/推荐网格已交给 TransitionGroup，这里不能再叠一套 fade-up，否则两套动画打架。 */
-:is(.enter-stagger, .settings-grid) > * { animation: fade-up var(--dur-slow) var(--ease) backwards; }
-:is(.enter-stagger, .settings-grid) > *:nth-child(1) { animation-delay: var(--dur-instant); }
-:is(.enter-stagger, .settings-grid) > *:nth-child(2) { animation-delay: var(--dur-instant); }
-:is(.enter-stagger, .settings-grid) > *:nth-child(3) { animation-delay: 0.10s; }
-:is(.enter-stagger, .settings-grid) > *:nth-child(4) { animation-delay: var(--dur-fast); }
-:is(.enter-stagger, .settings-grid) > *:nth-child(5) { animation-delay: var(--dur-mid); }
-:is(.enter-stagger, .settings-grid) > *:nth-child(6) { animation-delay: var(--dur-mid); }
-:is(.enter-stagger, .settings-grid) > *:nth-child(7) { animation-delay: var(--dur-base); }
-:is(.enter-stagger, .settings-grid) > *:nth-child(8) { animation-delay: 0.30s; }
-:is(.enter-stagger, .settings-grid) > *:nth-child(n+9) { animation-delay: var(--dur-pop); }
+.settings-grid > * { animation: fade-up var(--dur-slow) var(--ease) backwards; }
+.settings-grid > *:nth-child(1) { animation-delay: var(--dur-instant); }
+.settings-grid > *:nth-child(2) { animation-delay: var(--dur-instant); }
+.settings-grid > *:nth-child(3) { animation-delay: 0.10s; }
+.settings-grid > *:nth-child(4) { animation-delay: var(--dur-fast); }
+.settings-grid > *:nth-child(5) { animation-delay: var(--dur-mid); }
+.settings-grid > *:nth-child(6) { animation-delay: var(--dur-mid); }
+.settings-grid > *:nth-child(7) { animation-delay: var(--dur-base); }
+.settings-grid > *:nth-child(8) { animation-delay: 0.30s; }
+.settings-grid > *:nth-child(n+9) { animation-delay: var(--dur-pop); }
 
 /* 图片加载完成时淡入，避免懒加载图片突然蹦出来 */
 .img-fade { animation: img-reveal 0.42s var(--ease) both; }
@@ -308,12 +307,12 @@ html.theme-switching :where(body, .card, .panel, .today-hero, .modal, .btn, .chi
   0% { opacity: 0.8; transform: scale(0.4); }
   100% { opacity: 0; transform: scale(3.4); }
 }
-:is(.btn, .icon-btn, .chip, .tab, .duty-claim, .user-pick-item).is-tapped {
+:is(.btn, .icon-btn, .chip, .tab, .user-pick-item).is-tapped {
   box-shadow: 0 0 0 2px var(--brand-soft), 0 0 0 4px rgba(192, 90, 60, 0.16);
   transition: box-shadow var(--dur-mid) var(--ease-out);
 }
 /* 键盘可达性：焦点环同样是「指向」反馈的一种 */
-:where(.btn, .icon-btn, .chip, .tab, .duty-claim, .input, .select, .avatar-picker button):focus-visible {
+:where(.btn, .icon-btn, .chip, .tab, .input, .select, .avatar-picker button):focus-visible {
   outline: 2px solid var(--brand);
   outline-offset: 2px;
 }
