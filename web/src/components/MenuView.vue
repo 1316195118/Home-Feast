@@ -25,8 +25,10 @@ const visibleCuisines = computed(() =>
 // 「小吃」独立成栏：按标签横切聚合。剥离后小吃只出现在「全部」和「小吃」，
 // 不再掺在地域菜系里，地域菜系的计数也同步扣掉，避免「川菜 10 道点进去只有 8 道」。
 const SNACK_TAGS = ['小吃', '点心']
-// 数据层已把小吃菜 cuisine 迁为 snack；标签兜底保证老数据/新加的菜也能进这一栏
-const isSnack = (d) => d.cuisine === 'snack' || (d.tags || []).some((t) => SNACK_TAGS.includes(String(t)))
+// 数据层已把小吃菜 cuisine 迁为 snack；标签兜底保证老数据/新加的菜也能进这一栏。
+// 用「包含」而不是「等于」：像「川渝小吃」「广式点心」这类细分标签也要能命中。
+const isSnack = (d) => d.cuisine === 'snack'
+  || (d.tags || []).some((t) => SNACK_TAGS.some((k) => String(t).includes(k)))
 const snackCount = computed(() => state.dishes.filter(
   (d) => !isCuisineHidden(d.cuisine, state.hiddenCuisines) && isSnack(d),
 ).length)
