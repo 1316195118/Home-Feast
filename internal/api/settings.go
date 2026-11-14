@@ -74,16 +74,13 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 		v.BackupKeep = k
 	}
 	if in.Pantry != nil {
-		// 冰箱食材：去空白、去重、限长限量；不接外部服务，纯本地匹配
+		// 冰箱食材：走统一的 trimmed，顺带剥离控制字符（只做 TrimSpace 会漏 NUL）
 		seen := map[string]bool{}
 		clean := make([]string, 0, len(*in.Pantry))
 		for _, raw := range *in.Pantry {
-			item := strings.TrimSpace(raw)
+			item := trimmed(raw, 12)
 			if item == "" || seen[item] {
 				continue
-			}
-			if len([]rune(item)) > 12 {
-				item = string([]rune(item)[:12])
 			}
 			seen[item] = true
 			clean = append(clean, item)
@@ -100,7 +97,9 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 			jsonErr(w, http.StatusBadRequest, "访问口令由服务端环境变量 MENU_ACCESS_CODE 控制，请在 docker-compose.yml 里修改")
 			return
 		}
-		c := strings.TrimSpace(*in.AccessCode)
+		// 口令允许符号与内部空格，但控制字符必须去掉：它无法通过 HTTP 头传输，
+		// 存进去等于设了一个谁都输不对的口令。
+		c := stripControl(strings.TrimSpace(*in.AccessCode))
 		if len([]rune(c)) > 64 {
 			jsonErr(w, http.StatusBadRequest, "访问口令最多 64 个字符")
 			return
