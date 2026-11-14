@@ -238,10 +238,21 @@
 .cuisine-chip { flex: none; }
 .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 10px 0 18px; }
 .search-box { position: relative; flex: 1; min-width: 200px; max-width: 380px; }
-.search-box .input { padding-left: 34px; }
+.search-box .input { padding-left: 34px; padding-right: 36px; }
+.search-clear {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%;
+  background: var(--paper-deep); color: var(--ink-soft);
+  display: grid; place-items: center; font-size: 0.7rem; line-height: 1; cursor: pointer;
+}
+.search-clear:hover { background: var(--line-strong); color: var(--ink); }
 .search-box::before { content: "🔍"; position: absolute; left: 11px; top: 50%; transform: translateY(-50%); font-size: 0.85rem; opacity: 0.65; }
 
 .dish-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(212px, 1fr)); gap: 16px; }
+/* 切换分类时网格整体淡入一次，避免「瞬间换一批」的生硬 */
+.dish-grid.grid-in { animation: grid-fade-in 0.26s var(--ease); }
+@keyframes grid-fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .dish-grid.grid-in { animation: none; } }
 .dish-card { overflow: hidden; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease), border-color 0.2s var(--ease); }
 /* 触屏没有真 hover，避免点按后卡片「粘」在抬起状态 */
 @media (hover: hover) {

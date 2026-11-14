@@ -36,6 +36,14 @@ const visibleDishCount = computed(() =>
   state.dishes.filter((d) => !isCuisineHidden(d.cuisine, state.hiddenCuisines)).length
 )
 
+// 「小吃」独立成栏：不改变菜品原菜系（干炸响铃仍属浙菜），只按标签聚合，
+// 这样地域菜系保持完整，小吃又能一栏找齐，不丢归属也不重复维护数据。
+const SNACK_TAGS = ['小吃', '点心']
+const isSnack = (d) => (d.tags || []).some((t) => SNACK_TAGS.includes(String(t)))
+const snackCount = computed(() => state.dishes.filter(
+  (d) => !isCuisineHidden(d.cuisine, state.hiddenCuisines) && isSnack(d),
+).length)
+
 // 「优先推荐」：按冰箱已选主料的命中数实时重排，佐料不参与；
 // 命中数相同保持菜谱原顺序，勾选食材后 computed 自动重算，无需刷新。
 const priorityPantry = ref(localStorage.getItem('fm.priorityPantry') === '1')
@@ -53,7 +61,9 @@ const filtered = computed(() => {
   const q = keyword.value.trim().toLowerCase()
   const base = state.dishes.filter((d) => {
     if (isCuisineHidden(d.cuisine, state.hiddenCuisines)) return false
-    if (activeCuisine.value !== 'all' && d.cuisine !== activeCuisine.value) return false
+    if (activeCuisine.value === 'snack') {
+      if (!isSnack(d)) return false
+    } else if (activeCuisine.value !== 'all' && d.cuisine !== activeCuisine.value) return false
     if (onlyFavorite.value && !d.favorite) return false
     if (!q) return true
     return [d.name, d.desc, ...(d.tags || [])].join(' ').toLowerCase().includes(q)
@@ -66,11 +76,21 @@ const filtered = computed(() => {
     .map(({ d, hits }) => ({ ...d, _pantryHits: hits }))
 })
 
+// 切换分类时让网格整体淡入一次（只按分类触发，搜索输入时列表保持不重建）
+const gridKey = computed(() => activeCuisine.value)
+
+// 选择困难时「随便来一道」：在当前筛选结果里随机挑一道，直接打开详情
+function randomDish() {
+  const pool = filtered.value.length ? filtered.value : state.dishes
+  if (!pool.length) return
+  detailId.value = pool[Math.floor(Math.random() * pool.length)].id
+}
+
 // 当前选中的分类若是被隐藏了，自动退回「全部」
 watch(
   () => [state.hiddenCuisines, activeCuisine.value],
   () => {
-    if (activeCuisine.value !== 'all' && isCuisineHidden(activeCuisine.value, state.hiddenCuisines)) {
+    if (activeCuisine.value !== 'all' && activeCuisine.value !== 'snack' && isCuisineHidden(activeCuisine.value, state.hiddenCuisines)) {
       activeCuisine.value = 'all'
     }
   }
@@ -175,6 +195,13 @@ async function savePantry() {
         🍽️ 全部 <span class="tiny">{{ visibleDishCount }}</span>
       </button>
       <button
+        class="chip cuisine-chip" :class="{ active: activeCuisine === 'snack', 'is-empty': !snackCount }"
+        title="干炸响铃、虾饺、小笼包这类解馋小食"
+        @click="activeCuisine = 'snack'"
+      >
+        🍢 小吃 <span class="tiny">{{ snackCount }}</span>
+      </button>
+      <button
         v-for="c in visibleCuisines" :key="c.key"
         class="chip cuisine-chip" :class="{ active: activeCuisine === c.key, 'is-empty': !counts[c.key] }"
         @click="activeCuisine = c.key"
@@ -187,6 +214,7 @@ async function savePantry() {
     <div class="toolbar">
       <div class="search-box">
         <input v-model="keyword" class="input" placeholder="搜菜名、口味、标签…" aria-label="搜索菜品" />
+        <button v-if="keyword" class="search-clear" type="button" aria-label="清空搜索" @click="keyword = ''">✕</button>
       </div>
       <button class="chip" :class="{ active: onlyFavorite }" :aria-pressed="onlyFavorite" @click="onlyFavorite = !onlyFavorite">
         ⭐ 只看收藏
@@ -196,13 +224,14 @@ async function savePantry() {
         title="按冰箱已选的食材把能做的菜排到前面；盐、油、葱蒜等佐料不参与"
         @click="togglePriority"
       >🥬 优先推荐</button>
+      <button class="chip" type="button" title="在当前筛选结果里随机挑一道" @click="randomDish">🎲 随便来一道</button>
       <span v-if="priorityPantry && !(state.settings.pantry || []).length" class="tiny muted">先点「🧊 冰箱食材」选几样</span>
       <span v-if="hasFilter" class="tiny muted">找到 <span class="value-pop" :key="filtered.length">{{ filtered.length }}</span> 道</span>
     </div>
 
     <!-- 不用 TransitionGroup：切换菜系时整片卡片进出场 + move 会让画面明显晃一下。
          增删菜品是低频操作，稳定的静态网格比 0.3s 动画更重要。 -->
-    <div v-if="filtered.length" class="dish-grid">
+    <div v-if="filtered.length" :key="gridKey" class="dish-grid grid-in">
       <DishCard v-for="d in filtered" :key="d.id" :dish="d" @edit="openEdit" @open="openDetail" />
     </div>
     <Transition name="pop" mode="out-in">
