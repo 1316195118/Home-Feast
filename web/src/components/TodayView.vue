@@ -1,5 +1,5 @@
 <script setup>
-import { inject, computed, ref, watch, onUnmounted } from 'vue'
+import { inject, computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { friendlyDate, memberOf, dishImage, cuisineName, artStyle, isCuisineHidden, normalizeMeals, isMealExpired, rosterForDate, seasonOf, smartSuggest } from '../utils'
 import { getRecipe } from '../recipes'
 import { sparkleFromEvent, celebrate, vibrate } from '../feedback'
@@ -22,6 +22,22 @@ function selectMeal(key) {
   // 再点一次已选中的餐别 = 取消手动指定，回到跟随时间
   actions.setMealPick(state.mealPick === key ? '' : key)
 }
+// 餐别切换下方的滑动指示器：跟随当前选中项平滑移动到底边
+const chipsEl = ref(null)
+const indicator = ref(null)
+function updateIndicator() {
+  const box = chipsEl.value
+  const ind = indicator.value
+  if (!box || !ind) return
+  const active = box.querySelector('.meal-chip.active')
+  if (!active) { ind.style.opacity = '0'; return }
+  ind.style.opacity = '1'
+  ind.style.width = `${active.offsetWidth}px`
+  ind.style.transform = `translateX(${active.offsetLeft}px)`
+}
+watch([activeMeal, meals], updateIndicator, { flush: 'post' })
+onMounted(() => { updateIndicator(); window.addEventListener('resize', updateIndicator) })
+onUnmounted(() => window.removeEventListener('resize', updateIndicator))
 // 当前餐别排最前，其余按配置里的结束时刻顺序，「其他」永远垫底；
 // 已过饭点且没菜的组在模板里折叠成紧凑一行，避免把当前餐挤到屏幕外。
 const mealGroups = computed(() => {
@@ -238,7 +254,7 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
 
       <div class="meal-switch" role="group" aria-label="点的是哪一餐">
         <span class="meal-switch-label">点的是</span>
-        <div class="meal-chips">
+        <div class="meal-chips" ref="chipsEl">
           <button
             v-for="m in meals" :key="m.key" type="button"
             class="meal-chip"
@@ -247,6 +263,7 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
             :title="`${m.label} · ${m.end} 前；${isMealExpired(m.key, state.now, state.meals) ? '已过饭点，选它属于补记' : '接下来点的菜归到这一餐'}${state.mealPick === m.key ? '（再点一次跟随时间）' : ''}`"
             @click="selectMeal(m.key)"
           >{{ m.icon }} {{ m.label }}</button>
+          <span class="meal-indicator" ref="indicator" aria-hidden="true"></span>
         </div>
       </div>
 

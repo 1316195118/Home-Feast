@@ -22,6 +22,11 @@ const tabs = [
 // 本机还没记住身份时，首次打开主动让用户选一次
 const needsUserPick = ref(false)
 
+// PWA 新版本待更新：main.js 检测到 sw 处于 waiting 时广播 'sw-update'，这里弹提示条
+const updateReady = ref(false)
+function onSwUpdate() { updateReady.value = true }
+function applyUpdate() { window.dispatchEvent(new CustomEvent('sw-reload')) }
+
 // 用本地时区拼日期，不能用 toISOString()（UTC 会差一天导致跨天误判）
 function localDate(d = new Date()) {
   const p = (n) => String(n).padStart(2, '0')
@@ -459,6 +464,7 @@ onMounted(() => {
   window.addEventListener('fm:locked', onLocked)
   window.addEventListener('hashchange', onHashChange)
   document.addEventListener('visibilitychange', onVisible)
+  window.addEventListener('sw-update', onSwUpdate)
   boot()
   installRealtime()
   syncTimer = setInterval(syncNow, 60000)
@@ -467,6 +473,7 @@ onUnmounted(() => {
   window.removeEventListener('fm:locked', onLocked)
   window.removeEventListener('hashchange', onHashChange)
   document.removeEventListener('visibilitychange', onVisible)
+  window.removeEventListener('sw-update', onSwUpdate)
   clearTimeout(toastTimer)
   if (syncTimer) clearInterval(syncTimer)
   if (source) source.close()
@@ -482,6 +489,16 @@ onUnmounted(() => {
     <!-- 写操作进行中：顶栏下沿一条细进度条，给「点了没反应」一个明确交代 -->
     <Transition name="progress">
       <div v-if="state.busy > 0" class="busy-bar" role="progressbar" aria-label="正在保存" />
+    </Transition>
+
+    <!-- PWA 新版本就绪：点一下才刷新到新版本，不再需要手动强刷 -->
+    <Transition name="update">
+      <div v-if="updateReady" class="update-banner" role="status">
+        <span class="update-dot" aria-hidden="true">🎉</span>
+        <span class="update-text">有新版本啦，点此更新到最新功能</span>
+        <button class="update-btn" type="button" @click="applyUpdate">更新</button>
+        <button class="update-close" type="button" aria-label="暂不更新" @click="updateReady = false">稍后</button>
+      </div>
     </Transition>
 
     <header class="topbar">

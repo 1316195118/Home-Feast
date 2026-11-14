@@ -5,11 +5,14 @@ const CACHE = 'fm-shell-v1'
 const SHELL = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png']
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE)
-      .then((cache) => cache.addAll(SHELL))
-      .then(() => self.skipWaiting()),
-  )
+  // 注意：这里不再 skipWaiting()。新版本下载完后进入 waiting，
+  // 等页面上的「更新」按钮发来 SKIP_WAITING 才接管，避免无声切换打断正在点菜的人。
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)))
+})
+
+// 收到页面「立即接管」指令后，让等待中的新版本生效
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting()
 })
 
 self.addEventListener('activate', (event) => {
