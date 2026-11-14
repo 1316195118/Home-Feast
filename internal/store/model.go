@@ -1,5 +1,7 @@
 package store
 
+import "sort"
+
 // Dish 是菜品库中的一道菜。Builtin 为 true 表示随程序内置，自定义菜品可自由编辑。
 type Dish struct {
 	ID        string   `json:"id"`
@@ -129,6 +131,7 @@ func NormalizeRoster(in Roster, members []Member) Roster {
 type Settings struct {
 	FamilyName     string     `json:"familyName"`
 	HiddenCuisines []string   `json:"hiddenCuisines"` // 用户选择不展示的菜系 key 列表
+	CuisineOrder   []string   `json:"cuisineOrder"`   // 菜系展示顺序（空 = 用内置顺序）
 	Meals          []MealSlot `json:"meals"`           // 空表示使用默认三餐
 	Roster         Roster     `json:"roster"`          // 每周掌勺 / 洗碗排班
 	Pantry         []string   `json:"pantry"`          // 冰箱里现有的食材，供智能推荐匹配
@@ -190,4 +193,32 @@ func CuisineByKey(key string) Cuisine {
 		}
 	}
 	return Cuisines[0]
+}
+
+// OrderedCuisines 按用户自定义顺序返回分类；没出现在 order 里的保持内置顺序，排在后面。
+// order 为空时直接返回内置顺序，老数据零值兼容。
+func OrderedCuisines(order []string) []Cuisine {
+	if len(order) == 0 {
+		return Cuisines
+	}
+	rank := make(map[string]int, len(order))
+	for i, k := range order {
+		rank[k] = i
+	}
+	out := append([]Cuisine(nil), Cuisines...)
+	sort.SliceStable(out, func(i, j int) bool {
+		ri, oi := rank[out[i].Key]
+		rj, oj := rank[out[j].Key]
+		switch {
+		case oi && oj:
+			return ri < rj
+		case oi:
+			return true // 用户指定过顺序的排前面
+		case oj:
+			return false
+		default:
+			return false // 都没指定：SliceStable 会保持内置相对顺序
+		}
+	})
+	return out
 }
