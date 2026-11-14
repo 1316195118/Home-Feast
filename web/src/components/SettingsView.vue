@@ -85,6 +85,35 @@ function toggleCuisine(key) {
   else hidden.add(key)
   actions.setHiddenCuisines([...hidden])
 }
+
+// 菜系排序：顺序存进 settings.cuisineOrder，后端 bootstrap 时按它返回，
+// 所有设备看到的是同一个顺序。本地先重排，避免等下一次拉取。
+async function moveCuisine(key, delta) {
+  const list = allCuisines.value.map((c) => c.key)
+  const i = list.indexOf(key)
+  const j = i + delta
+  if (i < 0 || j < 0 || j >= list.length) return
+  const [moved] = list.splice(i, 1)
+  list.splice(j, 0, moved)
+  const map = new Map(allCuisines.value.map((c) => [c.key, c]))
+  state.cuisines = list.map((k) => map.get(k)).filter(Boolean)
+  try {
+    await api.saveSettings({ cuisineOrder: list })
+  } catch (err) {
+    actions.toast(err.message, 'error')
+  }
+}
+async function resetCuisineOrder() {
+  try {
+    await api.saveSettings({ cuisineOrder: [] })
+    // actions.refresh 是空操作，这里直接拉一次拿到内置顺序
+    const data = await api.bootstrap()
+    if (data?.cuisines) state.cuisines = data.cuisines
+    actions.toast('已恢复默认顺序', 'success')
+  } catch (err) {
+    actions.toast(err.message, 'error')
+  }
+}
 function showAllCuisines() {
   actions.setHiddenCuisines([])
 }
@@ -664,15 +693,24 @@ async function saveRoster() {
             <h2>🍽️ 菜系显示</h2>
             <button class="icon-btn" @click="showCuisineModal = false" aria-label="关闭">✕</button>
           </div>
-          <p class="setting-desc">勾选的菜系会在菜谱里显示，取消勾选则隐藏（随时可恢复）。</p>
+          <p class="setting-desc">勾选的菜系会在菜谱里显示，取消勾选则隐藏（随时可恢复）。用 ↑↓ 调整它们在菜谱顶部的排列顺序。</p>
           <div class="cuisine-toggle-list modal-cuisine-list">
-            <label v-for="c in allCuisines" :key="c.key" class="cuisine-toggle">
-              <span class="cuisine-toggle-name">{{ c.icon }} {{ c.name }}</span>
-              <input type="checkbox" :checked="!isHidden(c.key)" @change="toggleCuisine(c.key)" />
-            </label>
+            <div v-for="(c, i) in allCuisines" :key="c.key" class="cuisine-toggle" :class="{ 'is-hidden': isHidden(c.key) }">
+              <label class="cuisine-toggle-pick">
+                <input type="checkbox" :checked="!isHidden(c.key)" @change="toggleCuisine(c.key)" />
+                <span class="cuisine-toggle-name">{{ c.icon }} {{ c.name }}</span>
+              </label>
+              <span class="cuisine-order-actions">
+                <button type="button" class="order-btn" :disabled="i === 0"
+                        aria-label="上移" title="上移" @click.prevent="moveCuisine(c.key, -1)">↑</button>
+                <button type="button" class="order-btn" :disabled="i === allCuisines.length - 1"
+                        aria-label="下移" title="下移" @click.prevent="moveCuisine(c.key, 1)">↓</button>
+              </span>
+            </div>
           </div>
           <div class="modal-foot cuisine-modal-foot">
             <span class="cuisine-foot-count">{{ visibleCount }} / {{ allCuisines.length }} 显示中</span>
+            <button class="btn btn-ghost btn-sm" @click="resetCuisineOrder">恢复默认顺序</button>
             <button class="btn btn-ghost btn-sm" @click="showAllCuisines">全选显示</button>
             <button class="btn btn-ghost btn-sm" @click="hideAllCuisines">全部隐藏</button>
             <button class="btn btn-primary btn-sm" @click="showCuisineModal = false">完成</button>

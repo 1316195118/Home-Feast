@@ -11,6 +11,7 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		FamilyName     *string           `json:"familyName"`
 		HiddenCuisines *[]string         `json:"hiddenCuisines"`
+		CuisineOrder   *[]string         `json:"cuisineOrder"` // 菜系展示顺序
 		Meals          *[]store.MealSlot `json:"meals"`
 		Roster         *store.Roster     `json:"roster"`  // 每周掌勺 / 洗碗排班
 		Pantry         *[]string         `json:"pantry"`  // 冰箱现有食材
@@ -46,6 +47,30 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		v.HiddenCuisines = clean
+	}
+	if in.CuisineOrder != nil {
+		// 只接受已知 key、去重，并把没提到的分类补到末尾，
+		// 这样顺序表永远覆盖全部分类，前端不必再兜底。
+		known := map[string]bool{}
+		for _, c := range store.Cuisines {
+			known[c.Key] = true
+		}
+		seen := map[string]bool{}
+		order := make([]string, 0, len(store.Cuisines))
+		for _, k := range *in.CuisineOrder {
+			k = trimmed(k, 32)
+			if !known[k] || seen[k] {
+				continue
+			}
+			seen[k] = true
+			order = append(order, k)
+		}
+		for _, c := range store.Cuisines {
+			if !seen[c.Key] {
+				order = append(order, c.Key)
+			}
+		}
+		v.CuisineOrder = order
 	}
 	if in.Meals != nil {
 		// 用户自定义餐别：名字、图标、结束时刻都在这里校验，脏数据不落盘。

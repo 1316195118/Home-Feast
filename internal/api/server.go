@@ -164,7 +164,7 @@ func (s *Server) bootstrap(w http.ResponseWriter, r *http.Request) {
 		"familyId":  s.familyID(),
 		"settings":  s.st.GetSettings(),
 		"meals":     s.st.Meals(), // 生效的用餐时段配置（含旧数据兜底默认三餐）
-		"cuisines":  store.Cuisines,
+		"cuisines":  store.OrderedCuisines(s.st.GetSettings().CuisineOrder),
 		"dishes":    s.st.ListDishes(),
 		"members":   s.st.ListMembers(),
 		"plan":      s.st.GetPlan(date),
