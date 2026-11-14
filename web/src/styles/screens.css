@@ -521,7 +521,13 @@
 .setting-row-inline .input { width: auto; flex: 1 1 200px; min-width: 0; }
 .setting-row-inline .btn { flex: none; }
 .setting-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; padding-top: 14px; }
-.theme-choices { flex-wrap: wrap; }
+/* 外观：三个主题按钮固定一排等分，不再被「跟随系统」挤到第二行 */
+.theme-choices { flex-wrap: nowrap; }
+.theme-choices .btn {
+  flex: 1 1 0; min-width: 0;
+  padding-left: 6px; padding-right: 6px;
+  white-space: nowrap;
+}
 
 /* 下厨小贴士：与做法步骤分开，手机上单独成块更好读 */
 .recipe-tips { margin-top: 14px; padding: 12px 14px; border: 1px dashed var(--line-strong); border-radius: var(--radius); background: var(--surface-soft); }
@@ -578,11 +584,12 @@
 .shopping-preview-hint { font-size: 0.76rem; color: var(--muted); margin-top: 6px; }
 
 /* 「管理菜系显示」入口按钮 */
-.cuisine-manage-btn { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; }
+.cuisine-manage-btn { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; max-width: 100%; }
 .cuisine-count {
   font-size: 0.76rem; font-weight: 700;
   color: var(--brand-dark); background: var(--brand-soft);
   padding: 2px 9px; border-radius: 999px;
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .chev { font-size: 1.15rem; line-height: 1; margin-left: 2px; }
 

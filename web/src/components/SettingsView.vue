@@ -336,14 +336,14 @@ async function saveRoster() {
       <div class="card setting-card sc-theme">
         <div class="setting-title">🌙 外观</div>
         <p class="setting-desc">
-          深色主题只影响这台设备；选「跟随系统」会随手机 / 电脑的深浅模式自动切换，设置会记在本机。
+          深色主题只影响这台设备；选「自动」会随手机 / 电脑的深浅模式切换，设置记在本机。
         </p>
         <div class="setting-actions theme-choices">
           <button
             v-for="t in themeChoices" :key="t.key" class="btn btn-sm"
             :class="themeMode === t.key ? 'btn-primary' : 'btn-soft'"
-            :aria-pressed="themeMode === t.key" @click="chooseTheme(t.key, $event)"
-          >{{ t.label }}</button>
+            :aria-pressed="themeMode === t.key" :title="t.label" @click="chooseTheme(t.key, $event)"
+          >{{ t.icon }} {{ t.short }}</button>
         </div>
       </div>
 
@@ -416,9 +416,10 @@ async function saveRoster() {
         <p class="setting-desc">
           给每一餐起名字、定收起时间；过了时间，今天这一餐的菜会自动从今日菜单收起，历史记录仍保留。
         </p>
+        <div class="setting-meta tiny muted">收起时间 {{ mealSummary }}</div>
         <button class="btn btn-soft btn-sm cuisine-manage-btn" @click="openMealsModal">
           管理用餐时段
-          <span class="cuisine-count">{{ effectiveMeals.length }} 餐 · {{ mealSummary }}</span>
+          <span class="cuisine-count">{{ effectiveMeals.length }} 餐</span>
           <span class="chev">›</span>
         </button>
       </div>

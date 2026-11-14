@@ -3,10 +3,11 @@
 const KEY = 'fm.theme'
 const MODES = ['system', 'light', 'dark']
 
+// short 用于设置页那排等分按钮（三个都两字才排得齐），完整语义放 label 作 title 提示
 export const themeChoices = [
-  { key: 'system', label: '🖥️ 跟随系统' },
-  { key: 'light', label: '☀️ 浅色' },
-  { key: 'dark', label: '🌙 深色' },
+  { key: 'system', icon: '🖥️', short: '自动', label: '跟随系统深浅色' },
+  { key: 'light', icon: '☀️', short: '浅色', label: '始终浅色' },
+  { key: 'dark', icon: '🌙', short: '深色', label: '始终深色' },
 ]
 
 export function currentThemeMode() {
