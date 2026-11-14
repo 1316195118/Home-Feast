@@ -85,7 +85,7 @@ function computeSuggestions(excludeIds = []) {
     excludeIds,
     recentIds: recentIds.value,
     salt: suggestSalt.value,
-    limit: 6,
+    limit: 3,
     ingredientsOf: (d) => getRecipe(d).ingredients || [],
   })
 }

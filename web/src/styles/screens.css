@@ -212,25 +212,9 @@
 }
 .meal-group-count { font-size: 0.74rem; color: var(--muted); margin-left: auto; }
 
-/* 推荐卡只排一排：横向滚动看更多，不换行。窄右栏里露 3 张、手机端露 2 张半，暗示可滑。 */
-.suggest-grid {
-  display: flex;
-  gap: 9px;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  padding-bottom: 6px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--line-strong) transparent;
-  -webkit-overflow-scrolling: touch;
-  scroll-snap-type: x proximity;
-}
-.suggest-grid::-webkit-scrollbar { height: 6px; }
-.suggest-grid::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 999px; }
-.suggest-card {
-  flex: 0 0 188px;
-  scroll-snap-align: start;
-  border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--surface); text-align: left; padding: 0; transition: transform 0.16s var(--ease), box-shadow 0.16s var(--ease);
-}
+/* 固定三列一排：只显示 3 张，一行排满，不横滑、不截断 */
+.suggest-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+.suggest-card { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--surface); text-align: left; padding: 0; transition: transform 0.16s var(--ease), box-shadow 0.16s var(--ease); }
 .suggest-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
 .suggest-photo { width: 100%; aspect-ratio: 4 / 3; overflow: hidden; background: var(--paper-deep); }
 .suggest-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -780,7 +764,6 @@
 /* ---------- 平板 / 窄桌面 ---------- */
 @media (max-width: 980px) {
   .today-cols { grid-template-columns: 1fr; }
-  .suggest-card { flex-basis: 172px; }
   .main { padding-left: 18px; padding-right: 18px; }
   .topbar-inner, .tabs { padding-left: 18px; padding-right: 18px; }
   .section-head { flex-wrap: wrap; align-items: flex-start; }
@@ -877,7 +860,6 @@
   .panel-head > .btn, .panel-head > .panel-head-actions { flex: 0 0 auto; }
   .section-sub { text-wrap: balance; }
   .suggest-grid { gap: 8px; }
-  .suggest-card { flex-basis: 142px; }
   .order-thumb { width: 52px; height: 46px; }
   .meal-switch { gap: 6px; margin-top: 12px; }
   .meal-chip { padding: 6px 11px; font-size: 0.8rem; }
