@@ -1,0 +1,1569 @@
+[
+  {
+    "name": "宫保鸡丁",
+    "cuisine": "sichuan",
+    "image": "/uploads/imgf126ab8afadb7fa8c8807f3f.webp",
+    "tags": [
+      "下饭",
+      "经典"
+    ]
+  },
+  {
+    "name": "麻婆豆腐",
+    "cuisine": "sichuan",
+    "image": "/uploads/img9a3617fd326aceb5ce020ba5.webp",
+    "tags": [
+      "下饭",
+      "素菜"
+    ]
+  },
+  {
+    "name": "水煮鱼",
+    "cuisine": "sichuan",
+    "image": "/uploads/imgd8c1302781d3a131e38cb599.webp",
+    "tags": [
+      "硬菜",
+      "待客"
+    ]
+  },
+  {
+    "name": "回锅肉",
+    "cuisine": "sichuan",
+    "image": "/uploads/img19a78f1c111a66fb7013cac0.webp",
+    "tags": [
+      "下饭",
+      "经典"
+    ]
+  },
+  {
+    "name": "鱼香肉丝",
+    "cuisine": "sichuan",
+    "image": "/uploads/img0e8ec78586b5cae353afbc37.webp",
+    "tags": [
+      "下饭",
+      "快炒"
+    ]
+  },
+  {
+    "name": "夫妻肺片",
+    "cuisine": "sichuan",
+    "image": "/uploads/img6c27dc0ec6d3e93ae8ee7ff1.webp",
+    "tags": [
+      "凉菜",
+      "开胃"
+    ]
+  },
+  {
+    "name": "辣子鸡",
+    "cuisine": "sichuan",
+    "image": "/uploads/img2c2fb91ffa5a1a126bcd373a.webp",
+    "tags": [
+      "硬菜",
+      "香辣"
+    ]
+  },
+  {
+    "name": "毛血旺",
+    "cuisine": "sichuan",
+    "image": "/uploads/img1a1e5c881fdbfd1f6ec1ce52.webp",
+    "tags": [
+      "硬菜",
+      "多人"
+    ]
+  },
+  {
+    "name": "蒜泥白肉",
+    "cuisine": "sichuan",
+    "image": "/uploads/imgcd2a00a25168412908543de6.webp",
+    "tags": [
+      "凉菜",
+      "经典"
+    ]
+  },
+  {
+    "name": "开水白菜",
+    "cuisine": "sichuan",
+    "image": "/uploads/img67c88b057963e30a303d6e20.webp",
+    "tags": [
+      "汤菜",
+      "清淡"
+    ]
+  },
+  {
+    "name": "白切鸡",
+    "cuisine": "cantonese",
+    "image": "/uploads/img4e53a66da1491a48afac0346.webp",
+    "tags": [
+      "硬菜",
+      "清淡"
+    ]
+  },
+  {
+    "name": "虾饺",
+    "cuisine": "snack",
+    "image": "/uploads/imgcaef6fa3bcb3387110461ff4.webp",
+    "tags": [
+      "点心",
+      "老少皆宜"
+    ]
+  },
+  {
+    "name": "深井烧鹅",
+    "cuisine": "cantonese",
+    "image": "/uploads/imgf9b83475524e60f6ced1423a.webp",
+    "tags": [
+      "硬菜",
+      "待客"
+    ]
+  },
+  {
+    "name": "清蒸鲈鱼",
+    "cuisine": "cantonese",
+    "image": "/uploads/img1c1f25de59fb1ef6c3bf8ac7.webp",
+    "tags": [
+      "清淡",
+      "硬菜"
+    ]
+  },
+  {
+    "name": "蚝油生菜",
+    "cuisine": "cantonese",
+    "image": "/uploads/imgd2f29ea2a207e33e8bb62aaf.webp",
+    "tags": [
+      "素菜",
+      "快手"
+    ]
+  },
+  {
+    "name": "干炒牛河",
+    "cuisine": "cantonese",
+    "image": "/uploads/img9344e6166b89534f81ae56a5.webp",
+    "tags": [
+      "主食",
+      "快炒"
+    ]
+  },
+  {
+    "name": "腊味煲仔饭",
+    "cuisine": "cantonese",
+    "image": "/uploads/img65347b893e5f2248a222d7a2.webp",
+    "tags": [
+      "主食",
+      "一锅出"
+    ]
+  },
+  {
+    "name": "豉汁蒸排骨",
+    "cuisine": "snack",
+    "image": "/uploads/img4ca263889a4b42cdfe0c686c.webp",
+    "tags": [
+      "点心",
+      "下饭"
+    ]
+  },
+  {
+    "name": "糖醋鲤鱼",
+    "cuisine": "shandong",
+    "image": "/uploads/img69c2f66375952fe62b17716e.webp",
+    "tags": [
+      "硬菜",
+      "待客"
+    ]
+  },
+  {
+    "name": "九转大肠",
+    "cuisine": "shandong",
+    "image": "/uploads/imgf02d12965e67377609d550b2.webp",
+    "tags": [
+      "硬菜",
+      "重口"
+    ]
+  },
+  {
+    "name": "葱烧海参",
+    "cuisine": "shandong",
+    "image": "/uploads/img9433c4e0881931ca66bee523.webp",
+    "tags": [
+      "硬菜",
+      "宴客"
+    ]
+  },
+  {
+    "name": "油焖大虾",
+    "cuisine": "shandong",
+    "image": "/uploads/imgab7287af18d064888f6d33b7.webp",
+    "tags": [
+      "海鲜",
+      "快手"
+    ]
+  },
+  {
+    "name": "爆炒腰花",
+    "cuisine": "shandong",
+    "image": "/uploads/img1ae9aa98ee6fa4ac10604b3a.webp",
+    "tags": [
+      "快炒",
+      "下饭"
+    ]
+  },
+  {
+    "name": "德州扒鸡",
+    "cuisine": "shandong",
+    "image": "/uploads/img5fdb8c3bf2e9be9066266bc3.webp",
+    "tags": [
+      "凉菜",
+      "熟食"
+    ]
+  },
+  {
+    "name": "奶汤蒲菜",
+    "cuisine": "shandong",
+    "image": "/uploads/img471e9faecefb937d2f7e28f4.webp",
+    "tags": [
+      "汤菜",
+      "清淡"
+    ]
+  },
+  {
+    "name": "松鼠桂鱼",
+    "cuisine": "jiangsu",
+    "image": "/uploads/imgfe4642fb364789ff35e41a95.webp",
+    "tags": [
+      "硬菜",
+      "待客"
+    ]
+  },
+  {
+    "name": "清炖狮子头",
+    "cuisine": "jiangsu",
+    "image": "/uploads/img4262b9079de29cadda519705.webp",
+    "tags": [
+      "硬菜",
+      "慢炖"
+    ]
+  },
+  {
+    "name": "大煮干丝",
+    "cuisine": "jiangsu",
+    "image": "/uploads/imge9f2a68d9b33aaaa7dfad6ec.webp",
+    "tags": [
+      "清淡",
+      "刀工"
+    ]
+  },
+  {
+    "name": "盐水鸭",
+    "cuisine": "jiangsu",
+    "image": "/uploads/imgc0d40574a2f0dceab1c62ae4.webp",
+    "tags": [
+      "凉菜",
+      "经典"
+    ]
+  },
+  {
+    "name": "无锡酱排骨",
+    "cuisine": "jiangsu",
+    "image": "/uploads/img0dfb0ecc687c8c8ecb7418bd.webp",
+    "tags": [
+      "硬菜",
+      "偏甜"
+    ]
+  },
+  {
+    "name": "文思豆腐",
+    "cuisine": "jiangsu",
+    "image": "/uploads/imga5e4169f04d4b72f700e0ff5.webp",
+    "tags": [
+      "汤菜",
+      "刀工"
+    ]
+  },
+  {
+    "name": "三套鸭",
+    "cuisine": "jiangsu",
+    "image": "/uploads/img50a79f930d7c7170b097bfb4.webp",
+    "tags": [
+      "汤菜",
+      "宴客"
+    ]
+  },
+  {
+    "name": "东坡肉",
+    "cuisine": "zhejiang",
+    "image": "/uploads/imgc3650c8af7fdb6486752e732.webp",
+    "tags": [
+      "硬菜",
+      "慢炖"
+    ]
+  },
+  {
+    "name": "西湖醋鱼",
+    "cuisine": "zhejiang",
+    "image": "/uploads/imgaa48f0b011736574d8396119.webp",
+    "tags": [
+      "硬菜",
+      "经典"
+    ]
+  },
+  {
+    "name": "龙井虾仁",
+    "cuisine": "zhejiang",
+    "image": "/uploads/img101dad7d79ee96b8fa89fd71.webp",
+    "tags": [
+      "清淡",
+      "快手"
+    ]
+  },
+  {
+    "name": "宋嫂鱼羹",
+    "cuisine": "zhejiang",
+    "image": "/uploads/img879512c8846bf2e4887cf347.webp",
+    "tags": [
+      "汤菜",
+      "开胃"
+    ]
+  },
+  {
+    "name": "干炸响铃",
+    "cuisine": "snack",
+    "image": "/uploads/imgfa2aca73c1b445e50a993373.webp",
+    "tags": [
+      "小吃",
+      "酥脆"
+    ]
+  },
+  {
+    "name": "雪菜大汤黄鱼",
+    "cuisine": "zhejiang",
+    "image": "/uploads/imga5aea3cb7b66595e796976ac.webp",
+    "tags": [
+      "汤菜",
+      "海鲜"
+    ]
+  },
+  {
+    "name": "叫花童鸡",
+    "cuisine": "zhejiang",
+    "image": "/uploads/img48814abe95a0981886c1a750.webp",
+    "tags": [
+      "硬菜",
+      "宴客"
+    ]
+  },
+  {
+    "name": "佛跳墙",
+    "cuisine": "fujian",
+    "image": "/uploads/img514d405a73eec70d45557650.webp",
+    "tags": [
+      "汤菜",
+      "宴客"
+    ]
+  },
+  {
+    "name": "荔枝肉",
+    "cuisine": "fujian",
+    "image": "/uploads/img8c337800cb91dd11d9e5249e.webp",
+    "tags": [
+      "硬菜",
+      "偏甜"
+    ]
+  },
+  {
+    "name": "醉排骨",
+    "cuisine": "fujian",
+    "image": "/uploads/img98f3f1a0d8c8aef299c27bdd.webp",
+    "tags": [
+      "硬菜",
+      "下饭"
+    ]
+  },
+  {
+    "name": "海蛎煎",
+    "cuisine": "snack",
+    "image": "/uploads/imgdce7474bdee1b243e16b2522.webp",
+    "tags": [
+      "小吃",
+      "海鲜"
+    ]
+  },
+  {
+    "name": "沙茶面",
+    "cuisine": "fujian",
+    "image": "/uploads/img185a182696282fe0b0b752b9.webp",
+    "tags": [
+      "主食",
+      "汤面"
+    ]
+  },
+  {
+    "name": "扳指干贝",
+    "cuisine": "fujian",
+    "image": "/uploads/imgc360a9af48e14d011b046492.webp",
+    "tags": [
+      "清淡",
+      "素菜"
+    ]
+  },
+  {
+    "name": "剁椒鱼头",
+    "cuisine": "hunan",
+    "image": "/uploads/img5506f5de14fb005f0a4674b5.webp",
+    "tags": [
+      "硬菜",
+      "香辣"
+    ]
+  },
+  {
+    "name": "辣椒炒肉",
+    "cuisine": "hunan",
+    "image": "/uploads/imgf14c61f55721315a91be9f2b.webp",
+    "tags": [
+      "下饭",
+      "快炒"
+    ]
+  },
+  {
+    "name": "小炒黄牛肉",
+    "cuisine": "hunan",
+    "image": "/uploads/img3e938561239e4c27beb9f72f.webp",
+    "tags": [
+      "下饭",
+      "快炒"
+    ]
+  },
+  {
+    "name": "湘西外婆菜",
+    "cuisine": "hunan",
+    "image": "/uploads/img7a40ec9c06ff2d0f06e640f5.webp",
+    "tags": [
+      "下饭",
+      "腌菜"
+    ]
+  },
+  {
+    "name": "口味虾",
+    "cuisine": "hunan",
+    "image": "/uploads/img9146d6a517ed003366a27d99.webp",
+    "tags": [
+      "硬菜",
+      "多人"
+    ]
+  },
+  {
+    "name": "腊味合蒸",
+    "cuisine": "hunan",
+    "image": "/uploads/imgbabb15484acf54e29de4a341.webp",
+    "tags": [
+      "硬菜",
+      "腊味"
+    ]
+  },
+  {
+    "name": "擂辣椒皮蛋",
+    "cuisine": "hunan",
+    "image": "/uploads/img00debb400b8c0b6dc4d60494.webp",
+    "tags": [
+      "凉菜",
+      "开胃"
+    ]
+  },
+  {
+    "name": "臭鳜鱼",
+    "cuisine": "anhui",
+    "image": "/uploads/imgadb4f843796271eeb7179d48.webp",
+    "tags": [
+      "硬菜",
+      "重口"
+    ]
+  },
+  {
+    "name": "油煎毛豆腐",
+    "cuisine": "snack",
+    "image": "/uploads/img6452608ea3f51e186eae2927.webp",
+    "tags": [
+      "小吃",
+      "素菜"
+    ]
+  },
+  {
+    "name": "黄山炖鸽",
+    "cuisine": "anhui",
+    "image": "/uploads/imgc5176877c02aeed745cc91af.webp",
+    "tags": [
+      "汤菜",
+      "慢炖"
+    ]
+  },
+  {
+    "name": "火腿炖鞭笋",
+    "cuisine": "anhui",
+    "image": "/uploads/imgc61de28db06bef9f6ab96a30.webp",
+    "tags": [
+      "汤菜",
+      "时令"
+    ]
+  },
+  {
+    "name": "徽州一品锅",
+    "cuisine": "anhui",
+    "image": "/uploads/img4cf1cde5a08c2f445e14f856.webp",
+    "tags": [
+      "硬菜",
+      "多人"
+    ]
+  },
+  {
+    "name": "刀板香",
+    "cuisine": "anhui",
+    "image": "/uploads/img6b1e9f1dd99c18faab2d59a6.webp",
+    "tags": [
+      "腊味",
+      "凉菜"
+    ]
+  },
+  {
+    "name": "番茄炒蛋",
+    "cuisine": "homestyle",
+    "image": "/uploads/img36b25732b5196a8e4f4db5f2.webp",
+    "tags": [
+      "快手",
+      "老少皆宜"
+    ]
+  },
+  {
+    "name": "青椒土豆丝",
+    "cuisine": "homestyle",
+    "image": "/uploads/img9b82fc2daf09a3dde6f5e1e0.webp",
+    "tags": [
+      "素菜",
+      "快手"
+    ]
+  },
+  {
+    "name": "可乐鸡翅",
+    "cuisine": "homestyle",
+    "image": "/uploads/img04617e3b4eda2e00b0798bec.webp",
+    "tags": [
+      "老少皆宜",
+      "偏甜"
+    ]
+  },
+  {
+    "name": "红烧排骨",
+    "cuisine": "homestyle",
+    "image": "/uploads/imga51eb505e3c5c25b6e52cc82.webp",
+    "tags": [
+      "硬菜",
+      "下饭"
+    ]
+  },
+  {
+    "name": "蒜蓉西兰花",
+    "cuisine": "homestyle",
+    "image": "/uploads/img0bc361767fa35ddd5ff5b70e.webp",
+    "tags": [
+      "素菜",
+      "快手"
+    ]
+  },
+  {
+    "name": "地三鲜",
+    "cuisine": "homestyle",
+    "image": "/uploads/img0cd83dade809988fe921e8c7.webp",
+    "tags": [
+      "素菜",
+      "下饭"
+    ]
+  },
+  {
+    "name": "肉末茄子",
+    "cuisine": "homestyle",
+    "image": "/uploads/img240db68f6a4f43c6c95ba953.webp",
+    "tags": [
+      "下饭",
+      "家常"
+    ]
+  },
+  {
+    "name": "家常豆腐",
+    "cuisine": "sichuan",
+    "image": "/uploads/img5e36b2d3809dcbfa0b150068.webp",
+    "tags": [
+      "素菜",
+      "下饭"
+    ]
+  },
+  {
+    "name": "醋溜白菜",
+    "cuisine": "homestyle",
+    "image": "/uploads/img38ff13f3391bc30f93c25bc0.webp",
+    "tags": [
+      "素菜",
+      "快手"
+    ]
+  },
+  {
+    "name": "木须肉",
+    "cuisine": "homestyle",
+    "image": "/uploads/img016277acc702813022163355.webp",
+    "tags": [
+      "快手",
+      "均衡"
+    ]
+  },
+  {
+    "name": "香菇滑鸡",
+    "cuisine": "homestyle",
+    "image": "/uploads/img06e854659ee63a430e1a61f4.webp",
+    "tags": [
+      "蒸菜",
+      "老少皆宜"
+    ]
+  },
+  {
+    "name": "蚂蚁上树",
+    "cuisine": "homestyle",
+    "image": "/uploads/img0545668fde8add24f3857d25.webp",
+    "tags": [
+      "下饭",
+      "家常"
+    ]
+  },
+  {
+    "name": "冬瓜排骨汤",
+    "cuisine": "soup",
+    "image": "/uploads/img0bf5288f3327f7ab806dc65b.webp",
+    "tags": [
+      "清淡",
+      "慢炖"
+    ]
+  },
+  {
+    "name": "番茄蛋汤",
+    "cuisine": "soup",
+    "image": "/uploads/img9d239e50dd0490872cbc0e7c.webp",
+    "tags": [
+      "快手",
+      "清淡"
+    ]
+  },
+  {
+    "name": "紫菜蛋花汤",
+    "cuisine": "soup",
+    "image": "/uploads/img538007c00cc7d434ebe43cc1.webp",
+    "tags": [
+      "快手",
+      "清淡"
+    ]
+  },
+  {
+    "name": "玉米排骨汤",
+    "cuisine": "soup",
+    "image": "/uploads/img49ec028abcae04070990c210.webp",
+    "tags": [
+      "慢炖",
+      "老少皆宜"
+    ]
+  },
+  {
+    "name": "酸辣汤",
+    "cuisine": "soup",
+    "image": "/uploads/img2844145657b7236b728482c9.webp",
+    "tags": [
+      "开胃",
+      "酸辣"
+    ]
+  },
+  {
+    "name": "菌菇鸡汤",
+    "cuisine": "soup",
+    "image": "/uploads/imgd473d8d0e60fb19dc75bdd17.webp",
+    "tags": [
+      "慢炖",
+      "清淡"
+    ]
+  },
+  {
+    "name": "海带豆腐汤",
+    "cuisine": "soup",
+    "image": "/uploads/imgcf8593c0a6918c10dddec0fc.webp",
+    "tags": [
+      "清淡",
+      "快手"
+    ]
+  },
+  {
+    "name": "扬州炒饭",
+    "cuisine": "staple",
+    "image": "/uploads/imgb8e2eeaaaf7759b0167ab70c.webp",
+    "tags": [
+      "炒饭",
+      "一锅出"
+    ]
+  },
+  {
+    "name": "蛋炒饭",
+    "cuisine": "staple",
+    "image": "/uploads/imge0dcddc526960a7d50e49fa3.webp",
+    "tags": [
+      "快手",
+      "一锅出"
+    ]
+  },
+  {
+    "name": "葱油拌面",
+    "cuisine": "staple",
+    "image": "/uploads/imgf9a5101da57eba75dc309fdd.webp",
+    "tags": [
+      "面食",
+      "快手"
+    ]
+  },
+  {
+    "name": "番茄鸡蛋面",
+    "cuisine": "staple",
+    "image": "/uploads/img94853a8ff02ee8d83f071fe1.webp",
+    "tags": [
+      "汤面",
+      "快手"
+    ]
+  },
+  {
+    "name": "猪肉白菜饺子",
+    "cuisine": "staple",
+    "image": "/uploads/imgd80ac93b273c7c82396ea30b.webp",
+    "tags": [
+      "面食",
+      "多人"
+    ]
+  },
+  {
+    "name": "小笼包",
+    "cuisine": "snack",
+    "image": "/uploads/img113b4e168c010edac21316f1.webp",
+    "tags": [
+      "点心",
+      "面食"
+    ]
+  },
+  {
+    "name": "葱油饼",
+    "cuisine": "staple",
+    "image": "/uploads/img7a0bf5d9718955792132603a.webp",
+    "tags": [
+      "面食",
+      "早餐"
+    ]
+  },
+  {
+    "name": "阳春面",
+    "cuisine": "staple",
+    "image": "/uploads/imgbe1cb9b365d8dc48a905bdba.webp",
+    "tags": [
+      "汤面",
+      "清淡"
+    ]
+  },
+  {
+    "name": "拍黄瓜",
+    "cuisine": "cold",
+    "image": "/uploads/img5b3a4cd82b18370bf330ed87.webp",
+    "tags": [
+      "快手",
+      "开胃"
+    ]
+  },
+  {
+    "name": "凉拌木耳",
+    "cuisine": "cold",
+    "image": "/uploads/img3c181f21f18f261641c1a831.webp",
+    "tags": [
+      "素菜",
+      "开胃"
+    ]
+  },
+  {
+    "name": "凉拌三丝",
+    "cuisine": "cold",
+    "image": "/uploads/imgad53c4bc33683fb7995c12fc.webp",
+    "tags": [
+      "素菜",
+      "快手"
+    ]
+  },
+  {
+    "name": "口水鸡",
+    "cuisine": "sichuan",
+    "image": "/uploads/img847f7bf8abeadeb415a31390.webp",
+    "tags": [
+      "荤菜",
+      "香辣"
+    ]
+  },
+  {
+    "name": "皮蛋豆腐",
+    "cuisine": "cold",
+    "image": "/uploads/img1969f35588e126ecafa6ef4b.webp",
+    "tags": [
+      "快手",
+      "素菜"
+    ]
+  },
+  {
+    "name": "卤牛肉",
+    "cuisine": "cold",
+    "image": "/uploads/img6ea29b65bd9affbeed9af183.webp",
+    "tags": [
+      "荤菜",
+      "可提前做"
+    ]
+  },
+  {
+    "name": "豆浆油条",
+    "cuisine": "breakfast",
+    "image": "/uploads/img661aadd707b3d7cea658eb93.webp",
+    "tags": [
+      "中式",
+      "周末"
+    ]
+  },
+  {
+    "name": "鸡蛋灌饼",
+    "cuisine": "breakfast",
+    "image": "/uploads/imgf79e7c6089e8c54c36f54581.webp",
+    "tags": [
+      "中式",
+      "快手"
+    ]
+  },
+  {
+    "name": "小米粥",
+    "cuisine": "breakfast",
+    "image": "/uploads/imgd77e5e947c76dd6cc7d0e87b.webp",
+    "tags": [
+      "清淡",
+      "养胃"
+    ]
+  },
+  {
+    "name": "南瓜粥",
+    "cuisine": "breakfast",
+    "image": "/uploads/img633f3f11b795510228d7fd10.webp",
+    "tags": [
+      "清淡",
+      "老少皆宜"
+    ]
+  },
+  {
+    "name": "葱花鸡蛋饼",
+    "cuisine": "breakfast",
+    "image": "/uploads/img683a8bdfce52312e033e1e47.webp",
+    "tags": [
+      "快手",
+      "中式"
+    ]
+  },
+  {
+    "name": "牛奶燕麦杯",
+    "cuisine": "breakfast",
+    "image": "/uploads/img75e73e7dc35535e86fd24c77.webp",
+    "tags": [
+      "快手",
+      "西式"
+    ]
+  },
+  {
+    "name": "银耳莲子羹",
+    "cuisine": "dessert",
+    "image": "/uploads/imgd66e634bb9b6a823eb96b182.webp",
+    "tags": [
+      "甜品",
+      "慢炖"
+    ]
+  },
+  {
+    "name": "红豆沙",
+    "cuisine": "dessert",
+    "image": "/uploads/imgfc3f29ab2bdcbcbb2359b015.webp",
+    "tags": [
+      "甜品",
+      "慢炖"
+    ]
+  },
+  {
+    "name": "双皮奶",
+    "cuisine": "dessert",
+    "image": "/uploads/imgcb8a40612ced186b264d105e.webp",
+    "tags": [
+      "甜品",
+      "老少皆宜"
+    ]
+  },
+  {
+    "name": "绿豆汤",
+    "cuisine": "dessert",
+    "image": "/uploads/imgbbe699acbab6f66ca93c677b.webp",
+    "tags": [
+      "甜品",
+      "夏季"
+    ]
+  },
+  {
+    "name": "桂花酒酿圆子",
+    "cuisine": "dessert",
+    "image": "/uploads/imga36bcceefff4a35fb034d756.webp",
+    "tags": [
+      "甜品",
+      "快手"
+    ]
+  },
+  {
+    "name": "水果酸奶杯",
+    "cuisine": "dessert",
+    "image": "/uploads/img3061d18d2e0359b8972ec530.webp",
+    "tags": [
+      "快手",
+      "不用开火"
+    ]
+  },
+  {
+    "name": "番茄肉酱意面",
+    "cuisine": "western",
+    "image": "/uploads/imgb602d93f84681a07de145fad.webp",
+    "tags": [
+      "意面",
+      "老少皆宜"
+    ]
+  },
+  {
+    "name": "黑椒牛排",
+    "cuisine": "western",
+    "image": "/uploads/img002e0a7882d0b951360cf001.webp",
+    "tags": [
+      "硬菜",
+      "西式"
+    ]
+  },
+  {
+    "name": "芝士焗饭",
+    "cuisine": "western",
+    "image": "/uploads/img9bdcc263a4d39386c476977d.webp",
+    "tags": [
+      "烤箱",
+      "一锅出"
+    ]
+  },
+  {
+    "name": "凯撒沙拉",
+    "cuisine": "western",
+    "image": "/uploads/img0f77eefda5bec7adc7c3bd02.webp",
+    "tags": [
+      "清爽",
+      "不用开火"
+    ]
+  },
+  {
+    "name": "香烤鸡翅",
+    "cuisine": "western",
+    "image": "/uploads/imga6fa92ab427dc1df9ecb0973.webp",
+    "tags": [
+      "烤箱",
+      "老少皆宜"
+    ]
+  },
+  {
+    "name": "玛格丽特披萨",
+    "cuisine": "western",
+    "image": "/uploads/img4358be99c6d455238699f1c1.webp",
+    "tags": [
+      "烤箱",
+      "西式"
+    ]
+  },
+  {
+    "name": "麻辣香锅",
+    "cuisine": "sichuan",
+    "image": "/uploads/img81459da86396348ff2e37213.webp",
+    "tags": [
+      "香辣",
+      "一锅出",
+      "重口"
+    ]
+  },
+  {
+    "name": "凉拌皮蛋",
+    "cuisine": "cold",
+    "image": "/uploads/img7040bd32017ac0b195e5def8.webp",
+    "tags": [
+      "凉菜",
+      "开胃"
+    ]
+  },
+  {
+    "name": "泡椒魔芋",
+    "cuisine": "sichuan",
+    "image": "/uploads/img25cbfa65ca1cdbfe67edb6a7.webp",
+    "tags": [
+      "素菜",
+      "酸辣"
+    ]
+  },
+  {
+    "name": "烤肉",
+    "cuisine": "homestyle",
+    "image": "/uploads/imgcad675c46bacc5c6ef79d9cb.webp",
+    "tags": [
+      "荤菜",
+      "待客"
+    ]
+  },
+  {
+    "name": "火锅",
+    "cuisine": "sichuan",
+    "image": "/uploads/img26f7295b6835bd2ad94171be.webp",
+    "tags": [
+      "多人",
+      "一锅出"
+    ]
+  },
+  {
+    "name": "钵钵鸡",
+    "cuisine": "sichuan",
+    "image": "/uploads/imgff312744647d292efbb8fc82.webp",
+    "tags": [
+      "凉菜",
+      "香辣"
+    ]
+  },
+  {
+    "name": "冷吃翅尖",
+    "cuisine": "sichuan",
+    "image": "/uploads/img642fb477b346f90f81ddc200.webp",
+    "tags": [
+      "香辣",
+      "可提前做"
+    ]
+  },
+  {
+    "name": "泡椒牛肉",
+    "cuisine": "sichuan",
+    "image": "/uploads/img93f3784c7fe78914f3b9fba4.webp",
+    "tags": [
+      "下饭",
+      "快炒"
+    ]
+  },
+  {
+    "name": "爆炒花甲",
+    "cuisine": "homestyle",
+    "image": "/uploads/imgb33ab2846c580f82b49c896f.webp",
+    "tags": [
+      "海鲜",
+      "快炒"
+    ]
+  },
+  {
+    "name": "蒜香鸡翅",
+    "cuisine": "homestyle",
+    "image": "/uploads/imgbd14084aa2a1ff00ca2d2122.webp",
+    "tags": [
+      "荤菜",
+      "老少皆宜"
+    ]
+  },
+  {
+    "name": "凉拌藕片",
+    "cuisine": "cold",
+    "image": "/uploads/imgfb9f5a5270009ab905d0199a.webp",
+    "tags": [
+      "凉菜",
+      "清爽"
+    ]
+  },
+  {
+    "name": "泡椒滑肉",
+    "cuisine": "sichuan",
+    "image": "/uploads/imga6d3d189f5ae73aa42900b3d.webp",
+    "tags": [
+      "下饭",
+      "酸辣"
+    ]
+  },
+  {
+    "name": "干煸炒面",
+    "cuisine": "staple",
+    "image": "/uploads/img328c71aa087768ad806bd3fe.webp",
+    "tags": [
+      "面食",
+      "主食"
+    ]
+  },
+  {
+    "name": "藤椒鱼",
+    "cuisine": "sichuan",
+    "image": "/uploads/img8e8823ca8374aae9916f2a96.webp",
+    "tags": [
+      "硬菜",
+      "香辣"
+    ]
+  },
+  {
+    "name": "酸菜鱼",
+    "cuisine": "sichuan",
+    "image": "/uploads/img49e32024faddbf1ae6e26d73.webp",
+    "tags": [
+      "硬菜",
+      "汤菜"
+    ]
+  },
+  {
+    "name": "麻辣鱼",
+    "cuisine": "sichuan",
+    "image": "/uploads/imge869ace758ffa6ddb7e331f9.webp",
+    "tags": [
+      "硬菜",
+      "重口"
+    ]
+  },
+  {
+    "name": "清炒荷兰豆",
+    "cuisine": "homestyle",
+    "image": "/uploads/img3aa56dea2d1a6a86d8681cb6.webp",
+    "tags": [
+      "素菜",
+      "快手"
+    ]
+  },
+  {
+    "name": "虎皮茄子",
+    "cuisine": "homestyle",
+    "image": "/uploads/img564264cddd5291ae4564784c.webp",
+    "tags": [
+      "素菜",
+      "下饭"
+    ]
+  },
+  {
+    "name": "香辣鸡爪",
+    "cuisine": "cold",
+    "image": "/uploads/imgecf206df997fa7d8e0c6d7ec.webp",
+    "tags": [
+      "香辣",
+      "可提前做"
+    ]
+  },
+  {
+    "name": "炸蘑菇",
+    "cuisine": "homestyle",
+    "image": "/uploads/img9aad6d354ce96347cbe370d4.webp",
+    "tags": [
+      "酥脆",
+      "快手"
+    ]
+  },
+  {
+    "name": "清炒菜心",
+    "cuisine": "homestyle",
+    "image": "/uploads/img29d2d52ec86e1fed2b650b3f.webp",
+    "tags": [
+      "素菜",
+      "清淡"
+    ]
+  },
+  {
+    "name": "柠檬鸡爪",
+    "cuisine": "cold",
+    "image": "/uploads/img196ebc1d0f956ecb125a1bfc.webp",
+    "tags": [
+      "凉菜",
+      "开胃"
+    ]
+  },
+  {
+    "name": "鸡爪鸡翅煲",
+    "cuisine": "homestyle",
+    "image": "/uploads/img9959328e019eccdf5c13bd87.webp",
+    "tags": [
+      "一锅出",
+      "慢炖"
+    ]
+  },
+  {
+    "name": "炝炒西葫芦",
+    "cuisine": "homestyle",
+    "image": "/uploads/imgb2038382bfa7cb7bf0cbbcbe.webp",
+    "tags": [
+      "素菜",
+      "快手"
+    ]
+  },
+  {
+    "name": "香辣鸡翅",
+    "cuisine": "homestyle",
+    "image": "/uploads/img934b92547aee171d7e0f5b7e.webp",
+    "tags": [
+      "荤菜",
+      "香辣"
+    ]
+  },
+  {
+    "name": "土豆炖牛腩",
+    "cuisine": "homestyle",
+    "image": "/uploads/imgd2e7badf397cdcc281dab650.webp",
+    "tags": [
+      "慢炖",
+      "硬菜"
+    ]
+  },
+  {
+    "name": "香辣土豆片",
+    "cuisine": "homestyle",
+    "image": "/uploads/imgfef2236b3b8d9b84c3ac7ed2.webp",
+    "tags": [
+      "素菜",
+      "下饭"
+    ]
+  },
+  {
+    "name": "干煸鱿鱼须",
+    "cuisine": "sichuan",
+    "image": "/uploads/imgf2752a9679a3b7195fc8e3cc.webp",
+    "tags": [
+      "海鲜",
+      "香辣"
+    ]
+  },
+  {
+    "name": "炝炒包包菜",
+    "cuisine": "homestyle",
+    "image": "/uploads/img1c7d5e0a9eb231976a8d9443.webp",
+    "tags": [
+      "素菜",
+      "快手"
+    ]
+  },
+  {
+    "name": "蒜蓉炒大虾",
+    "cuisine": "homestyle",
+    "image": "/uploads/img1b9001ff19ff384285e06c9a.webp",
+    "tags": [
+      "海鲜",
+      "待客"
+    ]
+  },
+  {
+    "name": "手撕茄子",
+    "cuisine": "cold",
+    "image": "/uploads/imgd5e9fc081505ac146e4059c3.webp",
+    "tags": [
+      "凉菜",
+      "清爽"
+    ]
+  },
+  {
+    "name": "红烧茄子",
+    "cuisine": "homestyle",
+    "image": "/uploads/img3c2649bb7bdfdff9b37c4d66.webp",
+    "tags": [
+      "素菜",
+      "下饭"
+    ]
+  },
+  {
+    "name": "炒花菜",
+    "cuisine": "homestyle",
+    "image": "/uploads/img5ab07eb5cc3eabef5a08c5ad.webp",
+    "tags": [
+      "素菜",
+      "快手"
+    ]
+  },
+  {
+    "name": "炝炒小白菜",
+    "cuisine": "homestyle",
+    "image": "/uploads/img310319eaa29640e63af24b99.webp",
+    "tags": [
+      "素菜",
+      "清淡"
+    ]
+  },
+  {
+    "name": "干煸四季豆",
+    "cuisine": "sichuan",
+    "image": "/uploads/imgf33b772acf172af2b934d618.webp",
+    "tags": [
+      "素菜",
+      "下饭"
+    ]
+  },
+  {
+    "name": "青椒炒肉丝",
+    "cuisine": "homestyle",
+    "image": "/uploads/imgb49f766d46c5c213f25348bc.webp",
+    "tags": [
+      "下饭",
+      "快炒"
+    ]
+  },
+  {
+    "name": "米饭",
+    "cuisine": "staple",
+    "image": "/uploads/imge7328d2b176610ce714cec9c.webp",
+    "tags": [
+      "主食",
+      "老少皆宜"
+    ]
+  },
+  {
+    "name": "炒鸡",
+    "cuisine": "homestyle",
+    "image": "/uploads/img8dcec6a6e1143db12e87ef47.webp",
+    "tags": [
+      "硬菜",
+      "香辣"
+    ]
+  },
+  {
+    "name": "蒜香排骨",
+    "cuisine": "homestyle",
+    "image": "/uploads/img9a2f989bee48d8f74a372df6.webp",
+    "tags": [
+      "荤菜",
+      "待客"
+    ]
+  },
+  {
+    "name": "爆炒龙虾尾",
+    "cuisine": "homestyle",
+    "image": "/uploads/imgf6637c976211ad61bce1acf2.webp",
+    "tags": [
+      "海鲜",
+      "重口"
+    ]
+  },
+  {
+    "name": "爆炒小龙虾",
+    "cuisine": "homestyle",
+    "image": "/uploads/img80c5c8546601d02a0f546adc.webp",
+    "tags": [
+      "海鲜",
+      "多人"
+    ]
+  },
+  {
+    "name": "萝卜炖排骨",
+    "cuisine": "soup",
+    "image": "/uploads/img2ed6da9fc8d747112f0cf124.webp",
+    "tags": [
+      "汤菜",
+      "慢炖"
+    ]
+  },
+  {
+    "name": "酸辣土豆丝",
+    "cuisine": "homestyle",
+    "image": "/uploads/img0911401e71780dbd40d7d021.webp",
+    "tags": [
+      "素菜",
+      "开胃"
+    ]
+  },
+  {
+    "name": "炝炒油麦菜",
+    "cuisine": "homestyle",
+    "image": "/uploads/img29ca368451d44aea2f704739.webp",
+    "tags": [
+      "素菜",
+      "快手"
+    ]
+  },
+  {
+    "name": "蒜苔炒肉丝",
+    "cuisine": "homestyle",
+    "image": "/uploads/imga9872f34c9d012e94caf0bcf.webp",
+    "tags": [
+      "下饭",
+      "快炒"
+    ]
+  },
+  {
+    "name": "大盘鸡",
+    "cuisine": "xinjiang",
+    "image": "/uploads/imga88ae873bb989df013dce463.webp",
+    "tags": [
+      "新疆菜",
+      "西域风味"
+    ]
+  },
+  {
+    "name": "手抓饭",
+    "cuisine": "xinjiang",
+    "image": "/uploads/img202d6ad1663bbbcd5efc8fce.webp",
+    "tags": [
+      "新疆菜",
+      "西域风味"
+    ]
+  },
+  {
+    "name": "烤羊肉串",
+    "cuisine": "xinjiang",
+    "image": "/uploads/img37a039319a010a8bcd12d7cb.webp",
+    "tags": [
+      "新疆菜",
+      "西域风味"
+    ]
+  },
+  {
+    "name": "馕坑肉",
+    "cuisine": "xinjiang",
+    "image": "/uploads/imgbee6d564bbfa561819a00ad2.webp",
+    "tags": [
+      "新疆菜",
+      "西域风味"
+    ]
+  },
+  {
+    "name": "椒麻鸡",
+    "cuisine": "xinjiang",
+    "image": "/uploads/imgd0848163a8c21a1e5033c13c.webp",
+    "tags": [
+      "新疆菜",
+      "西域风味"
+    ]
+  },
+  {
+    "name": "过油肉拌面",
+    "cuisine": "xinjiang",
+    "image": "/uploads/imgea31f925ff1f2d48174b0a23.webp",
+    "tags": [
+      "新疆菜",
+      "西域风味"
+    ]
+  },
+  {
+    "name": "烤包子",
+    "cuisine": "xinjiang",
+    "image": "/uploads/imgc79d6bafd0bb57ae61a4bca2.webp",
+    "tags": [
+      "新疆菜",
+      "西域风味"
+    ]
+  },
+  {
+    "name": "手抓肉",
+    "cuisine": "xinjiang",
+    "image": "/uploads/img0f0283f48da49c28897f405a.webp",
+    "tags": [
+      "新疆菜",
+      "西域风味"
+    ]
+  },
+  {
+    "name": "丁丁炒面",
+    "cuisine": "xinjiang",
+    "image": "/uploads/img38689f3143fa3bbf6f8fc9e1.webp",
+    "tags": [
+      "新疆菜",
+      "西域风味"
+    ]
+  },
+  {
+    "name": "新疆炒米粉",
+    "cuisine": "xinjiang",
+    "image": "/uploads/img63bc9041074763a3045970fe.webp",
+    "tags": [
+      "新疆菜",
+      "西域风味"
+    ]
+  },
+  {
+    "name": "馕",
+    "cuisine": "xinjiang",
+    "image": "/uploads/img6aadd49166a235fef4aa800d.webp",
+    "tags": [
+      "新疆菜",
+      "西域风味"
+    ]
+  },
+  {
+    "name": "酸奶粽子",
+    "cuisine": "xinjiang",
+    "image": "/uploads/img1aacbd6d5258c1f94a762bc3.webp",
+    "tags": [
+      "新疆菜",
+      "西域风味"
+    ]
+  },
+  {
+    "name": "缸子肉",
+    "cuisine": "xinjiang",
+    "image": "/uploads/img1582c152e6c73344305490fa.webp",
+    "tags": [
+      "新疆菜",
+      "西域风味"
+    ]
+  },
+  {
+    "name": "拉条子",
+    "cuisine": "xinjiang",
+    "image": "/uploads/img264edd3881e61bab4f5253cf.webp",
+    "tags": [
+      "新疆菜",
+      "西域风味"
+    ]
+  },
+  {
+    "name": "羊肉揪片子",
+    "cuisine": "xinjiang",
+    "image": "/uploads/img233cae59033886f548092a10.webp",
+    "tags": [
+      "新疆菜",
+      "西域风味"
+    ]
+  },
+  {
+    "name": "碎肉抓饭",
+    "cuisine": "xinjiang",
+    "image": "/uploads/img248af3ecf237d5a803ce62ef.webp",
+    "tags": [
+      "新疆菜",
+      "西域风味"
+    ]
+  },
+  {
+    "name": "熏马肠",
+    "cuisine": "xinjiang",
+    "image": "/uploads/img8c2d4a45da7cadcf60533207.webp",
+    "tags": [
+      "新疆菜",
+      "西域风味"
+    ]
+  },
+  {
+    "name": "皮芽子馕",
+    "cuisine": "xinjiang",
+    "image": "/uploads/imgeddb01d769f87124698487cf.webp",
+    "tags": [
+      "新疆菜",
+      "西域风味"
+    ]
+  },
+  {
+    "name": "重庆小面",
+    "cuisine": "snack",
+    "image": "/uploads/imgbabe609caf4394ad0eca3602.webp",
+    "tags": [
+      "川渝小吃",
+      "山城味道"
+    ]
+  },
+  {
+    "name": "酸辣粉",
+    "cuisine": "snack",
+    "image": "/uploads/img283f1697ad986be5daa80889.webp",
+    "tags": [
+      "川渝小吃",
+      "山城味道"
+    ]
+  }
+]
