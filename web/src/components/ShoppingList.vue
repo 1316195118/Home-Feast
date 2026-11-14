@@ -1,6 +1,6 @@
 <script setup>
 import { inject, computed, ref } from 'vue'
-import { shoppingList, shoppingGroups } from '../utils'
+import { shoppingList, shoppingGroups, normalizeIngredient, shoppingKind } from '../utils'
 import { getRecipe } from '../recipes'
 import { useModalBehavior } from '../modal'
 
@@ -20,7 +20,18 @@ const preciseCount = computed(() => {
   const byId = new Map(dishesWithIngredients.value.map((d) => [d.id, d]))
   return (state.plan.orders || []).filter((o) => byId.get(o.dishId)?.precise).length
 })
-const groups = computed(() => shoppingGroups(list.value))
+// 冰箱里已有什么（仅主料，佐料不当作「已有」）：用来在清单上标注「🧊 冰箱有」
+const pantrySet = computed(() => new Set(
+  (state.pantry || [])
+    .map((x) => normalizeIngredient(String(x)))
+    .filter((x) => shoppingKind(x) !== '佐料'),
+))
+// 把「是否命中冰箱」挂到每个清单项上，命中即提示不用重复买
+const enriched = computed(() => list.value.map((it) => ({
+  ...it,
+  inPantry: pantrySet.value.has(normalizeIngredient(it.text)),
+})))
+const groups = computed(() => shoppingGroups(enriched.value))
 const STORE_KEY = `fm.shopping.${state.today}`
 
 function readChecked() {
@@ -58,7 +69,7 @@ function clearChecked() {
 async function copyList() {
   const lines = groups.value.flatMap((g) => g.items.length
     ? [`【${g.key}】`, ...g.items.map(
-        (x) => `${checked.value.has(x.text) ? '☑' : '☐'} ${x.text}${x.amount ? ` · ${x.amount}` : ''}${x.count > 1 ? ` ×${x.count}` : ''}`,
+        (x) => `${checked.value.has(x.text) ? '☑' : '☐'} ${x.inPantry ? '🧊 ' : ''}${x.text}${x.amount ? ` · ${x.amount}` : ''}${x.count > 1 ? ` ×${x.count}` : ''}`,
       )]
     : [])
   const text = `家里吃点啥 · ${state.today} 购物清单\n${lines.join('\n')}`
@@ -163,8 +174,9 @@ function buildImage() {
       }
       ctx.fillStyle = done ? '#948576' : '#3c3229'
       ctx.font = `19px ${FONT}`
-      const nameW = ctx.measureText(item.text).width
-      ctx.fillText(item.text, PAD + 46, y + 26)
+      const prefix = item.inPantry ? '🧊 ' : ''
+      const nameW = ctx.measureText(prefix + item.text).width
+      ctx.fillText(prefix + item.text, PAD + 46, y + 26)
       if (item.amount) {
         ctx.fillStyle = '#948576'
         ctx.font = `15px ${FONT}`
@@ -237,10 +249,11 @@ async function saveToAlbum() {
             </div>
             <label
               v-for="item in g.items" :key="item.text" class="shopping-item"
-              :class="{ done: checked.has(item.text) }"
+              :class="{ done: checked.has(item.text), 'has-pantry': item.inPantry }"
             >
               <input type="checkbox" :checked="checked.has(item.text)" @change="toggle(item.text)" />
               <span class="shopping-name">{{ item.text }}</span>
+              <span v-if="item.inPantry" class="shopping-pantry" title="冰箱里已有，不用买">🧊 冰箱有</span>
               <span v-if="item.amount" class="shopping-amount">{{ item.amount }}</span>
               <span v-if="item.count > 1" class="shopping-count">×{{ item.count }}</span>
               <span class="shopping-from tiny muted">{{ item.from.join('、') }}</span>

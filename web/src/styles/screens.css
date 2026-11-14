@@ -524,6 +524,11 @@
 .shopping-item.done { opacity: 0.58; }
 .shopping-item.done .shopping-name { text-decoration: line-through; }
 .shopping-name { font-weight: 700; }
+.shopping-pantry {
+  flex: none; font-size: 0.68rem; font-weight: 700; color: var(--pantry-ink);
+  background: var(--pantry-bg); border-radius: 999px; padding: 2px 8px; white-space: nowrap;
+}
+.shopping-item.has-pantry .shopping-name { opacity: 0.72; }
 .shopping-count { font-size: 0.76rem; color: var(--brand-dark); }
 .shopping-from { margin-left: auto; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .shopping-group + .shopping-group { margin-top: 14px; }

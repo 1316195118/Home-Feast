@@ -137,25 +137,66 @@ export function shoppingKind(name) {
 // 纯前端计算，不新增后端字段；「盐 少许」「盐 适量」会归成一条「盐」。
 // 用量文本形如「鸡腿肉 200g」「番茄 2 个」「盐 少许」，拆成食材名 + 用量。
 // 同名食材合并时：能解析成同一单位的数值就累加出总重量/总个数，否则把原文并列。
-const AMOUNT_UNITS = 'g|克|kg|千克|ml|毫升|个|只|根|片|块|勺|瓣|段|把|斤|两|罐|支|茶匙|汤匙|小块'
-function parseAmount(raw) {
-  const s = String(raw || '').replace(/\s+/g, '')
-  if (!s) return null
-  const m = s.match(new RegExp(`^([0-9.]+)(${AMOUNT_UNITS})$`))
-  return m ? { n: Number(m[1]), unit: m[2] } : null
+// 用量单位归一到规范写法，便于同单位累加（不跨数量级换算，保持简单可靠）
+const UNIT_NORM = {
+  g: 'g', 克: 'g', G: 'g',
+  kg: 'kg', 千克: 'kg', 公斤: 'kg',
+  ml: 'ml', 毫升: 'ml', ML: 'ml', mL: 'ml',
+  l: 'l', 升: 'l', L: 'l',
+  个: '个', 只: '个', 枚: '个', 颗: '个', 粒: '个',
+  根: '根', 条: '根',
+  片: '片', 块: '块', 瓣: '瓣', 段: '段', 把: '把',
+  勺: '勺', 汤匙: '勺', 茶匙: '勺', 小勺: '勺', 大勺: '勺',
+  罐: '罐', 支: '支', 杯: '杯', 斤: '斤', 两: '两',
 }
+// 食材别名归一：同名不同叫法归并成一条（番茄/西红柿、各类葱蒜姜…），提升聚合准确度
+const INGREDIENT_ALIAS = {
+  西红柿: '番茄', 洋柿子: '番茄',
+  小葱: '葱', 大葱: '葱', 香葱: '葱', 青葱: '葱', 胡葱: '葱',
+  大蒜: '蒜', 蒜头: '蒜',
+  老姜: '姜', 子姜: '姜', 生姜: '姜',
+  柿子椒: '青椒', 菜椒: '青椒',
+  葱头: '洋葱', 玉葱: '洋葱',
+  地瓜: '红薯', 蕃薯: '红薯',
+}
+export function normalizeIngredient(name) {
+  const n = String(name || '').replace(/[0-9０-９]/g, '').trim()
+  return INGREDIENT_ALIAS[n] || n
+}
+// 解析用量：「300g」「2 个」「2~3个」都能识别；范围量取上限；
+// 不能识别为「数字 + 已知单位」（如「少许」「适量」）返回 null，由调用方当原文处理。
+function parseAmount(raw) {
+  const s = String(raw || '').replace(/\s+/g, '').replace(/[~～—–]/g, '~')
+  if (!s) return null
+  let numStr, rest
+  const range = s.match(/^([0-9.]+)~([0-9.]+)(.+)$/)
+  if (range) { numStr = range[2]; rest = range[3] }       // 2~3个 → 取上限 3个
+  else {
+    const m = s.match(/^([0-9.]+)(.+)$/)
+    if (!m) return null
+    numStr = m[1]; rest = m[2]
+  }
+  if (!(rest in UNIT_NORM)) return null
+  return { n: Number(numStr), unit: UNIT_NORM[rest] }
+}
+// 同食材多来源用量：可识别的同单位数值相加（如 300g + 200g = 500g），
+// 不同单位或「少许」之类的文字各自并列，绝不臆造换算。
 function formatAmounts(list) {
   const uniq = [...new Set((list || []).map((x) => String(x).trim()).filter(Boolean))]
   if (!uniq.length) return ''
-  // 只有一个来源就照抄原用量（「200g」「2 个」「少许」），不加多余的「约」
-  if (uniq.length === 1) return uniq[0]
+  if (uniq.length === 1) return uniq[0]                  // 单一来源照抄原用量
   const parsed = uniq.map(parseAmount)
-  if (parsed.every(Boolean) && new Set(parsed.map((p) => p.unit)).size === 1) {
-    const sum = parsed.reduce((s, p) => s + p.n, 0)
-    const n = Number.isInteger(sum) ? sum : Number(sum.toFixed(1))
-    return `合计 ${n}${parsed[0].unit}`
+  const byUnit = {}
+  parsed.forEach((p) => { if (p) (byUnit[p.unit] ||= []).push(p.n) })
+  const parts = []
+  for (const [u, ns] of Object.entries(byUnit)) {
+    const sum = ns.reduce((a, b) => a + b, 0)
+    parts.push(`${Number.isInteger(sum) ? sum : Number(sum.toFixed(1))}${u}`)
   }
-  return uniq.slice(0, 2).join('、') + (uniq.length > 2 ? '…' : '')
+  for (let i = 0; i < uniq.length; i++) {
+    if (!parsed[i] && !parts.includes(uniq[i])) parts.push(uniq[i])  // 少许 / 适量
+  }
+  return parts.join(' + ')
 }
 
 export function shoppingList(orders, dishes) {
@@ -168,7 +209,7 @@ export function shoppingList(orders, dishes) {
       const text = String(raw).trim()
       if (!text) continue
       const bits = text.split(/\s+/)
-      const key = bits[0].replace(/[0-9０-９]/g, '').trim() || text
+      const key = normalizeIngredient(bits[0]) || text
       if (!map.has(key)) map.set(key, { text: key, kind: shoppingKind(key), count: 0, from: [], amounts: [] })
       const item = map.get(key)
       item.count++
