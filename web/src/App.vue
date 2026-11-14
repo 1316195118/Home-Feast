@@ -43,6 +43,8 @@ const state = reactive({
   busy: 0,           // 进行中的写操作数量，用于顶部进度条与防连点
   tab: 'today',
   version: '',
+  releaseNote: '',   // 本次构建的更新说明，随二进制一起编译进来
+  buildTime: '',     // 构建时间，用来判断线上跑的是哪一版
   today: '',
   meal: currentMeal(),   // 当前所处的餐别 key，随时间自动跟随（见 syncNow）
   mealPick: '',          // 用户手动指定的餐别；空串表示跟随当前时段（全站点菜入口共用）
@@ -372,6 +374,8 @@ async function boot() {
     state.accessRequired = cfg.accessRequired
     state.accessEnvManaged = !!cfg.accessEnvManaged
     state.version = cfg.version || ''
+    state.releaseNote = cfg.releaseNote || ''
+    state.buildTime = cfg.buildTime || ''
     if (cfg.accessRequired && !getAccessCode()) {
       state.locked = true
       return

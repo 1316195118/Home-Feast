@@ -41,11 +41,25 @@ func decodeBody(w http.ResponseWriter, r *http.Request, dest any) error {
 
 // trimmed 去掉首尾空白，并按字符数（不是字节数）限制长度。
 func trimmed(value string, max int) string {
-	v := strings.TrimSpace(value)
+	v := strings.TrimSpace(stripControl(value))
 	if utf8.RuneCountInString(v) > max {
 		v = string([]rune(v)[:max])
 	}
 	return v
+}
+
+// stripControl 去掉 NUL 等控制字符。它们能存进 JSON，但会让前端显示成空白、
+// 导出的 Excel 也可能出错；换行与制表符是合理输入，保留。
+func stripControl(s string) string {
+	return strings.Map(func(r rune) rune {
+		if r == '\n' || r == '\t' {
+			return r
+		}
+		if r < 0x20 || r == 0x7f {
+			return -1
+		}
+		return r
+	}, s)
 }
 
 // validDate 只接受 YYYY-MM-DD，且必须是真实存在的日期。

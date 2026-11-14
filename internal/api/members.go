@@ -112,7 +112,16 @@ func (s *Server) verifyMemberPin(w http.ResponseWriter, r *http.Request) {
 		jsonErr(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	jsonOK(w, map[string]bool{"ok": s.st.VerifyMemberPin(r.PathValue("id"), in.Pin)})
+	// PIN 只有 4~16 位，且很多家庭用 4 位数字：不设闸的话实测 56 次/秒、3 分钟能穷举完。
+	key := "pin:" + clientIP(r)
+	s.limit.wait(key)
+	ok := s.st.VerifyMemberPin(r.PathValue("id"), in.Pin)
+	if ok {
+		s.limit.Reset(key)
+	} else {
+		s.limit.Fail(key)
+	}
+	jsonOK(w, map[string]bool{"ok": ok})
 }
 
 func (s *Server) deleteMember(w http.ResponseWriter, r *http.Request) {
