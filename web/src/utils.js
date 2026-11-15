@@ -96,6 +96,16 @@ export function dutyNames(ids, members, max = 2) {
   return `${list[0].name} 等 ${list.length} 人`
 }
 
+// 一天里各餐出现过的成员（去重）：历史页与家庭统计按天看人，不细分到餐
+export function dayDutyIds(plan, key) {
+  const out = new Set()
+  for (const md of Object.values(plan?.mealDuties || {})) {
+    for (const id of (md?.[key] || [])) out.add(id)
+  }
+  for (const id of (plan?.[key] || [])) out.add(id)
+  return [...out]
+}
+
 export function memberOf(id, members) {
   return members.find((m) => m.id === id) || null
 }
