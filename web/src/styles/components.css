@@ -293,6 +293,10 @@
 .cook-title { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 .cook-title b { font-size: 1.02rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cook-progress { font-size: 0.76rem; font-weight: 700; color: var(--muted); flex: none; }
+.cook-lock {
+  font-size: 0.66rem; font-weight: 700; color: #8a5a00;
+  background: #fff4d8; padding: 2px 7px; border-radius: 999px; flex: none;
+}
 .cook-progress-bar { height: 4px; border-radius: 999px; background: var(--paper-deep); margin: 10px 0 4px; overflow: hidden; }
 .cook-progress-bar span {
   display: block; height: 100%; border-radius: inherit;
