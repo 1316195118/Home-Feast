@@ -630,7 +630,6 @@ async function saveRoster() {
                 <span class="tag tag-green">家里吃点啥 v{{ state.version }}</span>
                 <span v-if="state.buildTime" class="about-release-time">{{ state.buildTime }} 构建</span>
               </div>
-              <p v-if="state.releaseNote" class="about-release-note">{{ state.releaseNote }}</p>
             </div>
 
             <div class="about-stack">

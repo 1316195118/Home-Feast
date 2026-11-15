@@ -360,7 +360,6 @@
 .about-release { margin-top: 14px; padding: 12px 14px; background: var(--surface-soft); border-radius: var(--radius); }
 .about-release-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .about-release-time { font-size: 0.74rem; color: var(--muted); }
-.about-release-note { margin: 8px 0 0; font-size: 0.8rem; line-height: 1.65; color: var(--ink-soft); white-space: pre-line; }
 
 /* ---------- 用餐时段编辑（放在弹窗里，卡片本身与其它设置卡一样大） ---------- */
 .setting-title-tag { margin-left: 8px; font-size: 0.7rem; font-weight: 800; vertical-align: middle; }
