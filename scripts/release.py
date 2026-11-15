@@ -1,15 +1,22 @@
 #!/usr/bin/env python3
-"""发布脚本：递增四段式版本号 → 写 CHANGELOG → 生成 version_gen.go → 交叉编译。
+"""发布脚本：版本号只在「推送」时递增，平时部署只暂存更新说明。
 
 版本规则（用户约定）：
     1.0.0.1 → 1.0.0.2 → … → 1.0.0.9 → 1.0.1.0 → … → 1.0.9.9 → 1.1.0.0
     末位每发布一次 +1，满 10 向高位进位（十进制进位，段数始终是 4）。
 
-用法：
-    python scripts/release.py --note "补口令限速与字符过滤"
-    python scripts/release.py --note "..." --deploy      # 编译后顺带部署
-    python scripts/release.py --show                     # 只看当前版本
-    python scripts/release.py --note "..." --no-build    # 只改版本与说明
+工作流（用户 2026-11-15 定）：
+    平时改完想上线：
+        python scripts/release.py --note "这次改了什么" --deploy
+        → 说明记进 docs/PENDING.md，版本号不变，线上仍显示当前版本 + 最新一条说明
+
+    攒够了、用户明确说「推送」时：
+        python scripts/release.py --publish
+        → 把 PENDING 里的说明合并成一条 CHANGELOG、递增版本号、编译、
+          git commit、git push、部署（加 --no-deploy 可跳过部署）
+
+    python scripts/release.py --show     # 当前版本 + 待发布条数
+    python scripts/release.py --note "..." --no-deploy   # 只记录说明 + 编译
 """
 import argparse
 import datetime
@@ -24,8 +31,16 @@ sys.stdout.reconfigure(encoding='utf-8')
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 VERSION_FILE = os.path.join(ROOT, 'VERSION')
 CHANGELOG = os.path.join(ROOT, 'CHANGELOG.md')
+PENDING = os.path.join(ROOT, 'docs', 'PENDING.md')
 GEN_FILE = os.path.join(ROOT, 'internal', 'api', 'version_gen.go')
 BIN = os.path.join(ROOT, 'menu-linux')
+DEPLOY = os.path.join(ROOT, 'scripts', '_cq', 'deploy_menu4.py')
+
+PENDING_HEADER = '''# 待发布说明
+
+> 每次部署用 `--note` 记一条，版本号不变；用户确认后 `--publish` 一次性发版并推送。
+
+'''
 
 
 def read_version():
@@ -53,10 +68,32 @@ def write_version(v):
         f.write(v + '\n')
 
 
+def read_pending():
+    """返回 [(时间, 说明), ...]，文件名不存在时为空。"""
+    if not os.path.exists(PENDING):
+        return []
+    s = open(PENDING, encoding='utf-8').read()
+    blocks = re.findall(r'^## (.+?)\n\n(.*?)(?=^## |\Z)', s, re.M | re.S)
+    return [(t.strip(), body.strip()) for t, body in blocks if body.strip()]
+
+
+def append_pending(note, now):
+    s = open(PENDING, encoding='utf-8').read() if os.path.exists(PENDING) else PENDING_HEADER
+    if not s.lstrip().startswith('#'):
+        s = PENDING_HEADER + s
+    entry = f"## {now.strftime('%Y-%m-%d %H:%M')}\n\n{note.strip()}\n\n"
+    m = re.search(r'^## ', s, re.M)
+    s = (s[:m.start()] + entry + s[m.start():]) if m else (s.rstrip() + '\n\n' + entry)
+    open(PENDING, 'w', encoding='utf-8', newline='').write(s)
+
+
+def clear_pending():
+    open(PENDING, 'w', encoding='utf-8', newline='').write(PENDING_HEADER)
+
+
 def append_changelog(v, note, now):
     line = f'## {v} · {now.strftime("%Y-%m-%d")}\n\n{note.strip()}\n\n'
     s = open(CHANGELOG, encoding='utf-8').read() if os.path.exists(CHANGELOG) else '# 更新记录\n\n'
-    # 插在第一个版本小节之前，保持「最新在最上面」
     m = re.search(r'^## \d', s, re.M)
     s = (s[:m.start()] + line + s[m.start():]) if m else (s.rstrip() + '\n\n' + line)
     open(CHANGELOG, 'w', encoding='utf-8', newline='').write(s)
@@ -81,38 +118,87 @@ def build():
     cmd = ['go', 'build', '-trimpath', '-ldflags', '-s -w', '-o', BIN, './cmd/menu']
     print('编译:', ' '.join(cmd))
     subprocess.run(cmd, cwd=ROOT, env=env, check=True)
+    print(f'产物 {BIN}（{os.path.getsize(BIN) / 1024 / 1024:.1f} MB）')
+
+
+def deploy():
+    subprocess.run([sys.executable, DEPLOY], cwd=ROOT, check=True)
+
+
+def run_git(args, capture=False):
+    return subprocess.run(['git'] + args, cwd=ROOT, check=True,
+                          text=True, capture_output=capture)
+
+
+def publish(do_deploy=True):
+    entries = read_pending()
+    if not entries:
+        raise SystemExit('没有待发布说明，先用 --note 记录这次改了什么')
+
+    cur = read_version()
+    v = bump(cur)
+    now = datetime.datetime.now()
+
+    # 多个时间块的说明合并到同一个版本下，保留各自小标题便于回看
+    if len(entries) == 1:
+        note = entries[0][1]
+    else:
+        note = '\n\n'.join(f'**{t}**\n\n{body}' for t, body in entries)
+
+    write_version(v)
+    append_changelog(v, note, now)
+    gen_go(v, note, now)
+    clear_pending()
+    print(f'版本 {cur} → {v}（合并 {len(entries)} 条说明）')
+
+    build()
+    if do_deploy:
+        deploy()
+
+    # 提交与推送：用户明确要求「推送时才更新版本号」，所以只在 publish 里做
+    run_git(['add', '-A'])
+    msg = f'v{v}：{entries[0][1].splitlines()[0][:60]}'
+    run_git(['commit', '-m', msg])
+    print('已提交:', msg)
+    run_git(['push', 'origin', 'main'])
+    print('已推送到 GitHub')
+    return v
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--note', help='本次更新说明（会写进 CHANGELOG 并内嵌到二进制）')
-    ap.add_argument('--show', action='store_true', help='只显示当前版本')
-    ap.add_argument('--no-bump', action='store_true', help='不递增版本，用当前版本重新构建')
-    ap.add_argument('--no-build', action='store_true', help='只更新版本与说明，不编译')
-    ap.add_argument('--deploy', action='store_true', help='编译后调用 deploy_menu4.py')
+    ap.add_argument('--note', help='本次更新说明（记入 docs/PENDING.md，不递增版本）')
+    ap.add_argument('--show', action='store_true', help='显示当前版本与待发布条数')
+    ap.add_argument('--publish', action='store_true', help='正式发版：递增版本 + CHANGELOG + 编译 + 提交 + 推送')
+    ap.add_argument('--no-build', action='store_true', help='不编译')
+    ap.add_argument('--no-deploy', action='store_true', help='不部署')
     a = ap.parse_args()
 
-    cur = read_version()
     if a.show:
-        print(cur)
+        pending = read_pending()
+        print(f'当前版本 {read_version()}，待发布 {len(pending)} 条')
+        for t, body in pending:
+            print(f'  [{t}] {body.splitlines()[0][:60]}')
         return
-    if not a.note:
-        raise SystemExit('必须用 --note 写清本次更新内容（会显示在设置页「关于」里）')
 
-    v = cur if a.no_bump else bump(cur)
+    if a.publish:
+        publish(do_deploy=not a.no_deploy)
+        return
+
+    if not a.note:
+        raise SystemExit('请用 --note 写清本次更新内容，或用 --publish 正式发版')
+
     now = datetime.datetime.now()
-    write_version(v)
-    append_changelog(v, a.note, now)
-    gen_go(v, a.note, now)
-    print(f'版本 {cur} → {v}')
-    print(f'说明: {a.note.strip()}')
+    append_pending(a.note, now)
+    # 版本号保持不变，但让线上「关于」显示最新一条说明
+    gen_go(read_version(), a.note, now)
+    print(f'说明已暂存（版本仍为 {read_version()}）: {a.note.strip().splitlines()[0]}')
 
     if not a.no_build:
         build()
-        size = os.path.getsize(BIN) / 1024 / 1024
-        print(f'产物 {BIN}（{size:.1f} MB）')
-    if a.deploy:
-        subprocess.run([sys.executable, os.path.join(ROOT, 'scripts', '_cq', 'deploy_menu4.py')], cwd=ROOT, check=True)
+    if not a.no_deploy:
+        deploy()
+    print('提醒：未提交、未推送。确认后执行 release.py --publish')
 
 
 if __name__ == '__main__':
