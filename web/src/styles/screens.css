@@ -1123,6 +1123,7 @@
 .duty-mini:disabled { opacity: 0.5; cursor: default; }
 .duty-mini-ghost { color: var(--brand-dark); }
 .duty-roll { flex: none; margin-left: auto; }
+.duty-hint { margin: 7px 0 0; font-size: 0.72rem; line-height: 1.5; color: var(--muted); }
 /* 认领成功时卡片弹一下，给个「成了」的即时反馈 */
 .duty-card.just-claimed { animation: duty-pop 0.62s var(--ease); }
 @keyframes duty-pop {

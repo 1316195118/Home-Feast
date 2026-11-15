@@ -52,7 +52,7 @@ const cuisineDist = computed(() => {
     <div class="section-head">
       <div>
         <h2 class="section-title">🗓️ 吃过什么</h2>
-        <div class="section-sub">每天点了什么、谁掌勺谁洗碗，都留在这里；删掉菜品也不会丢掉菜名</div>
+        <div class="section-sub">每天点了什么、谁掌勺、谁洗碗，都留在这里；删掉菜品也不会丢掉菜名</div>
       </div>
     </div>
 

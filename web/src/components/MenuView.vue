@@ -218,7 +218,7 @@ async function savePantry() {
     <div class="section-head menu-head">
       <div>
         <h2 class="section-title">📖 家里的菜谱</h2>
-        <div class="section-sub">{{ state.dishes.length }} 道菜 · 八大菜系和家常菜，都能自己改</div>
+        <div class="section-sub">{{ state.dishes.length }} 道菜 · {{ state.cuisines.length }} 个菜系，菜品、用量和配图都能自己改</div>
       </div>
       <div class="menu-head-actions">
         <button class="btn btn-soft btn-sm" @click="openPantry">
