@@ -8,7 +8,7 @@ import DicePK from './DicePK.vue'
 import ShoppingList from './ShoppingList.vue'
 import WeekMenu from './WeekMenu.vue'
 
-const { state, actions, pending, confirmDialog } = inject('app')
+const { state, actions, pending, confirmDialog, choiceDialog } = inject('app')
 const detailId = ref(null)
 const detailDish = computed(() => state.dishes.find((d) => d.id === detailId.value) || null)
 const pkOpen = ref(false)
@@ -164,28 +164,91 @@ watch(
   { immediate: true },
 )
 
-// 分工改成「认领」：每个人在自己设备上认领自己的角色，不再由一个人替全家点。
-// 已经被别人认领时，点「换我」会先确认，避免手滑把别人的活儿抢了。
+// 分工是「认领」：每个人在自己设备上认领，不再由一个人替全家点。
+// 支持同时认领掌勺与洗碗；已经在另一个位置时，会先问「同时认领」还是「只换」。
 const meId = computed(() => state.currentUserId)
+const justClaimed = ref('') // 用于播放一次「认领成功」的卡片动画
+
+function setDuty(role, uid) {
+  const chefId = role === 'chef' ? uid : (state.plan.chefId || '')
+  const washId = role === 'wash' ? uid : (state.plan.dishwasherId || '')
+  return actions.setDuties(chefId, washId)
+}
+
+function playClaimAnim(role) {
+  justClaimed.value = role
+  clearTimeout(playClaimAnim.timer)
+  playClaimAnim.timer = setTimeout(() => { justClaimed.value = '' }, 700)
+}
 
 async function claimDuty(role) {
   const uid = meId.value
   if (!uid) return
-  const holder = role === 'chef' ? chef.value : washer.value
-  if (holder && holder.id !== uid) {
+  const isChef = role === 'chef'
+  const label = isChef ? '掌勺' : '洗碗'
+  const otherLabel = isChef ? '洗碗' : '掌勺'
+  const targetHolder = isChef ? chef.value : washer.value
+  const otherHolderId = isChef ? state.plan.dishwasherId : state.plan.chefId
+  const iHoldOther = otherHolderId === uid
+
+  // 1. 这个位置已经是我 → 直接换下来
+  if (targetHolder && targetHolder.id === uid) {
+    releaseDuty(role)
+    return
+  }
+
+  // 2. 位置被别人占着 → 确认是否接手（我若同时负责另一头，会一并说明）
+  if (targetHolder) {
     const ok = await confirmDialog({
-      title: role === 'chef' ? '换人掌勺？' : '换人洗碗？',
-      message: `今天已经由 ${holder.name} 认领，确定换成你来吗？`,
-      confirmText: '换成我',
+      title: `换成你${label}？`,
+      message: iHoldOther
+        ? `今天已由 ${targetHolder.name} ${label}。换成你来之后，你${label}和${otherLabel}都要管。`
+        : `今天已经由 ${targetHolder.name} 认领${label}，确定换成你来吗？`,
+      confirmText: `换成我${label}`,
     })
     if (!ok) return
+    const done = await setDuty(role, uid)
+    if (done) {
+      playClaimAnim(role)
+      actions.toast(iHoldOther ? `你今天${label}和${otherLabel}都包了 💪` : `好，今天你${label} ${isChef ? '👨‍🍳' : '🧽'}`, 'success')
+    }
+    return
   }
-  // 一个人不占两个坑：认领这头，自动把另一头让出来
-  const chefId = role === 'chef' ? uid : (state.plan.chefId === uid ? '' : (state.plan.chefId || ''))
-  const washId = role === 'wash' ? uid : (state.plan.dishwasherId === uid ? '' : (state.plan.dishwasherId || ''))
-  const ok = await actions.setDuties(chefId, washId)
-  if (ok) {
-    actions.toast(role === 'chef' ? '今天你掌勺 👨‍🍳' : '今天你洗碗 🧽', 'success')
+
+  // 3. 位置空着，但我已经在另一个位置 → 「同时认领」还是「只换」
+  if (iHoldOther) {
+    const choice = await choiceDialog({
+      title: '同时认领，还是换过来？',
+      message: `你今天已经在${otherLabel}了。要同时${label}，还是把${otherLabel}换成${label}？`,
+      confirmText: '两个都我来',
+      extraText: `只换${label}`,
+      cancelText: '算了',
+    })
+    if (choice === 'cancel') return
+    if (choice === 'extra') {
+      const done = await actions.setDuties(isChef ? uid : '', isChef ? '' : uid)
+      if (done) {
+        playClaimAnim(role)
+        actions.toast(`好，${otherLabel}交回给大家，你${label}`, 'success')
+      }
+      return
+    }
+    const done = await actions.setDuties(
+      isChef ? uid : (state.plan.chefId || ''),
+      isChef ? (state.plan.dishwasherId || '') : uid,
+    )
+    if (done) {
+      playClaimAnim(role)
+      actions.toast(`今天你全包了：掌勺 + 洗碗 👨‍🍳🧽`, 'success')
+    }
+    return
+  }
+
+  // 4. 两个位置都空 → 直接认领
+  const done = await setDuty(role, uid)
+  if (done) {
+    playClaimAnim(role)
+    actions.toast(isChef ? '今天你掌勺 👨‍🍳' : '今天你洗碗 🧽', 'success')
   }
 }
 
@@ -261,7 +324,7 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
       </p>
 
       <div class="duty-bar">
-        <div class="duty-card" :class="{ 'is-taken': chef, 'is-mine': chef && chef.id === meId }">
+        <div class="duty-card" :class="{ 'is-taken': chef, 'is-mine': chef && chef.id === meId, 'just-claimed': justClaimed === 'chef' }">
           <button v-if="!chef" class="duty-claim" type="button" :disabled="pending('duty')" @click="claimDuty('chef')">
             <span class="duty-claim-emoji" aria-hidden="true">👨‍🍳</span>
             <span class="duty-claim-body">
@@ -280,7 +343,7 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
           </template>
         </div>
 
-        <div class="duty-card" :class="{ 'is-taken': washer, 'is-mine': washer && washer.id === meId }">
+        <div class="duty-card" :class="{ 'is-taken': washer, 'is-mine': washer && washer.id === meId, 'just-claimed': justClaimed === 'wash' }">
           <button v-if="!washer" class="duty-claim" type="button" :disabled="pending('duty')" @click="claimDuty('wash')">
             <span class="duty-claim-emoji" aria-hidden="true">🧽</span>
             <span class="duty-claim-body">

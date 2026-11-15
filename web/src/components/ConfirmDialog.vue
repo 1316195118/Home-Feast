@@ -7,10 +7,12 @@ const props = defineProps({
   message: { type: String, default: '' },
   confirmText: { type: String, default: '确定' },
   cancelText: { type: String, default: '取消' },
+  // 可选第三个按钮：为空则不渲染。用于「同时认领 / 只换 / 取消」这种三选一
+  extraText: { type: String, default: '' },
   danger: { type: Boolean, default: false },
   busy: { type: Boolean, default: false },
 })
-const emit = defineEmits(['confirm', 'cancel'])
+const emit = defineEmits(['confirm', 'cancel', 'extra'])
 const root = ref(null)
 
 // Esc 取消 + 打开时锁背景滚动 + 焦点归还（栈式，嵌套弹窗只响应最上层）
@@ -27,6 +29,7 @@ useModalBehavior(() => { if (!props.busy) emit('cancel') }, root)
       <p class="confirm-msg">{{ message }}</p>
       <div class="modal-foot">
         <button class="btn" :disabled="busy" @click="emit('cancel')">{{ cancelText }}</button>
+        <button v-if="extraText" class="btn btn-soft" :disabled="busy" @click="emit('extra')">{{ extraText }}</button>
         <button
           class="btn" :class="danger ? 'btn-danger' : 'btn-primary'"
           :disabled="busy" @click="emit('confirm')"
