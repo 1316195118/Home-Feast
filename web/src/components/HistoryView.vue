@@ -1,6 +1,6 @@
 <script setup>
 import { inject, computed } from 'vue'
-import { friendlyDate, memberOf, cuisineIcon, cuisineName, mealOf, dutyNames } from '../utils'
+import { friendlyDate, memberOf, cuisineIcon, cuisineName, mealOf, dutyNames, dayDutyIds } from '../utils'
 
 const { state } = inject('app')
 
@@ -101,9 +101,9 @@ const cuisineDist = computed(() => {
             <span class="tag">{{ p.orders?.length || 0 }} 道菜</span>
           </div>
           <div class="tiny muted">
-            <template v-if="(p.chefIds || []).length">👨‍🍳 {{ dutyNames(p.chefIds, state.members) }} 掌勺</template>
+            <template v-if="dayDutyIds(p, 'chefIds').length">👨‍🍳 {{ dutyNames(dayDutyIds(p, 'chefIds'), state.members) }} 掌勺</template>
             <template v-else>掌勺人未定</template>
-            <template v-if="(p.dishwasherIds || []).length">· 🧽 {{ dutyNames(p.dishwasherIds, state.members) }} 洗碗</template>
+            <template v-if="dayDutyIds(p, 'dishwasherIds').length">· 🧽 {{ dutyNames(dayDutyIds(p, 'dishwasherIds'), state.members) }} 洗碗</template>
           </div>
         </div>
         <div v-if="p.orders?.length" class="history-dishes">

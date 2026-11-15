@@ -56,6 +56,9 @@ type Plan struct {
 	// 旧的单人字段保留并与数组首位同步，保证还没更新的旧前端也能显示第一个人。
 	ChefIDs       []string `json:"chefIds,omitempty"`
 	DishwasherIDs []string `json:"dishwasherIds,omitempty"`
+	// MealDuties 按餐次分别记录分工（key 是餐次 key，如 breakfast/lunch/dinner）。
+	// 顶层的 ChefIDs/DishwasherIDs 只作为旧数据兼容与「全天」语义，界面按餐读取。
+	MealDuties map[string]MealDuty `json:"mealDuties,omitempty"`
 	ChefID        string   `json:"chefId"`
 	DishwasherID  string   `json:"dishwasherId"`
 	Note          string   `json:"note"`
@@ -88,8 +91,25 @@ func (p *Plan) NormalizeDuty() {
 	}
 }
 
+// MealDuty 是某一餐的分工。
+type MealDuty struct {
+	ChefIDs       []string `json:"chefIds,omitempty"`
+	DishwasherIDs []string `json:"dishwasherIds,omitempty"`
+}
+
+// DutyFor 返回某餐的分工。没有单独安排时返回空值——按用户要求，
+// 空档就是「没人认领」，不沿用上一餐。
+func (p *Plan) DutyFor(meal string) MealDuty {
+	if meal == "" || p.MealDuties == nil {
+		return MealDuty{}
+	}
+	return p.MealDuties[meal]
+}
+
 // PlanPatch 是编辑当天分工时允许改动的字段，nil 表示保持不变。
 type PlanPatch struct {
+	// DutyMeal 非空时，本次分工只改这一餐；为空表示改顶层（兼容旧调用）
+	DutyMeal      string
 	ChefIDs       *[]string
 	DishwasherIDs *[]string
 	ChefID        *string // 兼容旧调用：等价于把数组设为单元素

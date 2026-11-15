@@ -265,6 +265,21 @@ func (s *Store) repair() {
 			changedPlans = true
 			continue
 		}
+		// 旧数据是「一天一份」：迁移成每一餐都相同的安排，否则按餐读取时整天都是空的。
+		// 迁移后顶层仍保留，作为「全天」语义与旧前端兜底。
+		if len(p.MealDuties) == 0 && (len(p.ChefIDs) > 0 || len(p.DishwasherIDs) > 0) {
+			slots := effectiveMeals(s.settings.Meals)
+			if len(slots) > 0 {
+				p.MealDuties = make(map[string]MealDuty, len(slots))
+				for _, m := range slots {
+					p.MealDuties[m.Key] = MealDuty{
+						ChefIDs:       append([]string(nil), p.ChefIDs...),
+						DishwasherIDs: append([]string(nil), p.DishwasherIDs...),
+					}
+				}
+				changedPlans = true
+			}
+		}
 		p.ChefIDs = keepKnown(p.ChefIDs, seenMember)
 		p.DishwasherIDs = keepKnown(p.DishwasherIDs, seenMember)
 		p.PKShown = keepKnown(p.PKShown, seenMember)
@@ -774,6 +789,15 @@ func (s *Store) ListPlans() []Plan {
 	return out
 }
 
+// planList 返回全部计划，供写盘使用。
+func (s *Store) planList() []Plan {
+	list := make([]Plan, 0, len(s.plans))
+	for _, p := range s.plans {
+		list = append(list, p)
+	}
+	return list
+}
+
 // SavePlan 只改「今天谁掌勺 / 谁洗碗 / 备注」，保留已点的菜。
 // 用 PlanPatch 的指针区分「没传」与「传了空值要清空」。
 func (s *Store) SavePlan(date string, patch PlanPatch) (Plan, error) {
@@ -784,6 +808,31 @@ func (s *Store) SavePlan(date string, patch PlanPatch) (Plan, error) {
 	if p.Orders == nil {
 		p.Orders = []Order{}
 	}
+	// 按餐分工：本次只改这一餐，其他餐次与顶层保持原样
+	if patch.DutyMeal != "" {
+		if p.MealDuties == nil {
+			p.MealDuties = make(map[string]MealDuty)
+		}
+		md := p.MealDuties[patch.DutyMeal]
+		if patch.ChefIDs != nil {
+			md.ChefIDs = append([]string(nil), (*patch.ChefIDs)...)
+		}
+		if patch.DishwasherIDs != nil {
+			md.DishwasherIDs = append([]string(nil), (*patch.DishwasherIDs)...)
+		}
+		if len(md.ChefIDs) == 0 && len(md.DishwasherIDs) == 0 {
+			delete(p.MealDuties, patch.DutyMeal) // 空名单直接删掉，别留空对象
+		} else {
+			p.MealDuties[patch.DutyMeal] = md
+		}
+		p.UpdatedAt = now()
+		if err := s.writeJSON(plansFile, s.planList()); err != nil {
+			return Plan{}, err
+		}
+		s.plans[date] = p
+		return p, nil
+	}
+
 	if patch.ChefIDs != nil {
 		p.ChefIDs = append([]string(nil), (*patch.ChefIDs)...)
 		// 先清空单值字段：否则 NormalizeDuty 看到「数组空 + 单值有值」会把旧人补回来，

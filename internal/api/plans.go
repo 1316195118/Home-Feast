@@ -27,6 +27,7 @@ func (s *Server) updatePlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var in struct {
+		DutyMeal      string          `json:"dutyMeal"` // 非空表示只改这一餐
 		ChefIDs       *[]string       `json:"chefIds"`
 		DishwasherIDs *[]string       `json:"dishwasherIds"`
 		ChefID        *string         `json:"chefId"`        // 兼容旧前端
@@ -42,6 +43,22 @@ func (s *Server) updatePlan(w http.ResponseWriter, r *http.Request) {
 	}
 	members := s.st.ListMembers()
 	patch := store.PlanPatch{}
+
+	// 按餐分工：餐次必须存在于已配置的用餐时段里
+	if in.DutyMeal != "" {
+		ok := false
+		for _, m := range s.st.Meals() {
+			if m.Key == in.DutyMeal {
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			jsonErr(w, http.StatusBadRequest, "餐次不在已配置的用餐时段里，请刷新页面重试")
+			return
+		}
+		patch.DutyMeal = in.DutyMeal
+	}
 
 	// 多人分工：去重、限数量、必须都是家里成员
 	cleanDuty := func(ids []string, label string) ([]string, bool) {

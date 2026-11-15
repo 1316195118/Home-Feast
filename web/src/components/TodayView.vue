@@ -58,8 +58,11 @@ const grouped = computed(() => {
 })
 // 分工支持多人：数组里可能有 0..N 个成员，这里统一转成成员对象列表
 const dutyMembers = (ids) => (ids || []).map((id) => memberOf(id, state.members)).filter(Boolean)
-const chefs = computed(() => dutyMembers(state.plan.chefIds))
-const washers = computed(() => dutyMembers(state.plan.dishwasherIds))
+// 分工按餐次独立：只读「现在这顿」，过了饭点 state.meal 自动变化，这里跟着换
+const dutyNow = computed(() => state.plan.mealDuties?.[state.meal] || {})
+const nowMeal = computed(() => (state.meals || []).find((m) => m.key === state.meal) || null)
+const chefs = computed(() => dutyMembers(dutyNow.value.chefIds))
+const washers = computed(() => dutyMembers(dutyNow.value.dishwasherIds))
 const noteText = ref(state.plan.note || '')
 const noteSaved = ref(false)
 const noteDirty = computed(() => noteText.value !== (state.plan.note || ''))
@@ -159,19 +162,19 @@ const rosterDiff = computed(() => {
   const r = rosterToday.value
   if (!r) return false
   // 分工是数组：排班上的人只要在名单里就算一致，不再只比第一个人
-  const chefOk = !r.chefId || (state.plan.chefIds || []).includes(r.chefId)
-  const washOk = !r.washId || (state.plan.dishwasherIds || []).includes(r.washId)
+  const chefOk = !r.chefId || (dutyNow.value.chefIds || []).includes(r.chefId)
+  const washOk = !r.washId || (dutyNow.value.dishwasherIds || []).includes(r.washId)
   return !(chefOk && washOk)
 })
 async function applyRoster() {
   const r = rosterToday.value
   if (!r) return
   // 排班没填的那一半保留今天已有的名单；填了的那一半以排班为准
-  const chefIds = r.chefId ? [r.chefId] : (state.plan.chefIds || [])
-  const washIds = r.washId ? [r.washId] : (state.plan.dishwasherIds || [])
+  const chefIds = r.chefId ? [r.chefId] : (dutyNow.value.chefIds || [])
+  const washIds = r.washId ? [r.washId] : (dutyNow.value.dishwasherIds || [])
   const dropped = [
-    ...(state.plan.chefIds || []).filter((id) => !chefIds.includes(id)),
-    ...(state.plan.dishwasherIds || []).filter((id) => !washIds.includes(id)),
+    ...(dutyNow.value.chefIds || []).filter((id) => !chefIds.includes(id)),
+    ...(dutyNow.value.dishwasherIds || []).filter((id) => !washIds.includes(id)),
   ]
   if (dropped.length) {
     const ok = await confirmDialog({
@@ -181,7 +184,7 @@ async function applyRoster() {
     })
     if (!ok) return
   }
-  const done = await actions.setDuties(chefIds, washIds)
+  const done = await actions.setDuties(chefIds, washIds, state.meal)
   if (done) actions.toast('已按排班安排今天的分工', 'success')
 }
 
@@ -225,15 +228,15 @@ async function toggleDuty(role) {
   const otherLabel = isChef ? '洗碗' : '掌勺'
   const key = isChef ? 'chefIds' : 'dishwasherIds'
   const otherKey = isChef ? 'dishwasherIds' : 'chefIds'
-  const list = [...(state.plan[key] || [])]
+  const list = [...(dutyNow.value[key] || [])]
   const at = list.indexOf(uid)
 
   // 已在名单里 → 退出
   if (at >= 0) {
     list.splice(at, 1)
-    const done = await actions.setDutyList(role, list)
+    const done = await actions.setDutyList(role, list, state.meal)
     if (done) {
-      const rest = (state.plan[key] || []).filter((id) => id !== uid)
+      const rest = (dutyNow.value[key] || []).filter((id) => id !== uid)
       actions.toast(rest.length ? `你退出了${label}，还有 ${rest.length} 人在${label}` : `你退出了${label}`, 'success')
     }
     return
@@ -252,7 +255,7 @@ async function toggleDuty(role) {
     })
     if (choice === 'cancel') return
     if (choice === 'extra') {
-      const replaced = await actions.setDutyList(role, [uid])
+      const replaced = await actions.setDutyList(role, [uid], state.meal)
       if (replaced) {
         playClaimAnim(role)
         actions.toast(`已经换成你${label}，${others.join('、')} 被换下了`, 'success')
@@ -263,13 +266,13 @@ async function toggleDuty(role) {
 
   // 加入（空位直接加，非空位是用户选了「一起」）
   list.push(uid)
-  const done = await actions.setDutyList(role, list)
+  const done = await actions.setDutyList(role, list, state.meal)
   if (!done) return
   playClaimAnim(role)
 
   // 提示要说清「和谁一起」，不能只说「今天你掌勺」——现在是多人分工
   const others = list.filter((id) => id !== uid).map((id) => memberOf(id, state.members)?.name).filter(Boolean)
-  const inOther = (state.plan[otherKey] || []).includes(uid)
+  const inOther = (dutyNow.value[otherKey] || []).includes(uid)
   if (inOther) {
     const partner = others.length ? `，还有 ${others.join('、')} 一起${label}` : ''
     actions.toast(`掌勺 + 洗碗都是你，全包了 👨‍🍳🧽${partner}`, 'success')
@@ -292,8 +295,8 @@ function openPK() {
 }
 async function applyPK({ chefId, dishwasherId }) {
   const extra = [
-    ...(state.plan.chefIds || []).filter((id) => id !== chefId),
-    ...(state.plan.dishwasherIds || []).filter((id) => id !== dishwasherId),
+    ...(dutyNow.value.chefIds || []).filter((id) => id !== chefId),
+    ...(dutyNow.value.dishwasherIds || []).filter((id) => id !== dishwasherId),
   ]
   if (extra.length) {
     const ok = await confirmDialog({
@@ -303,8 +306,11 @@ async function applyPK({ chefId, dishwasherId }) {
     })
     if (!ok) return
   }
-  const done = await actions.setDuties(chefId, dishwasherId)
-  if (done) pkOpen.value = false
+  const done = await actions.setDuties(chefId, dishwasherId, state.meal)
+  if (done) {
+    pkOpen.value = false
+    actions.toast(`这顿的分工定好了：${memberOf(chefId, state.members)?.name} 掌勺、${memberOf(dishwasherId, state.members)?.name} 洗碗`, 'success')
+  }
 }
 
 // 长按菜单行 → 快捷操作（标记上桌 / 撤掉），手机上不用瞄准两个小图标
@@ -383,6 +389,11 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
         {{ doneCount ? `已上桌 ${doneCount} 道，` : '' }}{{ orders.length ? '就等开饭啦' : '先点几个，别让掌勺的人猜' }}
       </p>
 
+      <div class="duty-head">
+        <span class="duty-meal-tag">{{ nowMeal?.icon }} {{ nowMeal?.label }}</span>
+        <span class="duty-meal-note">这顿的分工，过了饭点自动切下一顿</span>
+      </div>
+
       <div class="duty-bar">
         <div class="duty-card" :class="{ 'is-taken': chefs.length, 'is-mine': iAmChef, 'just-claimed': justClaimed === 'chef' }">
           <span v-if="chefs.length" class="duty-stack" aria-hidden="true">
@@ -412,7 +423,7 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
 
         <button class="btn btn-soft btn-sm duty-roll" type="button" title="全员掷骰，点大的掌勺、点小的洗碗" @click="openPK">🎲 摇骰子</button>
       </div>
-      <p class="duty-hint">点「我来」就能认领，可以多人一起；一个人也能把掌勺和洗碗都包了。</p>
+      <p class="duty-hint">只算「现在这顿」的分工；可以多人一起，一个人也能两头都包。</p>
 
       <div v-if="rosterToday && rosterNames" class="roster-hint" :class="{ 'is-done': !rosterDiff }">
         <span class="roster-hint-icon">{{ rosterDiff ? '📅' : '✅' }}</span>

@@ -1124,6 +1124,14 @@
 .duty-mini-ghost { color: var(--brand-dark); }
 .duty-roll { flex: none; margin-left: auto; }
 .duty-hint { margin: 7px 0 0; font-size: 0.72rem; line-height: 1.5; color: var(--muted); }
+/* 分工按餐次独立：标明现在这顿，避免误以为是「今天」的安排 */
+.duty-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 8px; }
+.duty-meal-tag {
+  font-size: 0.76rem; font-weight: 800;
+  color: var(--brand-dark); background: var(--brand-soft);
+  padding: 2px 10px; border-radius: 999px;
+}
+.duty-meal-note { font-size: 0.7rem; color: var(--muted); }
 /* 认领成功时卡片弹一下，给个「成了」的即时反馈 */
 .duty-card.just-claimed { animation: duty-pop 0.62s var(--ease); }
 @keyframes duty-pop {

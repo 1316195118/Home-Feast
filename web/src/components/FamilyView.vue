@@ -1,21 +1,21 @@
 <script setup>
 import { inject, computed, reactive, ref } from 'vue'
-import { avatarChoices, avatarGroups, colorChoices, memberOf, friendlyDate, avoidChoices, dutyNames } from '../utils'
+import { avatarChoices, avatarGroups, colorChoices, memberOf, friendlyDate, avoidChoices, dutyNames, dayDutyIds } from '../utils'
 import { useModalBehavior } from '../modal'
 import { api } from '../api'
 import { shake } from '../feedback'
 
 const { state, actions, confirmDialog, pending } = inject('app')
 
-// 一天可能有多人掌勺/洗碗，按人头各计一次
+// 一天可能有多人、多餐掌勺/洗碗：按「天」去重后每人计一次
 const chefCount = computed(() => {
   const map = {}
-  for (const p of state.plans) for (const id of (p.chefIds || [])) map[id] = (map[id] || 0) + 1
+  for (const p of state.plans) for (const id of dayDutyIds(p, 'chefIds')) map[id] = (map[id] || 0) + 1
   return map
 })
 const washCount = computed(() => {
   const map = {}
-  for (const p of state.plans) for (const id of (p.dishwasherIds || [])) map[id] = (map[id] || 0) + 1
+  for (const p of state.plans) for (const id of dayDutyIds(p, 'dishwasherIds')) map[id] = (map[id] || 0) + 1
   return map
 })
 const orderCount = computed(() => {
@@ -168,13 +168,13 @@ async function savePin() {
         <div v-for="p in state.plans.slice(0, 6)" :key="p.date" class="spread fs-88">
           <span class="muted">{{ friendlyDate(p.date) }}</span>
           <span class="row wrap">
-            <span v-if="(p.chefIds || []).length">
-              👨‍🍳 {{ dutyNames(p.chefIds, state.members) }}
+            <span v-if="dayDutyIds(p, 'chefIds').length">
+              👨‍🍳 {{ dutyNames(dayDutyIds(p, 'chefIds'), state.members) }}
             </span>
-            <span v-if="(p.dishwasherIds || []).length">
-              🧽 {{ dutyNames(p.dishwasherIds, state.members) }}
+            <span v-if="dayDutyIds(p, 'dishwasherIds').length">
+              🧽 {{ dutyNames(dayDutyIds(p, 'dishwasherIds'), state.members) }}
             </span>
-            <span v-if="!(p.chefIds || []).length && !(p.dishwasherIds || []).length" class="muted">还没定</span>
+            <span v-if="!dayDutyIds(p, 'chefIds').length && !dayDutyIds(p, 'dishwasherIds').length" class="muted">还没定</span>
           </span>
         </div>
       </div>
