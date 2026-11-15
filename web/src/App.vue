@@ -300,9 +300,9 @@ const actions = {
   setDutyList: (role, ids) =>
     guard(() => api.setPlan(state.today, role === 'chef' ? { chefIds: ids } : { dishwasherIds: ids }), '', 'duty'),
   // 兼容旧调用（骰子 PK / 排班套用）：单人等价于单元素数组
-  setChef: (chefId) => guard(() => api.setPlan(state.today, { chefIds: chefId ? [chefId] : [] }), `今天由 ${dutyName(chefId)} 掌勺 👨‍🍳`, 'duty'),
+  setChef: (chefId) => guard(() => api.setPlan(state.today, { chefIds: chefId ? [chefId] : [] }), `已设为 ${dutyName(chefId)} 掌勺`, 'duty'),
   clearChef: () => guard(() => api.setPlan(state.today, { chefIds: [] }), '', 'duty'),
-  setDishwasher: (id) => guard(() => api.setPlan(state.today, { dishwasherIds: id ? [id] : [] }), `今天由 ${dutyName(id)} 洗碗 🧽`, 'duty'),
+  setDishwasher: (id) => guard(() => api.setPlan(state.today, { dishwasherIds: id ? [id] : [] }), `已设为 ${dutyName(id)} 洗碗`, 'duty'),
   clearDishwasher: () => guard(() => api.setPlan(state.today, { dishwasherIds: [] }), '', 'duty'),
   // 骰子 PK / 排班套用的结果一次提交，避免两次请求两次刷新
   setDuties: (chefIds, dishwasherIds) =>

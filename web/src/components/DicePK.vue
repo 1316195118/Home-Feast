@@ -235,7 +235,7 @@ onUnmounted(() => {
         </div>
       </div>
       <p class="setting-desc">
-        每人摇一次，<strong>点大的掌勺、点小的洗碗</strong>；结果自动保存，刷新不用重摇。
+        每人摇一次，<strong>点大的掌勺、点小的洗碗</strong>；结果会自动保存，并替换今天的分工名单。
       </p>
 
       <div class="pk-list">
