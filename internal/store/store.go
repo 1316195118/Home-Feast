@@ -122,6 +122,19 @@ func Open(dir, cfgDir string) (*Store, error) {
 		{settingsFile, &s.settings},
 	} {
 		if err := readJSON(s.pathOf(item.file), item.dest); err != nil {
+			var ce *corruptError
+			if errors.As(err, &ce) {
+				// 文件损坏（不是权限问题）：留档一份再当空数据，服务照常起来。
+				// 直接拒绝启动会让全家连页面都打不开，比丢这一份数据更糟。
+				stamp := time.Now().Format("20060102-150405")
+				keep := fmt.Sprintf("%s.corrupt-%s", ce.path, stamp)
+				if renameErr := os.Rename(ce.path, keep); renameErr == nil {
+					fmt.Fprintf(os.Stderr, "⚠ %s 已损坏，留档为 %s，本次用空数据启动\n", item.file, keep)
+				} else {
+					fmt.Fprintf(os.Stderr, "⚠ %s 已损坏且无法留档: %v\n", item.file, renameErr)
+				}
+				continue
+			}
 			return nil, fmt.Errorf("读取 %s 失败: %w", item.file, err)
 		}
 	}
@@ -181,7 +194,141 @@ func Open(dir, cfgDir string) (*Store, error) {
 			return nil, err
 		}
 	}
+	s.repair()
 	return s, nil
+}
+
+// repair 给加载进来的数据做一次体检，修掉能自动判断的脏数据：
+//   - 菜品 / 成员：空 ID、重复 ID、空名字丢弃；未知菜系回退家常；辣度与耗时夹紧
+//   - 每日安排：日期格式非法丢弃；分工里指向已删成员的 id 移除
+//
+// 只修「确定是错的」，不猜用户意图；有改动才写回磁盘。
+func (s *Store) repair() {
+	changedDishes, changedMembers := false, false
+
+	seen := make(map[string]bool, len(s.dishes))
+	dishes := make([]Dish, 0, len(s.dishes))
+	for _, d := range s.dishes {
+		if d.ID == "" || seen[d.ID] {
+			changedDishes = true
+			continue
+		}
+		seen[d.ID] = true
+		if !knownCuisineKey(d.Cuisine) {
+			d.Cuisine = "homestyle"
+			changedDishes = true
+		}
+		if d.Spicy < 0 {
+			d.Spicy = 0
+			changedDishes = true
+		}
+		if d.Spicy > 3 {
+			d.Spicy = 3
+			changedDishes = true
+		}
+		if d.Minutes < 0 {
+			d.Minutes = 0
+			changedDishes = true
+		}
+		if d.Minutes > 600 {
+			d.Minutes = 600
+			changedDishes = true
+		}
+		dishes = append(dishes, d)
+	}
+	s.dishes = dishes
+
+	seenMember := make(map[string]bool, len(s.members))
+	members := make([]Member, 0, len(s.members))
+	for _, m := range s.members {
+		if m.ID == "" || m.Name == "" || seenMember[m.ID] {
+			changedMembers = true
+			continue
+		}
+		seenMember[m.ID] = true
+		if m.Avatar == "" {
+			m.Avatar = "🙂"
+			changedMembers = true
+		}
+		if len(m.Color) != 7 || m.Color[0] != '#' {
+			m.Color = paletteFor(len(members))
+			changedMembers = true
+		}
+		members = append(members, m)
+	}
+	s.members = members
+
+	changedPlans := false
+	for date, p := range s.plans {
+		if !validDateKey(date) {
+			delete(s.plans, date)
+			changedPlans = true
+			continue
+		}
+		p.ChefIDs = keepKnown(p.ChefIDs, seenMember)
+		p.DishwasherIDs = keepKnown(p.DishwasherIDs, seenMember)
+		p.PKShown = keepKnown(p.PKShown, seenMember)
+		if p.Dice != nil {
+			for id := range p.Dice {
+				if !seenMember[id] {
+					delete(p.Dice, id)
+					changedPlans = true
+				}
+			}
+		}
+		p.NormalizeDuty()
+		s.plans[date] = p
+	}
+
+	if changedDishes {
+		_ = s.writeJSON(dishesFile, s.dishes)
+	}
+	if changedMembers {
+		_ = s.writeJSON(membersFile, s.members)
+	}
+	if changedPlans {
+		list := make([]Plan, 0, len(s.plans))
+		for _, p := range s.plans {
+			list = append(list, p)
+		}
+		_ = s.writeJSON(plansFile, list)
+	}
+}
+
+func knownCuisineKey(key string) bool {
+	for _, c := range Cuisines {
+		if c.Key == key {
+			return true
+		}
+	}
+	return false
+}
+
+func paletteFor(i int) string {
+	palette := []string{"#d9a066", "#cf8b9b", "#7fa98d", "#8d9bc4", "#c59a6d", "#a98bb5"}
+	return palette[i%len(palette)]
+}
+
+// keepKnown 过滤掉指向不存在成员的 id，保持原顺序。
+func keepKnown(ids []string, known map[string]bool) []string {
+	if len(ids) == 0 {
+		return ids
+	}
+	out := make([]string, 0, len(ids))
+	for _, id := range ids {
+		if known[id] {
+			out = append(out, id)
+		}
+	}
+	return out
+}
+
+func validDateKey(s string) bool {
+	if len(s) != 10 {
+		return false
+	}
+	_, err := time.Parse("2006-01-02", s)
+	return err == nil
 }
 
 // Dir 返回数据目录，供上传与备份使用。
@@ -223,6 +370,8 @@ func (s *Store) Reload() error {
 		return err
 	}
 	s.accessCode = access.Code
+	// 导入的数据同样过一遍体检：备份可能来自旧版本，或被人手改过。
+	s.repair()
 	return nil
 }
 
@@ -528,7 +677,50 @@ func (s *Store) DeleteMember(id string) error {
 		}
 		s.pins = pins
 	}
+
+	// 分工与骰子记录里若还留着这个人，一并清掉：否则首页会显示一个已经不在的成员。
+	// 历史订单不动——那里存的是下单时的名字与头像快照，删人后仍应保留记录。
+	plansChanged := false
+	for date, p := range s.plans {
+		before := len(p.ChefIDs) + len(p.DishwasherIDs) + len(p.PKShown)
+		if p.Dice != nil {
+			if _, has := p.Dice[id]; has {
+				delete(p.Dice, id)
+				plansChanged = true
+			}
+		}
+		p.ChefIDs = removeID(p.ChefIDs, id)
+		p.DishwasherIDs = removeID(p.DishwasherIDs, id)
+		p.PKShown = removeID(p.PKShown, id)
+		if len(p.ChefIDs)+len(p.DishwasherIDs)+len(p.PKShown) != before {
+			plansChanged = true
+		}
+		p.NormalizeDuty()
+		s.plans[date] = p
+	}
+	if plansChanged {
+		list := make([]Plan, 0, len(s.plans))
+		for _, p := range s.plans {
+			list = append(list, p)
+		}
+		if err := s.writeJSON(plansFile, list); err != nil {
+			return err
+		}
+	}
 	return nil
+}
+
+func removeID(ids []string, id string) []string {
+	if len(ids) == 0 {
+		return ids
+	}
+	out := make([]string, 0, len(ids))
+	for _, v := range ids {
+		if v != id {
+			out = append(out, v)
+		}
+	}
+	return out
 }
 
 // ---------- 每日安排 ----------
@@ -760,6 +952,17 @@ func (s *Store) SaveSettings(v Settings) (Settings, error) {
 
 // ---------- 底层文件读写 ----------
 
+// corruptError 表示文件存在、也能读，但内容不是合法 JSON。
+// 与「读不了」（权限 / IO 错误）区分开：前者可以留档后用空数据启动，后者必须报错。
+type corruptError struct {
+	path string
+	err  error
+}
+
+func (e *corruptError) Error() string {
+	return fmt.Sprintf("%s 内容损坏: %v", e.path, e.err)
+}
+
 func readJSON(path string, dest any) error {
 	b, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {
@@ -771,7 +974,10 @@ func readJSON(path string, dest any) error {
 	if len(bytes.TrimSpace(b)) == 0 {
 		return nil
 	}
-	return json.Unmarshal(b, dest)
+	if err := json.Unmarshal(b, dest); err != nil {
+		return &corruptError{path: path, err: err}
+	}
+	return nil
 }
 
 func (s *Store) writeJSON(name string, value any) error {
