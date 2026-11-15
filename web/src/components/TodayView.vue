@@ -200,8 +200,9 @@ watch(
 // 掌勺和洗碗是两个独立集合，同一个人可以两边都在。
 const meId = computed(() => state.currentUserId)
 const justClaimed = ref('')
-const iAmChef = computed(() => (state.plan.chefIds || []).includes(meId.value))
-const iAmWasher = computed(() => (state.plan.dishwasherIds || []).includes(meId.value))
+// 必须和名单同源：都读当前餐。读顶层旧字段会出现「没人认领却给退出按钮」的矛盾。
+const iAmChef = computed(() => (dutyNow.value.chefIds || []).includes(meId.value))
+const iAmWasher = computed(() => (dutyNow.value.dishwasherIds || []).includes(meId.value))
 
 const namesOf = (list) => (list.length <= 2
   ? list.map((m) => m.name).join('、')
