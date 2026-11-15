@@ -12,6 +12,21 @@ const emit = defineEmits(['close', 'done'])
 
 const steps = computed(() => props.recipe.steps || [])
 const idx = ref(0)
+
+// 步骤字号：做饭时手机离得远，默认就给大字号，允许按视力/距离微调并记住
+const FONT_KEY = 'fm.cook.font'
+function readFont() {
+  try {
+    const v = Number(localStorage.getItem(FONT_KEY))
+    return v >= 1.1 && v <= 2.2 ? v : 1.5
+  } catch { return 1.5 }
+}
+const fontScale = ref(readFont())
+function changeFont(delta) {
+  const next = Math.min(2.2, Math.max(1.1, +(fontScale.value + delta).toFixed(2)))
+  fontScale.value = next
+  try { localStorage.setItem(FONT_KEY, String(next)) } catch { /* 隐私模式忽略 */ }
+}
 const doneSet = ref(new Set())
 const root = ref(null)
 useModalBehavior(() => emit('close'), root)
@@ -86,7 +101,13 @@ function finish() {
           <span class="cook-progress">{{ Math.min(idx + 1, total) }} / {{ total }}</span>
           <span v-if="lockOk" class="cook-lock">🔆 屏幕常亮</span>
         </div>
-        <button class="icon-btn" type="button" aria-label="退出做菜" @click="emit('close')">✕</button>
+        <div class="cook-tools">
+          <div class="cook-font">
+            <button type="button" aria-label="缩小字号" :disabled="fontScale <= 1.1" @click="changeFont(-0.1)">A−</button>
+            <button type="button" aria-label="放大字号" :disabled="fontScale >= 2.2" @click="changeFont(0.1)">A+</button>
+          </div>
+          <button class="icon-btn" type="button" aria-label="退出做菜" @click="emit('close')">✕</button>
+        </div>
       </header>
 
       <div class="cook-progress-bar" aria-hidden="true">
@@ -97,7 +118,10 @@ function finish() {
         <Transition name="cook-step" mode="out-in">
           <div :key="idx" class="cook-step">
             <div class="cook-num">第 {{ idx + 1 }} 步</div>
-            <p class="cook-text" :class="{ 'is-done': doneSet.has(idx) }">{{ steps[idx] }}</p>
+            <p
+              class="cook-text" :class="{ 'is-done': doneSet.has(idx) }"
+              :style="{ fontSize: `${fontScale}rem` }"
+            >{{ steps[idx] }}</p>
             <button class="cook-check" type="button" :class="{ 'is-done': doneSet.has(idx) }" @click="toggleDone(idx)">
               {{ doneSet.has(idx) ? '✓ 这步做完了' : '标记这步做完' }}
             </button>
