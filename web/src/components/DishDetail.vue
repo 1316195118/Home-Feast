@@ -140,8 +140,10 @@ async function order() {
     </div>
   </div>
 
-  <CookMode
-    v-if="cookOpen" :dish="dish" :recipe="recipe"
-    @close="cookOpen = false" @done="onCookDone"
-  />
+  <Teleport to="body">
+    <CookMode
+      v-if="cookOpen" :dish="dish" :recipe="recipe"
+      @close="cookOpen = false" @done="onCookDone"
+    />
+  </Teleport>
 </template>

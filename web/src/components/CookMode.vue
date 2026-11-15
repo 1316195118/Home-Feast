@@ -53,14 +53,20 @@ function onTouchEnd(e) {
 
 // 屏幕常亮：做饭时不会做到一半黑屏。不支持就静默跳过。
 let lock = null
+const lockOk = ref(false)
 async function acquireLock() {
   try {
-    if ('wakeLock' in navigator) lock = await navigator.wakeLock.request('screen')
+    if ('wakeLock' in navigator) {
+      lock = await navigator.wakeLock.request('screen')
+      lockOk.value = true
+      lock.addEventListener?.('release', () => { lockOk.value = false })
+    }
   } catch { /* 电量低或用户拒绝时忽略 */ }
 }
 function releaseLock() {
   try { lock?.release?.() } catch { /* 忽略 */ }
   lock = null
+  lockOk.value = false
 }
 onMounted(acquireLock)
 onUnmounted(releaseLock)
@@ -78,6 +84,7 @@ function finish() {
         <div class="cook-title">
           <b>{{ dish.name }}</b>
           <span class="cook-progress">{{ Math.min(idx + 1, total) }} / {{ total }}</span>
+          <span v-if="lockOk" class="cook-lock">🔆 屏幕常亮</span>
         </div>
         <button class="icon-btn" type="button" aria-label="退出做菜" @click="emit('close')">✕</button>
       </header>
