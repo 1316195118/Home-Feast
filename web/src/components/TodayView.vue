@@ -239,7 +239,29 @@ async function toggleDuty(role) {
     return
   }
 
-  // 不在名单里 → 加入
+  // 名单里已经有别人：问一句「一起」还是「只我来」。
+  // 多人模式原本没有「换我」入口，导致没办法把别人换下来，这里补回。
+  if (list.length > 0) {
+    const others = list.map((id) => memberOf(id, state.members)?.name).filter(Boolean)
+    const choice = await choiceDialog({
+      title: `一起${label}，还是换你？`,
+      message: `${others.join('、')} 已经在${label}了。可以一起干，也可以把 TA 换下来只留你。`,
+      confirmText: `一起${label}`,
+      extraText: '只我来',
+      cancelText: '算了',
+    })
+    if (choice === 'cancel') return
+    if (choice === 'extra') {
+      const replaced = await actions.setDutyList(role, [uid])
+      if (replaced) {
+        playClaimAnim(role)
+        actions.toast(`已经换成你${label}，${others.join('、')} 被换下了`, 'success')
+      }
+      return
+    }
+  }
+
+  // 加入（空位直接加，非空位是用户选了「一起」）
   list.push(uid)
   const done = await actions.setDutyList(role, list)
   if (!done) return
