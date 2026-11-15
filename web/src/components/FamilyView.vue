@@ -74,6 +74,11 @@ async function save() {
   if (ok) editorOpen.value = false
 }
 async function remove(id) {
+  // 至少留一位家人：否则「先选一下你是谁」会没有任何选项，强制弹窗就关不掉了
+  if ((state.members || []).length <= 1) {
+    actions.toast('至少留一位家人', 'error')
+    return
+  }
   const m = memberOf(id, state.members)
   const ok = await confirmDialog({
     title: '移除成员',
