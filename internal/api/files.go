@@ -43,11 +43,16 @@ func (s *Server) upload(w http.ResponseWriter, r *http.Request) {
 		jsonErr(w, http.StatusBadRequest, "只支持 PNG / JPEG / WebP / GIF 图片")
 		return
 	}
-	name := randomName() + ext
-	if err = os.WriteFile(filepath.Join(s.st.Dir(), "uploads", name), data, 0o644); err != nil {
+	base := randomName()
+	name := base + ext
+	uploadDir := filepath.Join(s.st.Dir(), "uploads")
+	if err = os.WriteFile(filepath.Join(uploadDir, name), data, 0o644); err != nil {
 		jsonErr(w, http.StatusInternalServerError, "保存图片失败")
 		return
 	}
+	// 顺手生成列表用的缩略图；失败不影响上传，前端会回落到原图
+	_ = writeThumb(data, uploadDir, base)
+
 	w.WriteHeader(http.StatusCreated)
 	jsonOK(w, map[string]string{"url": "/uploads/" + name})
 }

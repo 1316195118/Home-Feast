@@ -35,11 +35,12 @@
 | 组件 | 用途 | 许可证 |
 | --- | --- | --- |
 | Go 标准库（含 `embed`、`archive/zip`、`image/jpeg`、`compress/gzip`） | 后端、静态资源嵌入、备份、图片转码、传输压缩 | BSD-3-Clause |
+| `golang.org/x/image`（仅 `webp` 解码器） | 把上传的 WebP 图压成列表缩略图 | BSD-3-Clause |
 | Vue 3 | 前端响应式框架 | MIT |
 | Vite、`@vitejs/plugin-vue` | 前端构建工具 | MIT |
 | `node:*-alpine`、`golang:*-alpine`、`alpine` 基础镜像及 `tzdata`、`ca-certificates` | 构建与运行容器 | 各自上游许可证 |
 
-**运行时依赖只有 Go 标准库**；`npm` 依赖仅用于构建前端，产物是静态文件并嵌入二进制，
+**运行时依赖只有 Go 标准库与 Go 官方的 `golang.org/x/image`**（仅用到 WebP 解码器）；`npm` 依赖仅用于构建前端，产物是静态文件并嵌入二进制，
 运行镜像中不含 Node.js。除上表外没有引入任何其它库。
 
 深浅主题的圆形扩散、手机震动、点按涟漪、飘字与彩带分别使用浏览器自带的

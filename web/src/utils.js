@@ -4,8 +4,12 @@
 // 传 dishes 时，订单行优先取菜谱里这道菜「当前」的图片，这样改图后今日菜单会同步；
 // 菜品被删了就退回点菜时存下的快照，最后才用菜系插画。
 // withThumb 把用户上传的图换成 400px 缩略图地址；菜系封面本身就是小图，不动。
+// 缩略图统一是 JPEG（后端用标准库编码），与原图的扩展名无关。
 function withThumb(url) {
-  return url.startsWith('/uploads/') ? url.replace('/uploads/', '/uploads/thumb/') : url
+  if (!url.startsWith('/uploads/')) return url
+  const rest = url.slice('/uploads/'.length)
+  const dot = rest.lastIndexOf('.')
+  return '/uploads/thumb/' + (dot > 0 ? rest.slice(0, dot) : rest) + '.jpg'
 }
 
 // size: 'thumb' 用于列表/网格（200~400px 显示），不传则给详情大图
