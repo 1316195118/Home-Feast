@@ -1,11 +1,11 @@
 <script setup>
 import { inject, computed } from 'vue'
-import { friendlyDate, memberOf, cuisineIcon, cuisineName, mealOf } from '../utils'
+import { friendlyDate, memberOf, cuisineIcon, cuisineName, mealOf, dutyNames } from '../utils'
 
 const { state } = inject('app')
 
 const plans = computed(() => (state.plans || []).filter(
-  (p) => (p.orders?.length || 0) > 0 || p.chefId || p.dishwasherId || p.note,
+  (p) => (p.orders?.length || 0) > 0 || (p.chefIds || []).length || (p.dishwasherIds || []).length || p.note,
 ))
 const totalDishes = computed(() => plans.value.reduce((n, p) => n + (p.orders?.length || 0), 0))
 const thisMonth = computed(() => {
@@ -101,13 +101,9 @@ const cuisineDist = computed(() => {
             <span class="tag">{{ p.orders?.length || 0 }} 道菜</span>
           </div>
           <div class="tiny muted">
-            <template v-if="memberOf(p.chefId, state.members)">
-              {{ memberOf(p.chefId, state.members).avatar }} {{ memberOf(p.chefId, state.members).name }} 掌勺
-            </template>
+            <template v-if="(p.chefIds || []).length">👨‍🍳 {{ dutyNames(p.chefIds, state.members) }} 掌勺</template>
             <template v-else>掌勺人未定</template>
-            <template v-if="memberOf(p.dishwasherId, state.members)">
-              · 🧽 {{ memberOf(p.dishwasherId, state.members).name }} 洗碗
-            </template>
+            <template v-if="(p.dishwasherIds || []).length">· 🧽 {{ dutyNames(p.dishwasherIds, state.members) }} 洗碗</template>
           </div>
         </div>
         <div v-if="p.orders?.length" class="history-dishes">

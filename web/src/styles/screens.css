@@ -152,6 +152,20 @@
 
 /* 固定三列一排：只显示 3 张，一行排满，不横滑、不截断 */
 .suggest-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+/* 换一批：只播放一次整块淡入。
+   1) 不用 TransitionGroup 的逐卡进出场——离场卡片 position:absolute 后会脱离网格，
+      宽度塌成内容宽度、位置跳到左上角再飞走，手机上就是「抖一下 + 卡片乱飘」；
+   2) 不给 grid 绑 key——重建 DOM 会让 3 张 img 重新播放 img-reveal 淡入，
+      叠加起来像闪屏。这里复用节点、只换 src，浏览器会直接替换画面。 */
+.suggest-grid.is-swapping,
+.snack-picks.is-swapping { animation: batch-fade 0.42s var(--ease); }
+@keyframes batch-fade {
+  from { opacity: 0.4; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .suggest-grid.is-swapping, .snack-picks.is-swapping { animation: none; }
+}
 .suggest-card { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--surface); text-align: left; padding: 0; display: flex; flex-direction: column; transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease); }
 .suggest-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
 .suggest-photo { width: 100%; aspect-ratio: 4 / 3; flex: 0 0 auto; min-height: 80px; overflow: hidden; background: var(--paper-deep); }
@@ -1094,6 +1108,10 @@
   width: 30px; height: 30px; flex: none; border-radius: 50%;
   display: grid; place-items: center; font-size: 0.95rem; line-height: 1;
 }
+/* 多人认领：头像叠着显示，最多 3 个，超出用「等 N 人」文字带过 */
+.duty-stack { display: inline-flex; flex: none; }
+.duty-stack .duty-owner-avatar { margin-left: -9px; border: 2px solid var(--surface); }
+.duty-stack .duty-owner-avatar:first-child { margin-left: 0; }
 .duty-owner-info { min-width: 0; }
 .duty-owner-info b { display: block; font-size: 0.86rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 88px; }
 .duty-owner-info small { display: block; margin-top: 1px; font-size: 0.7rem; font-weight: 600; color: var(--muted); }

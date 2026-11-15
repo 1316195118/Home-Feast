@@ -56,8 +56,13 @@ const grouped = computed(() => {
   }
   return g
 })
-const chef = computed(() => memberOf(state.plan.chefId, state.members))
-const washer = computed(() => memberOf(state.plan.dishwasherId, state.members))
+// 分工支持多人：数组里可能有 0..N 个成员，这里统一转成成员对象列表
+const dutyMembers = (ids) => (ids || []).map((id) => memberOf(id, state.members)).filter(Boolean)
+const chefs = computed(() => dutyMembers(state.plan.chefIds))
+const washers = computed(() => dutyMembers(state.plan.dishwasherIds))
+// 兼容旧的单值字段：用于骰子 PK / 排班差异判断，只关心「有没有人」
+const chef = computed(() => chefs.value[0] || null)
+const washer = computed(() => washers.value[0] || null)
 const noteText = ref(state.plan.note || '')
 const noteSaved = ref(false)
 const noteDirty = computed(() => noteText.value !== (state.plan.note || ''))
@@ -65,6 +70,7 @@ let noteTimer = null
 onUnmounted(() => clearTimeout(noteTimer))
 const suggestions = ref([])
 const suggestSalt = ref(0)
+const suggesting = ref(false) // 换一批时播放一次整块淡入，不重建 DOM
 const season = computed(() => seasonOf(state.today))
 const selfMember = computed(() => state.members.find((m) => m.id === state.currentUserId) || null)
 const pantryCount = computed(() => (state.settings.pantry || []).length)
@@ -101,11 +107,17 @@ function computeSuggestions(excludeIds = [], limit = 3) {
   })
 }
 function refreshSuggestions() { suggestions.value = computeSuggestions([]) }
+function playBatchAnim(flag) {
+  flag.value = true
+  clearTimeout(playBatchAnim.timer)
+  playBatchAnim.timer = setTimeout(() => { flag.value = false }, 460)
+}
 function shuffle() {
   // 换一批时排除当前这三道，避免点一下还是同一批
   const exclude = suggestions.value.map((s) => s.dish.id)
   suggestSalt.value++
   suggestions.value = computeSuggestions(exclude)
+  playBatchAnim(suggesting)
 }
 
 // 首页小吃专区：从「小吃/点心」标签的菜里挑 3 道，换一批可刷新
@@ -127,7 +139,11 @@ const snackPicks = computed(() => {
     ingredientsOf: (d) => getRecipe(d).ingredients || [],
   })
 })
-function shuffleSnacks() { snackSalt.value += 1 }
+const snacking = ref(false)
+function shuffleSnacks() {
+  snackSalt.value += 1
+  playBatchAnim(snacking)
+}
 
 // 「本周菜单」：按人数配「荤 + 素 + 汤（+ 主食）」，整周不重样，可导出图片
 const weekOpen = ref(false)
@@ -164,16 +180,16 @@ watch(
   { immediate: true },
 )
 
-// 分工是「认领」：每个人在自己设备上认领，不再由一个人替全家点。
-// 支持同时认领掌勺与洗碗；已经在另一个位置时，会先问「同时认领」还是「只换」。
+// 分工是「认领」，且支持多人：每个人把自己的 id 加进数组，各设备各加各的。
+// 掌勺和洗碗是两个独立集合，同一个人可以两边都在。
 const meId = computed(() => state.currentUserId)
-const justClaimed = ref('') // 用于播放一次「认领成功」的卡片动画
+const justClaimed = ref('')
+const iAmChef = computed(() => (state.plan.chefIds || []).includes(meId.value))
+const iAmWasher = computed(() => (state.plan.dishwasherIds || []).includes(meId.value))
 
-function setDuty(role, uid) {
-  const chefId = role === 'chef' ? uid : (state.plan.chefId || '')
-  const washId = role === 'wash' ? uid : (state.plan.dishwasherId || '')
-  return actions.setDuties(chefId, washId)
-}
+const namesOf = (list) => (list.length <= 2
+  ? list.map((m) => m.name).join('、')
+  : `${list[0].name} 等 ${list.length} 人`)
 
 function playClaimAnim(role) {
   justClaimed.value = role
@@ -181,80 +197,34 @@ function playClaimAnim(role) {
   playClaimAnim.timer = setTimeout(() => { justClaimed.value = '' }, 700)
 }
 
-async function claimDuty(role) {
+async function toggleDuty(role) {
   const uid = meId.value
   if (!uid) return
   const isChef = role === 'chef'
-  const label = isChef ? '掌勺' : '洗碗'
-  const otherLabel = isChef ? '洗碗' : '掌勺'
-  const targetHolder = isChef ? chef.value : washer.value
-  const otherHolderId = isChef ? state.plan.dishwasherId : state.plan.chefId
-  const iHoldOther = otherHolderId === uid
+  const key = isChef ? 'chefIds' : 'dishwasherIds'
+  const otherKey = isChef ? 'dishwasherIds' : 'chefIds'
+  const list = [...(state.plan[key] || [])]
+  const at = list.indexOf(uid)
 
-  // 1. 这个位置已经是我 → 直接换下来
-  if (targetHolder && targetHolder.id === uid) {
-    releaseDuty(role)
+  // 已在名单里 → 退出
+  if (at >= 0) {
+    list.splice(at, 1)
+    const done = await actions.setDutyList(role, list)
+    if (done) actions.toast(isChef ? '已退出掌勺' : '已退出洗碗', 'success')
     return
   }
 
-  // 2. 位置被别人占着 → 确认是否接手（我若同时负责另一头，会一并说明）
-  if (targetHolder) {
-    const ok = await confirmDialog({
-      title: `换成你${label}？`,
-      message: iHoldOther
-        ? `今天已由 ${targetHolder.name} ${label}。换成你来之后，你${label}和${otherLabel}都要管。`
-        : `今天已经由 ${targetHolder.name} 认领${label}，确定换成你来吗？`,
-      confirmText: `换成我${label}`,
-    })
-    if (!ok) return
-    const done = await setDuty(role, uid)
-    if (done) {
-      playClaimAnim(role)
-      actions.toast(iHoldOther ? `你今天${label}和${otherLabel}都包了 💪` : `好，今天你${label} ${isChef ? '👨‍🍳' : '🧽'}`, 'success')
-    }
-    return
-  }
-
-  // 3. 位置空着，但我已经在另一个位置 → 「同时认领」还是「只换」
-  if (iHoldOther) {
-    const choice = await choiceDialog({
-      title: '同时认领，还是换过来？',
-      message: `你今天已经在${otherLabel}了。要同时${label}，还是把${otherLabel}换成${label}？`,
-      confirmText: '两个都我来',
-      extraText: `只换${label}`,
-      cancelText: '算了',
-    })
-    if (choice === 'cancel') return
-    if (choice === 'extra') {
-      const done = await actions.setDuties(isChef ? uid : '', isChef ? '' : uid)
-      if (done) {
-        playClaimAnim(role)
-        actions.toast(`好，${otherLabel}交回给大家，你${label}`, 'success')
-      }
-      return
-    }
-    const done = await actions.setDuties(
-      isChef ? uid : (state.plan.chefId || ''),
-      isChef ? (state.plan.dishwasherId || '') : uid,
-    )
-    if (done) {
-      playClaimAnim(role)
-      actions.toast(`今天你全包了：掌勺 + 洗碗 👨‍🍳🧽`, 'success')
-    }
-    return
-  }
-
-  // 4. 两个位置都空 → 直接认领
-  const done = await setDuty(role, uid)
-  if (done) {
-    playClaimAnim(role)
+  // 不在名单里 → 加入
+  list.push(uid)
+  const done = await actions.setDutyList(role, list)
+  if (!done) return
+  playClaimAnim(role)
+  const inOther = (state.plan[otherKey] || []).includes(uid)
+  if (inOther) {
+    actions.toast('今天你掌勺 + 洗碗，全包了 👨‍🍳🧽', 'success')
+  } else {
     actions.toast(isChef ? '今天你掌勺 👨‍🍳' : '今天你洗碗 🧽', 'success')
   }
-}
-
-function releaseDuty(role) {
-  if (role === 'chef') actions.clearChef()
-  else actions.clearDishwasher()
 }
 
 // 骰子 PK：全员掷骰，点大的掌勺、点小的洗碗
@@ -324,42 +294,30 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
       </p>
 
       <div class="duty-bar">
-        <div class="duty-card" :class="{ 'is-taken': chef, 'is-mine': chef && chef.id === meId, 'just-claimed': justClaimed === 'chef' }">
-          <button v-if="!chef" class="duty-claim" type="button" :disabled="pending('duty')" @click="claimDuty('chef')">
-            <span class="duty-claim-emoji" aria-hidden="true">👨‍🍳</span>
-            <span class="duty-claim-body">
-              <b>我来掌勺</b>
-              <small>点一下认领今天</small>
-            </span>
-          </button>
-          <template v-else>
-            <span class="duty-owner-avatar" :style="{ background: chef.color }" aria-hidden="true">{{ chef.avatar }}</span>
-            <span class="duty-owner-info">
-              <b>{{ chef.name }}</b>
-              <small>{{ chef.id === meId ? '你掌勺' : '掌勺中' }}</small>
-            </span>
-            <button v-if="chef.id === meId" class="duty-mini" type="button" @click="releaseDuty('chef')">取消</button>
-            <button v-else class="duty-mini duty-mini-ghost" type="button" :disabled="pending('duty')" @click="claimDuty('chef')">换我</button>
-          </template>
+        <div class="duty-card" :class="{ 'is-taken': chefs.length, 'is-mine': iAmChef, 'just-claimed': justClaimed === 'chef' }">
+          <span v-if="chefs.length" class="duty-stack" aria-hidden="true">
+            <span v-for="m in chefs.slice(0, 3)" :key="m.id" class="duty-owner-avatar" :style="{ background: m.color }">{{ m.avatar }}</span>
+          </span>
+          <span v-else class="duty-claim-emoji" aria-hidden="true">👨‍🍳</span>
+          <span class="duty-owner-info">
+            <b>{{ chefs.length ? namesOf(chefs) : '还没人认领' }}</b>
+            <small>{{ chefs.length ? (iAmChef ? `掌勺中 · 共 ${chefs.length} 人` : `掌勺中 · ${chefs.length} 人`) : '点「我来」加入' }}</small>
+          </span>
+          <button v-if="!iAmChef" class="duty-mini duty-mini-ghost" type="button" :disabled="pending('duty')" @click="toggleDuty('chef')">+ 我来</button>
+          <button v-else class="duty-mini" type="button" :disabled="pending('duty')" @click="toggleDuty('chef')">退出</button>
         </div>
 
-        <div class="duty-card" :class="{ 'is-taken': washer, 'is-mine': washer && washer.id === meId, 'just-claimed': justClaimed === 'wash' }">
-          <button v-if="!washer" class="duty-claim" type="button" :disabled="pending('duty')" @click="claimDuty('wash')">
-            <span class="duty-claim-emoji" aria-hidden="true">🧽</span>
-            <span class="duty-claim-body">
-              <b>我来洗碗</b>
-              <small>点一下认领今天</small>
-            </span>
-          </button>
-          <template v-else>
-            <span class="duty-owner-avatar" :style="{ background: washer.color }" aria-hidden="true">{{ washer.avatar }}</span>
-            <span class="duty-owner-info">
-              <b>{{ washer.name }}</b>
-              <small>{{ washer.id === meId ? '你洗碗' : '洗碗中' }}</small>
-            </span>
-            <button v-if="washer.id === meId" class="duty-mini" type="button" @click="releaseDuty('wash')">取消</button>
-            <button v-else class="duty-mini duty-mini-ghost" type="button" :disabled="pending('duty')" @click="claimDuty('wash')">换我</button>
-          </template>
+        <div class="duty-card" :class="{ 'is-taken': washers.length, 'is-mine': iAmWasher, 'just-claimed': justClaimed === 'wash' }">
+          <span v-if="washers.length" class="duty-stack" aria-hidden="true">
+            <span v-for="m in washers.slice(0, 3)" :key="m.id" class="duty-owner-avatar" :style="{ background: m.color }">{{ m.avatar }}</span>
+          </span>
+          <span v-else class="duty-claim-emoji" aria-hidden="true">🧽</span>
+          <span class="duty-owner-info">
+            <b>{{ washers.length ? namesOf(washers) : '还没人认领' }}</b>
+            <small>{{ washers.length ? (iAmWasher ? `洗碗中 · 共 ${washers.length} 人` : `洗碗中 · ${washers.length} 人`) : '点「我来」加入' }}</small>
+          </span>
+          <button v-if="!iAmWasher" class="duty-mini duty-mini-ghost" type="button" :disabled="pending('duty')" @click="toggleDuty('wash')">+ 我来</button>
+          <button v-else class="duty-mini" type="button" :disabled="pending('duty')" @click="toggleDuty('wash')">退出</button>
         </div>
 
         <button class="btn btn-soft btn-sm duty-roll" type="button" title="全员掷骰，点大的掌勺、点小的洗碗" @click="openPK">🎲 摇骰子</button>
@@ -480,9 +438,9 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
           </div>
         </div>
 
-        <TransitionGroup name="swap" tag="div" class="suggest-grid">
+        <div class="suggest-grid" :class="{ 'is-swapping': suggesting }">
           <div
-            v-for="s in suggestions" :key="s.dish.id" class="suggest-card"
+            v-for="(s, si) in suggestions" :key="si" class="suggest-card"
             :class="{ picked: isPicked(s.dish) }"
             role="button" tabindex="0" :aria-label="`点这道：${s.dish.name}`"
             :aria-disabled="pending(`order:${s.dish.id}`)"
@@ -498,16 +456,16 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
             <span class="suggest-name">{{ s.dish.name }}</span>
             <span class="suggest-reasons">{{ s.reasons.join(' · ') }}</span>
           </div>
-        </TransitionGroup>
+        </div>
 
         <div class="snack-strip" v-if="snackPicks.length">
           <div class="snack-strip-head">
             <span class="snack-strip-title">🍢 来点小吃解馋</span>
             <button class="btn btn-ghost btn-sm" type="button" @click="shuffleSnacks">换一批</button>
           </div>
-          <div class="snack-picks">
+          <div class="snack-picks" :class="{ 'is-swapping': snacking }">
             <button
-              v-for="s in snackPicks" :key="s.dish.id" type="button"
+              v-for="(s, ni) in snackPicks" :key="ni" type="button"
               class="snack-pick" :class="{ picked: isPicked(s.dish) }"
               :aria-label="`点这道：${s.dish.name}`"
               @click="quickOrder(s.dish, $event)"

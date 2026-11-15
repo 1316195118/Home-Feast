@@ -27,12 +27,14 @@ func (s *Server) updatePlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var in struct {
-		ChefID       *string         `json:"chefId"`
-		DishwasherID *string         `json:"dishwasherId"`
-		Note         *string         `json:"note"`
-		Dice         *map[string]int `json:"dice"`
-		DicePhase    *string         `json:"dicePhase"`
-		PKShown      *[]string       `json:"pkShown"`
+		ChefIDs       *[]string       `json:"chefIds"`
+		DishwasherIDs *[]string       `json:"dishwasherIds"`
+		ChefID        *string         `json:"chefId"`        // 兼容旧前端
+		DishwasherID  *string         `json:"dishwasherId"`  // 兼容旧前端
+		Note          *string         `json:"note"`
+		Dice          *map[string]int `json:"dice"`
+		DicePhase     *string         `json:"dicePhase"`
+		PKShown       *[]string       `json:"pkShown"`
 	}
 	if err := decodeBody(w, r, &in); err != nil {
 		jsonErr(w, http.StatusBadRequest, err.Error())
@@ -41,7 +43,35 @@ func (s *Server) updatePlan(w http.ResponseWriter, r *http.Request) {
 	members := s.st.ListMembers()
 	patch := store.PlanPatch{}
 
-	if in.ChefID != nil {
+	// 多人分工：去重、限数量、必须都是家里成员
+	cleanDuty := func(ids []string, label string) ([]string, bool) {
+		seen := make(map[string]bool, len(ids))
+		out := make([]string, 0, len(ids))
+		for _, raw := range ids {
+			v := trimmed(raw, 64)
+			if v == "" || seen[v] {
+				continue
+			}
+			if !memberExists(members, v) {
+				return nil, false
+			}
+			seen[v] = true
+			out = append(out, v)
+			if len(out) >= 12 {
+				break
+			}
+		}
+		return out, true
+	}
+
+	if in.ChefIDs != nil {
+		v, ok := cleanDuty(*in.ChefIDs, "掌勺")
+		if !ok {
+			jsonErr(w, http.StatusBadRequest, "请选择家里的成员掌勺")
+			return
+		}
+		patch.ChefIDs = &v
+	} else if in.ChefID != nil {
 		v := trimmed(*in.ChefID, 64)
 		if v != "" && !memberExists(members, v) {
 			jsonErr(w, http.StatusBadRequest, "请选择家里的成员掌勺")
@@ -49,7 +79,14 @@ func (s *Server) updatePlan(w http.ResponseWriter, r *http.Request) {
 		}
 		patch.ChefID = &v
 	}
-	if in.DishwasherID != nil {
+	if in.DishwasherIDs != nil {
+		v, ok := cleanDuty(*in.DishwasherIDs, "洗碗")
+		if !ok {
+			jsonErr(w, http.StatusBadRequest, "请选择家里的成员洗碗")
+			return
+		}
+		patch.DishwasherIDs = &v
+	} else if in.DishwasherID != nil {
 		v := trimmed(*in.DishwasherID, 64)
 		if v != "" && !memberExists(members, v) {
 			jsonErr(w, http.StatusBadRequest, "请选择家里的成员洗碗")
