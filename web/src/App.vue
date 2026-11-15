@@ -296,13 +296,20 @@ const actions = {
   updateMember: (id, patch) => withSound(guard(() => api.updateMember(id, patch), '已保存', 'member'), playSave),
   deleteMember: (id) => withSound(guard(() => api.deleteMember(id), '已移除成员', 'member'), playRemove),
 
-  setChef: (chefId) => guard(() => api.setPlan(state.today, { chefId }), `今天由 ${dutyName(chefId)} 掌勺 👨‍🍳`, 'duty'),
-  clearChef: () => guard(() => api.setPlan(state.today, { chefId: '' }), '', 'duty'),
-  setDishwasher: (id) => guard(() => api.setPlan(state.today, { dishwasherId: id }), `今天由 ${dutyName(id)} 洗碗 🧽`, 'duty'),
-  clearDishwasher: () => guard(() => api.setPlan(state.today, { dishwasherId: '' }), '', 'duty'),
-  // 骰子 PK 的结果一次提交，避免两次请求两次刷新
-  setDuties: (chefId, dishwasherId) =>
-    guard(() => api.setPlan(state.today, { chefId, dishwasherId }), '分工定好啦 🎲', 'duty'),
+  // 分工支持多人：数组即完整名单，前端只做「加入自己 / 移除自己」
+  setDutyList: (role, ids) =>
+    guard(() => api.setPlan(state.today, role === 'chef' ? { chefIds: ids } : { dishwasherIds: ids }), '', 'duty'),
+  // 兼容旧调用（骰子 PK / 排班套用）：单人等价于单元素数组
+  setChef: (chefId) => guard(() => api.setPlan(state.today, { chefIds: chefId ? [chefId] : [] }), `今天由 ${dutyName(chefId)} 掌勺 👨‍🍳`, 'duty'),
+  clearChef: () => guard(() => api.setPlan(state.today, { chefIds: [] }), '', 'duty'),
+  setDishwasher: (id) => guard(() => api.setPlan(state.today, { dishwasherIds: id ? [id] : [] }), `今天由 ${dutyName(id)} 洗碗 🧽`, 'duty'),
+  clearDishwasher: () => guard(() => api.setPlan(state.today, { dishwasherIds: [] }), '', 'duty'),
+  // 骰子 PK / 排班套用的结果一次提交，避免两次请求两次刷新
+  setDuties: (chefIds, dishwasherIds) =>
+    guard(() => api.setPlan(state.today, {
+      chefIds: Array.isArray(chefIds) ? chefIds : (chefIds ? [chefIds] : []),
+      dishwasherIds: Array.isArray(dishwasherIds) ? dishwasherIds : (dishwasherIds ? [dishwasherIds] : []),
+    }), '分工定好啦 🎲', 'duty'),
   // 骰子 PK 的点数 / 阶段 / 已看动画名单单独存：不走 guard，避免每次摇都整页 refresh 打断动画
   saveDice: async (patch) => {
     try {

@@ -560,6 +560,7 @@ func (s *Store) GetPlan(date string) Plan {
 		if p.Orders == nil {
 			p.Orders = []Order{}
 		}
+		p.NormalizeDuty() // 旧数据只有单人字段时，这里补出数组给前端
 		return p
 	}
 	return Plan{Date: date, Orders: []Order{}}
@@ -574,6 +575,7 @@ func (s *Store) ListPlans() []Plan {
 		if p.Orders == nil {
 			p.Orders = []Order{}
 		}
+		p.NormalizeDuty()
 		out = append(out, p)
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Date > out[j].Date })
@@ -590,12 +592,30 @@ func (s *Store) SavePlan(date string, patch PlanPatch) (Plan, error) {
 	if p.Orders == nil {
 		p.Orders = []Order{}
 	}
-	if patch.ChefID != nil {
-		p.ChefID = *patch.ChefID
+	if patch.ChefIDs != nil {
+		p.ChefIDs = append([]string(nil), (*patch.ChefIDs)...)
+		// 先清空单值字段：否则 NormalizeDuty 看到「数组空 + 单值有值」会把旧人补回来，
+		// 表现为「取消认领」无效。
+		p.ChefID = ""
+	} else if patch.ChefID != nil {
+		// 旧调用（单人）等价于把数组设成单元素
+		if *patch.ChefID == "" {
+			p.ChefIDs = nil
+		} else {
+			p.ChefIDs = []string{*patch.ChefID}
+		}
 	}
-	if patch.DishwasherID != nil {
-		p.DishwasherID = *patch.DishwasherID
+	if patch.DishwasherIDs != nil {
+		p.DishwasherIDs = append([]string(nil), (*patch.DishwasherIDs)...)
+		p.DishwasherID = ""
+	} else if patch.DishwasherID != nil {
+		if *patch.DishwasherID == "" {
+			p.DishwasherIDs = nil
+		} else {
+			p.DishwasherIDs = []string{*patch.DishwasherID}
+		}
 	}
+	p.NormalizeDuty()
 	if patch.Note != nil {
 		p.Note = *patch.Note
 	}

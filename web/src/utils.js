@@ -72,6 +72,14 @@ export function friendlyDate(value) {
   return `${month}月${date}日 ${week}${value === todayStr ? ' · 今天' : ''}`
 }
 
+// 分工支持多人：把 id 数组转成「张三、李四」这样的可读文本（超过 2 人只显示首人 + 人数）
+export function dutyNames(ids, members, max = 2) {
+  const list = (ids || []).map((id) => (members || []).find((m) => m.id === id)).filter(Boolean)
+  if (!list.length) return ''
+  if (list.length <= max) return list.map((m) => m.name).join('、')
+  return `${list[0].name} 等 ${list.length} 人`
+}
+
 export function memberOf(id, members) {
   return members.find((m) => m.id === id) || null
 }

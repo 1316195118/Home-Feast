@@ -1,20 +1,21 @@
 <script setup>
 import { inject, computed, reactive, ref } from 'vue'
-import { avatarChoices, avatarGroups, colorChoices, memberOf, friendlyDate, avoidChoices } from '../utils'
+import { avatarChoices, avatarGroups, colorChoices, memberOf, friendlyDate, avoidChoices, dutyNames } from '../utils'
 import { useModalBehavior } from '../modal'
 import { api } from '../api'
 import { shake } from '../feedback'
 
 const { state, actions, confirmDialog, pending } = inject('app')
 
+// 一天可能有多人掌勺/洗碗，按人头各计一次
 const chefCount = computed(() => {
   const map = {}
-  for (const p of state.plans) if (p.chefId) map[p.chefId] = (map[p.chefId] || 0) + 1
+  for (const p of state.plans) for (const id of (p.chefIds || [])) map[id] = (map[id] || 0) + 1
   return map
 })
 const washCount = computed(() => {
   const map = {}
-  for (const p of state.plans) if (p.dishwasherId) map[p.dishwasherId] = (map[p.dishwasherId] || 0) + 1
+  for (const p of state.plans) for (const id of (p.dishwasherIds || [])) map[id] = (map[id] || 0) + 1
   return map
 })
 const orderCount = computed(() => {
@@ -167,13 +168,13 @@ async function savePin() {
         <div v-for="p in state.plans.slice(0, 6)" :key="p.date" class="spread fs-88">
           <span class="muted">{{ friendlyDate(p.date) }}</span>
           <span class="row wrap">
-            <span v-if="memberOf(p.chefId, state.members)">
-              👨‍🍳 {{ memberOf(p.chefId, state.members).name }}
+            <span v-if="(p.chefIds || []).length">
+              👨‍🍳 {{ dutyNames(p.chefIds, state.members) }}
             </span>
-            <span v-if="memberOf(p.dishwasherId, state.members)">
-              🧽 {{ memberOf(p.dishwasherId, state.members).name }}
+            <span v-if="(p.dishwasherIds || []).length">
+              🧽 {{ dutyNames(p.dishwasherIds, state.members) }}
             </span>
-            <span v-if="!p.chefId && !p.dishwasherId" class="muted">还没定</span>
+            <span v-if="!(p.chefIds || []).length && !(p.dishwasherIds || []).length" class="muted">还没定</span>
           </span>
         </div>
       </div>

@@ -66,8 +66,12 @@ const needOtherNames = computed(() => needOthers.value
 // 分工已落库且与本次结果一致：只展示结果，不重复提交、不自动关闭
 const alreadyDecided = computed(() => {
   const p = todayPlan.value
-  return !!(decided.value && p?.chefId && p?.dishwasherId &&
-    p.chefId === chef.value?.id && p.dishwasherId === washer.value?.id)
+  const chefId = chef.value?.id
+  const washId = washer.value?.id
+  // 分工是数组（可能多人），只要结果里的两人都在名单里就算已落库
+  return !!(decided.value && chefId && washId
+    && (p?.chefIds || []).includes(chefId)
+    && (p?.dishwasherIds || []).includes(washId))
 })
 
 // 只有「当前用户 + 轮到自己摇」才能点摇一摇；force 用于平局系统自动加摇

@@ -51,12 +51,16 @@ type Order struct {
 // Plan 保存某一天的完整安排：谁掌勺、谁洗碗、备注、大家点的菜。
 // 新增字段用空值零值兼容旧的 plans.json 与旧备份，无需数据迁移。
 type Plan struct {
-	Date         string  `json:"date"`
-	ChefID       string  `json:"chefId"`
-	DishwasherID string  `json:"dishwasherId"`
-	Note         string  `json:"note"`
-	Orders       []Order `json:"orders"`
-	UpdatedAt    string  `json:"updatedAt"`
+	Date string `json:"date"`
+	// 分工支持多人：ChefIDs / DishwasherIDs 是唯一真相；
+	// 旧的单人字段保留并与数组首位同步，保证还没更新的旧前端也能显示第一个人。
+	ChefIDs       []string `json:"chefIds,omitempty"`
+	DishwasherIDs []string `json:"dishwasherIds,omitempty"`
+	ChefID        string   `json:"chefId"`
+	DishwasherID  string   `json:"dishwasherId"`
+	Note          string   `json:"note"`
+	Orders        []Order  `json:"orders"`
+	UpdatedAt     string   `json:"updatedAt"`
 	// 骰子 PK：Dice 保存每人点数，DicePhase 为 rolling/tied/done，
 	// PKShown 记录已经看过结果动画的成员（按用户维度只播一次）。
 	// omitempty 保证旧的 plans.json / 备份不含这些字段也能直接读。
@@ -65,14 +69,35 @@ type Plan struct {
 	PKShown   []string        `json:"pkShown,omitempty"`
 }
 
+// NormalizeDuty 把旧数据里的单人字段补进数组，并把数组首位同步回单人字段。
+// 读和写都调用它，前端因此永远能拿到 chefIds / dishwasherIds 两个数组。
+func (p *Plan) NormalizeDuty() {
+	if len(p.ChefIDs) == 0 && p.ChefID != "" {
+		p.ChefIDs = []string{p.ChefID}
+	}
+	if len(p.DishwasherIDs) == 0 && p.DishwasherID != "" {
+		p.DishwasherIDs = []string{p.DishwasherID}
+	}
+	p.ChefID = ""
+	if len(p.ChefIDs) > 0 {
+		p.ChefID = p.ChefIDs[0]
+	}
+	p.DishwasherID = ""
+	if len(p.DishwasherIDs) > 0 {
+		p.DishwasherID = p.DishwasherIDs[0]
+	}
+}
+
 // PlanPatch 是编辑当天分工时允许改动的字段，nil 表示保持不变。
 type PlanPatch struct {
-	ChefID       *string
-	DishwasherID *string
-	Note         *string
-	Dice         *map[string]int
-	DicePhase    *string
-	PKShown      *[]string
+	ChefIDs       *[]string
+	DishwasherIDs *[]string
+	ChefID        *string // 兼容旧调用：等价于把数组设为单元素
+	DishwasherID  *string
+	Note          *string
+	Dice          *map[string]int
+	DicePhase     *string
+	PKShown       *[]string
 }
 
 // MealSlot 是一顿饭的配置，由用户在「设置 → 用餐时段」里自定义。
