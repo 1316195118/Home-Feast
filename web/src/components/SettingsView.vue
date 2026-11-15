@@ -29,6 +29,29 @@ const showBackupModal = ref(false)
 const backupRoot = ref(null)
 useModalBehavior(() => { showBackupModal.value = false }, backupRoot, showBackupModal)
 
+// 版本更新：历史记录随二进制走，首次打开时拉一次
+const showVersionModal = ref(false)
+const versionRoot = ref(null)
+const changelog = ref([])
+const changelogLoading = ref(false)
+useModalBehavior(() => { showVersionModal.value = false }, versionRoot, showVersionModal)
+const KIND_CLASS = { 新增: 'k-add', 修复: 'k-fix', 优化: 'k-opt' }
+const kindClass = (kind) => KIND_CLASS[kind] || 'k-opt'
+
+async function openVersionModal() {
+  showVersionModal.value = true
+  if (changelog.value.length || changelogLoading.value) return
+  changelogLoading.value = true
+  try {
+    const list = await api.changelog()
+    changelog.value = Array.isArray(list) ? list : []
+  } catch (err) {
+    actions.toast(err.message || '读取更新记录失败', 'error')
+  } finally {
+    changelogLoading.value = false
+  }
+}
+
 // 关于与版权：说明文字较长，卡片只留摘要，完整素材与授权说明进二级弹窗
 const showAboutModal = ref(false)
 const aboutRoot = ref(null)
@@ -427,11 +450,21 @@ async function saveRoster() {
         </div>
       </div>
 
-      <div class="card setting-card sc-about">
+      <div class="card setting-card sc-version">
         <div class="setting-title">
-          🎨 关于与版权
+          📋 版本更新
           <span class="tag setting-title-tag">v{{ state.version }}</span>
         </div>
+        <p class="setting-desc">这次改了什么，以及之前每个版本都做了什么。</p>
+        <div class="setting-meta tiny muted">{{ state.buildTime }} 构建 · 共 {{ changelog.length || '—' }} 个版本</div>
+        <button class="btn btn-soft btn-sm cuisine-manage-btn" @click="openVersionModal">
+          查看更新记录
+          <span class="chev">›</span>
+        </button>
+      </div>
+
+      <div class="card setting-card sc-about">
+        <div class="setting-title">🎨 关于与版权</div>
         <p class="setting-desc">插画由 AI 生成，文案自写，源码 MIT；未用第三方图库或模板。</p>
         <div class="setting-meta tiny muted">Go + Vue 3 · 单文件服务端 · 数据全在本地</div>
         <button class="btn btn-soft btn-sm cuisine-manage-btn" @click="showAboutModal = true">
@@ -481,6 +514,44 @@ async function saveRoster() {
             </div>
             <div class="modal-foot">
               <button class="btn btn-primary btn-sm" @click="showAccessModal = false">完成</button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+
+      <Transition name="modal">
+        <div v-if="showVersionModal" ref="versionRoot" class="modal-backdrop" @click.self="showVersionModal = false">
+          <div class="modal modal-wide version-modal" role="dialog" aria-modal="true" aria-label="版本更新">
+            <div class="modal-head">
+              <h2>📋 版本更新</h2>
+              <button class="icon-btn" @click="showVersionModal = false" aria-label="关闭">✕</button>
+            </div>
+
+            <div class="version-current">
+              <span class="version-badge">v{{ state.version }}</span>
+              <span class="tiny muted">{{ state.buildTime }} 构建</span>
+            </div>
+
+            <div class="version-list">
+              <div v-if="changelogLoading" class="version-tip">读取中…</div>
+              <div v-else-if="!changelog.length" class="version-tip">暂无更新记录</div>
+              <article v-for="(v, i) in changelog" :key="v.version" class="version-item" :class="{ 'is-current': i === 0 }">
+                <header class="version-head">
+                  <span class="version-no">v{{ v.version }}</span>
+                  <span class="version-date">{{ v.date }}</span>
+                  <span v-if="i === 0" class="tag tag-green">当前</span>
+                </header>
+                <div v-for="sec in v.sections" :key="sec.kind" class="version-sec">
+                  <span class="version-kind" :class="kindClass(sec.kind)">{{ sec.kind }}</span>
+                  <ul class="version-lines">
+                    <li v-for="(line, j) in sec.lines" :key="j">{{ line }}</li>
+                  </ul>
+                </div>
+              </article>
+            </div>
+
+            <div class="modal-foot">
+              <button class="btn btn-primary btn-sm" @click="showVersionModal = false">知道了</button>
             </div>
           </div>
         </div>
