@@ -625,13 +625,6 @@ async function saveRoster() {
               </div>
             </div>
 
-            <div class="about-release">
-              <div class="about-release-head">
-                <span class="tag tag-green">家里吃点啥 v{{ state.version }}</span>
-                <span v-if="state.buildTime" class="about-release-time">{{ state.buildTime }} 构建</span>
-              </div>
-            </div>
-
             <div class="about-stack">
               <span class="tag">Go + Vue 3</span>
               <span class="tag">单文件服务端</span>
