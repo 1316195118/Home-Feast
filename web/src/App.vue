@@ -586,7 +586,7 @@ onUnmounted(() => {
     </div>
 
     <footer class="footer" v-if="state.ready">
-      数据只保存在你自己的设备 / NAS · 家里吃点啥 v{{ state.version }}
+      家里吃点啥 · 数据只保存在你自己的设备 / NAS
     </footer>
 
     <Transition name="toast">
