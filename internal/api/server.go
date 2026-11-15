@@ -36,6 +36,7 @@ func New(st *store.Store, web fs.FS, envCode string) http.Handler {
 	api := http.NewServeMux()
 	api.HandleFunc("GET /api/ping", s.ping)
 	api.HandleFunc("GET /api/config", s.config)
+	api.HandleFunc("GET /api/changelog", s.changelog)
 	api.HandleFunc("GET /api/bootstrap", s.bootstrap)
 	api.HandleFunc("GET /api/events", s.streamEvents)
 

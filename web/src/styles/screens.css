@@ -1233,3 +1233,30 @@
 .week-dish.kind-veg { border-color: rgba(109, 145, 119, 0.4); background: rgba(109, 145, 119, 0.1); color: var(--green-ink); }
 .week-dish.kind-soup { border-color: rgba(207, 154, 85, 0.45); background: rgba(207, 154, 85, 0.12); color: var(--ink-soft); }
 .week-dish.kind-staple { border-color: var(--line-strong); background: var(--paper-deep); color: var(--ink-soft); }
+
+/* ---------- 版本更新弹窗 ---------- */
+.version-modal { max-height: 86vh; display: flex; flex-direction: column; }
+.version-current { display: flex; align-items: center; gap: 10px; padding: 0 2px 10px; flex: none; }
+.version-badge { font-weight: 800; font-size: 0.95rem; color: var(--brand-dark); }
+.version-list {
+  flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch; padding-right: 4px;
+  border-top: 1px solid var(--line);
+}
+.version-tip { padding: 18px 2px; font-size: 0.84rem; color: var(--muted); }
+.version-item { padding: 13px 2px; border-bottom: 1px solid var(--line); }
+.version-item:last-child { border-bottom: 0; }
+.version-item.is-current { background: var(--surface-soft); border-radius: var(--radius-sm); padding-left: 8px; padding-right: 8px; }
+.version-head { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+.version-no { font-weight: 800; font-size: 0.9rem; }
+.version-date { font-size: 0.72rem; color: var(--muted); font-weight: 600; }
+.version-sec { display: flex; gap: 8px; margin-top: 5px; }
+.version-kind {
+  flex: none; width: 32px; padding: 1px 0; text-align: center;
+  font-size: 0.68rem; font-weight: 800; border-radius: 5px;
+}
+.version-kind.k-add { color: var(--green-ink); background: var(--green-soft); }
+.version-kind.k-fix { color: #b4483c; background: #fbe3df; }
+.version-kind.k-opt { color: #3f6ea8; background: #e3edf9; }
+.version-lines { margin: 0; padding-left: 14px; font-size: 0.79rem; line-height: 1.62; color: var(--ink-soft); }
+.version-lines li { margin: 1px 0; }

@@ -43,6 +43,7 @@ async function request(path, { method = 'GET', body, isForm = false, raw = false
 
 export const api = {
   config: () => request('/api/config'),
+  changelog: () => request('/api/changelog'),
   bootstrap: () => request('/api/bootstrap'),
   plans: () => request('/api/plans'),
 
