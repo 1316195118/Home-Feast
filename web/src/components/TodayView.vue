@@ -389,6 +389,7 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
 
         <button class="btn btn-soft btn-sm duty-roll" type="button" title="全员掷骰，点大的掌勺、点小的洗碗" @click="openPK">🎲 摇骰子</button>
       </div>
+      <p class="duty-hint">点「我来」就能认领，可以多人一起；一个人也能把掌勺和洗碗都包了。</p>
 
       <div v-if="rosterToday && rosterNames" class="roster-hint" :class="{ 'is-done': !rosterDiff }">
         <span class="roster-hint-icon">{{ rosterDiff ? '📅' : '✅' }}</span>
