@@ -4,6 +4,6 @@ package api
 
 func init() {
 	Version = "1.0.1.6"
-	ReleaseNote = "【修复】\n- 菜谱页写着「八大菜系」，实际是 19 个菜系\n- 关于弹窗的依赖列表漏了 golang.org/x/image\n- README 多处数字过时（16 个菜系、157 道配图）\n\n【优化】\n- 今日页补上分工说明：可以多人一起认领，一个人也能全包\n- 历史页表述改为「谁掌勺、谁洗碗」，与多人分工一致"
-	BuildTime = "2026-11-15 16:44:03"
+	ReleaseNote = "【修复】\n- 关于弹窗依赖列表补上 golang.org/x/image"
+	BuildTime = "2026-11-15 16:45:24"
 }
