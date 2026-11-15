@@ -60,9 +60,6 @@ const grouped = computed(() => {
 const dutyMembers = (ids) => (ids || []).map((id) => memberOf(id, state.members)).filter(Boolean)
 const chefs = computed(() => dutyMembers(state.plan.chefIds))
 const washers = computed(() => dutyMembers(state.plan.dishwasherIds))
-// 兼容旧的单值字段：用于骰子 PK / 排班差异判断，只关心「有没有人」
-const chef = computed(() => chefs.value[0] || null)
-const washer = computed(() => washers.value[0] || null)
 const noteText = ref(state.plan.note || '')
 const noteSaved = ref(false)
 const noteDirty = computed(() => noteText.value !== (state.plan.note || ''))
@@ -161,15 +158,31 @@ const rosterNames = computed(() => {
 const rosterDiff = computed(() => {
   const r = rosterToday.value
   if (!r) return false
-  const chefOk = !r.chefId || state.plan.chefId === r.chefId
-  const washOk = !r.washId || state.plan.dishwasherId === r.washId
+  // 分工是数组：排班上的人只要在名单里就算一致，不再只比第一个人
+  const chefOk = !r.chefId || (state.plan.chefIds || []).includes(r.chefId)
+  const washOk = !r.washId || (state.plan.dishwasherIds || []).includes(r.washId)
   return !(chefOk && washOk)
 })
-function applyRoster() {
+async function applyRoster() {
   const r = rosterToday.value
   if (!r) return
-  // 排班没填的那一半保留今天已定的人，不误清空
-  actions.setDuties(r.chefId || state.plan.chefId || '', r.washId || state.plan.dishwasherId || '')
+  // 排班没填的那一半保留今天已有的名单；填了的那一半以排班为准
+  const chefIds = r.chefId ? [r.chefId] : (state.plan.chefIds || [])
+  const washIds = r.washId ? [r.washId] : (state.plan.dishwasherIds || [])
+  const dropped = [
+    ...(state.plan.chefIds || []).filter((id) => !chefIds.includes(id)),
+    ...(state.plan.dishwasherIds || []).filter((id) => !washIds.includes(id)),
+  ]
+  if (dropped.length) {
+    const ok = await confirmDialog({
+      title: '套用排班会替换名单',
+      message: `今天已有 ${dropped.length} 位家人认领，套用排班后他们会从名单里移除，只留排班上的安排。`,
+      confirmText: '仍然套用',
+    })
+    if (!ok) return
+  }
+  const done = await actions.setDuties(chefIds, washIds)
+  if (done) actions.toast('已按排班安排今天的分工', 'success')
 }
 
 // 有未保存的草稿时，实时同步 / 其它设备改动触发的刷新都不覆盖输入框内容
@@ -191,6 +204,13 @@ const namesOf = (list) => (list.length <= 2
   ? list.map((m) => m.name).join('、')
   : `${list[0].name} 等 ${list.length} 人`)
 
+// 卡片副标题：空位 / 只有我 / 我在其中 / 别人在负责，四种状态文案分开
+function dutyHint(list, mine, label) {
+  if (!list.length) return '点「我来」加入'
+  if (mine) return list.length === 1 ? '目前只有你一人' : `你在其中 · 共 ${list.length} 人`
+  return `${list.length} 人在${label}`
+}
+
 function playClaimAnim(role) {
   justClaimed.value = role
   clearTimeout(playClaimAnim.timer)
@@ -201,6 +221,8 @@ async function toggleDuty(role) {
   const uid = meId.value
   if (!uid) return
   const isChef = role === 'chef'
+  const label = isChef ? '掌勺' : '洗碗'
+  const otherLabel = isChef ? '洗碗' : '掌勺'
   const key = isChef ? 'chefIds' : 'dishwasherIds'
   const otherKey = isChef ? 'dishwasherIds' : 'chefIds'
   const list = [...(state.plan[key] || [])]
@@ -210,7 +232,10 @@ async function toggleDuty(role) {
   if (at >= 0) {
     list.splice(at, 1)
     const done = await actions.setDutyList(role, list)
-    if (done) actions.toast(isChef ? '已退出掌勺' : '已退出洗碗', 'success')
+    if (done) {
+      const rest = (state.plan[key] || []).filter((id) => id !== uid)
+      actions.toast(rest.length ? `你退出了${label}，还有 ${rest.length} 人在${label}` : `你退出了${label}`, 'success')
+    }
     return
   }
 
@@ -219,12 +244,20 @@ async function toggleDuty(role) {
   const done = await actions.setDutyList(role, list)
   if (!done) return
   playClaimAnim(role)
+
+  // 提示要说清「和谁一起」，不能只说「今天你掌勺」——现在是多人分工
+  const others = list.filter((id) => id !== uid).map((id) => memberOf(id, state.members)?.name).filter(Boolean)
   const inOther = (state.plan[otherKey] || []).includes(uid)
   if (inOther) {
-    actions.toast('今天你掌勺 + 洗碗，全包了 👨‍🍳🧽', 'success')
-  } else {
-    actions.toast(isChef ? '今天你掌勺 👨‍🍳' : '今天你洗碗 🧽', 'success')
+    const partner = others.length ? `，还有 ${others.join('、')} 一起${label}` : ''
+    actions.toast(`掌勺 + 洗碗都是你，全包了 👨‍🍳🧽${partner}`, 'success')
+    return
   }
+  if (others.length) {
+    actions.toast(`你加入了${label}，和 ${others.join('、')} 一起`, 'success')
+    return
+  }
+  actions.toast(`你认领了今天的${label}${isChef ? ' 👨‍🍳' : ' 🧽'}，别人也可以加入`, 'success')
 }
 
 // 骰子 PK：全员掷骰，点大的掌勺、点小的洗碗
@@ -236,8 +269,20 @@ function openPK() {
   pkOpen.value = true
 }
 async function applyPK({ chefId, dishwasherId }) {
-  const ok = await actions.setDuties(chefId, dishwasherId)
-  if (ok) pkOpen.value = false
+  const extra = [
+    ...(state.plan.chefIds || []).filter((id) => id !== chefId),
+    ...(state.plan.dishwasherIds || []).filter((id) => id !== dishwasherId),
+  ]
+  if (extra.length) {
+    const ok = await confirmDialog({
+      title: '用骰子结果替换分工？',
+      message: `今天还有 ${extra.length} 位家人在名单里，骰子结果只会留 ${memberOf(chefId, state.members)?.name} 掌勺、${memberOf(dishwasherId, state.members)?.name} 洗碗。`,
+      confirmText: '用骰子结果',
+    })
+    if (!ok) return
+  }
+  const done = await actions.setDuties(chefId, dishwasherId)
+  if (done) pkOpen.value = false
 }
 
 async function saveNote() {
@@ -287,8 +332,8 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
       <div class="hero-label">今日份 · {{ friendlyDate(state.today) }}</div>
       <h1 class="hero-title"><span>今天已点 {{ orders.length }} 道</span></h1>
       <p class="hero-sub">
-        <template v-if="chef || washer">
-          {{ chef ? `${chef.avatar} ${chef.name} 掌勺` : '掌勺待定' }}<span class="hero-sep">·</span>{{ washer ? `${washer.avatar} ${washer.name} 洗碗` : '洗碗待定' }}<span class="hero-sep">·</span>
+        <template v-if="chefs.length || washers.length">
+          {{ chefs.length ? `${chefs[0].avatar} ${namesOf(chefs)} 掌勺` : '掌勺待定' }}<span class="hero-sep">·</span>{{ washers.length ? `${washers[0].avatar} ${namesOf(washers)} 洗碗` : '洗碗待定' }}<span class="hero-sep">·</span>
         </template>
         {{ doneCount ? `已上桌 ${doneCount} 道，` : '' }}{{ orders.length ? '就等开饭啦' : '先点几个，别让掌勺的人猜' }}
       </p>
@@ -301,7 +346,7 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
           <span v-else class="duty-claim-emoji" aria-hidden="true">👨‍🍳</span>
           <span class="duty-owner-info">
             <b>{{ chefs.length ? namesOf(chefs) : '还没人认领' }}</b>
-            <small>{{ chefs.length ? (iAmChef ? `掌勺中 · 共 ${chefs.length} 人` : `掌勺中 · ${chefs.length} 人`) : '点「我来」加入' }}</small>
+            <small>{{ dutyHint(chefs, iAmChef, '掌勺') }}</small>
           </span>
           <button v-if="!iAmChef" class="duty-mini duty-mini-ghost" type="button" :disabled="pending('duty')" @click="toggleDuty('chef')">+ 我来</button>
           <button v-else class="duty-mini" type="button" :disabled="pending('duty')" @click="toggleDuty('chef')">退出</button>
@@ -314,7 +359,7 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
           <span v-else class="duty-claim-emoji" aria-hidden="true">🧽</span>
           <span class="duty-owner-info">
             <b>{{ washers.length ? namesOf(washers) : '还没人认领' }}</b>
-            <small>{{ washers.length ? (iAmWasher ? `洗碗中 · 共 ${washers.length} 人` : `洗碗中 · ${washers.length} 人`) : '点「我来」加入' }}</small>
+            <small>{{ dutyHint(washers, iAmWasher, '洗碗') }}</small>
           </span>
           <button v-if="!iAmWasher" class="duty-mini duty-mini-ghost" type="button" :disabled="pending('duty')" @click="toggleDuty('wash')">+ 我来</button>
           <button v-else class="duty-mini" type="button" :disabled="pending('duty')" @click="toggleDuty('wash')">退出</button>
