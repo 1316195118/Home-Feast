@@ -84,3 +84,7 @@
 /scripts/_cq/_img/resized/*.webp
 /scripts/_cq/_img/resized/_*
 /scripts/_cq/_img/_*
+
+# 测试中间产物（每次跑脚本重新生成，不入库）
+/scripts/_cq/_test/*.json
+/scripts/_cq/_test/_*.jpg

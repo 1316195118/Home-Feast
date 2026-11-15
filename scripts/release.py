@@ -157,7 +157,17 @@ def publish(do_deploy=True):
 
     # 提交与推送：用户明确要求「推送时才更新版本号」，所以只在 publish 里做
     run_git(['add', '-A'])
-    msg = f'v{v}：{entries[0][1].splitlines()[0][:60]}'
+
+    # 说明是三段式（**新增** / **修复** / **优化**），标题取第一条实际内容
+    def first_summary(body):
+        for line in body.splitlines():
+            text = line.strip().lstrip('-').strip()
+            if not text or text.startswith('**'):
+                continue
+            return text[:60]
+        return '常规更新'
+
+    msg = f'v{v}：{first_summary(entries[-1][1])}'
     run_git(['commit', '-m', msg])
     print('已提交:', msg)
     run_git(['push', 'origin', 'main'])
