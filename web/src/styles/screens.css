@@ -1070,19 +1070,43 @@
 }
 
 /* 首页分工条：点头像直接定人（点自己=认领，点别人=帮家人指派），再点一次取消 */
-.duty-bar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 12px; }
-.duty-slot { display: flex; align-items: center; gap: 8px; }
-.duty-slot-label { flex: none; font-weight: 800; font-size: 0.8rem; color: var(--brand-dark); }
-.duty-avatars { display: flex; gap: 5px; }
-.duty-avatar {
-  width: 32px; height: 32px; padding: 0; border-radius: 50%;
-  border: 2px solid transparent; cursor: pointer;
-  font-size: 0.95rem; line-height: 1;
-  display: grid; place-items: center;
-  opacity: 0.62; transition: all var(--dur-fast) var(--ease);
+.duty-bar { display: flex; align-items: stretch; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+/* 认领卡片：虚线=还空着，实线=已认领；自己的那一张加品牌底色 */
+.duty-card {
+  display: flex; align-items: center; gap: 9px;
+  padding: 7px 12px; min-height: 54px; min-width: 148px;
+  background: var(--surface); border: 1.5px dashed var(--line-strong);
+  border-radius: var(--radius);
+  transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
 }
-.duty-avatar:hover { opacity: 1; transform: translateY(-2px); }
-.duty-avatar.active { opacity: 1; border-color: var(--brand); box-shadow: 0 2px 8px rgba(192, 90, 60, 0.35); transform: scale(1.08); }
+.duty-card.is-taken { border-style: solid; border-color: var(--brand); background: var(--surface-soft); }
+.duty-card.is-mine { background: var(--brand-soft); box-shadow: 0 2px 10px rgba(192, 90, 60, 0.14); }
+.duty-claim {
+  display: flex; align-items: center; gap: 9px; width: 100%;
+  padding: 0; border: 0; background: none; color: inherit;
+  text-align: left; cursor: pointer;
+}
+.duty-claim:disabled { opacity: 0.55; cursor: default; }
+.duty-claim-emoji { font-size: 1.45rem; line-height: 1; flex: none; }
+.duty-claim-body b { display: block; font-size: 0.86rem; font-weight: 800; }
+.duty-claim-body small { display: block; margin-top: 1px; font-size: 0.7rem; font-weight: 600; color: var(--muted); }
+.duty-owner-avatar {
+  width: 30px; height: 30px; flex: none; border-radius: 50%;
+  display: grid; place-items: center; font-size: 0.95rem; line-height: 1;
+}
+.duty-owner-info { min-width: 0; }
+.duty-owner-info b { display: block; font-size: 0.86rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 88px; }
+.duty-owner-info small { display: block; margin-top: 1px; font-size: 0.7rem; font-weight: 600; color: var(--muted); }
+.duty-mini {
+  flex: none; margin-left: auto; padding: 4px 9px;
+  font-size: 0.7rem; font-weight: 700; line-height: 1.4;
+  color: var(--ink-soft); background: var(--surface);
+  border: 1px solid var(--line-strong); border-radius: 999px; cursor: pointer;
+  transition: border-color var(--dur-fast), color var(--dur-fast);
+}
+.duty-mini:hover:not(:disabled) { border-color: var(--brand); color: var(--brand-dark); }
+.duty-mini:disabled { opacity: 0.5; cursor: default; }
+.duty-mini-ghost { color: var(--brand-dark); }
 .duty-roll { flex: none; margin-left: auto; }
 /* 留言条：放在页面底部一条 */
 /* 今日留言：并入 hero 第一屏，一行输入、失焦/回车自动保存，无需按钮 */

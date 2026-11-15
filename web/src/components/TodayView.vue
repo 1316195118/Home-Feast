@@ -8,7 +8,7 @@ import DicePK from './DicePK.vue'
 import ShoppingList from './ShoppingList.vue'
 import WeekMenu from './WeekMenu.vue'
 
-const { state, actions, pending } = inject('app')
+const { state, actions, pending, confirmDialog } = inject('app')
 const detailId = ref(null)
 const detailDish = computed(() => state.dishes.find((d) => d.id === detailId.value) || null)
 const pkOpen = ref(false)
@@ -164,14 +164,34 @@ watch(
   { immediate: true },
 )
 
-// 分工：点头像直接定人（点自己=认领，点别人=帮家人指派），再点一次取消
-function pickChef(m) {
-  if (state.plan.chefId === m.id) actions.clearChef()
-  else actions.setChef(m.id)
+// 分工改成「认领」：每个人在自己设备上认领自己的角色，不再由一个人替全家点。
+// 已经被别人认领时，点「换我」会先确认，避免手滑把别人的活儿抢了。
+const meId = computed(() => state.currentUserId)
+
+async function claimDuty(role) {
+  const uid = meId.value
+  if (!uid) return
+  const holder = role === 'chef' ? chef.value : washer.value
+  if (holder && holder.id !== uid) {
+    const ok = await confirmDialog({
+      title: role === 'chef' ? '换人掌勺？' : '换人洗碗？',
+      message: `今天已经由 ${holder.name} 认领，确定换成你来吗？`,
+      confirmText: '换成我',
+    })
+    if (!ok) return
+  }
+  // 一个人不占两个坑：认领这头，自动把另一头让出来
+  const chefId = role === 'chef' ? uid : (state.plan.chefId === uid ? '' : (state.plan.chefId || ''))
+  const washId = role === 'wash' ? uid : (state.plan.dishwasherId === uid ? '' : (state.plan.dishwasherId || ''))
+  const ok = await actions.setDuties(chefId, washId)
+  if (ok) {
+    actions.toast(role === 'chef' ? '今天你掌勺 👨‍🍳' : '今天你洗碗 🧽', 'success')
+  }
 }
-function pickWash(m) {
-  if (state.plan.dishwasherId === m.id) actions.clearDishwasher()
-  else actions.setDishwasher(m.id)
+
+function releaseDuty(role) {
+  if (role === 'chef') actions.clearChef()
+  else actions.clearDishwasher()
 }
 
 // 骰子 PK：全员掷骰，点大的掌勺、点小的洗碗
@@ -241,30 +261,44 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
       </p>
 
       <div class="duty-bar">
-        <div class="duty-slot">
-          <span class="duty-slot-label">👨‍🍳 {{ chef ? chef.name : '谁掌勺' }}</span>
-          <div class="duty-avatars">
-            <button
-              v-for="m in state.members" :key="`chef-${m.id}`" type="button"
-              class="duty-avatar" :class="{ active: chef && chef.id === m.id }"
-              :style="{ background: m.color }" :aria-pressed="!!(chef && chef.id === m.id)"
-              :title="chef && chef.id === m.id ? `取消 ${m.name} 掌勺` : `让 ${m.name} 掌勺`"
-              @click="pickChef(m)"
-            >{{ m.avatar }}</button>
-          </div>
+        <div class="duty-card" :class="{ 'is-taken': chef, 'is-mine': chef && chef.id === meId }">
+          <button v-if="!chef" class="duty-claim" type="button" :disabled="pending('duty')" @click="claimDuty('chef')">
+            <span class="duty-claim-emoji" aria-hidden="true">👨‍🍳</span>
+            <span class="duty-claim-body">
+              <b>我来掌勺</b>
+              <small>点一下认领今天</small>
+            </span>
+          </button>
+          <template v-else>
+            <span class="duty-owner-avatar" :style="{ background: chef.color }" aria-hidden="true">{{ chef.avatar }}</span>
+            <span class="duty-owner-info">
+              <b>{{ chef.name }}</b>
+              <small>{{ chef.id === meId ? '你掌勺' : '掌勺中' }}</small>
+            </span>
+            <button v-if="chef.id === meId" class="duty-mini" type="button" @click="releaseDuty('chef')">取消</button>
+            <button v-else class="duty-mini duty-mini-ghost" type="button" :disabled="pending('duty')" @click="claimDuty('chef')">换我</button>
+          </template>
         </div>
-        <div class="duty-slot">
-          <span class="duty-slot-label">🧽 {{ washer ? washer.name : '谁洗碗' }}</span>
-          <div class="duty-avatars">
-            <button
-              v-for="m in state.members" :key="`wash-${m.id}`" type="button"
-              class="duty-avatar" :class="{ active: washer && washer.id === m.id }"
-              :style="{ background: m.color }" :aria-pressed="!!(washer && washer.id === m.id)"
-              :title="washer && washer.id === m.id ? `取消 ${m.name} 洗碗` : `让 ${m.name} 洗碗`"
-              @click="pickWash(m)"
-            >{{ m.avatar }}</button>
-          </div>
+
+        <div class="duty-card" :class="{ 'is-taken': washer, 'is-mine': washer && washer.id === meId }">
+          <button v-if="!washer" class="duty-claim" type="button" :disabled="pending('duty')" @click="claimDuty('wash')">
+            <span class="duty-claim-emoji" aria-hidden="true">🧽</span>
+            <span class="duty-claim-body">
+              <b>我来洗碗</b>
+              <small>点一下认领今天</small>
+            </span>
+          </button>
+          <template v-else>
+            <span class="duty-owner-avatar" :style="{ background: washer.color }" aria-hidden="true">{{ washer.avatar }}</span>
+            <span class="duty-owner-info">
+              <b>{{ washer.name }}</b>
+              <small>{{ washer.id === meId ? '你洗碗' : '洗碗中' }}</small>
+            </span>
+            <button v-if="washer.id === meId" class="duty-mini" type="button" @click="releaseDuty('wash')">取消</button>
+            <button v-else class="duty-mini duty-mini-ghost" type="button" :disabled="pending('duty')" @click="claimDuty('wash')">换我</button>
+          </template>
         </div>
+
         <button class="btn btn-soft btn-sm duty-roll" type="button" title="全员掷骰，点大的掌勺、点小的洗碗" @click="openPK">🎲 摇骰子</button>
       </div>
 
