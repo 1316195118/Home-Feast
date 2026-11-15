@@ -341,3 +341,7 @@
 }
 .cook-font button + button { border-left: 1px solid var(--line); }
 .cook-font button:disabled { opacity: 0.35; cursor: default; }
+
+/* 首次选人：成员被同步清空时的兜底出口，避免强制弹窗无路可退 */
+.user-pick-empty { padding: 18px 4px; text-align: center; }
+.user-pick-empty p { font-size: 0.84rem; line-height: 1.6; margin: 0 0 12px; }

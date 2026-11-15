@@ -736,7 +736,11 @@ onUnmounted(() => {
           <h2>先选一下你是谁</h2>
           <p class="muted">之后点菜、掌勺、洗碗都会记在这个名字下，右上角随时能换。</p>
         </div>
-        <div class="user-pick-list">
+        <div v-if="!state.members.length" class="user-pick-empty">
+          <p class="muted">家里还没有成员，先关掉去添加一位。</p>
+          <button class="btn btn-soft btn-sm" @click="needsUserPick = false">先看看</button>
+        </div>
+        <div v-else class="user-pick-list">
           <button v-for="m in state.members" :key="m.id" class="user-pick-item" @click="pickUser(m.id)">
             <span class="avatar avatar-lg" :style="{ background: m.color }">{{ m.avatar }}</span>
             <span class="user-pick-name">{{ m.name }}</span>

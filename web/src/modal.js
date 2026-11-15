@@ -88,7 +88,8 @@ function focusInto(rootRef) {
 
 export function useModalBehavior(close, rootRef = ref(null), openRef = null, dismissible = true) {
   const restoreTo = ref(null)
-  // 不可关闭的弹窗（口令锁、首次选人）仍要锁滚动，但不进 Esc 栈
+  // 不可关闭的弹窗（口令锁、首次选人）仍入栈锁滚动、接管焦点，
+  // 但 close 是空函数：Esc 打在栈顶时会被吞掉，下面的弹窗也关不掉——这是刻意的强制优先级
   const stackClose = () => { if (dismissible) close() }
   let active = false
 
