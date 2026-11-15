@@ -88,3 +88,6 @@
 # 测试中间产物（每次跑脚本重新生成，不入库）
 /scripts/_cq/_test/*.json
 /scripts/_cq/_test/_*.jpg
+
+# 缩略图源图（从服务器可重新下载，不占仓库）
+/scripts/_cq/_thumb/src/
