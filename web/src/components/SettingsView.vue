@@ -578,7 +578,7 @@ async function saveRoster() {
                 <span class="about-ico">📜</span>
                 <div>
                   <div class="about-label">开源许可</div>
-                  <div class="about-text">本项目以 MIT 许可开源，可自由使用、修改、商用与再分发，保留版权与许可声明即可。第三方依赖仅 Vue 3、Vite（MIT）与 Go 标准库（BSD-3-Clause）。</div>
+                  <div class="about-text">本项目以 MIT 许可开源，可自由使用、修改、商用与再分发，保留版权与许可声明即可。第三方依赖仅 Vue 3、Vite（MIT）与 Go 标准库、golang.org/x/image（BSD-3-Clause）。</div>
                 </div>
               </div>
               <div class="about-item">
