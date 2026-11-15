@@ -1,5 +1,5 @@
 <script setup>
-import { inject, ref, watch, computed, reactive } from 'vue'
+import { inject, ref, watch, computed, reactive, onMounted } from 'vue'
 import { api, setAccessCode } from '../api'
 import { isCuisineHidden, DEFAULT_MEALS, mealEndMinutes, normalizeMeals, mealIconChoices, WEEKDAYS } from '../utils'
 import { useModalBehavior } from '../modal'
@@ -38,19 +38,27 @@ useModalBehavior(() => { showVersionModal.value = false }, versionRoot, showVers
 const KIND_CLASS = { 新增: 'k-add', 修复: 'k-fix', 优化: 'k-opt' }
 const kindClass = (kind) => KIND_CLASS[kind] || 'k-opt'
 
-async function openVersionModal() {
-  showVersionModal.value = true
+// 拉一次即可（内容随二进制走，运行期不会变）；卡片上要显示版本总数，挂载时先静默取一次
+async function ensureChangelog(notify = false) {
   if (changelog.value.length || changelogLoading.value) return
   changelogLoading.value = true
   try {
     const list = await api.changelog()
     changelog.value = Array.isArray(list) ? list : []
   } catch (err) {
-    actions.toast(err.message || '读取更新记录失败', 'error')
+    if (notify) actions.toast(err.message || '读取更新记录失败', 'error')
   } finally {
     changelogLoading.value = false
   }
 }
+function openVersionModal() {
+  showVersionModal.value = true
+  ensureChangelog(true)
+}
+onMounted(() => { ensureChangelog(false) })
+
+// 构建时间只取日期，卡片上不必显示到秒
+const buildDay = computed(() => (state.buildTime || '').slice(0, 10))
 
 // 关于与版权：说明文字较长，卡片只留摘要，完整素材与授权说明进二级弹窗
 const showAboutModal = ref(false)
@@ -456,7 +464,7 @@ async function saveRoster() {
           <span class="tag setting-title-tag">v{{ state.version }}</span>
         </div>
         <p class="setting-desc">这次改了什么，以及之前每个版本都做了什么。</p>
-        <div class="setting-meta tiny muted">{{ state.buildTime }} 构建 · 共 {{ changelog.length || '—' }} 个版本</div>
+        <div class="setting-meta tiny muted">{{ buildDay }} 构建<template v-if="changelog.length"> · 共 {{ changelog.length }} 个版本</template></div>
         <button class="btn btn-soft btn-sm cuisine-manage-btn" @click="openVersionModal">
           查看更新记录
           <span class="chev">›</span>
