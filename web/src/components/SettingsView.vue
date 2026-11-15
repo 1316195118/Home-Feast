@@ -496,31 +496,45 @@ async function saveRoster() {
 
             <div class="about-list">
               <div class="about-item">
+                <span class="about-ico">📜</span>
+                <div>
+                  <div class="about-label">开源许可</div>
+                  <div class="about-text">本项目以 MIT 许可开源，可自由使用、修改、商用与再分发，保留版权与许可声明即可。第三方依赖仅 Vue 3、Vite（MIT）与 Go 标准库（BSD-3-Clause）。</div>
+                </div>
+              </div>
+              <div class="about-item">
                 <span class="about-ico">🖼️</span>
                 <div>
-                  <div class="about-label">菜品插画</div>
-                  <div class="about-text">界面里的菜品图由 AI 绘制，属本项目自生成素材，可随项目一同使用。</div>
+                  <div class="about-label">图片素材</div>
+                  <div class="about-text">菜系封面与菜品图均由 AI 生成，不含任何图库照片或菜谱网站图片；图标为 emoji 与自绘 SVG，字体走系统字体栈。</div>
                 </div>
               </div>
               <div class="about-item">
                 <span class="about-ico">📝</span>
                 <div>
                   <div class="about-label">菜名与文案</div>
-                  <div class="about-text">菜名与菜系属通用饮食常识；菜品描述、推荐理由、页面文案均为自写。</div>
+                  <div class="about-text">菜名、菜系与地域属通用饮食常识；描述、标签、辣度、耗时与做法步骤均为自写，未摘录任何菜谱网站或图书。</div>
                 </div>
               </div>
               <div class="about-item">
                 <span class="about-ico">📐</span>
                 <div>
                   <div class="about-label">精确用量</div>
-                  <div class="about-text">克数换算取自公共领域项目 HowToCook（Unlicense），按其许可自由使用。</div>
+                  <div class="about-text">184 道菜的克数/毫升取自公共领域项目 HowToCook（Unlicense），其余按家常份量自写，已标注来源。</div>
                 </div>
               </div>
               <div class="about-item">
                 <span class="about-ico">🚫</span>
                 <div>
                   <div class="about-label">未使用的素材</div>
-                  <div class="about-text">未使用任何第三方图库照片、商业模板、外部字体或图标库。</div>
+                  <div class="about-text">未使用任何第三方图库照片、商业模板、UI 组件库、外部字体或图标包，也不含任何音频文件（音效为实时合成）。</div>
+                </div>
+              </div>
+              <div class="about-item">
+                <span class="about-ico">⚠️</span>
+                <div>
+                  <div class="about-label">免责声明</div>
+                  <div class="about-text">菜谱用量与步骤为家庭做法整理，未经专业营养或食品安全审核，请按自家口味与食材情况调整。所有数据仅保存在你自己的设备上，本项目不收集任何信息。</div>
                 </div>
               </div>
               <div class="about-item">
