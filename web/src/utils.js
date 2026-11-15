@@ -161,6 +161,23 @@ const SEASONING_WORDS = [
 // 这些词里虽然带「蒜 / 葱」，但本身是蔬菜主料，优先判为食材
 const INGREDIENT_EXCEPTIONS = ['蒜苗', '蒜苔', '蒜薹', '青蒜', '洋葱', '姜母', '姜撞奶']
 
+// 超市区域：按逛超市的动线分组，比「食材/佐料」好用得多。
+// 顺序有讲究——调味料优先（葱姜蒜不能算蔬菜），例外词先判（蒜苔、洋葱是菜不是调料）。
+const ZONE_STAPLE = ['米', '面', '粉', '馒头', '面包', '年糕', '粉丝', '米线', '河粉', '馄饨皮', '饺子皮', '燕麦', '糯米', '小米', '意面']
+const ZONE_SOY = ['豆腐', '豆干', '腐竹', '千张', '豆皮', '油豆腐', '豆泡', '素鸡', '豆花', '内酯豆腐']
+const ZONE_MEAT = ['肉', '鸡', '鸭', '鱼', '虾', '蟹', '牛', '羊', '猪', '排骨', '五花', '培根', '香肠',
+  '腊肉', '火腿', '蛋', '蛤', '贝', '鱿鱼', '墨鱼', '海参', '黄鳝', '泥鳅', '田螺', '蛏']
+
+export function shoppingZone(name) {
+  const n = String(name || '')
+  if (INGREDIENT_EXCEPTIONS.some((k) => n.includes(k))) return '蔬果'
+  if (SEASONING_WORDS.some((k) => n.includes(k))) return '调味料'
+  if (ZONE_SOY.some((k) => n.includes(k))) return '豆制品'
+  if (ZONE_STAPLE.some((k) => n.includes(k))) return '主食'
+  if (ZONE_MEAT.some((k) => n.includes(k))) return '肉蛋水产'
+  return '蔬果'
+}
+
 export function shoppingKind(name) {
   const n = String(name || '')
   if (INGREDIENT_EXCEPTIONS.some((k) => n.includes(k))) return '食材'
@@ -244,7 +261,7 @@ export function shoppingList(orders, dishes) {
       if (!text) continue
       const bits = text.split(/\s+/)
       const key = normalizeIngredient(bits[0]) || text
-      if (!map.has(key)) map.set(key, { text: key, kind: shoppingKind(key), count: 0, from: [], amounts: [] })
+      if (!map.has(key)) map.set(key, { text: key, kind: shoppingKind(key), zone: shoppingZone(key), count: 0, from: [], amounts: [] })
       const item = map.get(key)
       item.count++
       const amount = bits.slice(1).join(' ').trim()
@@ -258,10 +275,16 @@ export function shoppingList(orders, dishes) {
 
 // 按「食材 / 佐料」两组输出，供清单面板分节显示
 export function shoppingGroups(list) {
-  return [
-    { key: '食材', icon: '🥬', items: (list || []).filter((x) => x.kind === '食材') },
-    { key: '佐料', icon: '🧂', items: (list || []).filter((x) => x.kind === '佐料') },
+  const zones = [
+    { key: '蔬果', icon: '🥬' },
+    { key: '肉蛋水产', icon: '🥩' },
+    { key: '豆制品', icon: '🫘' },
+    { key: '主食', icon: '🍚' },
+    { key: '调味料', icon: '🧂' },
   ]
+  return zones
+    .map((z) => ({ ...z, items: (list || []).filter((x) => x.zone === z.key) }))
+    .filter((g) => g.items.length)
 }
 
 // ---------- 配餐分类：荤 / 素 / 汤 / 主食 / 甜品 ----------
@@ -613,6 +636,10 @@ export function smartSuggest(dishes, opts = {}) {
     }
     if (d.minutes >= 60) score -= 0.8
     if (d.favorite) score += 0.9
+    // 做完之后的评价：超赞/好吃加权，一般降权，让「做过且成功」的菜更容易再被推到
+    if (d.rating === 3) score += 1.4
+    else if (d.rating === 2) score += 0.7
+    else if (d.rating === 1) score -= 0.5
     // 近 7 天点过的菜降权，推动轮换：同一道不会连着被推，避免「来来回回就那几样」
     if (rset.has(d.id)) score -= 8
     if (!reasons.length) reasons.push(`${season.label}天也合适`)

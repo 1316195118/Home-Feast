@@ -307,6 +307,37 @@ const actions = {
   addDish: (dish) => guard(() => api.addDish(dish), '菜品已加入菜谱', 'dish'),
   updateDish: (id, patch) => guard(() => api.updateDish(id, patch), '已保存', 'dish'),
   // 删除类操作都留一次「撤销」：菜品删错要重传配图，代价比弹确认框高得多
+  // 「再来一桌」：把某天点过的菜原样加回今天。逐条加，跳过已删的菜。
+  reorderDay: async (plan) => {
+    if (state.busy > 0) return
+    const items = (plan?.orders || []).filter((o) => o.dishId)
+    if (!items.length) return
+    const mine = state.currentUserId || items[0].userId
+    state.busy++
+    let added = 0
+    let skipped = 0
+    try {
+      for (const o of items) {
+        try {
+          await api.addOrder(state.today, {
+            dishId: o.dishId, userId: mine, note: o.note || '', meal: o.meal || '',
+          })
+          added++
+        } catch {
+          skipped++
+        }
+      }
+      await refresh()
+      if (!added) toast('这些菜都已经不在菜谱里了', 'error')
+      else if (skipped) toast(`加回 ${added} 道，${skipped} 道已经没有了`, 'success')
+      else toast(`已把 ${added} 道菜加回今天`, 'success')
+    } finally {
+      state.busy--
+    }
+  },
+
+  // 做完之后的评价，只影响推荐权重
+  setDishRating: (id, rating) => guard(() => api.updateDish(id, { rating }), '', 'rate'),
   deleteDish: (id) => {
     const dish = state.dishes.find((d) => d.id === id)
     return withSound(guard(() => api.deleteDish(id), '', 'dish'), playRemove).then((ok) => {

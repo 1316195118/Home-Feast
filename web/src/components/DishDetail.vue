@@ -3,6 +3,7 @@ import { inject, computed, ref } from 'vue'
 import { dishImage, cuisineName, cuisineIcon, spicyText, artStyle } from '../utils'
 import { getRecipe } from '../recipes'
 import { useModalBehavior } from '../modal'
+import CookMode from './CookMode.vue'
 
 const props = defineProps({
   dish: { type: Object, required: true },
@@ -17,6 +18,25 @@ const image = computed(() => dishImage(props.dish, state.cuisines))
 const cuisine = computed(() => cuisineName(props.dish.cuisine, state.cuisines))
 const recipe = computed(() => getRecipe(props.dish))
 const ordering = computed(() => pending(`order:${props.dish.id}`))
+
+// 做完之后的评价：0 未评、1 一般、2 好吃、3 超赞
+const RATINGS = [
+  { v: 1, t: '一般' },
+  { v: 2, t: '好吃' },
+  { v: 3, t: '超赞' },
+]
+const cookOpen = ref(false)
+async function rate(v) {
+  // 再点一次同一档 = 取消评价
+  const next = (props.dish.rating || 0) === v ? 0 : v
+  await actions.setDishRating(props.dish.id, next)
+}
+function onCookDone() {
+  cookOpen.value = false
+  const order = (state.plan.orders || []).find((o) => o.dishId === props.dish.id)
+  if (order && !order.done) actions.toggleOrder(order.id)
+  else actions.toast('出锅啦 🍽️', 'success')
+}
 
 // 下厨小贴士：按这道菜的辣度、耗时与主料给出可操作的补充要点，
 // 让「做法」不只是步骤清单，也解释了火候和为什么这么做。
@@ -71,6 +91,16 @@ async function order() {
               {{ ordering ? '添加中…' : '＋ 点这道' }}
             </button>
             <button v-if="editable" class="btn btn-soft btn-sm" @click="emit('edit', dish)">✏️ 改做法</button>
+            <button v-if="recipe.steps.length" class="btn btn-soft btn-sm" @click="cookOpen = true">🔥 开始做菜</button>
+          </div>
+          <div class="detail-rating">
+            <span class="detail-rating-label">做过之后</span>
+            <button
+              v-for="r in RATINGS" :key="r.v" type="button"
+              class="rating-chip" :class="{ active: (dish.rating || 0) === r.v }"
+              :aria-pressed="(dish.rating || 0) === r.v"
+              @click="rate(r.v)"
+            >{{ r.t }}</button>
           </div>
         </div>
       </div>
@@ -109,4 +139,9 @@ async function order() {
       </div>
     </div>
   </div>
+
+  <CookMode
+    v-if="cookOpen" :dish="dish" :recipe="recipe"
+    @close="cookOpen = false" @done="onCookDone"
+  />
 </template>
