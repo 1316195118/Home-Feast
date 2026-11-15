@@ -2,8 +2,11 @@
 import { inject, computed } from 'vue'
 import { friendlyDate, memberOf, cuisineIcon, cuisineName, mealOf, dutyNames, dayDutyIds } from '../utils'
 
-const { state } = inject('app')
+const { state, actions, pending } = inject('app')
 
+async function reorder(p) {
+  await actions.reorderDay(p)
+}
 const plans = computed(() => (state.plans || []).filter(
   (p) => (p.orders?.length || 0) > 0 || (p.chefIds || []).length || (p.dishwasherIds || []).length || p.note,
 ))
@@ -99,6 +102,12 @@ const cuisineDist = computed(() => {
           <div class="row">
             <span class="history-date">{{ friendlyDate(p.date) }}</span>
             <span class="tag">{{ p.orders?.length || 0 }} 道菜</span>
+            <button
+              v-if="p.orders?.length && p.date !== state.today"
+              class="btn btn-ghost btn-sm history-reorder" type="button"
+              :disabled="state.busy > 0"
+              @click="reorder(p)"
+            >再来一桌</button>
           </div>
           <div class="tiny muted">
             <template v-if="dayDutyIds(p, 'chefIds').length">👨‍🍳 {{ dutyNames(dayDutyIds(p, 'chefIds'), state.members) }} 掌勺</template>

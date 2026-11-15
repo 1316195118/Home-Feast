@@ -18,6 +18,7 @@ type dishInput struct {
 	Minutes     int      `json:"minutes"`
 	Ingredients []string `json:"ingredients"`
 	Steps       []string `json:"steps"`
+	Rating      int      `json:"rating"`
 }
 
 func (s *Server) listDishes(w http.ResponseWriter, r *http.Request) {
@@ -125,6 +126,7 @@ func normalizeDish(in dishInput) (store.Dish, error) {
 		Minutes:     clamp(in.Minutes, 0, 600),
 		Ingredients: cleanList(in.Ingredients, 60, 20),
 		Steps:       cleanList(in.Steps, 200, 20),
+		Rating:      clamp(in.Rating, 0, 3),
 	}, nil
 }
 

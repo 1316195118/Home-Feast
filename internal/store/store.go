@@ -428,6 +428,7 @@ type DishPatch struct {
 	Ingredients *[]string `json:"ingredients"`
 	Steps       *[]string `json:"steps"`
 	Favorite    *bool     `json:"favorite"`
+	Rating      *int      `json:"rating"`
 }
 
 func (s *Store) AddDish(d Dish) (Dish, error) {
@@ -495,6 +496,16 @@ func applyPatch(d *Dish, p DishPatch) {
 	}
 	if p.Spicy != nil {
 		d.Spicy = *p.Spicy
+	}
+	if p.Rating != nil {
+		v := *p.Rating
+		if v < 0 {
+			v = 0
+		}
+		if v > 3 {
+			v = 3
+		}
+		d.Rating = v
 	}
 	if p.Minutes != nil {
 		d.Minutes = *p.Minutes

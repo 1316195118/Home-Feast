@@ -15,6 +15,9 @@ type Dish struct {
 	Ingredients []string `json:"ingredients"` // 配料，一行一项（可带用量）
 	Steps       []string `json:"steps"`       // 做法步骤，按数组顺序编号
 	Favorite    bool     `json:"favorite"`
+	// Rating 是「做过之后觉得怎么样」：0 未评、1 一般、2 好吃、3 超赞。
+	// 只影响推荐权重，不参与任何统计口径。
+	Rating      int      `json:"rating"`
 	Builtin   bool     `json:"builtin"`
 	CreatedAt string   `json:"createdAt"`
 }

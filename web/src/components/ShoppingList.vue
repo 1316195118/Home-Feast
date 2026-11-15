@@ -20,7 +20,7 @@ const preciseCount = computed(() => {
   const byId = new Map(dishesWithIngredients.value.map((d) => [d.id, d]))
   return (state.plan.orders || []).filter((o) => byId.get(o.dishId)?.precise).length
 })
-// 冰箱里已有什么（仅主料，佐料不当作「已有」）：用来在清单上标注「🧊 冰箱有」
+// 冰箱里已有什么（仅主料，调味料不当作「已有」）：用来在清单上标注「🧊 冰箱有」
 const pantrySet = computed(() => new Set(
   (state.pantry || [])
     .map((x) => normalizeIngredient(String(x)))
@@ -48,7 +48,7 @@ function toggle(text) {
   checked.value = next
   persist()
 }
-// 按「食材 / 佐料」一键全选；已全选时再点即整组取消
+// 按超市区域整组勾选；已全选时再点即整组取消
 function toggleGroup(items) {
   const next = new Set(checked.value)
   const allChecked = items.every((x) => next.has(x.text))
@@ -150,7 +150,11 @@ function buildImage() {
 
   let y = TOP
   for (const g of shown) {
-    const accent = g.key === '食材' ? '#6d9177' : '#cf9a55'
+    // 每个区域一个色条，逛超市时按颜色找得到
+    const accent = {
+      蔬果: '#6d9177', 肉蛋水产: '#c0685f', 豆制品: '#b08a5a',
+      主食: '#8b7ba8', 调味料: '#cf9a55',
+    }[g.key] || '#cf9a55'
     // 分组色条 + 标题
     roundRect(ctx, PAD, y + 2, 6, 24, 3)
     ctx.fillStyle = accent; ctx.fill()
