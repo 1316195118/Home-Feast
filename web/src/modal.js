@@ -61,16 +61,104 @@ function syncScrollLock() {
   document.body.classList.toggle('has-modal', stack.length > 0)
 }
 
-function enter(close, rootRef, restoreTo) {
+// 下滑关闭：只在触摸设备的小屏（底部抽屉形态）启用。
+// 关键约束：
+//   - 内容区已经往下滚过时不接管，避免和列表滚动打架
+//   - 只有「向下 + 垂直为主」才跟手，横向滑动留给烹饪模式翻页
+//   - 拖拽时给面板加位移，松手不够阈值就弹回，够了才真正关闭
+function attachSwipe(rootRef, close) {
+  let cleanup = () => {}
+  const raf = requestAnimationFrame(() => {
+    const root = rootRef?.value
+    if (!root) return
+    const sheetLike = () =>
+      window.matchMedia('(hover: none)').matches || window.innerWidth <= 640
+    const panel = () =>
+      root.querySelector('.modal') || root.querySelector('.cook-sheet') || root.firstElementChild
+
+    let startY = 0
+    let startX = 0
+    let dx = 0
+    let dy = 0
+    let tracking = false
+    let atTop = true
+
+    function findScroller(node) {
+      let el = node
+      while (el && el !== root) {
+        if (el.scrollHeight > el.clientHeight + 4 &&
+            /auto|scroll/.test(getComputedStyle(el).overflowY)) return el
+        el = el.parentElement
+      }
+      return null
+    }
+    function onStart(e) {
+      if (!sheetLike() || e.touches.length !== 1) return
+      const t = e.touches[0]
+      startY = t.clientY
+      startX = t.clientX
+      dx = dy = 0
+      tracking = true
+      atTop = (findScroller(e.target)?.scrollTop || 0) <= 0
+      const p = panel()
+      if (p) p.style.transition = 'none'
+    }
+    function onMove(e) {
+      if (!tracking || !atTop) return
+      const t = e.touches[0]
+      dy = t.clientY - startY
+      dx = t.clientX - startX
+      if (dy <= 0 || Math.abs(dy) < Math.abs(dx) * 1.2) return
+      const p = panel()
+      if (!p) return
+      p.style.transform = `translateY(${Math.min(dy, 260)}px)`
+      p.style.opacity = String(Math.max(0.65, 1 - dy / 600))
+    }
+    function onEnd() {
+      if (!tracking) return
+      tracking = false
+      const p = panel()
+      if (p) {
+        p.style.transition = ''
+        p.style.transform = ''
+        p.style.opacity = ''
+      }
+      // 向下拖过 90px、且明显是垂直手势 → 关闭
+      if (atTop && dy > 90 && Math.abs(dy) > Math.abs(dx) * 1.2) close()
+      dy = dx = 0
+    }
+
+    root.addEventListener('touchstart', onStart, { passive: true })
+    root.addEventListener('touchmove', onMove, { passive: true })
+    root.addEventListener('touchend', onEnd, { passive: true })
+    root.addEventListener('touchcancel', onEnd, { passive: true })
+    cleanup = () => {
+      root.removeEventListener('touchstart', onStart)
+      root.removeEventListener('touchmove', onMove)
+      root.removeEventListener('touchend', onEnd)
+      root.removeEventListener('touchcancel', onEnd)
+      const p = panel()
+      if (p) { p.style.transition = ''; p.style.transform = ''; p.style.opacity = '' }
+    }
+  })
+  return () => { cancelAnimationFrame(raf); cleanup() }
+}
+
+function enter(close, rootRef, restoreTo, dismissible = true) {
   restoreTo.value = document.activeElement
-  stack.push({ close, rootRef })
+  const item = { close, rootRef, swipe: null }
+  stack.push(item)
+  if (dismissible) item.swipe = attachSwipe(rootRef, close)
   ensureListener()
   syncScrollLock()
   requestAnimationFrame(() => focusInto(rootRef))
 }
 function leave(close, restoreTo) {
   const i = stack.findIndex((s) => s.close === close)
-  if (i >= 0) stack.splice(i, 1)
+  if (i >= 0) {
+    try { stack[i].swipe?.() } catch { /* 忽略 */ }
+    stack.splice(i, 1)
+  }
   syncScrollLock()
   const el = restoreTo.value
   if (el && document.contains(el)) {
@@ -96,7 +184,7 @@ export function useModalBehavior(close, rootRef = ref(null), openRef = null, dis
   const setActive = (on) => {
     if (on === active) return
     active = on
-    if (on) enter(stackClose, rootRef, restoreTo)
+    if (on) enter(stackClose, rootRef, restoreTo, dismissible)
     else leave(stackClose, restoreTo)
   }
 
