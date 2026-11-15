@@ -8,7 +8,7 @@ const props = defineProps({ dish: { type: Object, required: true } })
 defineEmits(['edit', 'open'])
 const { state, actions, pending } = inject('app')
 
-const image = computed(() => dishImage(props.dish, state.cuisines))
+const image = computed(() => dishImage(props.dish, state.cuisines, null, 'thumb'))
 const cuisine = computed(() => cuisineName(props.dish.cuisine, state.cuisines))
 const selfMember = computed(() => state.members.find((m) => m.id === state.currentUserId) || null)
 
@@ -37,7 +37,7 @@ const avoidHits = computed(() => {
       @click="$emit('open', dish)" @keydown.enter="$emit('open', dish)"
       @keydown.space.prevent="$emit('open', dish)"
     >
-      <img :src="image" :alt="dish.name" :style="artStyle(dish, state.dishes)" loading="lazy" class="img-fade" />
+      <img :src="image" :alt="dish.name" :style="artStyle(dish, state.dishes)" loading="lazy" decoding="async" class="img-fade" />
       <button class="dish-recipe" title="看做法" aria-label="看做法" @click.stop="$emit('open', dish)"><span class="badge-ico">📖</span></button>
       <button
         class="dish-fav" :class="{ 'is-fav': dish.favorite }"

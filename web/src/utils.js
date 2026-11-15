@@ -3,16 +3,28 @@
 // item 可能是菜品 Dish（字段 image/cuisine），也可能是点菜记录 Order（字段 dishImage/dishCuisine）。
 // 传 dishes 时，订单行优先取菜谱里这道菜「当前」的图片，这样改图后今日菜单会同步；
 // 菜品被删了就退回点菜时存下的快照，最后才用菜系插画。
-export function dishImage(item, cuisines, dishes) {
+// withThumb 把用户上传的图换成 400px 缩略图地址；菜系封面本身就是小图，不动。
+function withThumb(url) {
+  return url.startsWith('/uploads/') ? url.replace('/uploads/', '/uploads/thumb/') : url
+}
+
+// size: 'thumb' 用于列表/网格（200~400px 显示），不传则给详情大图
+export function dishImage(item, cuisines, dishes, size) {
+  let url
   if (item?.dishId && Array.isArray(dishes)) {
     const live = dishes.find((d) => d.id === item.dishId)
-    if (live?.image) return live.image
+    if (live?.image) url = live.image
   }
-  const snapshot = item?.image || item?.dishImage
-  if (snapshot) return snapshot
-  const key = item?.cuisine || item?.dishCuisine
-  const found = (cuisines || []).find((c) => c.key === key)
-  return found ? found.image : '/dishes/homestyle.jpg'
+  if (!url) {
+    const snapshot = item?.image || item?.dishImage
+    if (snapshot) url = snapshot
+  }
+  if (!url) {
+    const key = item?.cuisine || item?.dishCuisine
+    const found = (cuisines || []).find((c) => c.key === key)
+    url = found ? found.image : '/dishes/homestyle.webp'
+  }
+  return size === 'thumb' ? withThumb(url) : url
 }
 
 export function cuisineName(key, cuisines) {

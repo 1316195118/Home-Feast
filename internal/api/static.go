@@ -50,10 +50,20 @@ func (s *Server) serveFrontend(w http.ResponseWriter, r *http.Request) {
 // serveUpload 提供用户自己上传的菜品照片，路径只允许单层文件名。
 func (s *Server) serveUpload(w http.ResponseWriter, r *http.Request) {
 	name := strings.TrimPrefix(r.URL.Path, "/uploads/")
+	// thumb/ 是列表用的 400px 缩略图，文件名与原图一致，可长缓存
+	sub := ""
+	if strings.HasPrefix(name, "thumb/") {
+		sub = "thumb/"
+		name = strings.TrimPrefix(name, "thumb/")
+	}
 	if name == "" || strings.ContainsAny(name, "/\\") || strings.Contains(name, "..") {
 		http.NotFound(w, r)
 		return
 	}
-	w.Header().Set("Cache-Control", "public, max-age=86400")
-	http.ServeFile(w, r, filepath.Join(s.st.Dir(), "uploads", name))
+	if sub == "" {
+		w.Header().Set("Cache-Control", "public, max-age=86400")
+	} else {
+		w.Header().Set("Cache-Control", "public, max-age=604800")
+	}
+	http.ServeFile(w, r, filepath.Join(s.st.Dir(), "uploads", sub, name))
 }
