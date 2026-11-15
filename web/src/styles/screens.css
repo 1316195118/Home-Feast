@@ -1108,6 +1108,17 @@
 .duty-mini:disabled { opacity: 0.5; cursor: default; }
 .duty-mini-ghost { color: var(--brand-dark); }
 .duty-roll { flex: none; margin-left: auto; }
+/* 认领成功时卡片弹一下，给个「成了」的即时反馈 */
+.duty-card.just-claimed { animation: duty-pop 0.62s var(--ease); }
+@keyframes duty-pop {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.055); }
+  62% { transform: scale(0.985); }
+  100% { transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .duty-card.just-claimed { animation: none; }
+}
 /* 留言条：放在页面底部一条 */
 /* 今日留言：并入 hero 第一屏，一行输入、失焦/回车自动保存，无需按钮 */
 .note-line {

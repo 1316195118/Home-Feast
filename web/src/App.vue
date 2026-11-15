@@ -207,20 +207,44 @@ function onSwitchUser(e) {
 
 // 统一的「确认」弹窗：替换浏览器原生 confirm，保持界面风格一致，也带入场动画。
 const confirmState = reactive({
-  open: false, title: '', message: '', confirmText: '确定', cancelText: '取消', danger: false,
+  open: false, title: '', message: '', confirmText: '确定', cancelText: '取消',
+  extraText: '', mode: 'confirm', danger: false,
 })
 let confirmResolve = null
-function confirmDialog(opts = {}) {
+
+function openConfirm(opts = {}) {
   confirmState.title = opts.title || '请确认'
   confirmState.message = opts.message || ''
   confirmState.confirmText = opts.confirmText || '确定'
   confirmState.cancelText = opts.cancelText || '取消'
+  confirmState.extraText = opts.extraText || ''
+  confirmState.mode = opts.mode || 'confirm'
   confirmState.danger = !!opts.danger
   confirmState.open = true
   return new Promise((res) => { confirmResolve = res })
 }
-function onConfirmOk() { confirmState.open = false; confirmResolve?.(true); confirmResolve = null }
-function onConfirmCancel() { confirmState.open = false; confirmResolve?.(false); confirmResolve = null }
+
+// 二选一：resolve(true / false)
+function confirmDialog(opts = {}) {
+  return openConfirm({ ...opts, mode: 'confirm' })
+}
+
+// 三选一：resolve('ok' | 'extra' | 'cancel')，用于「同时认领 / 只换 / 取消」
+function choiceDialog(opts = {}) {
+  return openConfirm({ ...opts, mode: 'choice' })
+}
+
+function finishConfirm(result) {
+  const mode = confirmState.mode
+  const resolve = confirmResolve
+  confirmState.open = false
+  confirmResolve = null
+  if (!resolve) return
+  resolve(mode === 'choice' ? result : result === 'ok')
+}
+function onConfirmOk() { finishConfirm('ok') }
+function onConfirmExtra() { finishConfirm('extra') }
+function onConfirmCancel() { finishConfirm('cancel') }
 
 // key 相同的写操作会互相防连点；组件可用 pending(key) 把按钮置为 loading/禁用。
 const pendingKeys = reactive({})
@@ -351,7 +375,7 @@ const actions = {
   },
 }
 
-provide('app', { state, actions, tabs, selectUser, confirmDialog, pending })
+provide('app', { state, actions, tabs, selectUser, confirmDialog, choiceDialog, pending })
 
 watch(() => state.tab, (tab) => {
   window.history.replaceState(null, '', `#${tab}`)
@@ -640,8 +664,9 @@ onUnmounted(() => {
       <ConfirmDialog
         v-if="confirmState.open"
         :title="confirmState.title" :message="confirmState.message"
-        :confirm-text="confirmState.confirmText" :cancel-text="confirmState.cancelText" :danger="confirmState.danger"
-        @confirm="onConfirmOk" @cancel="onConfirmCancel"
+        :confirm-text="confirmState.confirmText" :cancel-text="confirmState.cancelText"
+        :extra-text="confirmState.extraText" :danger="confirmState.danger"
+        @confirm="onConfirmOk" @extra="onConfirmExtra" @cancel="onConfirmCancel"
       />
     </Transition>
   </div>
