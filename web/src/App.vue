@@ -491,6 +491,15 @@ async function syncNow() {
     if (next.length !== cur.length || next.some((o, i) => o.id !== cur[i]?.id)) {
       state.plan.orders = next
     }
+    // 分工也要跟上：SSE 断开时只能靠这里，否则别人认领了本机一直显示旧的。
+    // 正在提交认领时跳过，避免请求返回前被旧值覆盖。
+    if (!pending('duty')) {
+      const nextDuty = today?.mealDuties || {}
+      const curDuty = state.plan.mealDuties || {}
+      if (JSON.stringify(nextDuty) !== JSON.stringify(curDuty)) {
+        state.plan.mealDuties = nextDuty
+      }
+    }
   } catch {}
 }
 
