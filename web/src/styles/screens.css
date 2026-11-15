@@ -1070,14 +1070,14 @@
 }
 
 /* 图片加载前的骨架微光占位，避免「空白块」跳动（图片加载后由 img 覆盖） */
-.suggest-photo, .dish-photo {
+.suggest-photo, .dish-photo, .order-thumb, .detail-photo {
   background-image: linear-gradient(100deg, transparent 32%, rgba(255, 255, 255, 0.45) 50%, transparent 68%);
   background-size: 200% 100%;
   animation: photo-shimmer var(--dur-loop) linear infinite;
 }
 @keyframes photo-shimmer { to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) {
-  .suggest-photo, .dish-photo { animation: none; background-position: 0 0; }
+  .suggest-photo, .dish-photo, .order-thumb, .detail-photo { animation: none; background-position: 0 0; }
 }
 
 /* 首页分工条：点头像直接定人（点自己=认领，点别人=帮家人指派），再点一次取消 */

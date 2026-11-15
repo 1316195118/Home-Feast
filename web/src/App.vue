@@ -135,11 +135,31 @@ let syncTimer = null
 let toastSeq = 0
 
 // type: success / error / warn / info。带 id 便于连续弹同类提示时重播动画。
-function toast(message, type = 'info') {
-  state.toast = { id: ++toastSeq, text: message, type }
+// action：{ label, run } —— 用于「撤销」这类可回退操作，停留时间也放宽
+function toast(message, type = 'info', action = null) {
+  state.toast = { id: ++toastSeq, text: message, type, action }
   if (type === 'error') playError() // 失败提示配合抖动动画与低沉两音
   clearTimeout(toastTimer)
-  toastTimer = setTimeout(() => { state.toast = null }, type === 'error' ? 3400 : 2600)
+  const hold = action ? 5200 : (type === 'error' ? 3400 : 2600)
+  toastTimer = setTimeout(() => { state.toast = null }, hold)
+}
+function runToastAction() {
+  const act = state.toast?.action
+  state.toast = null
+  clearTimeout(toastTimer)
+  act?.run?.()
+}
+
+// 网络与实时同步状态：断线时页面还能开（PWA 缓存），但改动不会同步，必须明确告知
+const offline = ref(typeof navigator !== 'undefined' && navigator.onLine === false)
+function onOffline() {
+  offline.value = true
+  toast('网络已断开，改动不会同步', 'warn')
+}
+function onOnline() {
+  offline.value = false
+  toast('网络已恢复', 'success')
+  refresh().catch(() => {})
 }
 
 
@@ -286,7 +306,22 @@ const actions = {
   refresh: () => guard(() => Promise.resolve(), ''),
   addDish: (dish) => guard(() => api.addDish(dish), '菜品已加入菜谱', 'dish'),
   updateDish: (id, patch) => guard(() => api.updateDish(id, patch), '已保存', 'dish'),
-  deleteDish: (id) => withSound(guard(() => api.deleteDish(id), '菜品已移除', 'dish'), playRemove),
+  // 删除类操作都留一次「撤销」：菜品删错要重传配图，代价比弹确认框高得多
+  deleteDish: (id) => {
+    const dish = state.dishes.find((d) => d.id === id)
+    return withSound(guard(() => api.deleteDish(id), '', 'dish'), playRemove).then((ok) => {
+      if (!ok || !dish) return ok
+      toast('菜品已移除', 'success', {
+        label: '撤销',
+        run: () => guard(() => api.addDish({
+          name: dish.name, cuisine: dish.cuisine, desc: dish.desc, tags: dish.tags,
+          image: dish.image, spicy: dish.spicy, minutes: dish.minutes,
+          ingredients: dish.ingredients || [], steps: dish.steps || [],
+        }), '菜品已恢复'),
+      })
+      return ok
+    })
+  },
   toggleFavorite: (dish) => withSound(guard(
     () => api.updateDish(dish.id, { favorite: !dish.favorite }),
     dish.favorite ? '已取消收藏' : '⭐ 收藏好啦', `fav:${dish.id}`,
@@ -342,7 +377,19 @@ const actions = {
     ), playAdd)
   },
   toggleOrder: (orderId) => guard(() => api.toggleOrder(state.today, orderId), '', `toggle:${orderId}`),
-  removeOrder: (orderId) => withSound(guard(() => api.removeOrder(state.today, orderId), '已撤掉这道菜', `remove:${orderId}`), playRemove),
+  removeOrder: (orderId) => {
+    const order = (state.plan.orders || []).find((o) => o.id === orderId)
+    return withSound(guard(() => api.removeOrder(state.today, orderId), '', `remove:${orderId}`), playRemove).then((ok) => {
+      if (!ok || !order) return ok
+      toast('已撤掉这道菜', 'success', {
+        label: '撤销',
+        run: () => guard(() => api.addOrder(state.today, {
+          dishId: order.dishId, userId: order.userId, note: order.note, meal: order.meal,
+        }), '已恢复这道菜'),
+      })
+      return ok
+    })
+  },
 
   saveSettings: (patch) => withSound(guard(() => api.saveSettings(patch), '设置已保存', 'settings'), playSave),
   setHiddenCuisines: (hidden) => guard(
@@ -500,6 +547,8 @@ onMounted(() => {
   window.addEventListener('hashchange', onHashChange)
   document.addEventListener('visibilitychange', onVisible)
   window.addEventListener('sw-update', onSwUpdate)
+  window.addEventListener('offline', onOffline)
+  window.addEventListener('online', onOnline)
   boot()
   installRealtime()
   syncTimer = setInterval(syncNow, 60000)
@@ -507,6 +556,8 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('fm:locked', onLocked)
   window.removeEventListener('hashchange', onHashChange)
+  window.removeEventListener('offline', onOffline)
+  window.removeEventListener('online', onOnline)
   document.removeEventListener('visibilitychange', onVisible)
   window.removeEventListener('sw-update', onSwUpdate)
   clearTimeout(toastTimer)
@@ -568,6 +619,14 @@ onUnmounted(() => {
       </nav>
     </header>
 
+    <!-- 网络 / 实时同步异常时才出现：平时不占版面，出问题必须让用户看见 -->
+    <Transition name="fade">
+      <div v-if="offline || state.realtime === 'reconnecting'" class="net-banner" role="status">
+        <template v-if="offline">📵 已离线，改动不会同步到其他设备</template>
+        <template v-else>🔄 与服务器断开，正在重连…</template>
+      </div>
+    </Transition>
+
     <main class="main" v-if="state.ready">
       <Transition :name="pageDirection" mode="out-in">
         <component :is="currentView" :key="state.tab" />
@@ -592,14 +651,17 @@ onUnmounted(() => {
     <Transition name="toast">
       <div
         v-if="state.toast" :key="state.toast.id"
-        class="toast" :class="`toast-${state.toast.type}`"
+        class="toast" :class="[`toast-${state.toast.type}`, { 'has-action': state.toast.action }]"
         role="status" aria-live="polite"
-        @click="state.toast = null"
+        @click="!state.toast.action && (state.toast = null)"
       >
         <span class="toast-icon" aria-hidden="true">{{ {
           success: '✓', error: '!', warn: '!', info: '·',
         }[state.toast.type] || '·' }}</span>
         <span class="toast-text">{{ state.toast.text }}</span>
+        <button v-if="state.toast.action" class="toast-action" type="button" @click.stop="runToastAction">
+          {{ state.toast.action.label }}
+        </button>
       </div>
     </Transition>
 
