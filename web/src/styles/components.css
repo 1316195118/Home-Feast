@@ -233,3 +233,27 @@
 @media (max-width: 720px) { .boot-skeleton { grid-template-columns: 1fr; padding: 18px 14px; } .boot-skeleton > div { height: 110px; } .boot-skeleton > div:nth-child(n+3) { display: none; } }
 
 .divider { height: 1px; background: var(--line); margin: 18px 0; border: 0; }
+
+/* ---------- 网络 / 同步异常横条 ---------- */
+/* 只在离线或 SSE 断开时出现，平时完全不占版面 */
+.net-banner {
+  position: sticky; top: 0; z-index: var(--z-sticky, 40);
+  padding: 7px 14px; text-align: center;
+  font-size: 0.76rem; font-weight: 700; letter-spacing: 0.2px;
+  color: #8a5a00; background: #fff4d8;
+  border-bottom: 1px solid #f0dcae;
+}
+@media (prefers-color-scheme: dark) {
+  .net-banner { color: #ffd88a; background: #43371a; border-bottom-color: #5c4a22; }
+}
+
+/* ---------- toast 的「撤销」按钮 ---------- */
+.toast.has-action { cursor: default; }
+.toast-action {
+  flex: none; margin-left: 10px; padding: 3px 10px;
+  font-size: 0.76rem; font-weight: 800;
+  color: #fff; background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 999px;
+  cursor: pointer; transition: background var(--dur-fast) var(--ease);
+}
+.toast-action:hover { background: rgba(255, 255, 255, 0.3); }

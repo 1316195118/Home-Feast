@@ -307,6 +307,29 @@ async function applyPK({ chefId, dishwasherId }) {
   if (done) pkOpen.value = false
 }
 
+// 长按菜单行 → 快捷操作（标记上桌 / 撤掉），手机上不用瞄准两个小图标
+let pressTimer = null
+function cancelPress() {
+  if (pressTimer) { clearTimeout(pressTimer); pressTimer = null }
+}
+function startPress(order, e) {
+  if (e?.pointerType === 'mouse' && e.button !== 0) return
+  cancelPress()
+  pressTimer = setTimeout(async () => {
+    pressTimer = null
+    vibrate(12)
+    const choice = await choiceDialog({
+      title: order.dishName,
+      message: order.done ? '这道已经上桌了。' : '这道还没上桌。',
+      confirmText: order.done ? '改回没做' : '标记已上桌',
+      extraText: '撤掉这道',
+      cancelText: '取消',
+    })
+    if (choice === 'ok') actions.toggleOrder(order.id)
+    else if (choice === 'extra') actions.removeOrder(order.id)
+  }, 480)
+}
+
 async function saveNote() {
   if (!noteDirty.value) return
   const ok = await actions.setNote(noteText.value)
@@ -446,7 +469,11 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
                 <span class="meal-group-count">{{ grouped[m.key].length }} 道</span>
               </div>
               <TransitionGroup name="list" tag="div" class="order-list">
-                <div v-for="o in grouped[m.key]" :key="o.id" class="order-row" :class="{ done: o.done }">
+                <div
+                  v-for="o in grouped[m.key]" :key="o.id" class="order-row" :class="{ done: o.done }"
+                  @pointerdown="startPress(o, $event)" @pointerup="cancelPress"
+                  @pointerleave="cancelPress" @pointercancel="cancelPress"
+                >
                   <div class="order-thumb">
                     <img :src="dishImage(o, state.cuisines, state.dishes, 'thumb')" :alt="o.dishName" :style="artStyle(o, state.dishes)" loading="lazy" decoding="async" class="img-fade" />
                   </div>
