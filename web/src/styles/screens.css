@@ -330,7 +330,8 @@
 .settings-grid .sc-access { order: 6; }
 .settings-grid .sc-backup { order: 7; }
 .settings-grid .sc-storage { order: 8; }
-.settings-grid .sc-about { order: 9; }
+.settings-grid .sc-version { order: 9; }
+.settings-grid .sc-about { order: 10; }
 .setting-card { padding: 18px; display: flex; flex-direction: column; min-height: 192px; }
 /* 卡片内操作按钮统一贴底，内容少的卡（外观/关于）不会被拉出大片空白后按钮吊在中间 */
 .setting-card .setting-actions,
