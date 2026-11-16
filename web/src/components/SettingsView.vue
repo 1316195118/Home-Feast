@@ -3,6 +3,7 @@ import { inject, ref, watch, computed, reactive, onMounted } from 'vue'
 import { api, setAccessCode } from '../api'
 import { isCuisineHidden, DEFAULT_MEALS, mealEndMinutes, normalizeMeals, mealIconChoices, WEEKDAYS } from '../utils'
 import { useModalBehavior } from '../modal'
+import HelpTip from './HelpTip.vue'
 import { themeChoices, currentThemeMode, setThemeMode, fontChoices, currentFontScale, setFontScale } from '../theme'
 import { shake, bounce } from '../feedback'
 
@@ -388,7 +389,7 @@ async function saveRoster() {
           </span>
         </div>
         <p class="setting-desc">
-          给每天定好谁掌勺、谁洗碗；今日页会提醒「按排班今天该谁」，可一键套用。
+          定好每天谁掌勺、谁洗碗 <HelpTip text="今日页会提醒「按排班今天该谁」，可一键套用；排班只作提醒，不会改写已定好的分工。" />
         </p>
         <!-- 开关与保存都收进弹窗，卡片里不再放第二个「保存排班」，避免功能重复 -->
         <button class="btn btn-soft btn-sm cuisine-manage-btn roster-manage-btn" @click="showRosterModal = true">
@@ -401,7 +402,7 @@ async function saveRoster() {
       <div class="card setting-card sc-theme">
         <div class="setting-title">🌙 外观</div>
         <p class="setting-desc">
-          深色主题只影响这台设备；选「自动」会随手机 / 电脑的深浅模式切换，设置记在本机。
+          主题与字号只影响这台设备 <HelpTip text="选「自动」会随手机或系统的深浅模式切换；字号三档改的是全站文字大小，两项设置都记在本机，不进备份。" />
         </p>
         <div class="setting-actions theme-choices">
           <button
@@ -425,7 +426,7 @@ async function saveRoster() {
       <div class="card setting-card sc-cuisine">
         <div class="setting-title">🍽️ 菜系显示</div>
         <p class="setting-desc">
-          不想看到的菜系可以关掉，关掉后它在菜谱分类和「全部」里都不再出现；想看回来，随时打开即可。
+          选择菜谱里显示哪些菜系 <HelpTip text="关掉的菜系在分类栏和「全部」里都不再出现，想看回来随时打开；用 ↑↓ 调整它们在顶部的顺序。" />
         </p>
         <button class="btn btn-soft btn-sm cuisine-manage-btn" @click="showCuisineModal = true">
           管理菜系显示
@@ -446,9 +447,9 @@ async function saveRoster() {
         </p>
         <template v-else>
           <p class="setting-desc">
-            {{ state.accessRequired ? '其它设备打开网页要先输口令；本机已记住，无需重复输入。' : '开启后，其它设备打开网页要先输口令才能点菜。' }}
+            {{ state.accessRequired ? '其它设备要先输口令；本机已记住' : '开启后，其它设备要先输口令' }}
+            <HelpTip :text="state.accessRequired ? '本机浏览器已记住口令，无需重复输入。口令只存服务端数据目录，不会写进备份 zip。' : '开启后，其它设备打开网页要先输入口令才能点菜。口令存在服务端数据目录，不会写进备份 zip。'" />
           </p>
-          <div class="setting-meta tiny muted">口令存在服务端数据目录，不会写进备份 zip</div>
           <button class="btn btn-soft btn-sm cuisine-manage-btn" @click="showAccessModal = true">
             管理访问口令
             <span class="chev">›</span>
@@ -459,7 +460,7 @@ async function saveRoster() {
       <div class="card setting-card sc-storage">
         <div class="setting-title">📂 数据与配置在哪</div>
         <p class="setting-desc">
-          两个平级目录，都是纯文本、不依赖数据库；换机器时挂回去即可，无需迁移。
+          两个平级目录，换机器挂回去即可 <HelpTip text="data/ 存菜品、成员、计划、口令哈希与图片；config/ 存设置。都是纯文本，不依赖数据库，无需迁移。" />
         </p>
         <details class="setting-details">
           <summary>查看目录结构</summary>
