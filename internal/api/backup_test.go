@@ -45,6 +45,7 @@ func TestUploadEntryName(t *testing.T) {
 	ok := []string{
 		"uploads/img0123456789abcdef01234567.webp",
 		"uploads/a.png",
+		"uploads/thumb/img0123456789abcdef01234567.jpg",
 	}
 	for _, name := range ok {
 		if _, good := uploadEntryName(name); !good {
@@ -59,6 +60,8 @@ func TestUploadEntryName(t *testing.T) {
 		"dishes.json",
 		"/uploads/a.webp",
 		"uploads/a.webp/../../x",
+		"uploads/thumb/../../etc/passwd",
+		"uploads/thumb/sub/a.jpg",
 	}
 	for _, name := range bad {
 		if got, good := uploadEntryName(name); good {
