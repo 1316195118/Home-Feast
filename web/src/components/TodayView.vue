@@ -5,6 +5,7 @@ import { getRecipe } from '../recipes'
 import { sparkleFromEvent, celebrate, vibrate } from '../feedback'
 import DishDetail from './DishDetail.vue'
 import DicePK from './DicePK.vue'
+import MenuShare from './MenuShare.vue'
 import ShoppingList from './ShoppingList.vue'
 import WeekMenu from './WeekMenu.vue'
 
@@ -13,6 +14,7 @@ const detailId = ref(null)
 const detailDish = computed(() => state.dishes.find((d) => d.id === detailId.value) || null)
 const pkOpen = ref(false)
 const shoppingOpen = ref(false)
+const shareOpen = ref(false)
 
 const orders = computed(() => state.plan.orders || [])
 // 餐别完全来自后端下发：名字、图标、结束时刻都能在设置里改，这里不写死。
@@ -466,6 +468,10 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
             <div class="section-sub">谁点的、做没做好，一眼看清</div>
           </div>
           <div class="panel-head-actions">
+            <button
+              class="btn btn-soft btn-sm" :disabled="!orders.length"
+              @click="shareOpen = true"
+            >📤 分享</button>
             <button class="btn btn-soft btn-sm" @click="shoppingOpen = true">🛒 购物清单</button>
             <button class="btn btn-soft btn-sm" @click="state.tab = 'menu'">去点菜 ＋</button>
           </div>
@@ -603,6 +609,11 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
       <DicePK v-if="pkOpen" :members="state.members" @close="pkOpen = false" @apply="applyPK" />
     </Transition>
     <Transition name="modal">
+      <MenuShare
+        v-if="shareOpen" :orders="orders" :grouped="grouped" :meals="mealGroups"
+        :today="state.today" :chefs="chefs" :washers="washers"
+        @close="shareOpen = false"
+      />
       <ShoppingList v-if="shoppingOpen" @close="shoppingOpen = false" />
     </Transition>
     <Transition name="modal">

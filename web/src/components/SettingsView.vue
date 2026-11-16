@@ -3,7 +3,7 @@ import { inject, ref, watch, computed, reactive, onMounted } from 'vue'
 import { api, setAccessCode } from '../api'
 import { isCuisineHidden, DEFAULT_MEALS, mealEndMinutes, normalizeMeals, mealIconChoices, WEEKDAYS } from '../utils'
 import { useModalBehavior } from '../modal'
-import { themeChoices, currentThemeMode, setThemeMode } from '../theme'
+import { themeChoices, currentThemeMode, setThemeMode, fontChoices, currentFontScale, setFontScale } from '../theme'
 import { shake, bounce } from '../feedback'
 
 const { state, actions, confirmDialog, pending } = inject('app')
@@ -11,6 +11,11 @@ const familyName = ref(state.settings.familyName || '我们家')
 const importBusy = ref(false)
 const cuisineRoot = ref(null)
 const themeMode = ref(currentThemeMode())
+const fontScale = ref(currentFontScale())
+function chooseFont(v) {
+  fontScale.value = v
+  setFontScale(v)
+}
 function chooseTheme(mode, event) {
   const anchor = event && Number.isFinite(event.clientX)
     ? { x: event.clientX, y: event.clientY }
@@ -404,6 +409,16 @@ async function saveRoster() {
             :class="themeMode === t.key ? 'btn-primary' : 'btn-soft'"
             :aria-pressed="themeMode === t.key" :title="t.label" @click="chooseTheme(t.key, $event)"
           >{{ t.icon }} {{ t.short }}</button>
+        </div>
+        <div class="font-row">
+          <span class="font-label">字号</span>
+          <div class="setting-actions font-choices">
+            <button
+              v-for="f in fontChoices" :key="f.key" class="btn btn-sm"
+              :class="fontScale === f.key ? 'btn-primary' : 'btn-soft'"
+              :aria-pressed="fontScale === f.key" @click="chooseFont(f.key)"
+            >{{ f.label }}</button>
+          </div>
         </div>
       </div>
 

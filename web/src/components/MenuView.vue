@@ -72,7 +72,9 @@ const filtered = computed(() => {
     }
     if (onlyFavorite.value && !d.favorite) return false
     if (!q) return true
-    return [d.name, d.desc, ...(d.tags || [])].join(' ').toLowerCase().includes(q)
+    // 配料也纳入搜索：搜「土豆」能找出所有用到土豆的菜，和冰箱食材推荐口径一致
+    const ings = (getRecipe(d)?.ingredients || d.ingredients || []).join(' ')
+    return [d.name, d.desc, ...(d.tags || []), ings].join(' ').toLowerCase().includes(q)
   })
   if (!priorityPantry.value) return base
   const pantry = state.settings.pantry || []
@@ -251,7 +253,7 @@ async function savePantry() {
 
     <div class="toolbar">
       <div class="search-box">
-        <input v-model="keyword" class="input" placeholder="搜菜名、口味、标签…" aria-label="搜索菜品" />
+        <input v-model="keyword" class="input" placeholder="搜菜名、口味、配料…" aria-label="搜索菜品" />
         <button v-if="keyword" class="search-clear" type="button" aria-label="清空搜索" @click="keyword = ''">✕</button>
       </div>
       <button class="chip" :class="{ active: onlyFavorite }" :aria-pressed="onlyFavorite" @click="onlyFavorite = !onlyFavorite">
@@ -281,7 +283,7 @@ async function savePantry() {
       <div v-if="!filtered.length" key="empty" class="empty">
         <span class="empty-icon">{{ onlyFavorite && !keyword.trim() ? '⭐' : '🥕' }}</span>
         <template v-if="onlyFavorite && !keyword.trim()">还没有收藏的菜，点菜品卡片右上角的 ☆ 试试</template>
-        <template v-else>没找到合适的菜，换个词试试，或者自己加一道</template>
+        <template v-else>没找到合适的菜，换个词或配料试试，也可以自己加一道</template>
       </div>
     </Transition>
 
