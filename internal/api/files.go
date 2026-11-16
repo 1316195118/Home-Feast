@@ -124,6 +124,16 @@ func (s *Server) exportBackup(w http.ResponseWriter, r *http.Request) {
 		if err == nil {
 			_, _ = io.Copy(entry, f)
 		}
+		// 缩略图一起打包：否则恢复后列表只能回落原图（128KB vs 23KB），流量翻几倍。
+		base := strings.TrimSuffix(d.Name(), filepath.Ext(d.Name()))
+		thumbPath := filepath.Join(filepath.Dir(p), "thumb", base+".jpg")
+		if tf, err := os.Open(thumbPath); err == nil {
+			defer tf.Close()
+			name := filepath.ToSlash(filepath.Join(filepath.Dir(rel), "thumb", base+".jpg"))
+			if te, err := zw.Create(name); err == nil {
+				_, _ = io.Copy(te, tf)
+			}
+		}
 		return nil
 	})
 }
@@ -352,21 +362,28 @@ func validateBackupJSON(name string, b []byte) error {
 // 这是防 zip slip 的关键：备份里写 ../../etc/passwd 之类会被直接丢弃。
 func uploadEntryName(name string) (string, bool) {
 	const prefix = "uploads/"
-	if !strings.HasPrefix(name, prefix) {
+	const thumbPrefix = "uploads/thumb/"
+	sub := ""
+	rest := ""
+	switch {
+	case strings.HasPrefix(name, thumbPrefix):
+		sub, rest = "thumb/", name[len(thumbPrefix):]
+	case strings.HasPrefix(name, prefix):
+		rest = name[len(prefix):]
+	default:
 		return "", false
 	}
-	base := name[len(prefix):]
-	if base == "" || len(base) > 96 || strings.Contains(base, "..") {
+	if rest == "" || len(rest) > 96 || strings.Contains(rest, "..") {
 		return "", false
 	}
-	for _, r := range base {
+	for _, r := range rest {
 		ok := r == '.' || r == '_' || r == '-' ||
 			(r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9')
 		if !ok {
 			return "", false
 		}
 	}
-	return base, true
+	return sub + rest, true
 }
 
 // isJSONEntry 判断是不是四份数据文件之一（允许带 config/ 前缀）。
