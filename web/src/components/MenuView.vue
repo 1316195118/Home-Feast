@@ -11,6 +11,8 @@ const { state, actions, pending } = inject('app')
 const activeCuisine = ref('all')
 const keyword = ref('')
 const onlyFavorite = ref(false)
+const quickFilter = ref('') // '' | quick | mild | image
+function toggleQuick(k) { quickFilter.value = quickFilter.value === k ? '' : k }
 const editorOpen = ref(false)
 const editorDish = ref(null)
 // 详情按 id 引用，编辑保存后能自动拿到最新数据
@@ -58,7 +60,7 @@ const recipeIngredients = (d) => getRecipe(d).ingredients || []
 
 // 有筛选时才显示结果数，避免和菜系条「全部 N」重复
 const hasFilter = computed(() =>
-  !!keyword.value.trim() || activeCuisine.value !== 'all' || onlyFavorite.value || priorityPantry.value,
+  !!keyword.value.trim() || activeCuisine.value !== 'all' || onlyFavorite.value || !!quickFilter.value || priorityPantry.value,
 )
 const filtered = computed(() => {
   const q = keyword.value.trim().toLowerCase()
@@ -71,6 +73,9 @@ const filtered = computed(() => {
       if (isSnack(d)) return false // 小吃已独立成栏，地域菜系里不再重复出现
     }
     if (onlyFavorite.value && !d.favorite) return false
+    if (quickFilter.value === 'quick' && !((d.minutes || 20) <= 30)) return false
+    if (quickFilter.value === 'mild' && (d.spicy || 0) > 0) return false
+    if (quickFilter.value === 'image' && !d.image) return false
     if (!q) return true
     // 配料也纳入搜索：搜「土豆」能找出所有用到土豆的菜，和冰箱食材推荐口径一致
     const ings = (getRecipe(d)?.ingredients || d.ingredients || []).join(' ')
@@ -252,7 +257,18 @@ async function savePantry() {
     </div>
 
     <div class="toolbar">
-      <div class="search-box">
+      <div class="quick-filters">
+      <button
+        v-for="f in [
+          { key: 'quick', label: '⏱ 30分钟内' },
+          { key: 'mild', label: '🌶️ 不辣' },
+          { key: 'image', label: '🖼️ 有图' },
+        ]" :key="f.key" class="chip quick-chip" :class="{ active: quickFilter === f.key }"
+        :aria-pressed="quickFilter === f.key" @click="toggleQuick(f.key)"
+      >{{ f.label }}</button>
+    </div>
+
+    <div class="search-box">
         <input v-model="keyword" class="input" placeholder="搜菜名、口味、配料…" aria-label="搜索菜品" />
         <button v-if="keyword" class="search-clear" type="button" aria-label="清空搜索" @click="keyword = ''">✕</button>
       </div>

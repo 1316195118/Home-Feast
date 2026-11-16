@@ -1290,3 +1290,30 @@
 @media (prefers-reduced-motion: reduce) { .heat-cell { animation: none; } }
 /* 今日菜单空状态：给一个能直接点进去的出口 */
 .empty p { margin: 0 0 12px; }
+/* 菜谱页快捷筛选 */
+.quick-filters { display: flex; gap: 7px; flex-wrap: wrap; margin: 10px 0 12px; }
+.quick-chip { font-size: 0.78rem; }
+
+/* 推荐区：骰子、翻牌、理由淡入 */
+.suggest-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.dice-ico { display: inline-block; }
+.is-rolling .dice-ico { animation: dice-roll 0.62s cubic-bezier(.2,.8,.2,1); }
+@keyframes dice-roll {
+  0% { transform: rotate(0) scale(1); }
+  35% { transform: rotate(320deg) scale(1.35); }
+  70% { transform: rotate(650deg) scale(0.9); }
+  100% { transform: rotate(720deg) scale(1); }
+}
+.suggest-grid { perspective: 900px; }
+.suggest-grid.is-swapping .suggest-card { animation: card-flip 0.38s var(--ease-out) backwards; }
+.suggest-grid.is-swapping .suggest-card:nth-child(2) { animation-delay: 0.05s; }
+.suggest-grid.is-swapping .suggest-card:nth-child(3) { animation-delay: 0.1s; }
+@keyframes card-flip {
+  from { opacity: 0; transform: rotateY(78deg) translateY(8px); }
+  to { opacity: 1; transform: rotateY(0) translateY(0); }
+}
+.suggest-reasons { animation: reason-in 0.32s var(--ease-out) 0.1s backwards; }
+@keyframes reason-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .is-rolling .dice-ico, .suggest-grid.is-swapping .suggest-card, .suggest-reasons { animation: none; }
+}

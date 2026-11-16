@@ -1,6 +1,6 @@
 <script setup>
 import { inject, computed, ref, watch, onMounted, onUnmounted } from 'vue'
-import { friendlyDate, memberOf, dishImage, cuisineName, artStyle, isCuisineHidden, normalizeMeals, isMealExpired, rosterForDate, seasonOf, smartSuggest } from '../utils'
+import { friendlyDate, memberOf, dishImage, cuisineName, artStyle, isCuisineHidden, normalizeMeals, isMealExpired, rosterForDate, seasonOf, smartSuggest, classifyDish } from '../utils'
 import { getRecipe } from '../recipes'
 import { sparkleFromEvent, celebrate, vibrate } from '../feedback'
 import DishDetail from './DishDetail.vue'
@@ -94,6 +94,18 @@ const recentIds = computed(() => {
 
 // 智能推荐：季节 + 冰箱食材 + 口味避雷 + 耗时 + 收藏，全是本地规则，不调用外部服务。
 // 内置菜的配料由 recipes.js 动态生成，必须经 getRecipe() 展开才能匹配冰箱食材。
+// 今天已点菜的荤素分布，喂给推荐做平衡
+function todayBalance() {
+  const c = { meat: 0, veg: 0, soup: 0, staple: 0, dessert: 0 }
+  for (const o of state.plan.orders || []) {
+    const d = state.dishes.find((x) => x.id === o.dishId)
+    if (!d) continue
+    const cat = classifyDish(d, getRecipe(d).ingredients || [])
+    if (cat in c) c[cat]++
+  }
+  return c
+}
+
 function computeSuggestions(excludeIds = [], limit = 3) {
   return smartSuggest(state.dishes, {
     today: state.today,
@@ -103,6 +115,8 @@ function computeSuggestions(excludeIds = [], limit = 3) {
     orders: state.plan.orders || [],
     excludeIds,
     recentIds: recentIds.value,
+    meal: state.meal,
+    balance: todayBalance(),
     salt: suggestSalt.value,
     limit,
     ingredientsOf: (d) => getRecipe(d).ingredients || [],
@@ -355,6 +369,41 @@ function isPicked(dish) {
 }
 
 // 点完菜保留当前这三张卡片，只标记「已点」，避免图片突然换掉让人以为点错了
+// 点菜成功后让一颗小饭粒飞向今日菜单，强化「已加入」的去向感
+function flyToMenu(fromEl) {
+  const from = fromEl?.getBoundingClientRect?.()
+  const to = document.querySelector('#today-menu-panel')?.getBoundingClientRect?.()
+  if (!from || !to) return
+  const el = document.createElement('div')
+  el.textContent = '🍚'
+  el.setAttribute('aria-hidden', 'true')
+  el.style.cssText = `position:fixed;left:${from.left + from.width / 2 - 10}px;top:${from.top + from.height / 2 - 10}px;`
+    + 'z-index:9999;pointer-events:none;font-size:20px;line-height:1;'
+  document.body.appendChild(el)
+  const dx = to.left + 60 - from.left - from.width / 2
+  const dy = to.top + 30 - from.top - from.height / 2
+  const anim = el.animate([
+    { transform: 'translate(0,0) scale(1)', opacity: 1 },
+    { transform: `translate(${dx * 0.5}px,${dy * 0.5 - 50}px) scale(1.25)`, opacity: 1, offset: 0.5 },
+    { transform: `translate(${dx}px,${dy}px) scale(0.4)`, opacity: 0 },
+  ], { duration: 560, easing: 'cubic-bezier(.25,.8,.25,1)' })
+  anim.onfinish = () => el.remove()
+  anim.oncancel = () => el.remove()
+}
+
+// 选择困难：从当前推荐里随机抽一道直接点，摇一下骰子再定
+const diceRolling = ref(false)
+async function surprise() {
+  if (diceRolling.value || !suggestions.value.length) return
+  diceRolling.value = true
+  vibrate(18)
+  await new Promise((r) => setTimeout(r, 620))
+  const pool = suggestions.value.filter((s) => !isPicked(s.dish))
+  const pick = (pool.length ? pool : suggestions.value)[Math.floor(Math.random() * (pool.length || suggestions.value.length))]
+  diceRolling.value = false
+  if (pick) await quickOrder(pick.dish, null)
+}
+
 async function quickOrder(dish, event) {
   if (isPicked(dish)) {
     actions.toast('这道已经在今日菜单啦', 'warn')
@@ -368,6 +417,7 @@ async function quickOrder(dish, event) {
     celebrate(at.x, at.y)
     vibrate(16)
   }
+  if (ok) flyToMenu(event?.currentTarget || null)
 }
 
 
@@ -539,7 +589,15 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
             <div class="panel-title">💡 今天吃啥</div>
             <div class="section-sub">{{ season.label }}天 · 按季节{{ pantryCount ? '、冰箱里的 ' + pantryCount + ' 样食材' : '' }}和口味避雷挑的</div>
           </div>
-          <button class="btn btn-sm" @click="shuffle" aria-label="换一批推荐">🔄 换一批</button>
+          <div class="suggest-actions">
+            <button
+              class="btn btn-sm" :class="{ 'is-rolling': diceRolling }"
+              :disabled="diceRolling || !suggestions.length"
+              title="从推荐里随机抽一道，直接点菜"
+              @click="surprise"
+            ><span class="dice-ico">🎲</span> 随便来一道</button>
+            <button class="btn btn-sm" @click="shuffle" aria-label="换一批推荐">🔄 换一批</button>
+          </div>
         </div>
 
         <div class="meal-switch" role="group" aria-label="点的是哪一餐">
