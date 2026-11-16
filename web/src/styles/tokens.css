@@ -6,7 +6,8 @@
   --surface-soft: #fdf7ee;
   --ink: #3c3229;
   --ink-soft: #62564a;
-  --muted: #948576;
+  /* 辅助文字：从 #948576 调深到 4.75:1，小字不再糊在米色纸面上（WCAG AA 4.5） */
+  --muted: #7c6b5a;
   --line: #e9ddca;
   --line-strong: #dccbb2;
 

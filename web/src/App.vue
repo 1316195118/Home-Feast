@@ -412,6 +412,21 @@ const actions = {
     ), playAdd)
   },
   toggleOrder: (orderId) => guard(() => api.toggleOrder(state.today, orderId), '', `toggle:${orderId}`),
+  // 做完饭一道道点上桌太麻烦：一次把今天还没上桌的全标记掉
+  finishAllOrders: async () => {
+    const todo = (state.plan.orders || []).filter((o) => !o.done)
+    if (!todo.length) return
+    state.busy++
+    try {
+      for (const o of todo) await api.toggleOrder(state.today, o.id)
+      await refresh()
+      toast(`${todo.length} 道菜全部上桌 🍽️`, 'success')
+    } catch {
+      toast('有几道没标上，请逐道再试一次', 'error')
+    } finally {
+      state.busy--
+    }
+  },
   removeOrder: (orderId) => {
     const order = (state.plan.orders || []).find((o) => o.id === orderId)
     return withSound(guard(() => api.removeOrder(state.today, orderId), '', `remove:${orderId}`), playRemove).then((ok) => {

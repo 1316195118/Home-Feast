@@ -1288,3 +1288,5 @@
   .heat-cells { gap: 3px; }
 }
 @media (prefers-reduced-motion: reduce) { .heat-cell { animation: none; } }
+/* 今日菜单空状态：给一个能直接点进去的出口 */
+.empty p { margin: 0 0 12px; }

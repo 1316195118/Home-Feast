@@ -469,6 +469,11 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
           </div>
           <div class="panel-head-actions">
             <button
+              v-if="orders.some((o) => !o.done)" class="btn btn-primary btn-sm"
+              :disabled="state.busy > 0" title="把今天还没上桌的菜一次全标记"
+              @click="actions.finishAllOrders()"
+            >✅ 全部上桌</button>
+            <button
               class="btn btn-soft btn-sm" :disabled="!orders.length"
               @click="shareOpen = true"
             >📤 分享</button>
@@ -523,7 +528,8 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
         </div>
         <div v-else class="empty">
           <span class="empty-icon">🥢</span>
-          今天还没人点菜，去菜谱挑几道吧
+          <p>今天还没人点菜，去菜谱挑几道吧</p>
+          <button class="btn btn-primary btn-sm" @click="state.tab = 'menu'">去点菜 ＋</button>
         </div>
       </div>
 
