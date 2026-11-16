@@ -606,7 +606,7 @@ export function smartSuggest(dishes, opts = {}) {
   const {
     today = '', pantry = [], member = null, hiddenCuisines = [],
     orders = [], excludeIds = [], recentIds = [], limit = 3, salt = 0,
-    ingredientsOf = null,
+    ingredientsOf = null, meal = '', balance = null,
   } = opts
   const season = seasonOf(today)
   const picked = new Set([...(orders || []).map((o) => o.dishId), ...(excludeIds || [])])
@@ -640,6 +640,33 @@ export function smartSuggest(dishes, opts = {}) {
     if (d.rating === 3) score += 1.4
     else if (d.rating === 2) score += 0.7
     else if (d.rating === 1) score -= 0.5
+
+    // 按餐次：早上偏主食快手、少推硬菜；正餐推荤素汤
+    const cat = classifyDish(d, Array.isArray(ings) ? ings : [])
+    if (meal === 'breakfast') {
+      if (cat === 'staple' || (d.minutes > 0 && d.minutes <= 20)) {
+        score += 1.8
+        if (reasons.length < 2) reasons.push('早上做这个快')
+      } else if (cat === 'meat') score -= 1.5
+    } else if (meal === 'lunch' || meal === 'dinner') {
+      if (cat === 'meat' || cat === 'veg' || cat === 'soup') score += 0.5
+    }
+
+    // 荤素平衡：今天肉够了就推素，还没汤就补汤
+    if (balance) {
+      if (balance.meat >= 2 && cat === 'veg') {
+        score += 1.8
+        if (reasons.length < 2) reasons.push('今天肉够了，来点素')
+      }
+      if (balance.veg >= 2 && cat === 'meat') {
+        score += 1.2
+        if (reasons.length < 2) reasons.push('今天素菜多，配个荤')
+      }
+      if (!balance.soup && cat === 'soup') {
+        score += 1.2
+        if (reasons.length < 2) reasons.push('今天还没汤')
+      }
+    }
     // 近 7 天点过的菜降权，推动轮换：同一道不会连着被推，避免「来来回回就那几样」
     if (rset.has(d.id)) score -= 8
     if (!reasons.length) reasons.push(`${season.label}天也合适`)
