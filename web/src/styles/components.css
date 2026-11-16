@@ -352,3 +352,35 @@ html.font-changing { transition: font-size 0.24s var(--ease); }
 .font-label { font-size: 0.76rem; font-weight: 700; color: var(--muted); }
 .font-choices { display: inline-flex; gap: 6px; flex: 1; }
 .font-choices .btn { flex: 1; min-width: 0; padding: 5px 8px; }
+
+/* ---------- 字段说明问号 ---------- */
+.help-wrap { position: relative; display: inline-flex; vertical-align: middle; margin-left: 5px; }
+.help-btn {
+  width: 18px; height: 18px; flex: none; padding: 0;
+  font-size: 0.68rem; font-weight: 800; line-height: 1;
+  color: var(--muted); background: var(--paper-deep);
+  border: 1px solid var(--line-strong); border-radius: 50%; cursor: help;
+}
+.help-btn:hover, .help-btn:focus-visible { color: var(--brand-dark); border-color: var(--brand); outline: none; }
+.help-pop {
+  position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%);
+  z-index: var(--z-dropdown);
+  display: block; width: max-content; max-width: min(270px, 72vw);
+  padding: 9px 12px; border-radius: 11px;
+  font-size: 0.74rem; font-weight: 500; line-height: 1.6; color: #fffaf2;
+  background: #3c3229; box-shadow: var(--shadow-lg);
+  pointer-events: none;
+}
+.help-pop::after {
+  content: ''; position: absolute; left: 50%; bottom: -5px;
+  width: 10px; height: 10px; background: #3c3229; transform: translateX(-50%) rotate(45deg);
+}
+.help-fade-enter-active, .help-fade-leave-active { transition: opacity 0.15s var(--ease), transform 0.15s var(--ease); }
+.help-fade-enter-from, .help-fade-leave-to { opacity: 0; transform: translateX(-50%) translateY(4px); }
+@media (hover: none) {
+  .help-btn { cursor: pointer; }
+  .help-pop { pointer-events: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .help-fade-enter-active, .help-fade-leave-active { transition: none; }
+}
