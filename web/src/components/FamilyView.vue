@@ -7,6 +7,20 @@ import { shake } from '../feedback'
 
 const { state, actions, confirmDialog, pending } = inject('app')
 
+// 最近 14 天掌勺热力：一眼看出谁干得多（纯本机计算，不新增接口）
+const heatDays = computed(() => {
+  const out = []
+  const base = new Date(`${state.today}T12:00:00`)
+  for (let i = 13; i >= 0; i--) {
+    const dt = new Date(base)
+    dt.setDate(dt.getDate() - i)
+    const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`
+    const plan = (state.plans || []).find((p) => p.date === key)
+    out.push({ key, day: dt.getDate(), chefIds: plan ? dayDutyIds(plan, 'chefIds') : [] })
+  }
+  return out
+})
+
 // 一天可能有多人、多餐掌勺/洗碗：按「天」去重后每人计一次
 const chefCount = computed(() => {
   const map = {}
@@ -168,6 +182,24 @@ async function savePin() {
         <div class="section-sub">按记录里的掌勺与洗碗统计，只用于家庭内部玩笑，别当真</div>
       </div>
     </div>
+    <div v-if="state.members.length" class="panel heat-panel">
+      <div class="heat-head">最近 14 天 · 谁掌勺 <span class="tiny muted">每格一天，有颜色就是煮饭的人</span></div>
+      <div class="heat-row" v-for="m in state.members" :key="m.id">
+        <span class="heat-name">{{ m.avatar }} {{ m.name }}</span>
+        <div class="heat-cells">
+          <span
+            v-for="(d, i) in heatDays" :key="d.key" class="heat-cell"
+            :class="{ 'is-on': d.chefIds.includes(m.id) }"
+            :style="d.chefIds.includes(m.id) ? { background: m.color, animationDelay: `${i * 18}ms` } : { animationDelay: `${i * 18}ms` }"
+            :title="`${d.key} ${d.chefIds.includes(m.id) ? '掌勺' : '没轮到'}`"
+          ></span>
+        </div>
+      </div>
+      <div class="heat-days">
+        <span v-for="d in heatDays" :key="d.key">{{ d.day }}</span>
+      </div>
+    </div>
+
     <div class="panel">
       <div v-if="state.plans.length" class="history-list">
         <div v-for="p in state.plans.slice(0, 6)" :key="p.date" class="spread fs-88">

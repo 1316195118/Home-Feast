@@ -514,9 +514,13 @@
   display: flex; align-items: center; gap: 9px; padding: 8px 10px;
   border: 1px solid var(--line); border-radius: var(--radius-sm);
   background: var(--surface-soft); cursor: pointer;
+  transition: opacity var(--dur-mid) var(--ease), background var(--dur-fast) var(--ease);
 }
-.shopping-item.done { opacity: 0.58; }
-.shopping-item.done .shopping-name { text-decoration: line-through; }
+.shopping-item.done { opacity: 0.58; background: transparent; }
+.shopping-item.done .shopping-name {
+  text-decoration: line-through; text-decoration-color: var(--brand);
+  text-decoration-thickness: 1.5px;
+}
 .shopping-name { font-weight: 700; }
 .shopping-pantry {
   flex: none; font-size: 0.68rem; font-weight: 700; color: var(--pantry-ink);
@@ -1266,3 +1270,21 @@
 .version-kind.k-opt { color: #3f6ea8; background: #e3edf9; }
 .version-lines { margin: 0; padding-left: 14px; font-size: 0.79rem; line-height: 1.62; color: var(--ink-soft); }
 .version-lines li { margin: 1px 0; }
+
+/* 最近 14 天掌勺热力 */
+.heat-panel { margin-bottom: 18px; }
+.heat-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; font-size: 0.86rem; font-weight: 800; margin-bottom: 12px; }
+.heat-head .tiny { font-weight: 500; }
+.heat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
+.heat-name { flex: none; width: 86px; font-size: 0.78rem; font-weight: 700; color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.heat-cells { display: grid; grid-template-columns: repeat(14, 1fr); gap: 4px; flex: 1; min-width: 0; }
+.heat-cell { height: 17px; border-radius: 4px; background: var(--paper-deep); animation: heat-in var(--dur-base) var(--ease-out) backwards; }
+.heat-cell.is-on { box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05); }
+@keyframes heat-in { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: scale(1); } }
+.heat-days { display: grid; grid-template-columns: repeat(14, 1fr); gap: 4px; margin: 4px 0 0 96px; font-size: 0.6rem; color: var(--muted); text-align: center; }
+@media (max-width: 520px) {
+  .heat-name { width: 66px; font-size: 0.72rem; }
+  .heat-days { margin-left: 76px; font-size: 0.55rem; }
+  .heat-cells { gap: 3px; }
+}
+@media (prefers-reduced-motion: reduce) { .heat-cell { animation: none; } }

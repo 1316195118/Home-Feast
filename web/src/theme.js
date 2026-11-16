@@ -79,8 +79,35 @@ export function applyTheme(animate = false) {
   if (meta) meta.setAttribute('content', dark ? '#181410' : '#fbf6ee')
 }
 
+// 大字模式：只改 html 根字号，所有 rem 一起缩放，不动任何组件布局。
+// 三档：标准 16px / 大 17.6px / 特大 19.2px，存本机。
+const FONT_KEY = 'fm.fontScale'
+export const fontChoices = [
+  { key: 1, label: '标准' },
+  { key: 1.1, label: '大字' },
+  { key: 1.2, label: '特大' },
+]
+export function currentFontScale() {
+  try {
+    const v = Number(localStorage.getItem(FONT_KEY))
+    return [1, 1.1, 1.2].includes(v) ? v : 1
+  } catch { return 1 }
+}
+export function applyFontScale() {
+  document.documentElement.style.fontSize = `${16 * currentFontScale()}px`
+}
+export function setFontScale(v) {
+  try { localStorage.setItem(FONT_KEY, String(v)) } catch { /* 隐私模式忽略 */ }
+  const html = document.documentElement
+  html.classList.add('font-changing')
+  applyFontScale()
+  clearTimeout(html._fontTimer)
+  html._fontTimer = setTimeout(() => html.classList.remove('font-changing'), 260)
+}
+
 export function installTheme() {
   applyTheme()
+  applyFontScale()
   const mq = window.matchMedia?.('(prefers-color-scheme: dark)')
   mq?.addEventListener?.('change', () => {
     if (currentThemeMode() === 'system') applyTheme()

@@ -31,7 +31,12 @@ const enriched = computed(() => list.value.map((it) => ({
   ...it,
   inPantry: pantrySet.value.has(normalizeIngredient(it.text)),
 })))
-const groups = computed(() => shoppingGroups(enriched.value))
+// 勾选过的沉到组尾，买过的不再挡视线；checked 在下方定义，computed 惰性求值没问题
+const groups = computed(() => shoppingGroups(enriched.value).map((g) => {
+  const items = [...g.items]
+  items.sort((a, b) => Number(checked.value.has(a.text)) - Number(checked.value.has(b.text)))
+  return { ...g, items }
+}))
 const STORE_KEY = `fm.shopping.${state.today}`
 
 function readChecked() {
