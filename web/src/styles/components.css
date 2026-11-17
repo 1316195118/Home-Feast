@@ -384,3 +384,11 @@ html.font-changing { transition: font-size 0.24s var(--ease); }
 @media (prefers-reduced-motion: reduce) {
   .help-fade-enter-active, .help-fade-leave-active { transition: none; }
 }
+
+/* 搜索命中高亮 */
+.dish-name-link mark {
+  background: #ffdf80; color: inherit; border-radius: 3px; padding: 0 2px;
+}
+@media (prefers-color-scheme: dark) {
+  .dish-name-link mark { background: #6b5214; }
+}

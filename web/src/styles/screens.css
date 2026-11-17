@@ -1317,3 +1317,6 @@
 @media (prefers-reduced-motion: reduce) {
   .is-rolling .dice-ico, .suggest-grid.is-swapping .suggest-card, .suggest-reasons { animation: none; }
 }
+
+/* 骰子结果恭喜语 */
+.pk-congrat { margin: 2px 0 10px; font-size: 0.84rem; font-weight: 700; color: var(--brand-dark); animation: reason-in 0.4s var(--ease-out) 0.15s backwards; }

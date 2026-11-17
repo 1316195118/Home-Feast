@@ -64,6 +64,19 @@ const needOtherNames = computed(() => needOthers.value
   .map((id) => props.members.find((m) => m.id === id)?.name)
   .filter(Boolean).join('、'))
 // 分工已落库且与本次结果一致：只展示结果，不重复提交、不自动关闭
+// 结果出来后的恭喜语：按两位的名字稳定选一条，同一结果每次打开文案一致
+const CONGRATS = [
+  (c, w) => `${c.name} 掌勺、${w.name} 洗碗，安排！`,
+  (c, w) => `锅铲给 ${c.name}，水槽归 ${w.name}，都别想跑`,
+  (c, w) => `今晚 ${c.name} 露一手，${w.name} 收拾战场`,
+  (c, w) => `${c.name} 负责香喷喷，${w.name} 负责亮晶晶`,
+]
+const congrat = computed(() => {
+  if (!decided.value || !chef.value || !washer.value) return ''
+  const sum = (chef.value.id + washer.value.id).split('').reduce((n, ch) => n + ch.charCodeAt(0), 0)
+  return CONGRATS[sum % CONGRATS.length](chef.value, washer.value)
+})
+
 const alreadyDecided = computed(() => {
   const p = todayPlan.value
   const chefId = chef.value?.id
@@ -286,6 +299,7 @@ onUnmounted(() => {
             <span class="pk-clash-a">🎲</span><span class="pk-clash-b">🎲</span>
           </div>
           <div class="pk-result-title">🎉 结果出来了</div>
+          <p class="pk-congrat">{{ congrat }}</p>
           <div class="pk-result-line">
             <span class="pk-role chef-role">👨‍🍳 掌勺</span>
             <strong>{{ chef.avatar }} {{ chef.name }}</strong>
