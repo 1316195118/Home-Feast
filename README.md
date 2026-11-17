@@ -5,6 +5,32 @@
 「今天吃什么？」——把这个问题交给全家人一起点。这是一个**完全自托管**的家庭点菜网页：手机、平板、电脑打开同一个地址，每个人选好「我是谁」，就能点菜、看做法、定谁掌勺谁洗碗。
 **数据只存在自己的 NAS / 本机**，纯 JSON 文件，无数据库、无外部服务、无需注册、不上传任何数据。
 
+
+## 多架构部署
+
+后端是纯 Go（无 CGO），前端是静态文件，所以同一份代码可以交叉编译到不同 CPU 架构：
+
+```bash
+python scripts/release.py --arch amd64   # 默认，产物 menu-linux（当前 PVE LXC）
+python scripts/release.py --arch arm64   # 产物 menu-linux-arm64（ARM64 设备）
+python scripts/release.py --arch armv7   # 产物 menu-linux-armv7（32 位 ARM，GOARM=7）
+python scripts/release.py --arch all     # 一次编出三份
+```
+
+部署到现有 PVE 容器时，默认用 amd64；换到 ARM 机器时指定二进制：
+
+```bash
+FAMILY_MENU_BIN=menu-linux-arm64 python scripts/_cq/deploy_menu4.py
+```
+
+把对应二进制放到目标机器的 `/usr/local/bin/menu` 即可，`/data` 与 `/config` 是纯文本目录，可直接挂载迁移。
+
+用 Docker 时，构建阶段会根据 `--platform` 自动选择目标架构：
+
+```bash
+docker buildx build --platform linux/amd64,linux/arm64 -t family-menu:latest .
+```
+
 ## ✨ 为什么用它（优点速览）
 
 | 优点 | 说明 |

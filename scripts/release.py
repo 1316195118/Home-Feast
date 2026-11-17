@@ -146,12 +146,35 @@ def gen_changelog_go():
     return len(data)
 
 
-def build():
-    env = dict(os.environ, GOOS='linux', GOARCH='amd64', CGO_ENABLED='0')
-    cmd = ['go', 'build', '-trimpath', '-ldflags', '-s -w', '-o', BIN, './cmd/menu']
-    print('编译:', ' '.join(cmd))
+# 目标架构 → Go GOARCH / GOARM。纯 Go、无 CGO，全部可交叉编译。
+# amd64 沿用 menu-linux 这个名字，保证现有部署脚本与流程零改动。
+ARCHES = {
+    'amd64': {'GOARCH': 'amd64'},
+    'arm64': {'GOARCH': 'arm64'},
+    'armv7': {'GOARCH': 'arm', 'GOARM': '7'},
+}
+
+
+def bin_for(arch):
+    return BIN if arch == 'amd64' else os.path.join(ROOT, f'menu-linux-{arch}')
+
+
+def build(arch='amd64'):
+    if arch not in ARCHES:
+        raise SystemExit(f'不支持的架构 {arch}，可选：{", ".join(ARCHES)} / all')
+    env = dict(os.environ, GOOS='linux', CGO_ENABLED='0', **ARCHES[arch])
+    out = bin_for(arch)
+    cmd = ['go', 'build', '-trimpath', '-ldflags', '-s -w', '-o', out, './cmd/menu']
+    print(f'编译 {arch}:', ' '.join(cmd))
     subprocess.run(cmd, cwd=ROOT, env=env, check=True)
-    print(f'产物 {BIN}（{os.path.getsize(BIN) / 1024 / 1024:.1f} MB）')
+    print(f'  产物 {os.path.basename(out)}（{os.path.getsize(out) / 1024 / 1024:.1f} MB）')
+    return out
+
+
+def build_all():
+    """一次产出 amd64 / arm64 / armv7 三个二进制，供不同设备取用。"""
+    for arch in ARCHES:
+        build(arch)
 
 
 def deploy():
@@ -163,7 +186,7 @@ def run_git(args, capture=False):
                           text=True, capture_output=capture)
 
 
-def publish(do_deploy=True):
+def publish(do_deploy=True, arch='amd64'):
     entries = read_pending()
     if not entries:
         raise SystemExit('没有待发布说明，先用 --note 记录这次改了什么')
@@ -186,7 +209,7 @@ def publish(do_deploy=True):
     print(f'版本记录已嵌入：{n} 条')
     print(f'版本 {cur} → {v}（合并 {len(entries)} 条说明）')
 
-    build()
+    build_all() if arch == 'all' else build(arch)
     if do_deploy:
         deploy()
 
@@ -216,6 +239,8 @@ def main():
     ap.add_argument('--show', action='store_true', help='显示当前版本与待发布条数')
     ap.add_argument('--publish', action='store_true', help='正式发版：递增版本 + CHANGELOG + 编译 + 提交 + 推送')
     ap.add_argument('--no-build', action='store_true', help='不编译')
+    ap.add_argument('--arch', default='amd64',
+                    help='编译架构：amd64（默认）/ arm64 / armv7 / all（一次全编）')
     ap.add_argument('--no-deploy', action='store_true', help='不部署')
     a = ap.parse_args()
 
@@ -227,7 +252,7 @@ def main():
         return
 
     if a.publish:
-        publish(do_deploy=not a.no_deploy)
+        publish(do_deploy=not a.no_deploy, arch=a.arch)
         return
 
     if not a.note:
@@ -241,7 +266,7 @@ def main():
     print(f'说明已暂存（版本仍为 {read_version()}）')
 
     if not a.no_build:
-        build()
+        build_all() if a.arch == 'all' else build(a.arch)
     if not a.no_deploy:
         deploy()
     print('提醒：未提交、未推送。确认后执行 release.py --publish')
