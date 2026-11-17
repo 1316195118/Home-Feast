@@ -97,6 +97,25 @@ export function dutyNames(ids, members, max = 2) {
 }
 
 // 一天里各餐出现过的成员（去重）：历史页与家庭统计按天看人，不细分到餐
+// 搜索关键字高亮：把文本按命中段切分，模板里用 <mark> 渲染命中的部分。
+// 不用 v-html，保持「前端零危险 HTML 注入」的约定。
+export function splitHighlight(text, query) {
+  const q = String(query || '').trim().toLowerCase()
+  const raw = String(text || '')
+  if (!q) return [{ text: raw, hit: false }]
+  const out = []
+  const lower = raw.toLowerCase()
+  let i = 0
+  while (i < raw.length) {
+    const idx = lower.indexOf(q, i)
+    if (idx < 0) { out.push({ text: raw.slice(i), hit: false }); break }
+    if (idx > i) out.push({ text: raw.slice(i, idx), hit: false })
+    out.push({ text: raw.slice(idx, idx + q.length), hit: true })
+    i = idx + q.length
+  }
+  return out
+}
+
 export function dayDutyIds(plan, key) {
   const out = new Set()
   for (const md of Object.values(plan?.mealDuties || {})) {

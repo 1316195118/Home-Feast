@@ -288,7 +288,7 @@ async function savePantry() {
     <!-- 不用 TransitionGroup：切换菜系时整片卡片进出场 + move 会让画面明显晃一下。
          增删菜品是低频操作，稳定的静态网格比 0.3s 动画更重要。 -->
     <div v-if="filtered.length" :key="gridKey" class="dish-grid grid-in">
-      <DishCard v-for="d in visibleDishes" :key="d.id" :dish="d" @edit="openEdit" @open="openDetail" />
+      <DishCard v-for="d in visibleDishes" :key="d.id" :dish="d" :highlight="keyword" @edit="openEdit" @open="openDetail" />
     </div>
     <!-- 分批渲染的哨兵：滚动到附近就自动补下一批，不打断浏览 -->
     <div v-if="filtered.length" ref="loadMoreEl" class="grid-more" :class="{ 'is-done': !hasMore }">

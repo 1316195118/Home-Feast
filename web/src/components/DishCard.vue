@@ -1,10 +1,10 @@
 <script setup>
 import { inject, computed } from 'vue'
-import { dishImage, cuisineName, cuisineIcon, spicyText, artStyle, avoidConflicts } from '../utils'
+import { dishImage, cuisineName, cuisineIcon, spicyText, artStyle, avoidConflicts, splitHighlight } from '../utils'
 import { getRecipe } from '../recipes'
 import { sparkleFromEvent, celebrate, vibrate } from '../feedback'
 
-const props = defineProps({ dish: { type: Object, required: true } })
+const props = defineProps({ dish: { type: Object, required: true }, highlight: { type: String, default: '' } })
 defineEmits(['edit', 'open'])
 const { state, actions, pending } = inject('app')
 
@@ -49,7 +49,12 @@ const avoidHits = computed(() => {
     </div>
     <div class="dish-body">
       <div class="dish-title">
-        <span class="dish-name-link" @click="$emit('open', dish)" title="点开看做法">{{ dish.name }}</span>
+        <span class="dish-name-link" @click="$emit('open', dish)" title="点开看做法">
+          <template v-for="(part, i) in splitHighlight(dish.name, highlight)" :key="i">
+            <mark v-if="part.hit">{{ part.text }}</mark>
+            <template v-else>{{ part.text }}</template>
+          </template>
+        </span>
         <span class="tiny muted nowrap">{{ cuisineIcon(dish.cuisine, state.cuisines) }} {{ cuisine }}</span>
       </div>
       <p class="dish-desc">{{ dish.desc || '家里人都懂的一道菜' }}</p>
