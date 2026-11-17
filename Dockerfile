@@ -2,7 +2,7 @@
 # 三阶段构建：前端静态产物 -> 嵌入 Go 单文件 -> 极简运行镜像。
 # 运行镜像里没有 Node.js、没有数据库，只有一个二进制和时区证书。
 
-FROM node:20-alpine AS frontend
+FROM --platform=$BUILDPLATFORM node:20-alpine AS frontend
 WORKDIR /build/web
 # 国内网络下固定使用可达的 npm 镜像，只影响构建容器，不改变源码配置。
 ENV NPM_CONFIG_REGISTRY=https://registry.npmmirror.com
@@ -11,14 +11,16 @@ RUN npm install --no-audit --no-fund
 COPY web/ ./
 RUN npm run build
 
-FROM golang:1.24-alpine AS backend
+FROM --platform=$BUILDPLATFORM golang:1.24-alpine AS backend
+# buildx 多架构构建时自动注入目标架构；普通 docker build 回退 amd64
+ARG TARGETARCH=amd64
 WORKDIR /build
 COPY go.mod embed.go ./
 COPY cmd/ ./cmd/
 COPY internal/ ./internal/
 RUN mkdir -p webapp/dist
 COPY --from=frontend /build/web/dist/ ./webapp/dist/
-RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags "-s -w" -o /out/menu ./cmd/menu
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go build -trimpath -ldflags "-s -w" -o /out/menu ./cmd/menu
 
 FROM alpine:3.21
 RUN apk add --no-cache tzdata ca-certificates wget

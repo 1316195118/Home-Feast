@@ -53,6 +53,8 @@
 /scripts/_cq/_tmp/
 # 交叉编译产物（部署用，非源码）
 /menu-linux
+/menu-linux-arm64
+/menu-linux-armv7
 # 抓取的原始素材 / 中间快照：体积大且来源不对外发布
 /scripts/_src_images/
 /scripts/_src_dishes.html
