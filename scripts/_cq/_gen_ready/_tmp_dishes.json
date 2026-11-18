@@ -3146,7 +3146,7 @@
     "id": "dc24f275a2d934f8a",
     "name": "手抓饭",
     "cuisine": "xinjiang",
-    "desc": "新疆菜风味，羊排为主，家里也能做",
+    "desc": "羊油与胡萝卜焖出的油亮米饭，新疆人待客的头道主食",
     "tags": [
       "新疆菜",
       "西域风味",
@@ -3216,7 +3216,7 @@
     "id": "d0f97a1efba230c62",
     "name": "馕坑肉",
     "cuisine": "xinjiang",
-    "desc": "新疆菜风味，羊排为主，家里也能做",
+    "desc": "贴着馕坑壁烤出来的羊排，外焦里嫩带一股炭火香",
     "tags": [
       "新疆菜",
       "西域风味",
@@ -3285,7 +3285,7 @@
     "id": "d682ba5c2ea1e50ee",
     "name": "过油肉拌面",
     "cuisine": "xinjiang",
-    "desc": "新疆菜风味，羊肉为主，家里也能做",
+    "desc": "滑嫩羊肉配过油蔬菜，拌进刚拉好的筋道面条",
     "tags": [
       "新疆菜",
       "西域风味",
@@ -3321,7 +3321,7 @@
     "id": "dff50e079c68ab216",
     "name": "烤包子",
     "cuisine": "xinjiang",
-    "desc": "新疆菜风味，羊肉为主，家里也能做",
+    "desc": "羊肉洋葱馅烤到外皮焦脆，咬开一口爆汁",
     "tags": [
       "新疆菜",
       "西域风味",
@@ -3355,7 +3355,7 @@
     "id": "d49d722e7a5fa02e8",
     "name": "手抓肉",
     "cuisine": "xinjiang",
-    "desc": "新疆菜风味，羊排为主，家里也能做",
+    "desc": "清水煮羊肉只放盐和葱，原汁原味，撕着吃最过瘾",
     "tags": [
       "新疆菜",
       "西域风味",
@@ -3388,7 +3388,7 @@
     "id": "db9524559f6c4053a",
     "name": "丁丁炒面",
     "cuisine": "xinjiang",
-    "desc": "新疆菜风味，面粉为主，家里也能做",
+    "desc": "面丁与羊肉蔬菜同炒，粒粒裹着酱香",
     "tags": [
       "新疆菜",
       "西域风味",
@@ -3459,7 +3459,7 @@
     "id": "d5cc4b5d0061b3630",
     "name": "馕",
     "cuisine": "xinjiang",
-    "desc": "新疆菜风味，中筋面粉为主，家里也能做",
+    "desc": "麦香扎实的中亚面饼，烤好能放好几天，越嚼越香",
     "tags": [
       "新疆菜",
       "西域风味",
@@ -3525,7 +3525,7 @@
     "id": "d1f8f872ab005fcd8",
     "name": "缸子肉",
     "cuisine": "xinjiang",
-    "desc": "新疆菜风味，羊肉为主，家里也能做",
+    "desc": "搪瓷缸慢炖的羊肉汤配一块馕，新疆清晨的暖胃早餐",
     "tags": [
       "新疆菜",
       "西域风味",
@@ -3559,7 +3559,7 @@
     "id": "de937a16110abb2a6",
     "name": "拉条子",
     "cuisine": "xinjiang",
-    "desc": "新疆菜风味，中筋面粉为主，家里也能做",
+    "desc": "手工拉出的圆面条，拌面炒面都筋道",
     "tags": [
       "新疆菜",
       "西域风味",
@@ -3593,7 +3593,7 @@
     "id": "d32812c9e0aa90907",
     "name": "羊肉揪片子",
     "cuisine": "xinjiang",
-    "desc": "新疆菜风味，面粉为主，家里也能做",
+    "desc": "手工揪出的厚面片落在羊肉汤里，筋道又暖身",
     "tags": [
       "新疆菜",
       "西域风味",
@@ -3695,7 +3695,7 @@
     "id": "d4f0e4a3198cff2fe",
     "name": "皮芽子馕",
     "cuisine": "xinjiang",
-    "desc": "新疆菜风味，中筋面粉为主，家里也能做",
+    "desc": "洋葱提香的烤馕，趁热吃香气最足",
     "tags": [
       "新疆菜",
       "西域风味",
@@ -3835,7 +3835,7 @@
     "id": "d833962d4fb348cc8",
     "name": "山城小汤圆",
     "cuisine": "snack",
-    "desc": "川渝小吃风味，糯米粉为主，家里也能做",
+    "desc": "重庆老街的糯米小圆子，浮在醪糟汤里甜甜糯糯",
     "tags": [
       "川渝小吃",
       "山城味道",
@@ -3934,7 +3934,7 @@
     "id": "de927aecd6eeef2b4",
     "name": "凉糕",
     "cuisine": "snack",
-    "desc": "川渝小吃风味，糯米粉为主，家里也能做",
+    "desc": "米浆蒸成的嫩滑凉糕，浇一勺红糖水，夏天最解暑",
     "tags": [
       "川渝小吃",
       "山城味道",
@@ -3966,7 +3966,7 @@
     "id": "d6a4fb86f8a6a68d5",
     "name": "锅巴土豆",
     "cuisine": "snack",
-    "desc": "川渝小吃风味，土豆为主，家里也能做",
+    "desc": "外皮煎出锅巴的土豆块，拌辣椒面和折耳根",
     "tags": [
       "川渝小吃",
       "山城味道",
@@ -4000,7 +4000,7 @@
     "id": "dff8d45a816add627",
     "name": "狼牙土豆",
     "cuisine": "snack",
-    "desc": "川渝小吃风味，土豆为主，家里也能做",
+    "desc": "波浪刀切的土豆条，炸到微焦再撒辣粉，街边同款",
     "tags": [
       "川渝小吃",
       "山城味道",
@@ -4852,7 +4852,7 @@
       "街头",
       "天津"
     ],
-    "image": "",
+    "image": "/uploads/img7329794d94544b61259aa6e3.webp",
     "spicy": 1,
     "minutes": 20,
     "ingredients": [
@@ -4889,7 +4889,7 @@
       "多汁",
       "上海"
     ],
-    "image": "",
+    "image": "/uploads/img82b7ebdcd1c8e3cd86aefbe8.webp",
     "spicy": 0,
     "minutes": 90,
     "ingredients": [
@@ -5028,7 +5028,7 @@
       "滑嫩",
       "广东"
     ],
-    "image": "",
+    "image": "/uploads/img33e9c110445f7d1664c82b08.webp",
     "spicy": 0,
     "minutes": 40,
     "ingredients": [
@@ -5065,7 +5065,7 @@
       "甜咸",
       "广东"
     ],
-    "image": "",
+    "image": "/uploads/img40b0343d8d924326ad8a1d06.webp",
     "spicy": 0,
     "minutes": 120,
     "ingredients": [
@@ -5103,7 +5103,7 @@
       "干拌",
       "湖北"
     ],
-    "image": "",
+    "image": "/uploads/img28a85969f395cb9d9e065deb.webp",
     "spicy": 1,
     "minutes": 25,
     "ingredients": [
@@ -5353,7 +5353,7 @@
       "街头",
       "陕西"
     ],
-    "image": "",
+    "image": "/uploads/img8b1c26856d92aea7ab3688dc.webp",
     "spicy": 1,
     "minutes": 180,
     "ingredients": [
@@ -5389,7 +5389,7 @@
       "酸辣",
       "陕西"
     ],
-    "image": "",
+    "image": "/uploads/imga189c63d5579d2f891990a01.webp",
     "spicy": 2,
     "minutes": 120,
     "ingredients": [
@@ -5570,7 +5570,7 @@
       "酸辣",
       "广西"
     ],
-    "image": "",
+    "image": "/uploads/imgeb20a4ffcdfe8d9f0a32c187.webp",
     "spicy": 3,
     "minutes": 90,
     "ingredients": [
