@@ -3,6 +3,29 @@
 // item 可能是菜品 Dish（字段 image/cuisine），也可能是点菜记录 Order（字段 dishImage/dishCuisine）。
 // 传 dishes 时，订单行优先取菜谱里这道菜「当前」的图片，这样改图后今日菜单会同步；
 // 菜品被删了就退回点菜时存下的快照，最后才用菜系插画。
+// 图片清晰度策略：auto=局域网原图/外网缩略图，full=总是原图，thumb=总是缩略图。
+// 局域网判定：localhost / 私网段（10./172.16-31./192.168.）。
+export function isLanHost(host) {
+  if (typeof window === 'undefined') return true
+  const h = String(host || window.location.hostname || '').toLowerCase()
+  if (h === 'localhost' || h === '127.0.0.1' || h === '::1') return true
+  const p = h.split('.').map(Number)
+  if (p.length !== 4 || p.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) return false
+  if (p[0] === 10) return true
+  if (p[0] === 192 && p[1] === 168) return true
+  if (p[0] === 172 && p[1] >= 16 && p[1] <= 31) return true
+  return false
+}
+
+// 返回 ''（原图）或 'thumb'（缩略图），直接给 dishImage 的 size 参数。
+// 传入 mode 保证 computed 能追踪设置变化，切换后立即重渲染。
+export function imageSize(mode) {
+  const m = String(mode || 'auto')
+  if (m === 'full') return ''
+  if (m === 'thumb') return 'thumb'
+  return isLanHost() ? '' : 'thumb'
+}
+
 // withThumb 把用户上传的图换成 400px 缩略图地址；菜系封面本身就是小图，不动。
 // 缩略图统一是 JPEG（后端用标准库编码），与原图的扩展名无关。
 function withThumb(url) {

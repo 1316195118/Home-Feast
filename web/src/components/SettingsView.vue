@@ -1,7 +1,7 @@
 <script setup>
 import { inject, ref, watch, computed, reactive, onMounted } from 'vue'
 import { api, setAccessCode } from '../api'
-import { isCuisineHidden, DEFAULT_MEALS, mealEndMinutes, normalizeMeals, mealIconChoices, WEEKDAYS } from '../utils'
+import { isCuisineHidden, DEFAULT_MEALS, mealEndMinutes, normalizeMeals, mealIconChoices, WEEKDAYS, isLanHost, imageSize } from '../utils'
 import { useModalBehavior } from '../modal'
 import HelpTip from './HelpTip.vue'
 import { themeChoices, currentThemeMode, setThemeMode, fontChoices, currentFontScale, setFontScale } from '../theme'
@@ -75,6 +75,20 @@ useModalBehavior(() => { showAboutModal.value = false }, aboutRoot, showAboutMod
 const showAccessModal = ref(false)
 const accessRoot = ref(null)
 useModalBehavior(() => { showAccessModal.value = false }, accessRoot, showAccessModal)
+// 配图清晰度：auto 按网络自动选（局域网原图 / 外网缩略图），full 总是原图，thumb 总是缩略图
+const imageMode = computed(() => state.settings.imageMode || 'auto')
+const lanNow = computed(() => isLanHost())
+const currentModeLabel = computed(() => imageSize(imageMode.value) === '' ? '原图' : '缩略图')
+const imageChoices = [
+  { key: 'auto', label: '按网络', icon: '🌐', hint: '局域网原图 · 外网缩略图' },
+  { key: 'full', label: '原图', icon: '🖼️', hint: '始终加载清晰原图' },
+  { key: 'thumb', label: '省流量', icon: '📶', hint: '始终加载缩略图' },
+]
+function chooseImageMode(m) {
+  if (imageMode.value === m) return
+  actions.saveSettings({ imageMode: m })
+}
+
 const autoBackup = computed(() => state.settings.autoBackup !== false)
 const backupKeep = computed(() => state.settings.backupKeep || 7)
 async function loadBackups() {
@@ -397,6 +411,26 @@ async function saveRoster() {
           <span class="cuisine-count">{{ rosterFilledDays }} / 7 天已安排</span>
           <span class="chev">›</span>
         </button>
+      </div>
+
+      <div class="card setting-card sc-image">
+        <div class="setting-title">
+          🖼️ 配图清晰度
+          <span class="tag setting-title-tag" :class="lanNow ? 'tag-green' : ''">
+            {{ lanNow ? '局域网' : '外网' }} · 当前{{ currentModeLabel }}
+          </span>
+        </div>
+        <p class="setting-desc">
+          菜谱列表和今日菜单的配图大小 <HelpTip text="「按网络」会自动判断：家里局域网（10./192.168./172.16-31. 网段）加载 1200px 原图更清晰；从外网访问自动换成 400px 缩略图省流量。详情页始终用原图，不受此项影响。" />
+        </p>
+        <div class="setting-actions image-choices">
+          <button
+            v-for="c in imageChoices" :key="c.key" class="btn btn-sm"
+            :class="imageMode === c.key ? 'btn-primary' : 'btn-soft'"
+            :aria-pressed="imageMode === c.key" :title="c.hint" @click="chooseImageMode(c.key)"
+          >{{ c.icon }} {{ c.label }}</button>
+        </div>
+        <div class="setting-meta tiny muted">{{ imageChoices.find((c) => c.key === imageMode)?.hint }}</div>
       </div>
 
       <div class="card setting-card sc-theme">

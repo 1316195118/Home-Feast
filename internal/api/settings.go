@@ -19,6 +19,7 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 		PantryAdded    *map[string]string `json:"pantryAdded"` // 食材加入日期
 		AutoBackup     *bool             `json:"autoBackup"`
 		BackupKeep     *int              `json:"backupKeep"`
+		ImageMode      *string           `json:"imageMode"` // auto / full / thumb
 		AccessCode     *string           `json:"accessCode"` // 空串 = 关闭口令
 	}
 	if err := decodeBody(w, r, &in); err != nil {
@@ -99,6 +100,17 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 			k = 60
 		}
 		v.BackupKeep = k
+	}
+	if in.ImageMode != nil {
+		mode := strings.TrimSpace(strings.ToLower(*in.ImageMode))
+		if mode == "" {
+			mode = "auto"
+		}
+		if mode != "auto" && mode != "full" && mode != "thumb" {
+			jsonErr(w, http.StatusBadRequest, "图片模式只能是 auto / full / thumb")
+			return
+		}
+		v.ImageMode = mode
 	}
 	if in.PantryAdded != nil {
 		// 只保留合法日期（YYYY-MM-DD），最多 200 项，避免脏数据把设置撑大

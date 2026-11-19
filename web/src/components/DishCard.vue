@@ -1,6 +1,6 @@
 <script setup>
 import { inject, computed } from 'vue'
-import { dishImage, cuisineName, cuisineIcon, spicyText, artStyle, avoidConflicts, splitHighlight } from '../utils'
+import { dishImage, imageSize, cuisineName, cuisineIcon, spicyText, artStyle, avoidConflicts, splitHighlight } from '../utils'
 import { getRecipe } from '../recipes'
 import { sparkleFromEvent, celebrate, vibrate } from '../feedback'
 
@@ -8,7 +8,7 @@ const props = defineProps({ dish: { type: Object, required: true }, highlight: {
 defineEmits(['edit', 'open', 'multi-toggle'])
 const { state, actions, pending } = inject('app')
 
-const image = computed(() => dishImage(props.dish, state.cuisines, null, 'thumb'))
+const image = computed(() => dishImage(props.dish, state.cuisines, null, imageSize(state.settings.imageMode)))
 const cuisine = computed(() => cuisineName(props.dish.cuisine, state.cuisines))
 const selfMember = computed(() => state.members.find((m) => m.id === state.currentUserId) || null)
 
