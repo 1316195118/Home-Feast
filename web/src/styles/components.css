@@ -467,3 +467,59 @@ html.font-changing { transition: font-size 0.24s var(--ease); }
 .f-cube { top: 8px; left: 6px; width: 23px; height: 19px; border-radius: 5px;
   background: linear-gradient(150deg, var(--c-l), var(--c) 60%, var(--c-d)); box-shadow: inset -3px -3px 5px rgba(0,0,0,.16), 1px 2px 3px rgba(0,0,0,.2); }
 @media (prefers-reduced-motion: reduce) { .food3d { transition: none; } }
+
+/* 补：贝类 / 海带 / 青椒 / 西兰花 / 洋葱 / 南瓜 / 姜 / 豆腐 / 腐竹 / 香蕉 / 菠萝 */
+.f-shell { top: 9px; left: 5px; width: 24px; height: 19px; border-radius: 50% 50% 46% 46% / 70% 70% 30% 30%;
+  background: radial-gradient(circle at 38% 28%, #f0e6d4, var(--c) 62%, #9a8a76);
+  clip-path: polygon(50% 0, 100% 26%, 86% 100%, 14% 100%, 0 26%);
+  box-shadow: 1px 2px 3px rgba(0,0,0,.2); }
+.f-shell-rib { position: absolute; top: 4px; bottom: 3px; width: 1px; background: rgba(120,100,80,.3); }
+.f-shell-rib:nth-child(1){left:32%} .f-shell-rib:nth-child(2){left:50%} .f-shell-rib:nth-child(3){left:68%}
+.f-kelp { top: 6px; left: 8px; width: 18px; height: 24px; }
+.f-kelp span { position: absolute; inset: 0;
+  background: linear-gradient(120deg, #7fb36a, var(--c) 55%, #2f5738);
+  border-radius: 40% 60% 45% 55% / 20% 30% 70% 80%;
+  transform: rotate(-8deg); box-shadow: 1px 2px 3px rgba(0,0,0,.18); }
+.f-pepper { top: 8px; left: 7px; width: 21px; height: 20px; border-radius: 46% 46% 40% 40%;
+  background: radial-gradient(circle at 34% 26%, #86c95c, var(--c) 58%, #2f6a22);
+  box-shadow: inset -3px -3px 5px rgba(0,0,0,.15), 1px 2px 3px rgba(0,0,0,.2); }
+.f-pepper-stem { top: -4px; left: 9px; width: 3px; height: 7px; border-radius: 2px; background: #4a7a30; }
+.f-broccoli { top: 7px; left: 6px; width: 23px; height: 18px; border-radius: 50% 50% 40% 40%;
+  background: radial-gradient(circle at 30% 26%, #7fc25a, var(--c) 55%, #2c5a22);
+  box-shadow: 1px 2px 3px rgba(0,0,0,.2); }
+.f-broc-stem { bottom: -7px; left: 9px; width: 6px; height: 9px; border-radius: 0 0 3px 3px; background: #a8c98a; }
+.f-onion { top: 6px; left: 6px; width: 23px; height: 22px; border-radius: 50% 50% 46% 46%;
+  background: radial-gradient(circle at 34% 26%, #f0d8ea, var(--c) 58%, #8f6a88);
+  box-shadow: inset -3px -3px 5px rgba(0,0,0,.13), 1px 2px 3px rgba(0,0,0,.18); }
+.f-onion-sprout { top: -5px; left: 12px; width: 3px; height: 8px; border-radius: 2px; background: #7a9a52; transform: rotate(-10deg); }
+.f-pumpkin { top: 9px; left: 4px; width: 26px; height: 18px; border-radius: 50%;
+  background: radial-gradient(circle at 34% 26%, #f5b45e, var(--c) 58%, #a85a12);
+  box-shadow: 1px 2px 3px rgba(0,0,0,.2); }
+.f-pumpkin-rib { position: absolute; left: 50%; top: 2px; bottom: 2px; width: 1px; background: rgba(140,70,10,.3); }
+.f-pumpkin-stem { top: -4px; left: 11px; width: 4px; height: 6px; border-radius: 2px; background: #7a5a2a; }
+.f-ginger { inset: 9px 6px 8px; }
+.f-ginger span { position: absolute; border-radius: 46% 54% 40% 60%;
+  background: linear-gradient(140deg, #ecd8a8, var(--c) 60%, #a88848); box-shadow: 1px 2px 3px rgba(0,0,0,.18); }
+.f-ginger span:nth-child(1) { inset: 2px 8px 0 4px; }
+.f-ginger span:nth-child(2) { right: 0; top: 0; width: 13px; height: 11px; transform: rotate(-16deg); }
+.f-tofu { top: 8px; left: 6px; width: 22px; height: 19px; border-radius: 3px;
+  background: linear-gradient(150deg, #fffdf8, var(--c) 70%, #ddd6c4);
+  box-shadow: inset -2px -2px 4px rgba(0,0,0,.08), 1px 2px 3px rgba(0,0,0,.16); }
+.f-stick { inset: 6px 5px; }
+.f-stick span { position: absolute; left: 4px; right: 3px; height: 3.5px; border-radius: 2px;
+  background: linear-gradient(90deg, #f2dda8, var(--c)); box-shadow: 1px 1px 2px rgba(0,0,0,.14); }
+.f-stick span:nth-child(1){top:3px;transform:rotate(-4deg)}
+.f-stick span:nth-child(2){top:11px;transform:rotate(2deg)}
+.f-stick span:nth-child(3){top:19px;transform:rotate(-2deg)}
+.f-banana { top: 9px; left: 5px; width: 24px; height: 15px;
+  border: 6px solid var(--c); border-top-color: transparent; border-left-color: transparent;
+  border-radius: 50%; transform: rotate(-24deg);
+  box-shadow: 1px 2px 3px rgba(0,0,0,.16); }
+.f-banana-tip { position: absolute; right: -3px; top: 8px; width: 4px; height: 4px; border-radius: 50%; background: #7a6a2a; }
+.f-pineapple { top: 10px; left: 7px; width: 20px; height: 20px; border-radius: 46% 46% 44% 44%;
+  background: repeating-linear-gradient(48deg, #d8a83a 0 3px, #c08e28 3px 6px);
+  box-shadow: 1px 2px 3px rgba(0,0,0,.2); }
+.f-pine-leaf { position: absolute; top: -7px; width: 5px; height: 10px; border-radius: 50% 50% 0 0; background: #5e9a3c; }
+.f-pine-leaf.a { left: 4px; transform: rotate(-18deg); }
+.f-pine-leaf.b { left: 8px; transform: rotate(2deg); }
+.f-pine-leaf.c { left: 12px; transform: rotate(20deg); }
