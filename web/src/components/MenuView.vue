@@ -176,17 +176,19 @@ const pantryQuery = ref('')
 useModalBehavior(() => { pantryOpen.value = false }, pantryRoot, pantryOpen)
 
 // 70 种食材分 7 类，加搜索与分类快捷跳转，避免长滚动里找不到想要的那一项
+// 搜索驱动：默认只显示「已选食材」，输入关键词才展示匹配结果，不再一进来铺满 73 样
+const pantrySearching = computed(() => !!pantryQuery.value.trim())
 const shownPantryGroups = computed(() => {
   const q = pantryQuery.value.trim().toLowerCase()
-  if (!q) return pantryGroups
+  if (!q) return []
   return pantryGroups
     .map((g) => ({ ...g, items: g.items.filter((n) => n.toLowerCase().includes(q)) }))
     .filter((g) => g.items.length)
 })
+const selectedPantryCards = computed(() => [...pantryDraft.value].map((n) => ({ name: n, ...pantryVisual(n) })))
 function jumpToGroup(key) {
-  pantryQuery.value = ''
-  const el = document.getElementById('pantry-group-' + key)
-  el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  const g = pantryGroups.find((x) => x.key === key)
+  pantryQuery.value = g ? (g.label.replace(/^\S+\s*/, '').slice(0, 2) || '') : ''
 }
 function clearPantry() {
   pantryDraft.value = new Set()
@@ -362,7 +364,9 @@ async function savePantry() {
             <button class="btn btn-soft btn-sm" :disabled="!pantryDraft.size" @click="clearPantry">清空已选</button>
           </div>
           <div class="pantry-jumps">
-            <button v-for="g in pantryGroups" :key="g.key" type="button" class="chip" @click="jumpToGroup(g.key)">{{ g.label }}</button>
+            <span class="tiny muted">试试：</span>
+            <button v-for="q in ['番茄', '排骨', '鸡蛋', '青菜', '牛奶']" :key="q" type="button" class="chip" @click="pantryQuery = q">{{ q }}</button>
+            <button v-if="pantryQuery" class="chip" type="button" @click="pantryQuery = ''">✕ 清除</button>
           </div>
           <div class="pantry-feedback" aria-live="polite">
             <Transition name="duty-pop">
@@ -371,7 +375,22 @@ async function savePantry() {
               </span>
             </Transition>
           </div>
-          <div v-if="!shownPantryGroups.length && !pantryCustomCards.length" class="pantry-no-result tiny muted">没找到这个食材，可在下面「添加自定义食材」里加一个。</div>
+          <div v-if="!pantrySearching && !selectedPantryCards.length" class="pantry-no-result tiny muted">冰箱里还没食材。搜一个，或在下面自定义添加。</div>
+          <div v-if="pantrySearching && !shownPantryGroups.length && !pantryCustomCards.length" class="pantry-no-result tiny muted">没找到「{{ pantryQuery }}」，可在下面「添加自定义食材」里加一个。</div>
+          <div v-if="!pantrySearching && selectedPantryCards.length" class="pantry-section">
+            <div class="pantry-group-head">🧊 冰箱里已选（{{ selectedPantryCards.length }}）</div>
+            <div class="pantry-grid">
+              <button
+                v-for="p in selectedPantryCards" :key="p.name" type="button"
+                class="pantry-card active" @click="togglePantry(p.name)"
+                :aria-label="`从冰箱移除 ${p.name}`"
+              >
+                <span class="pantry-art" :style="{ background: p.tint }"><span class="pantry-art-icon">{{ p.icon }}</span></span>
+                <span class="pantry-card-name">{{ p.name }}</span>
+                <span class="pantry-check">✓</span>
+              </button>
+            </div>
+          </div>
           <div v-for="g in shownPantryGroups" :key="g.key" :id="'pantry-group-' + g.key" class="pantry-section">
             <div class="pantry-group-head" :style="{ borderColor: g.tint }">{{ g.label }}</div>
             <div class="pantry-grid">

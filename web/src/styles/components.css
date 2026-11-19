@@ -392,3 +392,78 @@ html.font-changing { transition: font-size 0.24s var(--ease); }
 @media (prefers-color-scheme: dark) {
   .dish-name-link mark { background: #6b5214; }
 }
+
+/* ---------- CSS 立体食材（无图片/无 emoji） ---------- */
+.food3d { position: relative; display: inline-block; width: 34px; height: 34px; transform-style: preserve-3d; }
+.food3d > span { position: absolute; display: block; }
+.f-shine { position: absolute; top: 14%; left: 18%; width: 26%; height: 20%; border-radius: 50%; background: rgba(255,255,255,.72); filter: blur(1px); }
+/* 球形果实 */
+.f-sphere { inset: 3px 2px 4px; border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, var(--c-l), var(--c) 55%, var(--c-d));
+  box-shadow: inset -4px -5px 8px rgba(0,0,0,.16), 1px 3px 4px rgba(0,0,0,.22); }
+.f-sphere .f-stem { top: -2px; left: 48%; width: 3px; height: 8px; border-radius: 2px; background: #6b7a3a; transform: rotate(9deg); }
+.f-sphere .f-leaf { top: 0; left: 57%; width: 12px; height: 6px; border-radius: 60% 0; background: #6fa03c; transform: rotate(-18deg); }
+/* 锥形根菜：胡萝卜 */
+.f-cone { bottom: 3px; left: 11px; width: 13px; height: 23px;
+  background: linear-gradient(100deg, #f7a24a, #e2761f 60%, #b85512);
+  clip-path: polygon(50% 0, 100% 18%, 62% 100%, 38% 100%, 0 18%);
+  filter: drop-shadow(1px 2px 2px rgba(0,0,0,.2)); }
+.f-cone::after { content: ''; position: absolute; inset: 0;
+  background: repeating-linear-gradient(105deg, transparent 0 5px, rgba(0,0,0,.08) 5px 6px); }
+.f-cone-leaf { top: -3px; left: 2px; width: 9px; height: 9px; border-radius: 50% 50% 0 50%; background: #5e9438; transform: rotate(-32deg); }
+.f-cone-leaf.b { left: 12px; transform: rotate(38deg); }
+/* 长条：黄瓜/茄子/玉米 */
+.f-long { top: 7px; left: 6px; width: 23px; height: 13px; border-radius: 40% 45% 45% 40%;
+  background: linear-gradient(160deg, var(--c-l), var(--c) 55%, var(--c-d));
+  transform: rotate(-24deg); box-shadow: inset -3px -3px 5px rgba(0,0,0,.16), 1px 2px 3px rgba(0,0,0,.2); }
+.f-long-tip { right: -2px; top: 3px; width: 6px; height: 6px; border-radius: 50%; background: var(--c-d); }
+/* 叶菜：层叠叶片 */
+.f-leafy { inset: 4px 3px; }
+.f-leaf-a, .f-leaf-b, .f-leaf-c { border-radius: 70% 10% 70% 10%; }
+.f-leaf-a { inset: 3px 8px 5px 6px; background: linear-gradient(140deg, #8dc45a, #4f8a2e); transform: rotate(-12deg); }
+.f-leaf-b { inset: 6px 5px 4px 10px; background: linear-gradient(140deg, #a9d873, #6aa33c); transform: rotate(20deg); }
+.f-leaf-c { inset: 1px 10px 7px 9px; width: 13px; background: linear-gradient(140deg, #c4e694, #7fb34c); transform: rotate(2deg); }
+/* 蛋 */
+.f-egg { inset: 3px 7px 2px; border-radius: 50% 50% 46% 46% / 60% 60% 40% 40%;
+  background: radial-gradient(circle at 34% 26%, #fffdf7, #f0e2c4 60%, #d8c39a);
+  box-shadow: inset -3px -4px 6px rgba(120,90,40,.2), 1px 2px 3px rgba(0,0,0,.18); }
+/* 鱼：梭形 + 尾 */
+.f-fish { top: 11px; left: 4px; width: 22px; height: 11px; border-radius: 60% 40% 45% 55%;
+  background: linear-gradient(160deg, #b9d6e2, #6f9fb8 60%, #47788f);
+  transform: rotate(-12deg); box-shadow: 1px 2px 3px rgba(0,0,0,.18); }
+.f-tail { right: -7px; top: 1px; width: 9px; height: 10px; background: #6f9fb8; clip-path: polygon(0 50%, 100% 0, 100% 100%); }
+.f-eye { left: 4px; top: 3px; width: 2.5px; height: 2.5px; border-radius: 50%; background: #223; }
+.f-fin { left: 10px; top: -3px; width: 8px; height: 6px; background: #8fb9cc; clip-path: polygon(0 100%, 50% 0, 100% 100%); }
+/* 虾：弯钩 */
+.f-shrimp { inset: 5px 6px 4px; border: 5px solid #f08a6a; border-left-color: transparent; border-bottom-color: #d76a4c;
+  border-radius: 50%; transform: rotate(35deg); box-shadow: 1px 2px 3px rgba(0,0,0,.16); }
+.f-shrimp .f-eye { left: -2px; top: -3px; width: 3px; height: 3px; background: #633; border-radius: 50%; }
+/* 肉块：大理石纹 */
+.f-meat { top: 8px; left: 5px; width: 24px; height: 18px; border-radius: 5px 8px 6px 7px;
+  background: linear-gradient(150deg, #d9665c, #b23a35 65%, #8e2a28);
+  box-shadow: inset -3px -3px 5px rgba(0,0,0,.18), 1px 2px 3px rgba(0,0,0,.2); }
+.f-fat { inset: 4px 6px; background: repeating-linear-gradient(48deg, transparent 0 4px, rgba(255,220,205,.55) 4px 6px); border-radius: 4px; }
+/* 蘑菇 */
+.f-mushroom { top: 6px; left: 5px; width: 23px; height: 15px; border-radius: 50% 50% 25% 25%;
+  background: radial-gradient(circle at 35% 25%, #d8c1a0, #9c7b58 70%, #74563c);
+  box-shadow: 1px 2px 3px rgba(0,0,0,.2); }
+.f-stem2 { bottom: -6px; left: 8px; width: 7px; height: 10px; border-radius: 0 0 4px 4px; background: linear-gradient(90deg, #e8dcc4, #c4b191); }
+/* 奶盒 */
+.f-carton { top: 4px; left: 9px; width: 17px; height: 26px; border-radius: 2px;
+  background: linear-gradient(100deg, #eef5f7, #cfe0e6 70%, #a9c2ca);
+  clip-path: polygon(0 18%, 50% 0, 100% 18%, 100% 100%, 0 100%); box-shadow: 1px 2px 3px rgba(0,0,0,.16); }
+.f-cap { top: 3px; left: 5px; width: 7px; height: 5px; border-radius: 2px; background: #5b8fa6; }
+/* 碗装主食 */
+.f-bowl { bottom: 3px; left: 3px; width: 28px; height: 16px; border-radius: 3px 3px 50% 50%;
+  background: linear-gradient(160deg, #fbf6ee, #ddd0bd); box-shadow: 1px 2px 3px rgba(0,0,0,.2); }
+.f-foodtop { top: -4px; left: 2px; width: 24px; height: 9px; border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #fffdf8, #e8e0cf); }
+/* 豆粒 */
+.f-beans { inset: 6px 5px; }
+.f-beans span { width: 9px; height: 9px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #d9e89a, #9ab34e); box-shadow: 1px 1px 2px rgba(0,0,0,.15); }
+.f-beans span:nth-child(1){left:0;top:2px} .f-beans span:nth-child(2){left:11px;top:0}
+.f-beans span:nth-child(3){left:4px;top:12px} .f-beans span:nth-child(4){left:16px;top:11px}
+/* 通用块 */
+.f-cube { top: 8px; left: 6px; width: 23px; height: 19px; border-radius: 5px;
+  background: linear-gradient(150deg, var(--c-l), var(--c) 60%, var(--c-d)); box-shadow: inset -3px -3px 5px rgba(0,0,0,.16), 1px 2px 3px rgba(0,0,0,.2); }
+@media (prefers-reduced-motion: reduce) { .food3d { transition: none; } }
