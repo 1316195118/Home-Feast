@@ -639,10 +639,10 @@ async function savePantry() {
                 <span class="pantry-card-name">{{ p.name }}</span>
                 <!-- 放了几天：7 天转黄、14 天转红 -->
                 <span
-                  v-if="daysInFridge(p.name) > 0"
+                  v-if="pantryAdded[p.name]"
                   class="pantry-age" :class="{ warn: daysInFridge(p.name) >= 7, old: daysInFridge(p.name) >= 14 }"
-                  :title="`放进冰箱第 ${daysInFridge(p.name)} 天`"
-                >{{ daysInFridge(p.name) }}天</span>
+                  :title="daysInFridge(p.name) > 0 ? `放进冰箱第 ${daysInFridge(p.name)} 天` : '今天放进冰箱的'"
+                >{{ daysInFridge(p.name) > 0 ? `${daysInFridge(p.name)}天` : '今天' }}</span>
                 <span class="pantry-check">✓</span>
               </button>
             </div>

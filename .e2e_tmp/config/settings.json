@@ -1,0 +1,42 @@
+{
+  "familyName": "小小家",
+  "hiddenCuisines": [],
+  "cuisineOrder": [
+    "sichuan",
+    "xinjiang",
+    "cantonese",
+    "shandong",
+    "dongbei",
+    "jiangsu",
+    "benbang",
+    "zhejiang",
+    "fujian",
+    "hunan",
+    "anhui",
+    "homestyle",
+    "soup",
+    "staple",
+    "cold",
+    "snack",
+    "breakfast",
+    "dessert",
+    "western"
+  ],
+  "meals": null,
+  "roster": {
+    "enabled": false,
+    "days": null
+  },
+  "pantry": [
+    "排骨",
+    "鸡蛋",
+    "牛奶",
+    "土豆"
+  ],
+  "pantryAdded": {
+    "土豆": "2026-11-19"
+  },
+  "autoBackup": true,
+  "backupKeep": 7,
+  "updatedAt": "2026-11-19T21:40:55+08:00"
+}

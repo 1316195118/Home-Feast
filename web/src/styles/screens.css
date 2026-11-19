@@ -1743,7 +1743,7 @@
 
 /* 批量点菜 */
 .multi-bar {
-  position: fixed; left: 50%; bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
+  position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px));
   transform: translateX(-50%);
   display: flex; align-items: center; gap: 10px;
   width: min(560px, calc(100% - 28px));
