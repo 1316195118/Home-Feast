@@ -1806,3 +1806,8 @@
 }
 @keyframes today-glow { from { box-shadow: 0 0 0 0 rgba(192,90,60,.18); } to { box-shadow: 0 0 0 6px rgba(192,90,60,0); } }
 @media (prefers-reduced-motion: reduce) { .week-day.is-today { animation: none; } }
+
+/* 配图清晰度卡片 */
+.image-choices { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; padding-top: 10px; }
+.image-choices .btn { padding: 5px 11px; }
+.sc-image .setting-meta { margin-top: 8px; }
