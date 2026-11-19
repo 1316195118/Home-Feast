@@ -3,8 +3,9 @@ import { inject, ref, computed, watch, onMounted, onUnmounted, nextTick } from '
 import DishCard from './DishCard.vue'
 import DishEditor from './DishEditor.vue'
 import PantryFridge from './PantryFridge.vue'
+import Food3D from './Food3D.vue'
 import DishDetail from './DishDetail.vue'
-import { isCuisineHidden, pantryGroups, pantryVisual, pantryMatches } from '../utils'
+import { isCuisineHidden, pantryGroups, pantryVisual, pantryMatches, foodShape } from '../utils'
 import { getRecipe } from '../recipes'
 import { useModalBehavior } from '../modal'
 
@@ -385,7 +386,7 @@ async function savePantry() {
                 class="pantry-card active" @click="togglePantry(p.name)"
                 :aria-label="`从冰箱移除 ${p.name}`"
               >
-                <span class="pantry-art" :style="{ background: p.tint }"><span class="pantry-art-icon">{{ p.icon }}</span></span>
+                <span class="pantry-art" :style="{ background: p.tint }"><Food3D :name="p.name" v-bind="foodShape(p.name)" /></span>
                 <span class="pantry-card-name">{{ p.name }}</span>
                 <span class="pantry-check">✓</span>
               </button>
@@ -400,7 +401,7 @@ async function savePantry() {
                 :aria-pressed="pantryDraft.has(p)" @click="togglePantry(p)"
               >
                 <span class="pantry-art" :style="{ background: pantryVisual(p).tint }">
-                  <span class="pantry-art-icon">{{ pantryVisual(p).icon }}</span>
+                  <Food3D :name="p" v-bind="foodShape(p)" />
                 </span>
                 <span class="pantry-card-name">{{ p }}</span>
                 <span v-if="pantryDraft.has(p)" class="pantry-check">✓</span>
@@ -416,7 +417,7 @@ async function savePantry() {
                 :aria-pressed="pantryDraft.has(p.name)" @click="togglePantry(p.name)"
               >
                 <span class="pantry-art" :style="{ background: p.tint }">
-                  <span class="pantry-art-icon">{{ p.icon }}</span>
+                  <Food3D :name="p.name" v-bind="foodShape(p.name)" />
                 </span>
                 <span class="pantry-card-name">{{ p.name }}</span>
                 <span v-if="pantryDraft.has(p.name)" class="pantry-check">✓</span>
