@@ -1715,3 +1715,17 @@
   .fridge-door:hover .door-face::after, .fridge.is-full .fridge-body { animation: none !important; }
   .fridge-food, .pantry-age { transition: none; }
 }
+
+/* 触屏拖动排序：长按后跟手移动，其余卡片平滑让位 */
+.pantry-card {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none; user-select: none;
+  transition: transform .18s var(--ease), box-shadow .18s var(--ease), border-color .18s var(--ease), opacity .18s var(--ease);
+}
+.pantry-card.is-dragging {
+  z-index: 6; opacity: .92;
+  box-shadow: 0 10px 22px rgba(80,60,40,.28);
+  border-color: var(--brand);
+}
+.pantry-card[draggable="true"] { touch-action: pan-y; }
+@media (prefers-reduced-motion: reduce) { .pantry-card { transition: none; } }
