@@ -1731,3 +1731,78 @@
 }
 .pantry-card[draggable="true"] { touch-action: pan-y; }
 @media (prefers-reduced-motion: reduce) { .pantry-card { transition: none; } }
+
+/* 购物清单跨天记忆：历史勾选半透明置灰，标「昨天买过」 */
+.shopping-item.was-bought { opacity: .62; }
+.shopping-item.was-bought .shopping-name { text-decoration: line-through; text-decoration-thickness: 1px; text-decoration-color: var(--line-strong); }
+.shopping-before {
+  flex: none; padding: 1px 6px; border-radius: 999px;
+  font-size: .6rem; font-weight: 700; color: #8a6a2c;
+  background: #f6ecd2; border: 1px solid #e6d4a0;
+}
+
+/* 批量点菜 */
+.multi-bar {
+  position: fixed; left: 50%; bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  display: flex; align-items: center; gap: 10px;
+  width: min(560px, calc(100% - 28px));
+  padding: 10px 14px; border-radius: 999px; z-index: var(--z-dropdown);
+  background: var(--surface); border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-lg);
+}
+.multi-count { font-size: .85rem; font-weight: 700; color: var(--ink-soft); }
+.multi-count b { color: var(--brand); }
+.dish-card.is-multi { cursor: pointer; }
+.dish-card.is-multi .dish-photo { cursor: pointer; }
+.dish-card.is-multi-picked { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: var(--radius); }
+.dish-card.is-multi-picked .dish-photo::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  background: rgba(192, 90, 60, .16);
+}
+.multi-check {
+  position: absolute; top: 8px; left: 8px; z-index: 3;
+  width: 26px; height: 26px; display: grid; place-items: center;
+  border-radius: 50%; border: 2px solid #fff;
+  background: var(--surface); color: var(--brand);
+  font-size: .86rem; font-weight: 900; cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,.25);
+}
+.is-multi-picked .multi-check { background: var(--brand); color: #fff; }
+
+/* 本月点菜 TOP 榜 */
+.top-head { font-size: .9rem; font-weight: 800; color: var(--ink); margin-bottom: 10px; display: flex; align-items: baseline; gap: 8px; }
+.top-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.top-list li { display: flex; align-items: center; gap: 9px; }
+.top-rank {
+  width: 20px; height: 20px; flex: none; display: grid; place-items: center;
+  border-radius: 6px; font-size: .68rem; font-weight: 900; color: var(--muted);
+  background: var(--paper-deep);
+}
+.top-rank.top-1 { color: #7a5a10; background: #f5d98c; }
+.top-rank.top-2 { color: #5d6570; background: #d9dde3; }
+.top-rank.top-3 { color: #7a4a22; background: #e8c4a0; }
+.top-name { flex: none; min-width: 74px; max-width: 120px; font-size: .82rem; font-weight: 700;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.top-bar { flex: 1; height: 8px; border-radius: 4px; background: var(--paper-deep); overflow: hidden; }
+.top-bar-fill {
+  display: block; height: 100%; border-radius: 4px;
+  background: linear-gradient(90deg, var(--brand-soft), var(--brand));
+  animation: top-grow .7s var(--ease-out) backwards;
+}
+@keyframes top-grow { from { width: 0; } }
+.top-count { flex: none; font-size: .72rem; font-weight: 800; color: var(--brand-dark); }
+@media (prefers-reduced-motion: reduce) { .top-bar-fill { animation: none; } }
+
+/* 周菜单：今天这一行高亮 */
+.week-day.is-today {
+  background: var(--brand-soft); border-color: var(--brand);
+  border-radius: var(--radius-sm); padding: 8px 10px; margin: 0 -6px;
+  animation: today-glow 1.6s var(--ease) infinite alternate;
+}
+.week-today {
+  margin-left: auto; padding: 1px 8px; border-radius: 999px;
+  font-size: .62rem; font-weight: 900; color: #fff; background: var(--brand);
+}
+@keyframes today-glow { from { box-shadow: 0 0 0 0 rgba(192,90,60,.18); } to { box-shadow: 0 0 0 6px rgba(192,90,60,0); } }
+@media (prefers-reduced-motion: reduce) { .week-day.is-today { animation: none; } }

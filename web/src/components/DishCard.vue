@@ -4,8 +4,8 @@ import { dishImage, cuisineName, cuisineIcon, spicyText, artStyle, avoidConflict
 import { getRecipe } from '../recipes'
 import { sparkleFromEvent, celebrate, vibrate } from '../feedback'
 
-const props = defineProps({ dish: { type: Object, required: true }, highlight: { type: String, default: '' } })
-defineEmits(['edit', 'open'])
+const props = defineProps({ dish: { type: Object, required: true }, highlight: { type: String, default: '' }, multi: { type: Boolean, default: false }, multiPicked: { type: Boolean, default: false } })
+defineEmits(['edit', 'open', 'multi-toggle'])
 const { state, actions, pending } = inject('app')
 
 const image = computed(() => dishImage(props.dish, state.cuisines, null, 'thumb'))
@@ -31,11 +31,17 @@ const avoidHits = computed(() => {
 </script>
 
 <template>
-  <article class="dish-card">
+  <article class="dish-card" :class="{ 'is-multi': multi, 'is-multi-picked': multiPicked }">
+    <button
+      v-if="multi" class="multi-check" type="button"
+      :aria-label="multiPicked ? `取消选择 ${dish.name}` : `选择 ${dish.name}`"
+      @click.stop="$emit('multi-toggle', dish)"
+    >{{ multiPicked ? '✓' : '' }}</button>
     <div
       class="dish-photo" role="button" tabindex="0" :aria-label="`查看 ${dish.name} 的做法`"
-      @click="$emit('open', dish)" @keydown.enter="$emit('open', dish)"
-      @keydown.space.prevent="$emit('open', dish)"
+      @click="multi ? $emit('multi-toggle', dish) : $emit('open', dish)"
+      @keydown.enter="multi ? $emit('multi-toggle', dish) : $emit('open', dish)"
+      @keydown.space.prevent="multi ? $emit('multi-toggle', dish) : $emit('open', dish)"
     >
       <img :src="image" :alt="dish.name" :style="artStyle(dish, state.dishes)" loading="lazy" decoding="async" class="img-fade" />
       <button class="dish-recipe" title="看做法" aria-label="看做法" @click.stop="$emit('open', dish)"><span class="badge-ico">📖</span></button>

@@ -8,6 +8,19 @@ import { shake } from '../feedback'
 const { state, actions, confirmDialog, pending } = inject('app')
 
 // 最近 14 天掌勺热力：一眼看出谁干得多（纯本机计算，不新增接口）
+// 本月点菜 TOP10：按订单聚合，取前十
+const monthTop = computed(() => {
+  const now = new Date()
+  const prefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  const counter = {}
+  for (const p of state.plans || []) {
+    if (!String(p.date || '').startsWith(prefix)) continue
+    for (const o of p.orders || []) counter[o.dishName] = (counter[o.dishName] || 0) + 1
+  }
+  return Object.entries(counter).sort((a, b) => b[1] - a[1]).slice(0, 10)
+})
+const maxTop = computed(() => monthTop.value[0]?.[1] || 1)
+
 const heatDays = computed(() => {
   const out = []
   const base = new Date(`${state.today}T12:00:00`)
@@ -198,6 +211,18 @@ async function savePin() {
       <div class="heat-days">
         <span v-for="d in heatDays" :key="d.key">{{ d.day }}</span>
       </div>
+    </div>
+
+    <div v-if="monthTop.length" class="panel">
+      <div class="top-head">🏆 本月点菜 TOP{{ monthTop.length }} <span class="tiny muted">按本月的点菜记录统计</span></div>
+      <ol class="top-list">
+        <li v-for="(t, i) in monthTop" :key="t[0]">
+          <span class="top-rank" :class="{ 'top-1': i === 0, 'top-2': i === 1, 'top-3': i === 2 }">{{ i + 1 }}</span>
+          <span class="top-name">{{ t[0] }}</span>
+          <span class="top-bar"><span class="top-bar-fill" :style="{ width: `${Math.max(8, (t[1] / maxTop) * 100)}%` }"></span></span>
+          <span class="top-count">{{ t[1] }} 次</span>
+        </li>
+      </ol>
     </div>
 
     <div class="panel">

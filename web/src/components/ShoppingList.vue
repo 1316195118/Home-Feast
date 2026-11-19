@@ -34,38 +34,43 @@ const enriched = computed(() => list.value.map((it) => ({
 // 勾选过的沉到组尾，买过的不再挡视线；checked 在下方定义，computed 惰性求值没问题
 const groups = computed(() => shoppingGroups(enriched.value).map((g) => {
   const items = [...g.items]
-  items.sort((a, b) => Number(checked.value.has(a.text)) - Number(checked.value.has(b.text)))
+  items.sort((a, b) => Number(checkedToday(a.text)) - Number(checkedToday(b.text)) || Number(checkedBefore(a.text)) - Number(checkedBefore(b.text)))
   return { ...g, items }
 }))
-const STORE_KEY = `fm.shopping.${state.today}`
+// 跨天记忆：勾选状态存「食材 → 勾选日期」，不随清单日期重置。
+// 今天勾的照常置灰沉底；昨天（更早）勾过的标「昨天买过」，知道最近买过什么。
+const STORE_KEY = 'fm.shopping.checkedMap'
 
 function readChecked() {
-  try { return new Set(JSON.parse(localStorage.getItem(STORE_KEY) || '[]')) } catch { return new Set() }
+  try { return new Map(Object.entries(JSON.parse(localStorage.getItem(STORE_KEY) || '{}'))) } catch { return new Map() }
 }
 const checked = ref(readChecked())
+// 今天勾的才算「已买」；历史勾选只用于提示
+const checkedToday = (t) => checked.value.get(t) === state.today
+const checkedBefore = (t) => !!checked.value.has(t) && checked.value.get(t) !== state.today
 function persist() {
-  try { localStorage.setItem(STORE_KEY, JSON.stringify([...checked.value])) } catch { /* 隐私模式忽略 */ }
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(Object.fromEntries(checked.value))) } catch { /* 隐私模式忽略 */ }
 }
 function toggle(text) {
-  const next = new Set(checked.value)
-  if (next.has(text)) next.delete(text)
-  else next.add(text)
+  const next = new Map(checked.value)
+  if (checkedToday(text)) next.delete(text)
+  else next.set(text, state.today)
   checked.value = next
   persist()
 }
 // 按超市区域整组勾选；已全选时再点即整组取消
 function toggleGroup(items) {
   const next = new Set(checked.value)
-  const allChecked = items.every((x) => next.has(x.text))
+  const allChecked = items.every((x) => checkedToday(x.text))
   for (const x of items) {
     if (allChecked) next.delete(x.text)
-    else next.add(x.text)
+    else next.set(x.text, state.today)
   }
   checked.value = next
   persist()
 }
 function groupAllChecked(items) {
-  return items.length > 0 && items.every((x) => checked.value.has(x.text))
+  return items.length > 0 && items.every((x) => checkedToday(x.text))
 }
 function clearChecked() {
   checked.value = new Set()
@@ -74,7 +79,7 @@ function clearChecked() {
 async function copyList() {
   const lines = groups.value.flatMap((g) => g.items.length
     ? [`【${g.key}】`, ...g.items.map(
-        (x) => `${checked.value.has(x.text) ? '☑' : '☐'} ${x.inPantry ? '🧊 ' : ''}${x.text}${x.amount ? ` · ${x.amount}` : ''}${x.count > 1 ? ` ×${x.count}` : ''}`,
+        (x) => `${checkedToday(x.text) ? '☑' : checkedBefore(x.text) ? '◔' : '☐'} ${x.inPantry ? '🧊 ' : ''}${x.text}${x.amount ? ` · ${x.amount}` : ''}${x.count > 1 ? ` ×${x.count}` : ''}`,
       )]
     : [])
   const text = `家里吃点啥 · ${state.today} 购物清单\n${lines.join('\n')}`
@@ -258,10 +263,11 @@ async function saveToAlbum() {
             </div>
             <label
               v-for="item in g.items" :key="item.text" class="shopping-item"
-              :class="{ done: checked.has(item.text), 'has-pantry': item.inPantry }"
+              :class="{ done: checkedToday(item.text), 'was-bought': checkedBefore(item.text), 'has-pantry': item.inPantry }"
             >
-              <input type="checkbox" :checked="checked.has(item.text)" @change="toggle(item.text)" />
+              <input type="checkbox" :checked="checkedToday(item.text)" @change="toggle(item.text)" />
               <span class="shopping-name">{{ item.text }}</span>
+              <span v-if="checkedBefore(item.text) && !checkedToday(item.text)" class="shopping-before" :title="`${checked.get(item.text)} 买过，今天点菜后又出现在清单`">昨天买过</span>
               <span v-if="item.inPantry" class="shopping-pantry" title="冰箱里已有，不用买">🧊 冰箱有</span>
               <span v-if="item.amount" class="shopping-amount">{{ item.amount }}</span>
               <span v-if="item.count > 1" class="shopping-count">×{{ item.count }}</span>

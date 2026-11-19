@@ -172,10 +172,11 @@ async function saveToAlbum() {
       </div>
 
       <div v-if="week.length" class="week-list">
-        <div v-for="day in week" :key="day.date" class="week-day">
+        <div v-for="day in week" :key="day.date" class="week-day" :class="{ 'is-today': day.date === state.today }">
           <div class="week-day-head">
             <span class="week-date">{{ day.label }}</span>
             <span class="week-weekday">{{ day.weekday }}</span>
+            <span v-if="day.date === state.today" class="week-today">今天</span>
           </div>
           <div class="week-dishes">
             <span
