@@ -198,6 +198,50 @@ function onDragOver(name, e) {
   dragName.value = name
 }
 function onDragEnd() { dragName.value = ''; scheduleSavePantry() }
+
+// 触屏拖动排序：HTML5 drag 在 iOS/安卓 WebView 不触发，用 pointer 事件补一套。
+// 长按 300ms 激活 → 跟手移动 → 手指下的卡片即目标位 → 松手保存。
+const touchDrag = ref(null) // { name, startX, startY, dx, dy }
+let pressTimer = null
+let downInfo = null
+function tDown(name, e) {
+  if (e.pointerType === 'mouse') return
+  downInfo = { name, x: e.clientX, y: e.clientY }
+  clearTimeout(pressTimer)
+  pressTimer = setTimeout(() => {
+    touchDrag.value = { name, startX: e.clientX, startY: e.clientY, dx: 0, dy: 0 }
+    navigator.vibrate?.(14)
+  }, 300)
+}
+function tMove(e) {
+  if (!downInfo) return
+  if (!touchDrag.value) {
+    if (Math.hypot(e.clientX - downInfo.x, e.clientY - downInfo.y) > 8) clearTimeout(pressTimer)
+    return
+  }
+  if (e.cancelable) e.preventDefault()
+  touchDrag.value = { ...touchDrag.value, dx: e.clientX - touchDrag.value.startX, dy: e.clientY - touchDrag.value.startY }
+  const hit = document.elementFromPoint(e.clientX, e.clientY)?.closest?.('[data-pantry-name]')
+  const target = hit?.getAttribute('data-pantry-name')
+  if (target && target !== touchDrag.value.name) {
+    const list = [...pantryDraft.value]
+    const fi = list.indexOf(touchDrag.value.name)
+    const ti = list.indexOf(target)
+    if (fi >= 0 && ti >= 0 && fi !== ti) {
+      list.splice(ti, 0, list.splice(fi, 1)[0])
+      pantryDraft.value = new Set(list)
+    }
+  }
+}
+function tUp() {
+  clearTimeout(pressTimer)
+  if (touchDrag.value) scheduleSavePantry()
+  touchDrag.value = null
+  downInfo = null
+}
+const touchStyle = (name) => (touchDrag.value?.name === name
+  ? { transform: `translate(${touchDrag.value.dx}px, ${touchDrag.value.dy}px) scale(1.045)`, zIndex: 6 }
+  : null)
 const pantryCustom = ref('')
 const pantryQuery = ref('')
 useModalBehavior(() => { pantryOpen.value = false }, pantryRoot, pantryOpen)
@@ -530,12 +574,26 @@ async function savePantry() {
             <div class="pantry-grid">
               <button
                 v-for="p in selectedPantryCards" :key="p.name" type="button"
-                class="pantry-card active" @click="togglePantry(p.name)"
-                :style="{ '--group-tint': p.tint }"
-                :aria-label="`从冰箱移除 ${p.name}`"
+                class="pantry-card active"
+                :class="{ 'is-dragging': dragName === p.name || touchDrag?.name === p.name }"
+                draggable="true"
+                :data-pantry-name="p.name"
+                :style="[{ '--group-tint': p.tint }, touchStyle(p.name)]"
+                :aria-label="`从冰箱移除 ${p.name}，可拖动排序`"
+                @click="touchDrag?.name === p.name ? null : togglePantry(p.name)"
+                @dragstart="onDragStart(p.name)" @dragover="onDragOver(p.name, $event)"
+                @dragend="onDragEnd" @drop.prevent="onDragEnd"
+                @pointerdown="tDown(p.name, $event)" @pointermove="tMove($event)"
+                @pointerup="tUp" @pointercancel="tUp"
               >
                 <span class="pantry-art" :style="{ background: p.tint }"><Food3D :name="p.name" v-bind="foodShape(p.name)" /></span>
                 <span class="pantry-card-name">{{ p.name }}</span>
+                <!-- 放了几天：7 天转黄、14 天转红 -->
+                <span
+                  v-if="daysInFridge(p.name) > 0"
+                  class="pantry-age" :class="{ warn: daysInFridge(p.name) >= 7, old: daysInFridge(p.name) >= 14 }"
+                  :title="`放进冰箱第 ${daysInFridge(p.name)} 天`"
+                >{{ daysInFridge(p.name) }}天</span>
                 <span class="pantry-check">✓</span>
               </button>
             </div>
