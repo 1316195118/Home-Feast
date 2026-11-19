@@ -172,6 +172,32 @@ function editFromDetail(dish) {
 const pantryOpen = ref(false)
 const pantryRoot = ref(null)
 const pantryDraft = ref(new Set(state.settings.pantry || []))
+// 食材 → 加入日期（YYYY-MM-DD），用于「放了几天」提醒
+const pantryAdded = ref({ ...(state.settings.pantryAdded || {}) })
+const todayStr = () => state.today || new Date().toISOString().slice(0, 10)
+function daysInFridge(name) {
+  const d = pantryAdded.value[name]
+  if (!d) return 0
+  const t = new Date(`${todayStr()}T12:00:00`).getTime()
+  const s0 = new Date(`${d}T12:00:00`).getTime()
+  if (!Number.isFinite(t) || !Number.isFinite(s0)) return 0
+  return Math.max(0, Math.round((t - s0) / 86400000))
+}
+// 拖动排序：拖动已选卡片调整顺序，常用的放前面
+const dragName = ref('')
+function onDragStart(name) { dragName.value = name }
+function onDragOver(name, e) {
+  e.preventDefault()
+  const from = dragName.value
+  if (!from || from === name) return
+  const list = [...pantryDraft.value]
+  const fi = list.indexOf(from), ti = list.indexOf(name)
+  if (fi < 0 || ti < 0) return
+  list.splice(ti, 0, list.splice(fi, 1)[0])
+  pantryDraft.value = new Set(list)
+  dragName.value = name
+}
+function onDragEnd() { dragName.value = ''; scheduleSavePantry() }
 const pantryCustom = ref('')
 const pantryQuery = ref('')
 useModalBehavior(() => { pantryOpen.value = false }, pantryRoot, pantryOpen)
@@ -196,6 +222,7 @@ function jumpToGroup(key) {
 }
 function clearPantry() {
   pantryDraft.value = new Set()
+  pantryAdded.value = {}
   scheduleSavePantry()
 }
 
@@ -209,6 +236,7 @@ const pantryCustomCards = computed(() => {
 })
 function openPantry() {
   pantryDraft.value = new Set(state.settings.pantry || [])
+  pantryAdded.value = { ...(state.settings.pantryAdded || {}) }
   pantryCustom.value = ''
   pantryQuery.value = ''
   pantryOpen.value = true
@@ -219,16 +247,23 @@ let pantryTimer = null
 function scheduleSavePantry() {
   clearTimeout(pantryTimer)
   pantryTimer = setTimeout(() => {
-    actions.saveSettings({ pantry: [...pantryDraft.value] })
+    actions.saveSettings({ pantry: [...pantryDraft.value], pantryAdded: pantryAdded.value })
   }, 500)
 }
 onUnmounted(() => clearTimeout(pantryTimer))
 
 function togglePantry(name) {
   const next = new Set(pantryDraft.value)
-  if (next.has(name)) next.delete(name)
-  else next.add(name)
+  const added = { ...pantryAdded.value }
+  if (next.has(name)) {
+    next.delete(name)
+    delete added[name]
+  } else {
+    next.add(name)
+    added[name] = todayStr() // 新放的记今天，用于保质期提醒
+  }
   pantryDraft.value = next
+  pantryAdded.value = added
   scheduleSavePantry()
 }
 // 实时反馈：当前勾选的食材能匹配到多少道菜，让用户知道选了有用
@@ -238,6 +273,53 @@ const pantryHitCount = computed(() => {
     pantryMatches(d, [...pantryDraft.value], recipeIngredients).count > 0,
   ).length
 })
+// 语音输入：一句话说出冰箱里的东西（Chrome/Edge 支持，Safari/iOS 部分支持）
+const listening = ref(false)
+const speechSupported = typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
+let recognizer = null
+function startVoice() {
+  if (!speechSupported) {
+    actions.toast('这个浏览器不支持语音，可以手打「土豆、番茄、鸡蛋」批量添加', 'warn')
+    return
+  }
+  if (listening.value) { recognizer?.stop(); return }
+  const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition
+  recognizer = new Ctor()
+  recognizer.lang = 'zh-CN'
+  recognizer.interimResults = false
+  recognizer.maxAlternatives = 1
+  listening.value = true
+  recognizer.onresult = (e) => {
+    const text = e.results?.[0]?.[0]?.transcript || ''
+    if (text) addBatchPantry(text)
+  }
+  recognizer.onerror = () => { listening.value = false; actions.toast('没听清，再说一次或直接手打', 'error') }
+  recognizer.onend = () => { listening.value = false }
+  try { recognizer.start() } catch { listening.value = false }
+}
+onUnmounted(() => { try { recognizer?.abort() } catch { /* 忽略 */ } })
+
+// 批量添加：支持「土豆、番茄、鸡蛋」「土豆 番茄 鸡蛋」「土豆和番茄」等
+function addBatchPantry(text) {
+  const words = String(text || '')
+    .split(/[、,，;；\s]+|和|还有|以及/)
+    .map((x) => x.trim().replace(/^(冰箱里|有|还?有)/, '').trim())
+    .filter((x) => x && x.length <= 12)
+  if (!words.length) return
+  const next = new Set(pantryDraft.value)
+  const added = { ...pantryAdded.value }
+  for (const w of words) {
+    // 去掉「两斤」「一把」这类数量词，只留食材名
+    const name = w.replace(/[0-9一二三四五六七八九十半两]+(斤|个|把|根|颗|头|片|块|袋|盒|瓶)$/g, '').trim() || w
+    next.add(name)
+    if (!added[name]) added[name] = todayStr()
+  }
+  pantryDraft.value = next
+  pantryAdded.value = added
+  scheduleSavePantry()
+  actions.toast(`已放进冰箱：${words.join('、')}`, 'success')
+}
+
 function addCustomPantry() {
   const words = pantryCustom.value.split(/[、,，\s]+/).map((s) => s.trim()).filter(Boolean)
   const next = new Set(pantryDraft.value)
@@ -432,11 +514,18 @@ async function savePantry() {
           </div>
           <div class="pantry-add-row">
             <input
-              v-model="pantryCustom" class="input" maxlength="60"
-              placeholder="自定义食材，例如：排骨、玉米…"
-              aria-label="自定义食材" @keyup.enter="addCustomPantry"
+              v-model="pantryCustom" class="input" maxlength="80"
+              placeholder="一句话批量添加：土豆、番茄、鸡蛋…"
+              aria-label="批量添加食材"
+              @keyup.enter="addBatchPantry(pantryCustom); pantryCustom = ''"
             />
-            <button class="btn btn-soft btn-sm" @click="addCustomPantry">添加</button>
+            <button
+              class="btn btn-sm mic-btn" :class="{ 'is-listening': listening }"
+              :disabled="!speechSupported"
+              :title="speechSupported ? '说出冰箱里的食材，一句多个' : '当前浏览器不支持语音'"
+              @click="startVoice"
+            >{{ listening ? '🎙️ 听…' : '🎤' }}</button>
+            <button class="btn btn-soft btn-sm" @click="addBatchPantry(pantryCustom); pantryCustom = ''">添加</button>
           </div>
           <div class="modal-foot">
             <span class="tiny muted">✓ 勾选后自动保存，首页推荐即时更新</span>

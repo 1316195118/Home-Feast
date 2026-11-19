@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 	"strings"
+	"time"
 
 	"familymenu/internal/store"
 )
@@ -15,6 +16,7 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 		Meals          *[]store.MealSlot `json:"meals"`
 		Roster         *store.Roster     `json:"roster"`  // 每周掌勺 / 洗碗排班
 		Pantry         *[]string         `json:"pantry"`  // 冰箱现有食材
+		PantryAdded    *map[string]string `json:"pantryAdded"` // 食材加入日期
 		AutoBackup     *bool             `json:"autoBackup"`
 		BackupKeep     *int              `json:"backupKeep"`
 		AccessCode     *string           `json:"accessCode"` // 空串 = 关闭口令
@@ -97,6 +99,25 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 			k = 60
 		}
 		v.BackupKeep = k
+	}
+	if in.PantryAdded != nil {
+		// 只保留合法日期（YYYY-MM-DD），最多 200 项，避免脏数据把设置撑大
+		clean := make(map[string]string, len(*in.PantryAdded))
+		for k, v := range *in.PantryAdded {
+			name := stripControl(strings.TrimSpace(k))
+			if name == "" || len(name) > 20 {
+				continue
+			}
+			date := strings.TrimSpace(v)
+			if _, err := time.Parse("2006-01-02", date); err != nil {
+				continue
+			}
+			if len(clean) >= 200 {
+				break
+			}
+			clean[name] = date
+		}
+		v.PantryAdded = clean
 	}
 	if in.Pantry != nil {
 		// 冰箱食材：走统一的 trimmed，顺带剥离控制字符（只做 TrimSpace 会漏 NUL）

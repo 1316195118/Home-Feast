@@ -105,7 +105,13 @@ const openAll = () => { leftOpen.value = true; rightOpen.value = true; drawerOpe
                       <Food3D :name="food" v-bind="shapeOf(food)" />
                       <span class="fridge-food-name">{{ food }}</span>
                     </div>
-                    <span v-if="!layer.foods.length" class="fridge-layer-empty">空</span>
+                    <span v-if="!layer.foods.length" class="fridge-layer-empty">
+                      <span class="empty-doodle" aria-hidden="true">
+                        <span class="doodle-shelf"></span>
+                        <span class="doodle-dot a"></span><span class="doodle-dot b"></span>
+                      </span>
+                      <span class="empty-text">{{ layer.key === 'upper' ? '上层还空着' : '这里也空着' }}</span>
+                    </span>
                   </div>
                 </div>
                 <div class="fridge-shelf"></div>
@@ -142,7 +148,13 @@ const openAll = () => { leftOpen.value = true; rightOpen.value = true; drawerOpe
                     <Food3D :name="food" v-bind="shapeOf(food)" />
                     <span class="fridge-food-name">{{ food }}</span>
                   </div>
-                  <span v-if="!lowerItems.length" class="fridge-layer-empty">空</span>
+                  <span v-if="!lowerItems.length" class="fridge-layer-empty">
+                    <span class="empty-doodle big" aria-hidden="true">
+                      <span class="doodle-shelf"></span>
+                      <span class="doodle-dot a"></span><span class="doodle-dot b"></span>
+                    </span>
+                    <span class="empty-text">抽屉空空的</span>
+                  </span>
                 </div>
               </div>
             </div>
