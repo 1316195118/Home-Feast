@@ -8,9 +8,12 @@ const props = defineProps({
   items: { type: Array, default: () => [] },
   visualOf: { type: Function, required: true },
   hitCount: { type: Number, default: 0 },
+  daysOf: { type: Function, default: () => 0 },      // 放进冰箱多少天，用于新鲜度衰减
+  dishCountOf: { type: Function, default: () => 0 }, // 每样食材能被多少道菜用到
+  drop: { type: Object, default: null },             // 外部投递 { name, x, y, t }
 })
+const emit = defineEmits(['sticker', 'food-click'])
 
-// 精确分层：按预设分组归属，不靠名字正则
 const GROUP_LAYER = { meat: 'upper', seafood: 'upper', veg: 'middle', mushroom: 'middle', staple: 'lower', fruit: 'lower', dairy: 'lower' }
 const LAYER_OF_NAME = (() => {
   const map = {}
@@ -19,31 +22,45 @@ const LAYER_OF_NAME = (() => {
 })()
 const shapeOf = (name) => foodShape(name)
 const layerOf = (name) => LAYER_OF_NAME[name] || 'middle'
-
 const upperItems = computed(() => props.items.filter((n) => layerOf(n) === 'upper'))
 const middleItems = computed(() => props.items.filter((n) => layerOf(n) === 'middle'))
 const lowerItems = computed(() => props.items.filter((n) => layerOf(n) === 'lower'))
 
-// 视角：all 全看 / cold 只高亮冷藏 / freeze 只高亮冷冻。旋钮点击循环。
+// 新鲜度：7 天起发蔫、14 天更明显
+function freshness(name) {
+  const d = props.daysOf(name) || 0
+  if (d >= 14) return 'stale'
+  if (d >= 7) return 'aging'
+  return ''
+}
+
+// 视角切换
 const VIEWS = ['all', 'cold', 'freeze']
 const view = ref('all')
 const viewLabel = computed(() => ({ all: '全部', cold: '冷藏', freeze: '冷冻' })[view.value])
-function cycleView() {
-  view.value = VIEWS[(VIEWS.indexOf(view.value) + 1) % VIEWS.length]
-}
+function cycleView() { view.value = VIEWS[(VIEWS.indexOf(view.value) + 1) % VIEWS.length] }
 const dimUpper = computed(() => view.value === 'freeze')
 const dimLower = computed(() => view.value === 'cold')
 
 const leftOpen = ref(true), rightOpen = ref(true), drawerOpen = ref(true)
 const landed = ref('')
 const mistOn = ref(false)
-let timer = null, mistTimer = null
+const fullPulse = ref(false)
+let timer = null, mistTimer = null, fullTimer = null
 
 function puffMist() {
   mistOn.value = true
   clearTimeout(mistTimer)
   mistTimer = setTimeout(() => { mistOn.value = false }, 1200)
 }
+// 放满 12 样以上时轻微"吃力"闪一下
+watch(() => props.items.length, (n, p) => {
+  if (n >= 12 && n > (p || 0)) {
+    fullPulse.value = true
+    clearTimeout(fullTimer)
+    fullTimer = setTimeout(() => { fullPulse.value = false }, 900)
+  }
+})
 watch(() => props.items, (next, prev) => {
   const added = next.find((x) => !(prev || []).includes(x))
   if (added) {
@@ -53,25 +70,71 @@ watch(() => props.items, (next, prev) => {
     if (!leftOpen.value && !rightOpen.value) { leftOpen.value = true; rightOpen.value = true; puffMist() }
   }
 })
-onUnmounted(() => { clearTimeout(timer); clearTimeout(mistTimer) })
+
+// 飞入轨迹：从点击的卡片沿弧线飞到冰箱对应层
+const fridgeEl = ref(null)
+const flies = ref([])
+let flyId = 0
+watch(() => props.drop, (d) => {
+  if (!d || !fridgeEl.value) return
+  const box = fridgeEl.value.getBoundingClientRect()
+  const target = layerOf(d.name)
+  const ty = target === 'upper' ? box.top + box.height * 0.26
+    : target === 'middle' ? box.top + box.height * 0.48
+      : box.top + box.height * 0.84
+  const tx = box.left + box.width * 0.5
+  const id = ++flyId
+  flies.value = [...flies.value, {
+    id, name: d.name,
+    path: `M ${d.x}px ${d.y}px Q ${(d.x + tx) / 2}px ${Math.min(d.y, ty) - 90}px ${tx}px ${ty}px`,
+  }]
+  setTimeout(() => { flies.value = flies.value.filter((f) => f.id !== id) }, 820)
+})
+const flyStyle = (f) => ({ offsetPath: `path('${f.path}')` })
+
+onUnmounted(() => { clearTimeout(timer); clearTimeout(mistTimer); clearTimeout(fullTimer) })
+
+// 层架反光跟随鼠标
+const glare = ref({ x: 50, y: 30 })
+function onMove(e) {
+  if (!fridgeEl.value) return
+  const b = fridgeEl.value.getBoundingClientRect()
+  glare.value = {
+    x: Math.max(0, Math.min(100, ((e.clientX - b.left) / b.width) * 100)),
+    y: Math.max(0, Math.min(100, ((e.clientY - b.top) / b.height) * 100)),
+  }
+}
 
 function toggleDoor(side) {
   if (side === 'left') leftOpen.value = !leftOpen.value
   else rightOpen.value = !rightOpen.value
-  if (leftOpen.value || rightOpen.value) puffMist()
+  if (leftOpen.value || rightOpen.value) { puffMist(); emit('sticker', 'ding') }
 }
 function toggleDrawer() {
   drawerOpen.value = !drawerOpen.value
-  if (drawerOpen.value) puffMist()
+  if (drawerOpen.value) { puffMist(); emit('sticker', 'ding') }
 }
-const openAll = () => { leftOpen.value = true; rightOpen.value = true; drawerOpen.value = true; puffMist() }
+const openAll = () => {
+  leftOpen.value = true; rightOpen.value = true; drawerOpen.value = true
+  puffMist(); emit('sticker', 'ding')
+}
 </script>
 
 <template>
   <div class="fridge-stage">
-    <div class="fridge-scene">
-      <div class="fridge" :class="{ 'view-cold': view === 'cold', 'view-freeze': view === 'freeze' }">
-        <!-- 上半：双开门冷藏室 -->
+    <!-- 飞行中的食材：从卡片弧线飞进冰箱 -->
+    <div class="fly-host" aria-hidden="true">
+      <span v-for="f in flies" :key="f.id" class="flying-food" :style="flyStyle(f)">
+        <Food3D :name="f.name" v-bind="shapeOf(f.name)" />
+      </span>
+    </div>
+
+    <div class="fridge-scene" @mousemove="onMove" @mouseleave="glare = { x: 50, y: 30 }">
+      <div
+        ref="fridgeEl" class="fridge"
+        :class="{ 'view-cold': view === 'cold', 'view-freeze': view === 'freeze', 'is-full': fullPulse }"
+        :style="{ '--glare-x': glare.x + '%', '--glare-y': glare.y + '%' }"
+      >
         <div class="fridge-upper" :class="{ 'is-dim': dimUpper }">
           <div class="fridge-body">
             <div class="fridge-top">
@@ -84,6 +147,7 @@ const openAll = () => { leftOpen.value = true; rightOpen.value = true; drawerOpe
             </div>
             <div class="fridge-cavity">
               <div class="fridge-glow"></div>
+              <div class="fridge-glare"></div>
               <div
                 v-for="layer in [
                   { key: 'upper', label: '冷藏 · 上层', foods: upperItems },
@@ -94,13 +158,14 @@ const openAll = () => { leftOpen.value = true; rightOpen.value = true; drawerOpe
                   {{ layer.label }}
                   <span v-if="layer.foods.length" class="layer-count">{{ layer.foods.length }}</span>
                 </div>
-                <!-- 横向滚动：食材再多也能全部看全，不再被 +N 截断 -->
                 <div class="fridge-food-scroll">
                   <div class="fridge-food-row">
                     <div
                       v-for="(food, fi) in layer.foods" :key="food"
-                      class="fridge-food" :class="{ landed: landed === food }"
+                      class="fridge-food" :class="[freshness(food), { landed: landed === food }]"
                       :style="{ animationDelay: landed === food ? '0ms' : `${fi * 38}ms` }"
+                      :title="dishCountOf(food) ? `${food}：${dishCountOf(food)} 道菜用得上` : food"
+                      @click="emit('food-click', food)"
                     >
                       <Food3D :name="food" v-bind="shapeOf(food)" />
                       <span class="fridge-food-name">{{ food }}</span>
@@ -119,18 +184,29 @@ const openAll = () => { leftOpen.value = true; rightOpen.value = true; drawerOpe
             </div>
           </div>
           <button class="fridge-door fridge-door-l" :class="{ open: leftOpen }" type="button" aria-label="开关左门" @click="toggleDoor('left')">
-            <span class="door-face"><span class="door-handle l"></span><span class="door-bin"></span><span class="door-bin b2"></span></span>
+            <span class="door-face">
+              <span class="door-handle l"></span>
+              <span class="door-bin"></span><span class="door-bin b2"></span>
+              <span class="fridge-magnets">
+                <button class="magnet" type="button" title="去菜谱点菜" @click.stop="emit('sticker', 'menu')">📖</button>
+                <button class="magnet" type="button" title="看购物清单" @click.stop="emit('sticker', 'shopping')">🛒</button>
+              </span>
+            </span>
           </button>
           <button class="fridge-door fridge-door-r" :class="{ open: rightOpen }" type="button" aria-label="开关右门" @click="toggleDoor('right')">
-            <span class="door-face"><span class="door-handle r"></span><span class="door-bin"></span><span class="door-bin b2"></span></span>
+            <span class="door-face">
+              <span class="door-handle r"></span>
+              <span class="door-bin"></span><span class="door-bin b2"></span>
+              <span class="fridge-magnets right">
+                <button class="magnet" type="button" title="生成一周菜单" @click.stop="emit('sticker', 'week')">🗓️</button>
+              </span>
+            </span>
           </button>
-          <!-- 开门冷气 -->
           <div v-if="mistOn" class="fridge-mist" aria-hidden="true">
             <span v-for="i in 5" :key="i" :style="{ animationDelay: `${i * 90}ms` }"></span>
           </div>
         </div>
 
-        <!-- 下半：整宽冷冻抽屉 -->
         <div class="fridge-lower" :class="{ 'is-dim': dimLower }">
           <div class="fridge-body drawer-body">
             <div class="fridge-layer drawer-layer">
@@ -142,8 +218,10 @@ const openAll = () => { leftOpen.value = true; rightOpen.value = true; drawerOpe
                 <div class="fridge-food-row">
                   <div
                     v-for="(food, fi) in lowerItems" :key="food"
-                    class="fridge-food" :class="{ landed: landed === food }"
+                    class="fridge-food" :class="[freshness(food), { landed: landed === food }]"
                     :style="{ animationDelay: landed === food ? '0ms' : `${fi * 38}ms` }"
+                    :title="dishCountOf(food) ? `${food}：${dishCountOf(food)} 道菜用得上` : food"
+                    @click="emit('food-click', food)"
                   >
                     <Food3D :name="food" v-bind="shapeOf(food)" />
                     <span class="fridge-food-name">{{ food }}</span>
@@ -171,7 +249,6 @@ const openAll = () => { leftOpen.value = true; rightOpen.value = true; drawerOpe
       <span class="fridge-total">
         🧊 <b :key="`n-${items.length}`" class="fridge-num">{{ items.length }}</b> 样
       </span>
-      <!-- 分层统计：一眼看出每层放了几样 -->
       <span class="fridge-chips">
         <span class="fridge-chip" :class="{ active: view === 'cold' }" @click="view = view === 'cold' ? 'all' : 'cold'">🥩 冷藏 {{ upperItems.length + middleItems.length }}</span>
         <span class="fridge-chip" :class="{ active: view === 'freeze' }" @click="view = view === 'freeze' ? 'all' : 'freeze'">❄ 冷冻 {{ lowerItems.length }}</span>

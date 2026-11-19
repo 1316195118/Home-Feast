@@ -5,7 +5,7 @@ import DishEditor from './DishEditor.vue'
 import PantryFridge from './PantryFridge.vue'
 import Food3D from './Food3D.vue'
 import DishDetail from './DishDetail.vue'
-import { isCuisineHidden, pantryGroups, pantryVisual, pantryMatches, foodShape } from '../utils'
+import { isCuisineHidden, pantryGroups, pantryVisual, pantryMatches, foodShape, normalizeIngredient } from '../utils'
 import { getRecipe } from '../recipes'
 import { useModalBehavior } from '../modal'
 
@@ -266,6 +266,64 @@ function togglePantry(name) {
   pantryAdded.value = added
   scheduleSavePantry()
 }
+// 单样食材能被多少道菜用到：点冰箱里的食材时给出「N 道菜用得上」的反馈
+const dishCountCache = computed(() => {
+  const map = {}
+  for (const d of state.dishes) {
+    const ings = recipeIngredients(d)
+    const seen = new Set()
+    for (const raw of ings) {
+      const n = normalizeIngredient(raw)
+      if (n && !seen.has(n)) { seen.add(n); map[n] = (map[n] || 0) + 1 }
+    }
+  }
+  return map
+})
+const dishCountOf = (name) => dishCountCache.value[normalizeIngredient(name)] || 0
+
+// 投递给冰箱做「飞入」动画
+const dropPayload = ref(null)
+function sendDrop(name, event) {
+  const r = event?.currentTarget?.getBoundingClientRect?.()
+  if (!r) return
+  dropPayload.value = { name, x: r.left + r.width / 2, y: r.top + r.height / 2, t: Date.now() }
+}
+
+// 冰箱贴 / 开门音效 / 食材点击联动
+function onFridgeSticker(key) {
+  if (key === 'ding') { playFridgeDing(); return }
+  if (key === 'menu') { pantryOpen.value = false; state.tab = 'menu' }
+  if (key === 'shopping') { pantryOpen.value = false; state.tab = 'today' }
+  if (key === 'week') { pantryOpen.value = false; state.tab = 'today' }
+}
+function onFoodClick(name) {
+  const n = dishCountOf(name)
+  actions.toast(n ? `${name}：${n} 道菜用得上，搜一下看看` : `${name}：暂时没有菜用到它`, n ? 'success' : 'info')
+  pantryQuery.value = name
+}
+
+// 极轻的开箱「叮」：Web Audio 合成，不引素材；跟随全局静音设置
+let audioCtx = null
+function playFridgeDing() {
+  try {
+    if (state.settings?.soundEnabled === false) return
+    if (typeof window === 'undefined') return
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)()
+    if (audioCtx.state === 'suspended') audioCtx.resume()
+    const now = audioCtx.currentTime
+    const osc = audioCtx.createOscillator()
+    const gain = audioCtx.createGain()
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(1180, now)
+    osc.frequency.exponentialRampToValueAtTime(760, now + 0.09)
+    gain.gain.setValueAtTime(0.0001, now)
+    gain.gain.exponentialRampToValueAtTime(0.05, now + 0.012)
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16)
+    osc.connect(gain).connect(audioCtx.destination)
+    osc.start(now); osc.stop(now + 0.18)
+  } catch { /* 浏览器不支持音频时静默 */ }
+}
+
 // 实时反馈：当前勾选的食材能匹配到多少道菜，让用户知道选了有用
 const pantryHitCount = computed(() => {
   if (!pantryDraft.value.size) return 0
@@ -438,7 +496,11 @@ async function savePantry() {
             <h2>🧊 冰箱里有什么</h2>
             <button class="icon-btn" aria-label="关闭" @click="pantryOpen = false">✕</button>
           </div>
-          <PantryFridge :items="[...pantryDraft]" :visual-of="pantryVisual" :hit-count="pantryHitCount" />
+          <PantryFridge
+            :items="[...pantryDraft]" :visual-of="pantryVisual" :hit-count="pantryHitCount"
+            :days-of="daysInFridge" :dish-count-of="dishCountOf" :drop="dropPayload"
+            @sticker="onFridgeSticker" @food-click="onFoodClick"
+          />
           <p class="setting-desc">
             点选家里现有的食材，「今天吃啥」和菜谱「优先推荐」会立刻按它们重排。按类别找更快，佐料不参与推荐。
           </p>
@@ -485,7 +547,7 @@ async function savePantry() {
                 v-for="p in g.items" :key="p" type="button"
                 class="pantry-card" :class="{ active: pantryDraft.has(p) }"
                 :style="{ '--group-tint': g.tint }"
-                :aria-pressed="pantryDraft.has(p)" @click="togglePantry(p)"
+                :aria-pressed="pantryDraft.has(p)" @click="togglePantry(p); !pantryDraft.has(p) && sendDrop(p, $event)"
               >
                 <span class="pantry-art" :style="{ background: pantryVisual(p).tint }">
                   <Food3D :name="p" v-bind="foodShape(p)" />
@@ -524,7 +586,8 @@ async function savePantry() {
               :disabled="!speechSupported"
               :title="speechSupported ? '说出冰箱里的食材，一句多个' : '当前浏览器不支持语音'"
               @click="startVoice"
-            >{{ listening ? '🎙️ 听…' : '🎤' }}</button>
+            >{{ listening ? '🎙️' : '🎤' }}</button>
+            <span v-if="listening" class="voice-wave" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
             <button class="btn btn-soft btn-sm" @click="addBatchPantry(pantryCustom); pantryCustom = ''">添加</button>
           </div>
           <div class="modal-foot">
