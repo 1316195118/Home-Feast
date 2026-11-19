@@ -152,7 +152,7 @@ async function remove() {
     <div class="modal modal-wide" role="dialog" aria-modal="true" :aria-label="dish ? '编辑菜品' : '添加一道自家的菜'">
       <div class="modal-head">
         <h2>{{ dish ? '编辑菜品' : '添加一道自家的菜' }}</h2>
-        <button class="icon-btn" @click="emit('close')">✕</button>
+        <button class="icon-btn" aria-label="关闭" @click="emit('close')">✕</button>
       </div>
 
       <div class="form-grid">

@@ -537,7 +537,7 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
               v-if="orders.some((o) => !o.done)" class="btn btn-primary btn-sm"
               :disabled="state.busy > 0" title="把今天还没上桌的菜一次全标记"
               @click="actions.finishAllOrders()"
-            >✅ 全部上桌</button>
+            ><span v-if="state.busy > 0" class="btn-spinner btn-spinner-light" aria-hidden="true" />{{ state.busy > 0 ? '标记中…' : '✅ 全部上桌' }}</button>
             <button
               class="btn btn-soft btn-sm" :disabled="!orders.length"
               @click="shareOpen = true"

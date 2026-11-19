@@ -508,7 +508,7 @@
 .avoid-custom .input { flex: 1; min-width: 0; }
 
 /* ---------- 购物清单 ---------- */
-.panel-head-actions { display: flex; gap: 6px; flex-wrap: nowrap; flex: none; }
+.panel-head-actions { display: flex; gap: 6px; flex-wrap: wrap; flex: none; }
 .shopping-list { display: flex; flex-direction: column; gap: 6px; max-height: 46vh; max-height: 46dvh; overflow-y: auto; margin-top: 12px; }
 .shopping-item {
   display: flex; align-items: center; gap: 9px; padding: 8px 10px;
@@ -1411,8 +1411,10 @@
 }
 .fridge-door-l { left: 0; transform-origin: left center; }
 .fridge-door-r { right: 0; transform-origin: right center; }
-.fridge-door-l.open { transform: rotateY(-112deg) translateZ(2px); z-index: 6; }
-.fridge-door-r.open { transform: rotateY(112deg) translateZ(2px); z-index: 6; }
+/* 门自身带 perspective：单元素独立 3D，不依赖父级 preserve-3d，任何浏览器都生效 */
+.fridge-door-l.open { transform: perspective(900px) rotateY(-74deg); z-index: 6; }
+.fridge-door-r.open { transform: perspective(900px) rotateY(74deg); z-index: 6; }
+.fridge-door-l.open .door-face, .fridge-door-r.open .door-face { opacity: .9; }
 .door-face {
   position: absolute; inset: 2px; border-radius: 11px;
   background: linear-gradient(155deg, rgba(255,255,255,.72), rgba(226,238,236,.56));
@@ -1470,8 +1472,8 @@
   .fridge-food-name { font-size: .44rem; }
   .fridge-layer { padding: 4px 6px 9px; }
   .fridge-meta { margin-top: 16px; font-size: .72rem; gap: 5px; }
-  .fridge-door-l.open { transform: rotateY(-104deg); }
-  .fridge-door-r.open { transform: rotateY(104deg); }
+  .fridge-door-l.open { transform: perspective(700px) rotateY(-70deg); }
+  .fridge-door-r.open { transform: perspective(700px) rotateY(70deg); }
   .pantry-art { min-height: 54px; }
   .pantry-art .food3d { transform: scale(1.25); }
 }
@@ -1480,12 +1482,12 @@
   .fridge-lower { height: 70px; }
   .fridge-food { transform: scale(.72); }
   .fridge-food-row { gap: 3px; }
-  .fridge-door-l.open { transform: rotateY(-96deg); }
-  .fridge-door-r.open { transform: rotateY(96deg); }
+  .fridge-door-l.open { transform: perspective(600px) rotateY(-66deg); }
+  .fridge-door-r.open { transform: perspective(600px) rotateY(66deg); }
 }
 @media (prefers-reduced-motion: reduce) {
   .fridge-door, .fridge-drawer, .fridge-food, .fridge-num { transition: none; animation: none; }
-  .fridge-door-l.open, .fridge-door-r.open { transform: none; }
+  .fridge-door-l.open, .fridge-door-r.open { transform: scaleX(.06); }
 }
 
 /* ---------- 冰箱增强：横向滚动 / 冷气 / 旋钮 / 分层角标 ---------- */
