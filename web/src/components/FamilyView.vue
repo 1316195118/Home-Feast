@@ -223,7 +223,7 @@ async function savePin() {
       <div class="modal" role="dialog" aria-modal="true" :aria-label="editingId ? '编辑成员' : '添加一位家人'">
         <div class="modal-head">
           <h2>{{ editingId ? '编辑成员' : '添加一位家人' }}</h2>
-          <button class="icon-btn" @click="editorOpen = false">✕</button>
+          <button class="icon-btn" aria-label="关闭" @click="editorOpen = false">✕</button>
         </div>
         <div class="field">
           <label for="member-name">怎么称呼</label>
