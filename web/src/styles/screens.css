@@ -1353,18 +1353,20 @@
 
 /* ---------- 写实 3D 冰箱：上双开门 + 下抽屉（法式对开门） ---------- */
 .fridge-stage { margin: 4px 0 14px; }
-.fridge-scene { perspective: 1200px; perspective-origin: 50% 42%; display: flex; justify-content: center; padding: 8px 6px 4px; }
+.fridge-scene { overflow: visible; perspective: 1200px; perspective-origin: 50% 42%; display: flex; justify-content: center; padding: 8px 6px 4px; }
+/* 注意：这里不能用 filter（会压平 3D，导致开门动画在桌面端失效），阴影用 box-shadow 由子层承担 */
 .fridge { position: relative; width: min(100%, 380px); display: flex; flex-direction: column; gap: 5px;
-  transform: rotateX(3deg); filter: drop-shadow(0 16px 20px rgba(50,60,55,.22)); }
+  transform: rotateX(3deg); }
 /* 高度跟着宽度走，窄屏不会把弹窗撑爆 */
 .fridge-upper { height: clamp(150px, 44%, 216px); }
 /* 上半：双开门 */
-.fridge-upper { position: relative; height: clamp(150px, 45vw, 216px); }
+.fridge-upper { position: relative; height: clamp(150px, 45vw, 216px); transform-style: preserve-3d; }
 .fridge-body {
   position: absolute; inset: 0; border-radius: 13px; overflow: hidden;
   background: linear-gradient(165deg, #f6f9f8, #dde7e5 72%, #c9d6d3);
   border: 3px solid #b4c5c2;
-  box-shadow: inset 0 2px 6px rgba(255,255,255,.95), inset 0 -7px 14px rgba(60,80,75,.14);
+  box-shadow: inset 0 2px 6px rgba(255,255,255,.95), inset 0 -7px 14px rgba(60,80,75,.14),
+    0 14px 22px rgba(50,60,55,.2);
 }
 .fridge-top {
   position: absolute; top: 0; left: 0; right: 0; z-index: 3; height: 24px;
@@ -1403,19 +1405,20 @@
 /* 双开门（只覆盖上半部） */
 .fridge-door {
   position: absolute; top: 0; bottom: 0; width: 50%; padding: 0; border: 0; background: transparent;
-  cursor: pointer; transform-style: preserve-3d;
+  cursor: pointer; transform-style: preserve-3d; backface-visibility: visible;
+  will-change: transform; transform: translateZ(0);
   transition: transform .72s cubic-bezier(.3,.75,.3,1); z-index: 4;
 }
 .fridge-door-l { left: 0; transform-origin: left center; }
 .fridge-door-r { right: 0; transform-origin: right center; }
-.fridge-door-l.open { transform: rotateY(-112deg); }
-.fridge-door-r.open { transform: rotateY(112deg); }
+.fridge-door-l.open { transform: rotateY(-112deg) translateZ(2px); z-index: 6; }
+.fridge-door-r.open { transform: rotateY(112deg) translateZ(2px); z-index: 6; }
 .door-face {
   position: absolute; inset: 2px; border-radius: 11px;
   background: linear-gradient(155deg, rgba(255,255,255,.72), rgba(226,238,236,.56));
   border: 2px solid rgba(178,203,199,.9);
-  box-shadow: inset 0 1px 8px rgba(255,255,255,.85), 4px 6px 12px rgba(50,70,65,.14);
-  backdrop-filter: blur(2px); overflow: hidden;
+  box-shadow: inset 0 1px 8px rgba(255,255,255,.9), 4px 6px 12px rgba(50,70,65,.16);
+  overflow: hidden;
 }
 .door-handle { position: absolute; top: 26%; width: 9px; height: 78px; border-radius: 6px;
   background: linear-gradient(90deg, #a9bfbb, #f6fbf9 45%, #9fb8b3);
@@ -1425,12 +1428,13 @@
   border-radius: 5px; background: rgba(255,255,255,.44); border: 1px solid rgba(160,190,185,.5); }
 .door-bin.b2 { bottom: 12px; height: 32px; }
 /* 下半：抽屉 */
-.fridge-lower { position: relative; height: clamp(78px, 24vw, 108px); }
+.fridge-lower { position: relative; height: clamp(78px, 24vw, 108px); transform-style: preserve-3d; }
 .drawer-body { border-radius: 11px; }
 .drawer-layer { padding: 5px 10px 8px; }
 .fridge-drawer {
   position: absolute; inset: 0; padding: 0; border: 0; background: transparent;
   cursor: pointer; z-index: 4; transform-style: preserve-3d;
+  backface-visibility: visible; will-change: transform; transform: translateZ(0);
   transition: transform .55s cubic-bezier(.3,.8,.3,1);
 }
 .drawer-face {
@@ -1438,13 +1442,12 @@
   background: linear-gradient(160deg, rgba(255,255,255,.78), rgba(223,237,234,.62));
   border: 2px solid rgba(178,203,199,.92);
   box-shadow: inset 0 1px 8px rgba(255,255,255,.9), 3px 4px 10px rgba(50,70,65,.14);
-  backdrop-filter: blur(2px);
 }
 .drawer-handle { position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
   width: 96px; height: 7px; border-radius: 5px;
   background: linear-gradient(180deg, #f6fbf9, #a9bfbb); box-shadow: 0 2px 4px rgba(0,0,0,.16); }
 /* 抽屉拉开：向下抽出并轻微前倾 */
-.fridge-drawer.open { transform: translateY(58px) translateZ(18px) rotateX(6deg); }
+.fridge-drawer.open { transform: translateY(58px) translateZ(18px) rotateX(6deg); z-index: 6; }
 /* 底部品牌条 */
 .fridge-foot { position: absolute; bottom: -18px; left: 0; right: 0; text-align: center;
   font-size: .48rem; font-weight: 900; letter-spacing: 3px; color: #a8bcb8; }
@@ -1620,3 +1623,95 @@
 .doodle-dot.b { right: 8px; bottom: 5px; }
 .empty-doodle.big { width: 46px; height: 20px; }
 .empty-text { font-size: .54rem; color: #a8bfbb; letter-spacing: .5px; }
+
+/* ===== 冰箱增强 12 项 ===== */
+
+/* ① 新鲜度衰减：7 天发蔫、14 天更明显 */
+.fridge-food.aging .food3d { filter: saturate(.62) brightness(.96); transform: scale(.94) translateY(1px); }
+.fridge-food.stale .food3d { filter: saturate(.35) brightness(.9) blur(.2px); transform: scale(.9) translateY(2px) rotate(-3deg); }
+.fridge-food.aging .fridge-food-name { color: #8a7a4a; }
+.fridge-food.stale .fridge-food-name { color: #9b6f63; text-decoration: line-through; text-decoration-thickness: 1px; }
+.fridge-food { transition: filter .4s var(--ease), transform .4s var(--ease); cursor: pointer; }
+.fridge-food:hover .food3d { transform: translateY(-2px) scale(1.06); }
+.fridge-food:hover .fridge-food-name { color: var(--brand-dark); }
+
+/* ② 语音声波 */
+.voice-wave { display: inline-flex; align-items: center; gap: 2px; height: 18px; margin-left: 6px; }
+.voice-wave i {
+  display: block; width: 2.5px; border-radius: 2px; background: var(--brand);
+  animation: voice-bar .9s ease-in-out infinite;
+}
+.voice-wave i:nth-child(1) { height: 7px; animation-delay: 0s; }
+.voice-wave i:nth-child(2) { height: 13px; animation-delay: .12s; }
+.voice-wave i:nth-child(3) { height: 18px; animation-delay: .24s; }
+.voice-wave i:nth-child(4) { height: 11px; animation-delay: .36s; }
+@keyframes voice-bar { 0%,100% { transform: scaleY(.4); opacity: .55; } 50% { transform: scaleY(1); opacity: 1; } }
+
+/* ③ 门把手微交互：悬停弹一下 + 高光扫过 */
+.fridge-door:hover .door-handle { animation: handle-pop .5s var(--ease); }
+@keyframes handle-pop { 0%,100% { transform: translateY(-50%) scale(1); } 45% { transform: translateY(-50%) scale(1.12); } }
+.fridge-door:hover .door-face::after {
+  content: ''; position: absolute; top: -40%; left: -60%; width: 40%; height: 180%;
+  background: linear-gradient(105deg, transparent, rgba(255,255,255,.55), transparent);
+  transform: rotate(8deg); animation: face-shine .85s var(--ease-out);
+}
+@keyframes face-shine { from { left: -60%; } to { left: 130%; } }
+
+/* ④ 送入冰箱的飞行轨迹 */
+.fly-host { position: fixed; inset: 0; pointer-events: none; z-index: 9998; }
+.flying-food {
+  position: absolute; left: 0; top: 0;
+  offset-distance: 0%; offset-rotate: 0deg;
+  animation: fly-in .78s cubic-bezier(.35,.7,.3,1) forwards;
+}
+@keyframes fly-in {
+  0% { offset-distance: 0%; transform: scale(1); opacity: 1; }
+  70% { opacity: 1; }
+  100% { offset-distance: 100%; transform: scale(.55); opacity: 0; }
+}
+
+/* ⑤ 满箱 / 空箱反馈 */
+.fridge.is-full .fridge-body { animation: fridge-strain .9s var(--ease); }
+@keyframes fridge-strain {
+  0%,100% { transform: none; }
+  30% { transform: translateY(1px) scaleY(.995); }
+  60% { transform: translateY(-1px) scaleY(1.004); }
+}
+.fridge-cavity:has(.fridge-layer-empty:only-child) { filter: brightness(.94); transition: filter .5s var(--ease); }
+
+/* ⑥ 冷藏室灯光呼吸 */
+.fridge-glow { animation: fridge-breathe 4.5s ease-in-out infinite; }
+@keyframes fridge-breathe { 0%,100% { opacity: .82; } 50% { opacity: 1; } }
+
+/* ⑦ 层架玻璃反光跟随指针 */
+.fridge-glare {
+  position: absolute; inset: 0; z-index: 3; pointer-events: none; mix-blend-mode: screen;
+  background: radial-gradient(220px circle at var(--glare-x,50%) var(--glare-y,30%), rgba(255,255,255,.45), transparent 65%);
+  transition: background-position .08s linear;
+}
+
+/* ⑨ 保质期徽章变色过渡 */
+.pantry-age { transition: background .45s var(--ease), color .45s var(--ease), border-color .45s var(--ease); }
+
+/* ⑪ 冰箱贴 */
+.fridge-magnets { position: absolute; left: 10px; top: 12px; display: flex; flex-direction: column; gap: 6px; z-index: 2; }
+.fridge-magnets.right { left: auto; right: 10px; }
+.magnet {
+  width: 22px; height: 22px; padding: 0; display: grid; place-items: center;
+  font-size: .7rem; border-radius: 5px; cursor: pointer;
+  background: linear-gradient(150deg, #fff8e8, #f0dcb8);
+  border: 1px solid rgba(190,160,110,.55);
+  box-shadow: 0 1px 3px rgba(120,90,50,.25), inset 0 1px 1px rgba(255,255,255,.9);
+  transition: transform .18s var(--ease), box-shadow .18s var(--ease);
+}
+.magnet:hover { transform: translateY(-1px) rotate(-4deg) scale(1.08); box-shadow: 0 3px 6px rgba(120,90,50,.3); }
+.magnet:active { transform: scale(.94); }
+
+/* ⑫ 食材点击联动提示 */
+.fridge-food:active .food3d { transform: scale(.92); }
+
+@media (prefers-reduced-motion: reduce) {
+  .voice-wave i, .fridge-glow, .flying-food, .fridge-door:hover .door-handle,
+  .fridge-door:hover .door-face::after, .fridge.is-full .fridge-body { animation: none !important; }
+  .fridge-food, .pantry-age { transition: none; }
+}
