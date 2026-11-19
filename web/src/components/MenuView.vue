@@ -2,6 +2,7 @@
 import { inject, ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import DishCard from './DishCard.vue'
 import DishEditor from './DishEditor.vue'
+import PantryFridge from './PantryFridge.vue'
 import DishDetail from './DishDetail.vue'
 import { isCuisineHidden, pantryGroups, pantryVisual, pantryMatches } from '../utils'
 import { getRecipe } from '../recipes'
@@ -187,7 +188,10 @@ function jumpToGroup(key) {
   const el = document.getElementById('pantry-group-' + key)
   el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
-function clearPantry() { pantryDraft.value = new Set() }
+function clearPantry() {
+  pantryDraft.value = new Set()
+  scheduleSavePantry()
+}
 
 // 预设食材按分类展示（见 pantryGroups）；这里只算出「自定义」的那些，单独一组。
 const pantryCustomCards = computed(() => {
@@ -203,11 +207,23 @@ function openPantry() {
   pantryQuery.value = ''
   pantryOpen.value = true
 }
+// 实时保存：勾选后 500ms 自动写盘，无需点「保存食材」。
+// 首页推荐 watch 的是 state.settings.pantry，保存后立刻重排。
+let pantryTimer = null
+function scheduleSavePantry() {
+  clearTimeout(pantryTimer)
+  pantryTimer = setTimeout(() => {
+    actions.saveSettings({ pantry: [...pantryDraft.value] })
+  }, 500)
+}
+onUnmounted(() => clearTimeout(pantryTimer))
+
 function togglePantry(name) {
   const next = new Set(pantryDraft.value)
   if (next.has(name)) next.delete(name)
   else next.add(name)
   pantryDraft.value = next
+  scheduleSavePantry()
 }
 // 实时反馈：当前勾选的食材能匹配到多少道菜，让用户知道选了有用
 const pantryHitCount = computed(() => {
@@ -222,6 +238,7 @@ function addCustomPantry() {
   for (const w of words) next.add(w.slice(0, 12))
   pantryDraft.value = next
   pantryCustom.value = ''
+  scheduleSavePantry()
 }
 async function savePantry() {
   const ok = await actions.saveSettings({ pantry: [...pantryDraft.value] })
@@ -333,6 +350,7 @@ async function savePantry() {
             <h2>🧊 冰箱里有什么</h2>
             <button class="icon-btn" aria-label="关闭" @click="pantryOpen = false">✕</button>
           </div>
+          <PantryFridge :items="[...pantryDraft]" :visual-of="pantryVisual" :hit-count="pantryHitCount" />
           <p class="setting-desc">
             点选家里现有的食材，「今天吃啥」和菜谱「优先推荐」会立刻按它们重排。按类别找更快，佐料不参与推荐。
           </p>
@@ -395,9 +413,8 @@ async function savePantry() {
             <button class="btn btn-soft btn-sm" @click="addCustomPantry">添加</button>
           </div>
           <div class="modal-foot">
-            <span class="tiny muted">保存后立即生效</span>
-            <button class="btn" @click="pantryOpen = false">取消</button>
-            <button class="btn btn-primary" :disabled="pending('settings')" @click="savePantry">保存食材</button>
+            <span class="tiny muted">✓ 勾选后自动保存，首页推荐即时更新</span>
+            <button class="btn btn-primary" @click="pantryOpen = false">完成</button>
           </div>
         </div>
       </div>
