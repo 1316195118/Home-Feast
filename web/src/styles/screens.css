@@ -1484,3 +1484,100 @@
   .fridge-door, .fridge-drawer, .fridge-food, .fridge-num { transition: none; animation: none; }
   .fridge-door-l.open, .fridge-door-r.open { transform: none; }
 }
+
+/* ---------- 冰箱增强：横向滚动 / 冷气 / 旋钮 / 分层角标 ---------- */
+.fridge-food-scroll {
+  overflow-x: auto; overflow-y: hidden;
+  margin: 0 -2px; padding: 2px 2px 4px;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  /* 右侧渐隐提示还能右滑 */
+  mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 14px), transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 14px), transparent 100%);
+}
+.fridge-food-scroll::-webkit-scrollbar { display: none; }
+.fridge-food-row { flex-wrap: nowrap; justify-content: flex-start; }
+.fridge-food { flex: none; }
+.layer-count {
+  display: inline-grid; place-items: center; min-width: 15px; height: 15px;
+  margin-left: 4px; padding: 0 4px; border-radius: 999px;
+  font-size: .5rem; font-weight: 800; color: #fff; background: #8aa5a1;
+}
+/* 温度旋钮 */
+.fridge-knob {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 1px 7px 1px 3px; border-radius: 999px;
+  border: 1px solid rgba(140,170,165,.55); background: rgba(255,255,255,.6);
+  cursor: pointer;
+}
+.knob-dial {
+  width: 11px; height: 11px; border-radius: 50%;
+  background: conic-gradient(from 0deg, #cfe6e2, #8fb3ae, #cfe6e2);
+  box-shadow: inset 0 0 2px rgba(0,0,0,.25);
+  position: relative; transition: transform .4s var(--ease);
+}
+.knob-dial::after {
+  content: ''; position: absolute; left: 50%; top: 1px; width: 1.5px; height: 4px;
+  background: #55706c; transform: translateX(-50%);
+}
+.knob-all { transform: rotate(0deg); }
+.knob-cold { transform: rotate(120deg); }
+.knob-freeze { transform: rotate(240deg); }
+.knob-text { font-size: .5rem; font-weight: 800; color: #55706c; }
+/* 开门冷气雾 */
+.fridge-mist { position: absolute; inset: -8px -4px auto; height: 120px; pointer-events: none; z-index: 5; }
+.fridge-mist span {
+  position: absolute; bottom: 0; width: 46px; height: 46px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,.85), rgba(255,255,255,0) 70%);
+  filter: blur(3px); opacity: 0;
+  animation: mist-rise 1.15s ease-out forwards;
+}
+.fridge-mist span:nth-child(1) { left: 8%; }
+.fridge-mist span:nth-child(2) { left: 27%; }
+.fridge-mist span:nth-child(3) { left: 46%; }
+.fridge-mist span:nth-child(4) { left: 64%; }
+.fridge-mist span:nth-child(5) { left: 82%; }
+@keyframes mist-rise {
+  0% { opacity: 0; transform: translateY(10px) scale(.5); }
+  35% { opacity: .9; }
+  100% { opacity: 0; transform: translateY(-40px) scale(1.5); }
+}
+/* 视角聚焦：非当前视角的那半降饱和变暗 */
+.fridge-upper.is-dim, .fridge-lower.is-dim { filter: saturate(.35) brightness(.86); transition: filter .4s var(--ease); }
+.fridge-upper, .fridge-lower { transition: filter .4s var(--ease); }
+/* 分层统计 chip */
+.fridge-chips { display: inline-flex; gap: 5px; }
+.fridge-chip {
+  padding: 2px 8px; border-radius: 999px; cursor: pointer;
+  font-size: .68rem; font-weight: 700; color: var(--ink-soft);
+  background: var(--paper-deep); border: 1px solid transparent;
+}
+.fridge-chip.active { color: var(--brand-dark); border-color: var(--brand); background: var(--brand-soft); }
+.fridge-total { font-weight: 700; }
+.fridge-brand {
+  position: absolute; bottom: -16px; left: 0; right: 0; text-align: center;
+  font-size: .46rem; font-weight: 900; letter-spacing: 3px; color: #a8bcb8;
+}
+@media (max-width: 560px) {
+  .fridge-food-scroll { margin: 0 -4px; padding: 2px 4px 4px; }
+  .fridge-meta { gap: 4px; row-gap: 4px; }
+  .fridge-chip { font-size: .64rem; padding: 2px 7px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fridge-mist span { animation: none; opacity: 0; }
+  .knob-dial, .fridge-upper, .fridge-lower { transition: none; }
+}
+
+/* 食材卡片按类别着色：底色 + 左侧色条 */
+.pantry-card {
+  background: linear-gradient(170deg, color-mix(in srgb, var(--group-tint, #f3ece0) 42%, #fff), var(--surface));
+  border-color: color-mix(in srgb, var(--group-tint, #e9ddca) 55%, var(--line));
+}
+.pantry-card::before {
+  content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px;
+  border-radius: 0 3px 3px 0; background: var(--group-tint, var(--line-strong));
+  opacity: .85;
+}
+.pantry-card.active {
+  background: linear-gradient(170deg, color-mix(in srgb, var(--group-tint, #f8e5d9) 60%, #fff), var(--brand-soft));
+  border-color: var(--brand);
+}

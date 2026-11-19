@@ -186,7 +186,10 @@ const shownPantryGroups = computed(() => {
     .map((g) => ({ ...g, items: g.items.filter((n) => n.toLowerCase().includes(q)) }))
     .filter((g) => g.items.length)
 })
-const selectedPantryCards = computed(() => [...pantryDraft.value].map((n) => ({ name: n, ...pantryVisual(n) })))
+const selectedPantryCards = computed(() => [...pantryDraft.value].map((n) => {
+  const g = pantryGroups.find((x) => x.items.includes(n))
+  return { name: n, tint: g?.tint || pantryVisual(n).tint, group: g?.label || '', ...pantryVisual(n) }
+}))
 function jumpToGroup(key) {
   const g = pantryGroups.find((x) => x.key === key)
   pantryQuery.value = g ? (g.label.replace(/^\S+\s*/, '').slice(0, 2) || '') : ''
@@ -384,6 +387,7 @@ async function savePantry() {
               <button
                 v-for="p in selectedPantryCards" :key="p.name" type="button"
                 class="pantry-card active" @click="togglePantry(p.name)"
+                :style="{ '--group-tint': p.tint }"
                 :aria-label="`从冰箱移除 ${p.name}`"
               >
                 <span class="pantry-art" :style="{ background: p.tint }"><Food3D :name="p.name" v-bind="foodShape(p.name)" /></span>
@@ -398,6 +402,7 @@ async function savePantry() {
               <button
                 v-for="p in g.items" :key="p" type="button"
                 class="pantry-card" :class="{ active: pantryDraft.has(p) }"
+                :style="{ '--group-tint': g.tint }"
                 :aria-pressed="pantryDraft.has(p)" @click="togglePantry(p)"
               >
                 <span class="pantry-art" :style="{ background: pantryVisual(p).tint }">
@@ -414,6 +419,7 @@ async function savePantry() {
               <button
                 v-for="p in pantryCustomCards" :key="p.name" type="button"
                 class="pantry-card" :class="{ active: pantryDraft.has(p.name) }"
+                :style="{ '--group-tint': p.tint }"
                 :aria-pressed="pantryDraft.has(p.name)" @click="togglePantry(p.name)"
               >
                 <span class="pantry-art" :style="{ background: p.tint }">
