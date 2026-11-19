@@ -369,6 +369,21 @@ function isPicked(dish) {
 }
 
 // 点完菜保留当前这三张卡片，只标记「已点」，避免图片突然换掉让人以为点错了
+// 上桌后顺手评价：不用钻进详情页，直接给这道菜打分
+function dishById(id) { return state.dishes.find((d) => d.id === id) || null }
+function quickRate(order, v) {
+  const d = dishById(order.dishId)
+  if (!d) return
+  const next = (d.rating || 0) === v ? 0 : v
+  actions.setDishRating(d.id, next)
+}
+
+// 从推荐面板直达冰箱食材设置：跳到菜谱页并让那边自动弹开面板
+function gotoPantry() {
+  try { sessionStorage.setItem('fm:open-pantry', '1') } catch { /* 隐私模式忽略 */ }
+  state.tab = 'menu'
+}
+
 // 点菜成功后让一颗小饭粒飞向今日菜单，强化「已加入」的去向感
 function flyToMenu(fromEl) {
   const from = fromEl?.getBoundingClientRect?.()
@@ -558,6 +573,14 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
                       <span v-if="o.note">「{{ o.note }}」</span>
                     </div>
                   </div>
+                  <div v-if="o.done && dishById(o.dishId)" class="order-quick-rate" title="吃过觉得怎么样？评分会改进推荐">
+                    <button
+                      v-for="r in [{ v: 1, t: '一般' }, { v: 2, t: '好吃' }, { v: 3, t: '超赞' }]"
+                      :key="r.v" type="button" class="rate-mini"
+                      :class="{ active: (dishById(o.dishId)?.rating || 0) === r.v }"
+                      @click="quickRate(o, r.v)"
+                    >{{ r.t }}</button>
+                  </div>
                   <div class="order-actions">
                     <button
                       class="icon-btn" :aria-label="o.done ? '标记为还没做' : '标记已上桌'"
@@ -598,6 +621,11 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
             ><span class="dice-ico">🎲</span> 随便来一道</button>
             <button class="btn btn-sm" @click="shuffle" aria-label="换一批推荐">🔄 换一批</button>
           </div>
+        </div>
+
+        <div v-if="!pantryCount" class="suggest-nudge">
+          <span>🍽️ 推荐现在只按季节和耗时挑。告诉家里冰箱有啥，命中食材的菜会被优先推荐。</span>
+          <button class="btn btn-soft btn-sm" type="button" @click="gotoPantry">🧊 添加冰箱食材</button>
         </div>
 
         <div class="meal-switch" role="group" aria-label="点的是哪一餐">

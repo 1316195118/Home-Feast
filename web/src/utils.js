@@ -604,17 +604,24 @@ function pickWeighted(pool, limit, salt) {
   const weights = pool.map((p) => Math.exp((p.score - maxS) / T))
   const chosen = []
   const avail = pool.map((_, i) => i)
+  const usedCuisines = new Set()
   while (chosen.length < limit && avail.length) {
-    const ws = avail.map((i) => weights[i])
+    // 优先从没出现过的菜系里抽；某菜系被抽过就降权但不完全禁止，
+    // 避免菜系太少时凑不够 limit（例如只显示一个菜系的情况）。
+    const fresh = avail.filter((i) => !usedCuisines.has(pool[i].dish.cuisine))
+    const candidates = fresh.length ? fresh : avail
+    const ws = candidates.map((i) => weights[i] * (fresh.length ? 1 : 0.25))
     const sum = ws.reduce((a, b) => a + b, 0)
     let r = rng() * sum
-    let idx = 0
-    for (; idx < ws.length - 1; idx++) {
-      r -= ws[idx]
+    let at = 0
+    for (; at < ws.length - 1; at++) {
+      r -= ws[at]
       if (r <= 0) break
     }
-    chosen.push(pool[avail[idx]])
-    avail.splice(idx, 1)
+    const pickedIdx = candidates[at]
+    usedCuisines.add(pool[pickedIdx].dish.cuisine)
+    chosen.push(pool[pickedIdx])
+    avail.splice(avail.indexOf(pickedIdx), 1)
   }
   return chosen
 }

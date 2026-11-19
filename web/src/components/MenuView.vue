@@ -128,7 +128,16 @@ function onScroll() {
   maybeLoadMore()
 }
 function scrollTop() { window.scrollTo({ top: 0, behavior: 'smooth' }) }
-onMounted(() => window.addEventListener('scroll', onScroll, { passive: true }))
+onMounted(() => {
+  window.addEventListener('scroll', onScroll, { passive: true })
+  // 从首页推荐面板跳过来时，自动打开冰箱食材设置
+  try {
+    if (sessionStorage.getItem('fm:open-pantry') === '1') {
+      sessionStorage.removeItem('fm:open-pantry')
+      nextTick(openPantry)
+    }
+  } catch { /* 隐私模式忽略 */ }
+})
 onUnmounted(() => window.removeEventListener('scroll', onScroll))
 
 // 当前选中的分类若是被隐藏了，自动退回「全部」
