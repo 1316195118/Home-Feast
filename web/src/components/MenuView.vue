@@ -171,6 +171,36 @@ function editFromDetail(dish) {
 // ---------- 冰箱食材（入口放在菜谱标题后，和菜谱一样用带效果图的卡片挑选）----------
 const pantryOpen = ref(false)
 const pantryRoot = ref(null)
+// 批量点菜：点「多选」进入选择模式，勾几道一起加入今日菜单
+const multiMode = ref(false)
+const multiSet = ref(new Set())
+function toggleMulti() {
+  multiMode.value = !multiMode.value
+  multiSet.value = new Set()
+}
+function togglePick(id) {
+  const next = new Set(multiSet.value)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  multiSet.value = next
+}
+async function addAllPicked() {
+  const ids = [...multiSet.value]
+  if (!ids.length) return
+  let okCount = 0
+  state.busy++
+  try {
+    for (const id of ids) {
+      if (await actions.order(id, '', state.meal)) okCount++
+    }
+    if (okCount) actions.toast(`已把 ${okCount} 道菜加进今日菜单 🍽️`, 'success')
+  } finally {
+    state.busy--
+    multiSet.value = new Set()
+    multiMode.value = false
+  }
+}
+
 const pantryDraft = ref(new Set(state.settings.pantry || []))
 // 食材 → 加入日期（YYYY-MM-DD），用于「放了几天」提醒
 const pantryAdded = ref({ ...(state.settings.pantryAdded || {}) })
@@ -447,6 +477,9 @@ async function savePantry() {
         <button class="btn btn-soft btn-sm" @click="openPantry">
           🧊 冰箱食材 <span class="tiny">{{ (state.settings.pantry || []).length }}</span>
         </button>
+        <button class="btn btn-soft btn-sm" :class="{ 'btn-primary': multiMode }" :aria-pressed="multiMode" @click="toggleMulti">
+          {{ multiMode ? '退出多选' : '☑ 多选' }}
+        </button>
         <button class="btn btn-primary" @click="openAdd">＋ 添加菜品</button>
       </div>
     </div>
@@ -504,7 +537,11 @@ async function savePantry() {
     <!-- 不用 TransitionGroup：切换菜系时整片卡片进出场 + move 会让画面明显晃一下。
          增删菜品是低频操作，稳定的静态网格比 0.3s 动画更重要。 -->
     <div v-if="filtered.length" :key="gridKey" class="dish-grid grid-in">
-      <DishCard v-for="d in visibleDishes" :key="d.id" :dish="d" :highlight="keyword" @edit="openEdit" @open="openDetail" />
+      <DishCard
+        v-for="d in visibleDishes" :key="d.id" :dish="d" :highlight="keyword"
+        :multi="multiMode" :multi-picked="multiSet.has(d.id)"
+        @multi-toggle="togglePick(d.id)" @edit="openEdit" @open="openDetail"
+      />
     </div>
     <!-- 分批渲染的哨兵：滚动到附近就自动补下一批，不打断浏览 -->
     <div v-if="filtered.length" ref="loadMoreEl" class="grid-more" :class="{ 'is-done': !hasMore }">
@@ -531,6 +568,18 @@ async function savePantry() {
 
     <Transition name="pop">
       <button v-if="showTop" class="back-top" type="button" aria-label="回到顶部" @click="scrollTop">↑</button>
+    </Transition>
+
+    <!-- 批量点菜浮条 -->
+    <Transition name="sheet-up">
+      <div v-if="multiMode" class="multi-bar" role="toolbar" aria-label="批量点菜">
+        <span class="multi-count">已选 <b>{{ multiSet.size }}</b> 道</span>
+        <span class="grow"></span>
+        <button class="btn btn-sm" @click="toggleMulti">取消</button>
+        <button class="btn btn-primary btn-sm" :disabled="!multiSet.size || state.busy > 0" @click="addAllPicked">
+          {{ state.busy > 0 ? '点菜中…' : '＋ 加入今日菜单' }}
+        </button>
+      </div>
     </Transition>
 
     <Transition name="modal">
