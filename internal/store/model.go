@@ -183,6 +183,9 @@ type Settings struct {
 	Meals          []MealSlot `json:"meals"`           // 空表示使用默认三餐
 	Roster         Roster     `json:"roster"`          // 每周掌勺 / 洗碗排班
 	Pantry         []string   `json:"pantry"`          // 冰箱里现有的食材，供智能推荐匹配
+	// PantryAdded 记录每样食材加入冰箱的日期（YYYY-MM-DD），用于「放了几天」提醒。
+	// 与 Pantry 分开存：老数据没有这个字段也能正常工作，食材本身仍是纯字符串数组。
+	PantryAdded map[string]string `json:"pantryAdded,omitempty"`
 	AutoBackup     bool       `json:"autoBackup"`      // 每天 03:30 自动打包到 data/backups/
 	BackupKeep     int        `json:"backupKeep"`      // 自动备份保留份数，0 视为默认 7
 	// FamilyID 是「多家庭隔离」第一阶段的地基：只用于备份命名空间，
