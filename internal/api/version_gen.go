@@ -3,7 +3,7 @@
 package api
 
 func init() {
-	Version = "1.0.2.7"
-	ReleaseNote = "【修复】\n- 在线更新替换程序失败：数据卷与容器可写层是不同文件系统，rename 会报 cross-device link；改为先复制到目标同目录再原子改名"
-	BuildTime = "2026-11-20 15:34:15"
+	Version = "1.0.2.8"
+	ReleaseNote = "【新增】\n- 在线更新支持强制重装：不管有没有新版本都重新下载安装一次\n\n【修复】\n- 手机端「检查更新」和「更新设置」按钮紧贴重叠，改为并排 + 间距"
+	BuildTime = "2026-11-20 16:56:33"
 }
