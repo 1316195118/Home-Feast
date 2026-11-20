@@ -73,6 +73,6 @@ export const api = {
   // 容器内在线更新
   checkUpdate: () => request('/api/update/check'),
   updateStatus: () => request('/api/update/status'),
-  applyUpdate: () => request('/api/update/apply', { method: 'POST' }),
+  applyUpdate: (body) => request('/api/update/apply', { method: 'POST', body: body || {} }),
   testProxy: (body) => request('/api/update/proxy-test', { method: 'POST', body }),
 }

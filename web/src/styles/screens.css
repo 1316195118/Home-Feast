@@ -1962,3 +1962,14 @@
 .update-option input { margin-top: 2px; accent-color: var(--brand); flex: none; }
 .update-option b { font-size: .88rem; }
 .update-option .block { display: block; margin-top: 3px; }
+
+/* 在线更新卡片：按钮之间要留间距，「更新设置」不再紧贴上一行 */
+.sc-update .update-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: 10px;
+}
+.sc-update .update-actions .btn { flex: 0 1 auto; }
+.sc-update .cuisine-manage-btn { margin-top: 10px; }
