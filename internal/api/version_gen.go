@@ -3,7 +3,7 @@
 package api
 
 func init() {
-	Version = "1.0.3.1"
-	ReleaseNote = "【修复】\n- 正式发版强制重新构建并同步前端资源，解决版本更新后线上仍显示旧设置页的问题\n- 修复 320px 小屏状态徽标截断、手机横屏首屏内容过低和平板触控按钮偏小\n- 设置页说明按钮保持 18px 视觉尺寸，实际触控范围扩大到 44px\n【优化】\n- 完成 320–1920 多分辨率与手机横屏布局回归，设置分类导航在小屏保持吸顶横向滑动"
-	BuildTime = "2026-11-20 20:50:51"
+	Version = "1.0.3.2"
+	ReleaseNote = "【优化】\n- Docker 用户部署固定拉取 `ghcr.io/1316195118/home-feast:latest`，不再需要选择版本号或本地构建\n- 新增 GitHub Actions 主分支自动发布 amd64 / arm64 容器镜像\n- Compose 显式声明数据、配置目录和监听参数，继续独立保留 `/data` 与 `/config`"
+	BuildTime = "2026-11-20 21:18:42"
 }

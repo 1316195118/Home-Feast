@@ -4,6 +4,13 @@
 > 日常部署只暂存说明到 `docs/PENDING.md`，版本号不变；用户确认后 `release.py --publish`
 > 才递增版本、写本文件并推送 GitHub。
 
+## 1.0.3.2 · 2026-11-20
+
+**优化**
+- Docker 用户部署固定拉取 `ghcr.io/1316195118/home-feast:latest`，不再需要选择版本号或本地构建
+- 新增 GitHub Actions 主分支自动发布 amd64 / arm64 容器镜像
+- Compose 显式声明数据、配置目录和监听参数，继续独立保留 `/data` 与 `/config`
+
 ## 1.0.3.1 · 2026-11-20
 
 **修复**
