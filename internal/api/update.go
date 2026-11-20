@@ -11,6 +11,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -62,6 +63,27 @@ type updateStatus struct {
 var updateMu sync.Mutex
 var updateState updateStatus
 
+// updateClient 构造走代理的 HTTP 客户端。代理地址来自设置页，只用于更新下载。
+// 直连时 transport 为 nil，等同于默认行为。
+func updateClient(proxyURL string, timeout time.Duration) *http.Client {
+	c := &http.Client{Timeout: timeout}
+	if proxyURL == "" {
+		return c
+	}
+	pu, err := url.Parse(proxyURL)
+	if err != nil || pu.Host == "" {
+		return c
+	}
+	c.Transport = &http.Transport{
+		Proxy:                 http.ProxyURL(pu),
+		MaxIdleConns:          4,
+		IdleConnTimeout:       30 * time.Second,
+		TLSHandshakeTimeout:   15 * time.Second,
+		ResponseHeaderTimeout: 30 * time.Second,
+	}
+	return c
+}
+
 // 更新源列表：raw 优先，ghproxy 兜底。
 // MENU_UPDATE_BASE 可覆盖为本地测试源（如 http://127.0.0.1:18099/dist/），便于 E2E 验证。
 func updateSources() []string {
@@ -71,7 +93,7 @@ func updateSources() []string {
 	return []string{updateRaw, updateProxy}
 }
 
-func fetchUpdateJSON(ctx context.Context, path string, dest any) error {
+func fetchUpdateJSON(ctx context.Context, path, proxyURL string, dest any) error {
 	var lastErr error
 	firstErr := ""
 	for i, base := range updateSources() {
@@ -81,7 +103,7 @@ func fetchUpdateJSON(ctx context.Context, path string, dest any) error {
 			continue
 		}
 		req.Header.Set("User-Agent", "family-menu-updater")
-		resp, err := (&http.Client{Timeout: 20 * time.Second}).Do(req)
+		resp, err := updateClient(proxyURL, 20*time.Second).Do(req)
 		if err != nil {
 			lastErr = err
 			continue
@@ -146,7 +168,7 @@ func (s *Server) checkUpdate(w http.ResponseWriter, r *http.Request) {
 	updateMu.Unlock()
 
 	var m releaseManifest
-	err := fetchUpdateJSON(r.Context(), "manifest.json", &m)
+	err := fetchUpdateJSON(r.Context(), "manifest.json", s.st.GetSettings().ProxyURL, &m)
 	now := time.Now().Format(time.RFC3339)
 
 	updateMu.Lock()
@@ -249,6 +271,53 @@ func goArchKey() string {
 	}
 }
 
+// testProxy 用给定代理试连 GitHub，返回耗时与结果，供设置页「测试」按钮使用。
+// 不传 proxy 时测试当前保存的配置。
+func (s *Server) testProxy(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		ProxyURL *string `json:"proxyUrl"`
+	}
+	if err := decodeBody(w, r, &in); err != nil {
+		jsonErr(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	proxy := s.st.GetSettings().ProxyURL
+	if in.ProxyURL != nil {
+		proxy = strings.TrimSpace(*in.ProxyURL)
+	}
+	if proxy != "" {
+		u, err := url.Parse(proxy)
+		if err != nil || u.Host == "" || (u.Scheme != "http" && u.Scheme != "https" && u.Scheme != "socks5") {
+			jsonErr(w, http.StatusBadRequest, "代理地址格式应为 http://IP:端口 或 socks5://IP:端口")
+			return
+		}
+	}
+	start := time.Now()
+	ctx, cancel := context.WithTimeout(r.Context(), 25*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, updateRaw+"manifest.json", nil)
+	if err != nil {
+		jsonErr(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	req.Header.Set("User-Agent", "family-menu-updater")
+	resp, err := updateClient(proxy, 25*time.Second).Do(req)
+	elapsed := time.Since(start).Milliseconds()
+	if err != nil {
+		jsonOK(w, map[string]any{
+			"ok": false, "ms": elapsed, "proxy": proxy,
+			"error": "连不上：" + err.Error(),
+		})
+		return
+	}
+	defer resp.Body.Close()
+	io.Copy(io.Discard, io.LimitReader(resp.Body, 1<<16))
+	jsonOK(w, map[string]any{
+		"ok": resp.StatusCode == http.StatusOK, "status": resp.StatusCode,
+		"ms": elapsed, "proxy": proxy,
+	})
+}
+
 // applyUpdate 下载 → 校验 → 备份 → 原子替换 → 延迟 Exec。
 func (s *Server) applyUpdate(w http.ResponseWriter, r *http.Request) {
 	updateMu.Lock()
@@ -276,7 +345,7 @@ func (s *Server) applyUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var m releaseManifest
-	if err := fetchUpdateJSON(r.Context(), "manifest.json", &m); err != nil {
+	if err := fetchUpdateJSON(r.Context(), "manifest.json", s.st.GetSettings().ProxyURL, &m); err != nil {
 		setProgress(0, "")
 		jsonErr(w, http.StatusBadGateway, "获取更新信息失败: "+err.Error())
 		return
@@ -303,7 +372,7 @@ func (s *Server) applyUpdate(w http.ResponseWriter, r *http.Request) {
 	// 下载并校验：优先 gzip 版（体积约一半，容器到 GitHub 链路不稳时成功率高），
 	// 失败自动换源重试；压缩包校验 gzSha256，解压后再校验二进制 sha256。
 	setProgress(10, "正在下载新版本")
-	if err := downloadRelease(r.Context(), f, staging, setProgress); err != nil {
+	if err := downloadRelease(r.Context(), f, staging, s.st.GetSettings().ProxyURL, setProgress); err != nil {
 		setProgress(0, "")
 		jsonErr(w, http.StatusBadGateway, err.Error())
 		return
@@ -366,7 +435,7 @@ func (s *Server) applyUpdate(w http.ResponseWriter, r *http.Request) {
 
 // downloadRelease 把某个架构的产物下载到 staging，优先 gzip。
 // 每个源重试 3 次，任意一次成功即返回；两次源都失败则报最后一次错误。
-func downloadRelease(ctx context.Context, f releaseFile, staging string, setProgress func(int, string)) error {
+func downloadRelease(ctx context.Context, f releaseFile, staging, proxyURL string, setProgress func(int, string)) error {
 	useGz := f.Gz != "" && f.GzSHA256 != ""
 	remoteName, wantHash, wantSize := f.Name, f.SHA256, f.Size
 	if useGz {
@@ -381,7 +450,7 @@ func downloadRelease(ctx context.Context, f releaseFile, staging string, setProg
 				time.Sleep(time.Duration(attempt) * 2 * time.Second)
 				setProgress(10, fmt.Sprintf("重试第 %d 次", attempt))
 			}
-			got, err := fetchToFile(ctx, base+remoteName, tmp, wantSize, setProgress)
+			got, err := fetchToFile(ctx, proxyURL, base+remoteName, tmp, wantSize, setProgress)
 			if err != nil {
 				lastErr = err
 				continue
@@ -422,13 +491,13 @@ func downloadRelease(ctx context.Context, f releaseFile, staging string, setProg
 }
 
 // fetchToFile 下载到 path，返回 sha256。total 用于进度百分比。
-func fetchToFile(ctx context.Context, url, path string, total int64, setProgress func(int, string)) (string, error) {
+func fetchToFile(ctx context.Context, proxyURL, url, path string, total int64, setProgress func(int, string)) (string, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return "", err
 	}
 	req.Header.Set("User-Agent", "family-menu-updater")
-	resp, err := (&http.Client{Timeout: 10 * time.Minute}).Do(req)
+	resp, err := updateClient(proxyURL, 10*time.Minute).Do(req)
 	if err != nil {
 		return "", err
 	}

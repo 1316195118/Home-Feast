@@ -192,6 +192,9 @@ type Settings struct {
 	ImageMode      string     `json:"imageMode,omitempty"`
 	// AutoCheckUpdate 是否在设置页每天自动检查新版本，默认 true（空值视为开）。
 	AutoCheckUpdate *bool     `json:"autoCheckUpdate,omitempty"`
+	// ProxyURL 在线更新走 HTTP/SOCKS5 代理，例如 http://10.10.10.254:7890；空表示直连。
+	// 只影响更新下载，业务接口不受影响。
+	ProxyURL       string     `json:"proxyUrl,omitempty"`
 	// FamilyID 是「多家庭隔离」第一阶段的地基：只用于备份命名空间，
 	// 当前所有数据仍共用一份 JSON，不做分仓，旧数据零值兼容。
 	FamilyID       string     `json:"familyId,omitempty"`

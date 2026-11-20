@@ -135,6 +135,31 @@ async function doUpdate() {
   }
 }
 
+// 代理：只用于在线更新下载（GitHub 直连不稳时填这里）
+const proxyUrl = ref(state.settings.proxyUrl || '')
+const proxyTesting = ref(false)
+const proxyResult = ref(null)
+async function saveProxy() {
+  const v = proxyUrl.value.trim()
+  const ok = await actions.saveSettings({ proxyUrl: v })
+  if (ok) actions.toast(v ? '代理已保存，更新会走它' : '已改为直连', 'success')
+}
+async function testProxy() {
+  proxyTesting.value = true
+  proxyResult.value = null
+  try {
+    const r = await api.testProxy({ proxyUrl: proxyUrl.value.trim() })
+    proxyResult.value = r
+    if (r.ok) actions.toast(`代理可用，${r.ms}ms`, 'success')
+    else actions.toast('代理不通：' + (r.error || `HTTP ${r.status}`), 'error')
+  } catch (e) {
+    proxyResult.value = { ok: false, error: e.message }
+    actions.toast('测试失败：' + e.message, 'error')
+  } finally {
+    proxyTesting.value = false
+  }
+}
+
 function toggleAutoCheck() {
   actions.saveSettings({ autoCheckUpdate: !autoCheck.value })
 }
@@ -634,6 +659,26 @@ async function saveRoster() {
         <label class="update-auto tiny muted">
           <input type="checkbox" :checked="autoCheck" @change="toggleAutoCheck" /> 每天自动检查
         </label>
+        <div class="proxy-block">
+          <div class="proxy-label">
+            🌐 更新走代理
+            <span class="tiny muted">留空直连；GitHub 下载慢时填这里</span>
+          </div>
+          <div class="proxy-row">
+            <input
+              v-model="proxyUrl" class="input" maxlength="120"
+              placeholder="http://10.10.10.254:7890" aria-label="代理地址"
+              @keyup.enter="saveProxy"
+            />
+            <button class="btn btn-soft btn-sm" :disabled="proxyTesting" @click="testProxy">
+              {{ proxyTesting ? '测试中…' : '测试' }}
+            </button>
+            <button class="btn btn-primary btn-sm" :disabled="pending('settings')" @click="saveProxy">保存</button>
+          </div>
+          <div v-if="proxyResult" class="proxy-result tiny" :class="proxyResult.ok ? 'ok' : 'bad'">
+            {{ proxyResult.ok ? `✓ 可用（${proxyResult.ms}ms，HTTP ${proxyResult.status}）` : `✗ ${proxyResult.error || ('HTTP ' + proxyResult.status)}` }}
+          </div>
+        </div>
       </div>
 
       <div class="card setting-card sc-about">

@@ -1940,3 +1940,15 @@
   }
   .panel-head > .panel-head-actions .btn { flex: 0 1 auto; }
 }
+
+/* 在线更新：代理配置 */
+.proxy-block { margin-top: 12px; padding-top: 11px; border-top: 1px dashed var(--line); }
+.proxy-label { display: flex; align-items: baseline; gap: 7px; font-size: .8rem; font-weight: 800; color: var(--ink); margin-bottom: 7px; flex-wrap: wrap; }
+.proxy-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.proxy-row .input { flex: 1 1 150px; min-width: 0; font-size: .82rem; }
+.proxy-result { margin-top: 6px; }
+.proxy-result.ok { color: #2e7d4f; }
+.proxy-result.bad { color: #b3402c; }
+@media (max-width: 560px) {
+  .proxy-row .input { flex: 1 1 100%; }
+}
