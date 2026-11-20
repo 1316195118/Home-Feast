@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -21,6 +22,7 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 		BackupKeep     *int              `json:"backupKeep"`
 		ImageMode      *string           `json:"imageMode"` // auto / full / thumb
 		AutoCheckUpdate *bool            `json:"autoCheckUpdate"`
+		ProxyURL       *string           `json:"proxyUrl"`
 		AccessCode     *string           `json:"accessCode"` // 空串 = 关闭口令
 	}
 	if err := decodeBody(w, r, &in); err != nil {
@@ -101,6 +103,19 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 			k = 60
 		}
 		v.BackupKeep = k
+	}
+	if in.ProxyURL != nil {
+		raw := strings.TrimSpace(*in.ProxyURL)
+		if raw == "" {
+			v.ProxyURL = ""
+		} else {
+			u, err := url.Parse(raw)
+			if err != nil || u.Host == "" || (u.Scheme != "http" && u.Scheme != "https" && u.Scheme != "socks5") {
+				jsonErr(w, http.StatusBadRequest, "代理地址格式应为 http://IP:端口 或 socks5://IP:端口")
+				return
+			}
+			v.ProxyURL = raw
+		}
 	}
 	if in.AutoCheckUpdate != nil {
 		v.AutoCheckUpdate = in.AutoCheckUpdate

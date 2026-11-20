@@ -74,6 +74,7 @@ func New(st *store.Store, web fs.FS, envCode string) http.Handler {
 	api.HandleFunc("GET /api/update/check", s.checkUpdate)
 	api.HandleFunc("GET /api/update/status", s.updateStatus)
 	api.HandleFunc("POST /api/update/apply", s.applyUpdate)
+	api.HandleFunc("POST /api/update/proxy-test", s.testProxy)
 
 	// 应用内定时备份：随进程启动，不需要宿主机 cron
 	s.startAutoBackup()

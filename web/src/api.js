@@ -74,4 +74,5 @@ export const api = {
   checkUpdate: () => request('/api/update/check'),
   updateStatus: () => request('/api/update/status'),
   applyUpdate: () => request('/api/update/apply', { method: 'POST' }),
+  testProxy: (body) => request('/api/update/proxy-test', { method: 'POST', body }),
 }
