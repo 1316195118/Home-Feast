@@ -20,6 +20,7 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 		AutoBackup     *bool             `json:"autoBackup"`
 		BackupKeep     *int              `json:"backupKeep"`
 		ImageMode      *string           `json:"imageMode"` // auto / full / thumb
+		AutoCheckUpdate *bool            `json:"autoCheckUpdate"`
 		AccessCode     *string           `json:"accessCode"` // 空串 = 关闭口令
 	}
 	if err := decodeBody(w, r, &in); err != nil {
@@ -100,6 +101,9 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 			k = 60
 		}
 		v.BackupKeep = k
+	}
+	if in.AutoCheckUpdate != nil {
+		v.AutoCheckUpdate = in.AutoCheckUpdate
 	}
 	if in.ImageMode != nil {
 		mode := strings.TrimSpace(strings.ToLower(*in.ImageMode))

@@ -20,9 +20,11 @@
 """
 import argparse
 import datetime
+import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 
@@ -36,6 +38,7 @@ GEN_FILE = os.path.join(ROOT, 'internal', 'api', 'version_gen.go')
 CHANGELOG_GO = os.path.join(ROOT, 'internal', 'api', 'changelog_gen.go')
 BIN = os.path.join(ROOT, 'menu-linux')
 DEPLOY = os.path.join(ROOT, 'scripts', '_cq', 'deploy_menu4.py')
+DIST = os.path.join(ROOT, 'dist')  # 容器内在线更新的下载源，仓库只留最新一份
 
 PENDING_HEADER = '''# 待发布说明
 
@@ -177,6 +180,41 @@ def build_all():
         build(arch)
 
 
+def publish_dist(version, note, now):
+    """把最新三架构二进制写入 dist/（覆盖式），并生成 manifest.json 供容器内更新拉取。"""
+    os.makedirs(DIST, exist_ok=True)
+    files = {}
+    # 先清理旧的二进制，确保仓库只留最新一份
+    for f in os.listdir(DIST):
+        if f.startswith('menu-linux'):
+            os.remove(os.path.join(DIST, f))
+    for arch, cfg in ARCHES.items():
+        src = bin_for(arch)
+        if not os.path.exists(src):
+            raise SystemExit(f'缺少 {arch} 产物 {src}，无法发布更新')
+        name = 'menu-linux-amd64' if arch == 'amd64' else f'menu-linux-{arch}'
+        dst = os.path.join(DIST, name)
+        with open(src, 'rb') as fsrc, open(dst, 'wb') as fdst:
+            shutil.copyfileobj(fsrc, fdst)
+        digest = hashlib.sha256()
+        with open(dst, 'rb') as f:
+            for chunk in iter(lambda: f.read(1 << 20), b''):
+                digest.update(chunk)
+        files[arch] = {'name': name, 'sha256': digest.hexdigest(), 'size': os.path.getsize(dst)}
+        print(f'  dist/{name}  {os.path.getsize(dst) / 1024 / 1024:.1f} MB  sha256={digest.hexdigest()[:12]}…')
+    manifest = {
+        'version': version,
+        'publishedAt': now.isoformat(timespec='seconds'),
+        'note': note,
+        'files': files,
+    }
+    path = os.path.join(DIST, 'manifest.json')
+    with open(path, 'w', encoding='utf-8', newline='') as f:
+        json.dump(manifest, f, ensure_ascii=False, indent=2)
+        f.write('\n')
+    print('  已生成 dist/manifest.json（', version, '）')
+
+
 def deploy():
     subprocess.run([sys.executable, DEPLOY], cwd=ROOT, check=True)
 
@@ -186,7 +224,7 @@ def run_git(args, capture=False):
                           text=True, capture_output=capture)
 
 
-def publish(do_deploy=True, arch='amd64'):
+def publish(do_deploy=True, arch='amd64', no_build=False):
     entries = read_pending()
     if not entries:
         raise SystemExit('没有待发布说明，先用 --note 记录这次改了什么')
@@ -209,7 +247,12 @@ def publish(do_deploy=True, arch='amd64'):
     print(f'版本记录已嵌入：{n} 条')
     print(f'版本 {cur} → {v}（合并 {len(entries)} 条说明）')
 
-    build_all() if arch == 'all' else build(arch)
+    # 在线更新需要三架构产物，publish 时始终全编（本地开发可用 --no-build 跳过）
+    if no_build:
+        print('跳过编译（--no-build），dist/ 保持原样')
+    else:
+        build_all()
+        publish_dist(v, note, now)
     if do_deploy:
         deploy()
 
@@ -252,7 +295,7 @@ def main():
         return
 
     if a.publish:
-        publish(do_deploy=not a.no_deploy, arch=a.arch)
+        publish(do_deploy=not a.no_deploy, arch=a.arch, no_build=a.no_build)
         return
 
     if not a.note:

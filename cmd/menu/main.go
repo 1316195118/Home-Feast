@@ -61,6 +61,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("打开数据/配置目录失败: %v", err)
 	}
+	// 在线更新后由新进程自检：若版本对不上（说明更新失败被重新拉起），自动回滚
+	api.CheckRecovery(*dataDir, "")
 	accessCode := os.Getenv("MENU_ACCESS_CODE")
 
 	server := &http.Server{

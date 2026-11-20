@@ -69,4 +69,9 @@ export const api = {
   listBackups: () => request('/api/backups'),
   runBackupNow: () => request('/api/backups/run', { method: 'POST' }),
   importBackup: (form) => request('/api/backup', { method: 'POST', body: form, isForm: true }),
+
+  // 容器内在线更新
+  checkUpdate: () => request('/api/update/check'),
+  updateStatus: () => request('/api/update/status'),
+  applyUpdate: () => request('/api/update/apply', { method: 'POST' }),
 }

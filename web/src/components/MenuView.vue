@@ -3,9 +3,10 @@ import { inject, ref, computed, watch, onMounted, onUnmounted, nextTick } from '
 import DishCard from './DishCard.vue'
 import DishEditor from './DishEditor.vue'
 import PantryFridge from './PantryFridge.vue'
+import OrderPanel from './OrderPanel.vue'
 import Food3D from './Food3D.vue'
 import DishDetail from './DishDetail.vue'
-import { isCuisineHidden, pantryGroups, pantryVisual, pantryMatches, foodShape, normalizeIngredient } from '../utils'
+import { normalizeMeals, isCuisineHidden, pantryGroups, pantryVisual, pantryMatches, foodShape, normalizeIngredient } from '../utils'
 import { getRecipe } from '../recipes'
 import { useModalBehavior } from '../modal'
 
@@ -171,6 +172,11 @@ function editFromDetail(dish) {
 // ---------- 冰箱食材（入口放在菜谱标题后，和菜谱一样用带效果图的卡片挑选）----------
 const pantryOpen = ref(false)
 const pantryRoot = ref(null)
+// 已下单悬浮：组件内部处理餐次分组与订单操作
+const orderPanelOpen = ref(false)
+const todayOrders = computed(() => state.plan?.orders || [])
+function openOrderPanel() { orderPanelOpen.value = true }
+
 // 批量点菜：点「多选」进入选择模式，勾几道一起加入今日菜单
 const multiMode = ref(false)
 const multiSet = ref(new Set())
@@ -565,6 +571,18 @@ async function savePantry() {
     <Transition name="modal">
       <DishEditor v-if="editorOpen" :dish="editorDish" @close="editorOpen = false" />
     </Transition>
+
+    <!-- 已下单悬浮入口 -->
+    <button
+      class="order-fab" type="button"
+      :aria-label="`查看已下单的 ${todayOrders.length} 道菜`"
+      @click="openOrderPanel"
+    >
+      🧾 已下单
+      <span :key="`fab-${todayOrders.length}`" class="order-fab-count">{{ todayOrders.length }}</span>
+    </button>
+
+    <OrderPanel v-if="orderPanelOpen" @close="orderPanelOpen = false" />
 
     <Transition name="pop">
       <button v-if="showTop" class="back-top" type="button" aria-label="回到顶部" @click="scrollTop">↑</button>
