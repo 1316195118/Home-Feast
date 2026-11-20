@@ -9,6 +9,7 @@ const props = defineProps({
 })
 const open = ref(false)
 const root = ref(null)
+const setRoot = (el) => { root.value = el }
 let timer = null
 // 触屏设备上 tap 会先合成 mouseenter 再触发 click，
 // 若两者都绑事件，show() 后紧跟 toggle() 会把浮层关掉——只在支持悬停的设备启用 hover。
@@ -37,7 +38,10 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <span ref="root" class="help-wrap" @mouseenter="canHover && show()" @mouseleave="canHover && hideSoon()">
+  <span
+    :ref="setRoot" :class="['help-wrap', { 'is-open': open }]"
+    @mouseenter="canHover && show()" @mouseleave="canHover && hideSoon()"
+  >
     <button
       class="help-btn" type="button" :aria-label="label" :aria-expanded="open"
       @click="toggle" @focus="canHover && show()" @blur="canHover && hideSoon()"

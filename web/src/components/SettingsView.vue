@@ -1,5 +1,5 @@
 <script setup>
-import { inject, ref, watch, computed, reactive, onMounted } from 'vue'
+import { inject, ref, watch, computed, reactive, onMounted, onBeforeUnmount } from 'vue'
 import { api, setAccessCode } from '../api'
 import { isCuisineHidden, DEFAULT_MEALS, mealEndMinutes, normalizeMeals, mealIconChoices, WEEKDAYS, isLanHost, imageSize } from '../utils'
 import { useModalBehavior } from '../modal'
@@ -66,12 +66,63 @@ onMounted(() => { ensureChangelog(false) })
 // 构建时间只取日期，卡片上不必显示到秒
 const buildDay = computed(() => (state.buildTime || '').slice(0, 10))
 
+// 设置项较多，用页面内快捷导航直达四组配置，不把功能藏进页签。
+const settingsCategories = [
+  { id: 'family', icon: '🏠', title: '家庭与日常', hint: '名字 · 用餐 · 排班', count: 3 },
+  { id: 'display', icon: '🍽️', title: '菜谱与显示', hint: '菜系 · 配图 · 外观', count: 3 },
+  { id: 'data', icon: '🛡️', title: '安全与数据', hint: '口令 · 备份 · 存储', count: 3 },
+  { id: 'system', icon: '⬆️', title: '系统与更新', hint: '更新 · 版本 · 关于', count: 3 },
+]
+const activeSettingsSection = ref(settingsCategories[0].id)
+let settingsScrollFrame = 0
+function syncActiveSettingsSection() {
+  settingsScrollFrame = 0
+  const probe = window.innerWidth <= 720 ? 132 : 110
+  let current = settingsCategories[0].id
+  const atPageEnd = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4
+  if (atPageEnd) {
+    current = settingsCategories[settingsCategories.length - 1].id
+  } else {
+    for (const category of settingsCategories) {
+      const section = document.getElementById(`settings-${category.id}`)
+      if (section && section.getBoundingClientRect().top <= probe) current = category.id
+    }
+  }
+  activeSettingsSection.value = current
+}
+function queueActiveSettingsSync() {
+  if (settingsScrollFrame) return
+  settingsScrollFrame = requestAnimationFrame(syncActiveSettingsSection)
+}
+function jumpToSettings(id) {
+  const target = document.getElementById(`settings-${id}`)
+  if (!target) return
+  activeSettingsSection.value = id
+  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })
+  target.focus({ preventScroll: true })
+}
+onMounted(() => {
+  window.addEventListener('scroll', queueActiveSettingsSync, { passive: true })
+  window.addEventListener('resize', queueActiveSettingsSync, { passive: true })
+  queueActiveSettingsSync()
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', queueActiveSettingsSync)
+  window.removeEventListener('resize', queueActiveSettingsSync)
+  if (settingsScrollFrame) cancelAnimationFrame(settingsScrollFrame)
+})
+
 // ---- 容器内在线更新 ----
 const updateInfo = ref({ current: state.version, latest: '', available: false, note: '', published: '' })
-const updateBusy = ref(false)
+const updateChecking = ref(false)
+const updateApplying = ref(false)
+const updateBusy = computed(() => updateChecking.value || updateApplying.value)
 const updateProgress = ref(0)
 const updateMsg = ref('')
 const updateErr = ref('')
+const updateCard = ref(null)
+const updateStatusVisible = computed(() => updateBusy.value || !!updateMsg.value || !!updateErr.value)
 const autoCheck = computed(() => state.settings.autoCheckUpdate !== false) // 默认开
 const LAST_CHECK_KEY = 'fm.update.lastCheck'
 
@@ -79,34 +130,136 @@ function fmtNote(note) {
   return String(note || '').replace(/\*\*([^*]+)\*\*/g, '【$1】').split('\n').filter(Boolean).slice(0, 3)
 }
 
+const noteLines = computed(() => fmtNote(updateInfo.value.note))
+const updateVisualState = computed(() => {
+  if (updateErr.value) return 'error'
+  if (updateApplying.value) return 'working'
+  if (updateChecking.value) return 'checking'
+  if (updateInfo.value.available) return 'available'
+  if (updateMsg.value.startsWith('已是最新')) return 'success'
+  return 'idle'
+})
+const updateStatusLabel = computed(() => ({
+  error: '更新遇到问题',
+  working: updateProgress.value >= 85 ? '正在安装新版本' : '正在下载新版本',
+  checking: '正在检查更新',
+  available: '新版本已经准备好',
+  success: '当前已经是最新版本',
+  idle: '更新状态',
+}[updateVisualState.value]))
+const updateStatusIcon = computed(() => ({
+  error: '!',
+  working: updateProgress.value >= 85 ? '↻' : '↓',
+  checking: '↻',
+  available: '↑',
+  success: '✓',
+  idle: '·',
+}[updateVisualState.value]))
+const updateTagText = computed(() => {
+  if (updateVisualState.value === 'error') return '需处理'
+  if (updateApplying.value) return `${updateProgress.value}%`
+  if (updateChecking.value) return '检查中'
+  if (updateInfo.value.available) return `发现 v${updateInfo.value.latest}`
+  if (updateVisualState.value === 'success') return '已是最新'
+  return `当前 v${state.version}`
+})
+const updateTagClass = computed(() => {
+  if (updateVisualState.value === 'error') return 'tag-error'
+  if (['working', 'checking'].includes(updateVisualState.value)) return 'tag-update-live'
+  if (['available', 'success'].includes(updateVisualState.value)) return 'tag-green'
+  return ''
+})
+const updatePhaseHint = computed(() => {
+  if (!updateApplying.value) return ''
+  if (updateProgress.value >= 85) return '正在准备切换服务，页面会短暂重连'
+  return '下载期间可以刷新页面，进度会自动接回'
+})
+
 async function checkUpdate(silent = false) {
   if (updateBusy.value) return
-  updateBusy.value = true
+  updateChecking.value = true
   updateErr.value = ''
+  updateProgress.value = 0
+  updateMsg.value = '正在连接更新源，检查最新版本…'
   try {
     const r = await api.checkUpdate()
     updateInfo.value = r
     try { localStorage.setItem(LAST_CHECK_KEY, String(Date.now())) } catch { /* 隐私模式忽略 */ }
-    if (!silent && !r.available) actions.toast(`已是最新版本 v${r.current}`, 'success')
+    bounce(updateCard.value)
+    if (r.available) {
+      updateMsg.value = `发现新版本 v${r.latest}，可以立即更新`
+      if (!silent) actions.toast(`发现新版本 v${r.latest}`, 'success')
+    } else {
+      updateMsg.value = `已是最新版本 v${r.current}`
+      if (!silent) actions.toast(`已是最新版本 v${r.current}`, 'success')
+    }
   } catch (e) {
     updateErr.value = e.message || '检查失败'
+    updateMsg.value = '检查未完成'
+    shake(updateCard.value)
     if (!silent) actions.toast('检查更新失败：' + updateErr.value, 'error')
   } finally {
-    updateBusy.value = false
+    updateChecking.value = false
   }
 }
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
 async function pollUpdate() {
-  for (let i = 0; i < 40; i++) {
-    await new Promise((r) => setTimeout(r, 1000))
+  const started = Date.now()
+  let sawTask = false
+  let taskError = null
+  let completion = null
+  while (Date.now() - started < 10 * 60 * 1000) {
     try {
       const st = await api.updateStatus()
-      updateProgress.value = st.progress || 0
+      const progress = Number(st.progress) || 0
+      updateProgress.value = progress
       updateMsg.value = st.message || ''
-      if (!st.downloading) return st
-    } catch { /* 服务正在切换，忽略 */ }
+      if (st.downloading) sawTask = true
+      if (completion && !st.downloading) {
+        if (st.lastError) throw new Error(st.lastError)
+        return completion
+      }
+      if (st.lastError && !st.downloading) {
+        taskError = new Error(st.lastError)
+        break
+      }
+      if (!st.downloading) {
+        if (progress >= 100 || st.message === '已是最新版本') return st
+        if (sawTask) {
+          taskError = new Error('更新任务提前结束，当前版本未改变')
+          break
+        }
+      }
+      // 已替换二进制后服务还会再等 600ms 才 Exec。再读一次状态，
+      // 这样 Exec 立即失败并回滚时也能拿到真实错误，而不是误报“已安装”。
+      if (progress >= 100 && st.downloading) {
+        completion = st
+        await sleep(650)
+        continue
+      }
+      if (completion) return completion
+    } catch {
+      if (completion) return completion
+      updateMsg.value = '服务正在重启，等待重新连接…'
+    }
+    await sleep(650)
   }
-  return null
+  if (taskError) throw taskError
+  throw new Error('更新等待超时，请稍后刷新页面查看版本')
+}
+
+async function waitForVersion(target) {
+  const deadline = Date.now() + 60 * 1000
+  while (Date.now() < deadline) {
+    try {
+      const info = await api.ping()
+      if (!target || info.version === target) return true
+    } catch { /* 服务切换期间短暂断开是正常的 */ }
+    await sleep(800)
+  }
+  return false
 }
 
 async function doUpdate(force = false) {
@@ -120,20 +273,62 @@ async function doUpdate(force = false) {
     confirmText: force ? '强制重装' : '立即更新', danger: true,
   })
   if (!ok) return
-  updateBusy.value = true
+  updateApplying.value = true
   updateErr.value = ''
   updateProgress.value = 0
-  updateMsg.value = '准备更新…'
+  updateMsg.value = '正在启动更新任务…'
   try {
     const r = await api.applyUpdate({ force })
-    updateMsg.value = r.message || '更新中…'
+    updateMsg.value = r.message || '更新任务已开始'
+    actions.toast('更新任务已开始，可查看实时进度', 'info')
+    bounce(updateCard.value)
     const st = await pollUpdate()
+    if (st?.message === '已是最新版本') {
+      updateMsg.value = `已是最新版本 v${state.version}`
+      updateApplying.value = false
+      return
+    }
+    updateProgress.value = 100
+    updateMsg.value = '正在重启并连接新版本…'
+    const ready = await waitForVersion(st?.latest || updateInfo.value.latest)
+    if (!ready) throw new Error('新版本已安装，但服务暂未重新连接，请稍后刷新页面')
+    updateMsg.value = '更新完成，正在刷新页面…'
     actions.toast('更新完成，正在重新连接…', 'success')
-    setTimeout(() => window.location.reload(), 1600)
+    await sleep(500)
+    window.location.reload()
   } catch (e) {
     updateErr.value = e.message || '更新失败'
+    updateMsg.value = '更新未完成'
+    shake(updateCard.value)
     actions.toast('更新失败：' + updateErr.value, 'error')
-    updateBusy.value = false
+    updateApplying.value = false
+    updateProgress.value = 0
+  }
+}
+
+// 页面刷新或中途重新进入设置时，接管尚未结束的后台更新并继续显示进度。
+async function resumeUpdate() {
+  try {
+    const st = await api.updateStatus()
+    if (!st.downloading) return
+    updateApplying.value = true
+    updateProgress.value = Number(st.progress) || 0
+    updateMsg.value = st.message || '更新正在进行中…'
+    const final = await pollUpdate()
+    updateProgress.value = 100
+    updateMsg.value = '正在重启并连接新版本…'
+    const ready = await waitForVersion(final?.latest || st.latest)
+    if (!ready) throw new Error('新版本已安装，但服务暂未重新连接，请稍后刷新页面')
+    updateMsg.value = '更新完成，正在刷新页面…'
+    bounce(updateCard.value)
+    actions.toast('更新完成，正在重新连接…', 'success')
+    await sleep(500)
+    window.location.reload()
+  } catch (e) {
+    updateErr.value = e.message || '更新失败'
+    updateMsg.value = '更新未完成'
+    shake(updateCard.value)
+    updateApplying.value = false
     updateProgress.value = 0
   }
 }
@@ -173,6 +368,7 @@ function toggleAutoCheck() {
 }
 
 onMounted(() => {
+  resumeUpdate()
   if (!autoCheck.value) return
   let last = 0
   try { last = Number(localStorage.getItem(LAST_CHECK_KEY) || 0) } catch { /* 忽略 */ }
@@ -470,16 +666,61 @@ async function saveRoster() {
 </script>
 
 <template>
-  <section>
-    <div class="section-head">
-      <div>
+  <section class="settings-screen">
+    <div class="section-head settings-head">
+      <div class="settings-head-copy">
+        <span class="settings-eyebrow"><span aria-hidden="true">✦</span> 家庭控制台</span>
         <h2 class="section-title">⚙️ 设置</h2>
         <div class="section-sub">数据都在你自己的设备里：家庭信息、菜系、时段、排班、口令与备份</div>
       </div>
+      <span class="settings-local-pill">
+        <span class="settings-local-dot" aria-hidden="true"></span>
+        <span class="settings-local-label">仅存本机 / NAS</span>
+      </span>
     </div>
 
-    <div class="settings-grid">
-      <div class="card setting-card sc-name">
+    <nav class="settings-category-nav" aria-label="设置分类快捷导航">
+      <button
+        v-for="(category, i) in settingsCategories"
+        :key="category.id"
+        type="button"
+        class="settings-jump"
+        :class="[`is-${category.id}`, { 'is-active': activeSettingsSection === category.id }]"
+        :aria-controls="`settings-${category.id}`"
+        :aria-current="activeSettingsSection === category.id ? 'location' : undefined"
+        @click="jumpToSettings(category.id)"
+      >
+        <span class="settings-jump-index" aria-hidden="true">{{ String(i + 1).padStart(2, '0') }}</span>
+        <span class="settings-jump-icon" aria-hidden="true">{{ category.icon }}</span>
+        <span class="settings-jump-copy">
+          <b>{{ category.title }}</b>
+          <small>{{ category.hint }}</small>
+        </span>
+        <span class="settings-jump-count">{{ category.count }} 项</span>
+        <span class="settings-jump-arrow" aria-hidden="true">↓</span>
+      </button>
+    </nav>
+
+    <div class="settings-sections">
+      <section
+        id="settings-family"
+        class="settings-section settings-section-family"
+        data-settings-section
+        aria-labelledby="settings-family-title"
+        tabindex="-1"
+      >
+        <header class="settings-section-head">
+          <span class="settings-section-icon" aria-hidden="true">🏠</span>
+          <div class="settings-section-copy">
+            <span class="settings-section-kicker">01 · 家庭</span>
+            <h3 id="settings-family-title">先把这个家调成你们习惯的样子</h3>
+            <p>家里的称呼、吃饭时间和每周分工。</p>
+          </div>
+          <span class="settings-section-total">3 项设置</span>
+        </header>
+
+        <div class="settings-section-grid settings-family-grid">
+          <div class="card setting-card setting-card-wide sc-name">
         <div class="setting-title">🏠 家的名字</div>
         <p class="setting-desc">显示在左上角，改成你们家习惯的叫法。</p>
         <div class="setting-row setting-row-inline">
@@ -491,27 +732,7 @@ async function saveRoster() {
         </div>
       </div>
 
-      <div class="card setting-card sc-backup">
-        <div class="setting-title">
-          💾 备份与恢复
-          <span class="tag setting-title-tag" :class="autoBackup ? 'tag-green' : ''">
-            {{ autoBackup ? '自动备份中' : '仅手动' }}
-          </span>
-        </div>
-        <p class="setting-desc">
-          每天 03:30 自动打包数据与图片，保留最近 {{ backupKeep }} 份；也可随时导出 / 恢复。
-        </p>
-        <div class="setting-meta tiny muted">
-          共 <span class="value-pop" :key="backups.length">{{ backups.length }}</span> 份备份<template v-if="backups.length"> · 最近 {{ backups[0].at }}</template>
-        </div>
-        <button class="btn btn-soft btn-sm cuisine-manage-btn" @click="showBackupModal = true">
-          管理备份
-          <span class="cuisine-count">{{ backups.length }} 份</span>
-          <span class="chev">›</span>
-        </button>
-      </div>
-
-      <div class="card setting-card sc-roster">
+          <div class="card setting-card sc-roster">
         <div class="setting-title">
           📅 每周掌勺排班
           <span class="tag setting-title-tag" :class="rosterEnabled ? 'tag-green' : ''">
@@ -529,7 +750,52 @@ async function saveRoster() {
         </button>
       </div>
 
-      <div class="card setting-card sc-image">
+          <div class="card setting-card sc-meals">
+        <div class="setting-title">🕐 用餐时段</div>
+        <p class="setting-desc">
+          给每一餐起名字、定收起时间；过了时间，今天这一餐的菜会自动从今日菜单收起，历史记录仍保留。
+        </p>
+        <div class="setting-meta tiny muted">收起时间 {{ mealSummary }}</div>
+        <button class="btn btn-soft btn-sm cuisine-manage-btn" @click="openMealsModal">
+          管理用餐时段
+          <span class="cuisine-count">{{ effectiveMeals.length }} 餐</span>
+          <span class="chev">›</span>
+        </button>
+      </div>
+        </div>
+      </section>
+
+      <section
+        id="settings-display"
+        class="settings-section settings-section-display"
+        data-settings-section
+        aria-labelledby="settings-display-title"
+        tabindex="-1"
+      >
+        <header class="settings-section-head">
+          <span class="settings-section-icon" aria-hidden="true">🍽️</span>
+          <div class="settings-section-copy">
+            <span class="settings-section-kicker">02 · 内容</span>
+            <h3 id="settings-display-title">只留下你们爱看、顺手的内容</h3>
+            <p>控制菜谱范围，以及这台设备上的图片和外观。</p>
+          </div>
+          <span class="settings-section-total">3 项设置</span>
+        </header>
+
+        <div class="settings-section-grid settings-display-grid">
+          <div class="card setting-card sc-cuisine">
+        <div class="setting-title">🍽️ 菜系显示</div>
+        <p class="setting-desc">
+          选择菜谱里显示哪些菜系 <HelpTip text="关掉的菜系在分类栏和「全部」里都不再出现，想看回来随时打开；用 ↑↓ 调整它们在顶部的顺序。" />
+        </p>
+        <button class="btn btn-soft btn-sm cuisine-manage-btn" @click="showCuisineModal = true">
+          管理菜系显示
+          <span class="cuisine-count">{{ visibleCount }} / {{ allCuisines.length }} 显示中</span>
+          <span class="chev">›</span>
+        </button>
+      </div>
+
+          <div class="card setting-card sc-image">
         <div class="setting-title">
           🖼️ 配图清晰度
           <span class="tag setting-title-tag" :class="lanNow ? 'tag-green' : ''">
@@ -549,7 +815,7 @@ async function saveRoster() {
         <div class="setting-meta tiny muted">{{ imageChoices.find((c) => c.key === imageMode)?.hint }}</div>
       </div>
 
-      <div class="card setting-card sc-theme">
+          <div class="card setting-card setting-card-wide sc-theme">
         <div class="setting-title">🌙 外观</div>
         <p class="setting-desc">
           主题与字号只影响这台设备 <HelpTip text="选「自动」会随手机或系统的深浅模式切换；字号三档改的是全站文字大小，两项设置都记在本机，不进备份。" />
@@ -572,20 +838,28 @@ async function saveRoster() {
           </div>
         </div>
       </div>
+        </div>
+      </section>
 
-      <div class="card setting-card sc-cuisine">
-        <div class="setting-title">🍽️ 菜系显示</div>
-        <p class="setting-desc">
-          选择菜谱里显示哪些菜系 <HelpTip text="关掉的菜系在分类栏和「全部」里都不再出现，想看回来随时打开；用 ↑↓ 调整它们在顶部的顺序。" />
-        </p>
-        <button class="btn btn-soft btn-sm cuisine-manage-btn" @click="showCuisineModal = true">
-          管理菜系显示
-          <span class="cuisine-count">{{ visibleCount }} / {{ allCuisines.length }} 显示中</span>
-          <span class="chev">›</span>
-        </button>
-      </div>
+      <section
+        id="settings-data"
+        class="settings-section settings-section-data"
+        data-settings-section
+        aria-labelledby="settings-data-title"
+        tabindex="-1"
+      >
+        <header class="settings-section-head">
+          <span class="settings-section-icon" aria-hidden="true">🛡️</span>
+          <div class="settings-section-copy">
+            <span class="settings-section-kicker">03 · 安全</span>
+            <h3 id="settings-data-title">守住访问，也守住每一份家常数据</h3>
+            <p>口令与备份放一起，数据位置和同步状态也能随时确认。</p>
+          </div>
+          <span class="settings-section-total">3 项设置</span>
+        </header>
 
-      <div class="card setting-card sc-access">
+        <div class="settings-section-grid settings-data-grid">
+          <div class="card setting-card sc-access">
         <div class="setting-title">
           🔒 访问口令
           <span class="tag setting-title-tag" :class="state.accessRequired ? 'tag-green' : ''">
@@ -607,7 +881,27 @@ async function saveRoster() {
         </template>
       </div>
 
-      <div class="card setting-card sc-storage">
+          <div class="card setting-card sc-backup">
+        <div class="setting-title">
+          💾 备份与恢复
+          <span class="tag setting-title-tag" :class="autoBackup ? 'tag-green' : ''">
+            {{ autoBackup ? '自动备份中' : '仅手动' }}
+          </span>
+        </div>
+        <p class="setting-desc">
+          每天 03:30 自动打包数据与图片，保留最近 {{ backupKeep }} 份；也可随时导出 / 恢复。
+        </p>
+        <div class="setting-meta tiny muted">
+          共 <span class="value-pop" :key="backups.length">{{ backups.length }}</span> 份备份<template v-if="backups.length"> · 最近 {{ backups[0].at }}</template>
+        </div>
+        <button class="btn btn-soft btn-sm cuisine-manage-btn" @click="showBackupModal = true">
+          管理备份
+          <span class="cuisine-count">{{ backups.length }} 份</span>
+          <span class="chev">›</span>
+        </button>
+      </div>
+
+          <div class="card setting-card setting-card-wide sc-storage">
         <div class="setting-title">📂 数据与配置在哪</div>
         <p class="setting-desc">
           两个平级目录，换机器挂回去即可 <HelpTip text="data/ 存菜品、成员、计划、口令哈希与图片；config/ 存设置。都是纯文本，不依赖数据库，无需迁移。" />
@@ -623,8 +917,106 @@ async function saveRoster() {
           🔄 多人实时同步：<b>{{ realtimeText }}</b>
         </div>
       </div>
+        </div>
+      </section>
 
-      <div class="card setting-card sc-version">
+      <section
+        id="settings-system"
+        class="settings-section settings-section-system"
+        data-settings-section
+        aria-labelledby="settings-system-title"
+        tabindex="-1"
+      >
+        <header class="settings-section-head">
+          <span class="settings-section-icon" aria-hidden="true">⬆️</span>
+          <div class="settings-section-copy">
+            <span class="settings-section-kicker">04 · 系统</span>
+            <h3 id="settings-system-title">更新、版本和来源，都集中在这里</h3>
+            <p>检查与安装更新，查看每次改了什么，以及素材授权说明。</p>
+          </div>
+          <span class="settings-section-total">3 项设置</span>
+        </header>
+
+        <div class="settings-section-grid settings-system-grid">
+          <div ref="updateCard" class="card setting-card setting-card-wide setting-card-feature sc-update" :class="`is-${updateVisualState}`">
+        <span class="update-card-aura" aria-hidden="true"></span>
+        <div class="setting-title">
+          ⬆️ 在线更新
+          <span class="tag setting-title-tag" :class="updateTagClass">
+            {{ updateTagText }}
+          </span>
+        </div>
+        <p class="setting-desc">
+          从 GitHub 拉取新版本，在容器内直接更新，菜和图片都不会动
+          <HelpTip text="更新包带 SHA256 校验，下载后原子替换程序并原地重启，容器不会重建。若新版启动失败会自动回滚到旧版；检查更新默认每天自动做一次。" />
+        </p>
+        <div v-if="noteLines.length" class="update-note">
+          <span class="update-note-label">本次更新</span>
+          <div class="update-note-lines">
+            <div v-for="(line, i) in noteLines" :key="i">{{ line }}</div>
+          </div>
+        </div>
+        <div
+          v-if="updateStatusVisible"
+          class="update-progress" :class="`is-${updateVisualState}`"
+          role="status" aria-live="polite"
+        >
+          <div class="update-state-head">
+            <span
+              class="update-state-icon" :class="{ 'is-spinning': updateBusy, 'is-result': !updateBusy }"
+              aria-hidden="true"
+            >{{ updateStatusIcon }}</span>
+            <span class="update-state-copy">
+              <strong>{{ updateStatusLabel }}</strong>
+              <span>{{ updateMsg }}</span>
+            </span>
+            <b v-if="updateApplying" class="update-percent">
+              {{ updateProgress }}<small>%</small>
+            </b>
+          </div>
+          <div
+            v-if="updateBusy"
+            class="update-bar"
+            :class="{ 'is-indeterminate': updateChecking, 'is-installing': updateApplying && updateProgress >= 85 }"
+            role="progressbar"
+            :aria-valuenow="updateChecking ? undefined : updateProgress"
+            aria-valuemin="0" aria-valuemax="100"
+            :aria-label="updateChecking ? '正在检查更新' : '在线更新进度'"
+          ><span :style="{ width: updateProgress + '%' }"><i aria-hidden="true"></i></span></div>
+          <span v-if="updatePhaseHint" class="update-phase-hint">{{ updatePhaseHint }}</span>
+        </div>
+        <div v-if="updateErr" class="update-error tiny" role="alert">
+          <span class="update-error-icon" aria-hidden="true">!</span>
+          <span>{{ updateErr }}</span>
+        </div>
+        <div class="setting-actions update-actions">
+          <button
+            class="btn btn-soft btn-sm update-check-btn"
+            :disabled="updateBusy" :aria-busy="updateChecking" @click="checkUpdate(false)"
+          >
+            <span v-if="updateChecking" class="btn-spinner" aria-hidden="true" />
+            <span v-else class="update-action-icon" aria-hidden="true">⌕</span>
+            {{ updateChecking ? '正在检查…' : '检查更新' }}
+          </button>
+          <button v-if="updateInfo.available" class="btn btn-primary btn-sm" :disabled="updateBusy" :aria-busy="updateApplying" @click="doUpdate(false)">
+            <span v-if="updateApplying" class="btn-spinner btn-spinner-light" aria-hidden="true" />
+            <span v-else class="update-action-icon" aria-hidden="true">↑</span>
+            {{ updateApplying ? `更新中 ${updateProgress}%` : `更新到 v${updateInfo.latest}` }}
+          </button>
+          <button v-else class="btn btn-soft btn-sm" :disabled="updateBusy" :aria-busy="updateApplying" @click="doUpdate(true)">
+            <span v-if="updateApplying" class="btn-spinner" aria-hidden="true" />
+            <span v-else class="update-action-icon" aria-hidden="true">↻</span>
+            {{ updateApplying ? `更新中 ${updateProgress}%` : '⚡ 强制重装' }}
+          </button>
+        </div>
+        <button class="btn btn-soft btn-sm cuisine-manage-btn" @click="showUpdateSettings = true">
+          更新设置
+          <span class="cuisine-count">{{ proxyUrl ? '已配代理' : (autoCheck ? '每日检查' : '仅手动') }}</span>
+          <span class="chev">›</span>
+        </button>
+      </div>
+
+          <div class="card setting-card sc-version">
         <div class="setting-title">
           📋 版本更新
           <span class="tag setting-title-tag">v{{ state.version }}</span>
@@ -637,44 +1029,7 @@ async function saveRoster() {
         </button>
       </div>
 
-      <div class="card setting-card sc-update">
-        <div class="setting-title">
-          ⬆️ 在线更新
-          <span class="tag setting-title-tag" :class="updateInfo.available ? 'tag-green' : ''">
-            {{ updateInfo.available ? `发现 v${updateInfo.latest}` : `当前 v${state.version}` }}
-          </span>
-        </div>
-        <p class="setting-desc">
-          从 GitHub 拉取新版本，在容器内直接更新，菜和图片都不会动
-          <HelpTip text="更新包带 SHA256 校验，下载后原子替换程序并原地重启，容器不会重建。若新版启动失败会自动回滚到旧版；检查更新默认每天自动做一次。" />
-        </p>
-        <div v-if="updateInfo.available" class="update-note">
-          <div v-for="(line, i) in fmtNote(updateInfo.note)" :key="i">{{ line }}</div>
-        </div>
-        <div v-if="updateBusy" class="update-progress">
-          <div class="update-bar"><span :style="{ width: updateProgress + '%' }"></span></div>
-          <span class="tiny muted">{{ updateMsg }}</span>
-        </div>
-        <div v-if="updateErr" class="update-error tiny">{{ updateErr }}</div>
-        <div class="setting-actions update-actions">
-          <button class="btn btn-soft btn-sm" :disabled="updateBusy" @click="checkUpdate(false)">
-            {{ updateBusy ? '检查中…' : '🔍 检查更新' }}
-          </button>
-          <button v-if="updateInfo.available" class="btn btn-primary btn-sm" :disabled="updateBusy" @click="doUpdate(false)">
-            ⬆️ 更新到 v{{ updateInfo.latest }}
-          </button>
-          <button v-else class="btn btn-soft btn-sm" :disabled="updateBusy" @click="doUpdate(true)">
-            ⚡ 强制重装
-          </button>
-        </div>
-        <button class="btn btn-soft btn-sm cuisine-manage-btn" @click="showUpdateSettings = true">
-          更新设置
-          <span class="cuisine-count">{{ proxyUrl ? '已配代理' : (autoCheck ? '每日检查' : '仅手动') }}</span>
-          <span class="chev">›</span>
-        </button>
-      </div>
-
-      <div class="card setting-card sc-about">
+          <div class="card setting-card sc-about">
         <div class="setting-title">🎨 关于与版权</div>
         <p class="setting-desc">插画由 AI 生成，文案自写，源码 MIT；未用第三方图库或模板。</p>
         <div class="setting-meta tiny muted">Go + Vue 3 · 单文件服务端 · 数据全在本地</div>
@@ -683,19 +1038,8 @@ async function saveRoster() {
           <span class="chev">›</span>
         </button>
       </div>
-
-      <div class="card setting-card sc-meals">
-        <div class="setting-title">🕐 用餐时段</div>
-        <p class="setting-desc">
-          给每一餐起名字、定收起时间；过了时间，今天这一餐的菜会自动从今日菜单收起，历史记录仍保留。
-        </p>
-        <div class="setting-meta tiny muted">收起时间 {{ mealSummary }}</div>
-        <button class="btn btn-soft btn-sm cuisine-manage-btn" @click="openMealsModal">
-          管理用餐时段
-          <span class="cuisine-count">{{ effectiveMeals.length }} 餐</span>
-          <span class="chev">›</span>
-        </button>
-      </div>
+        </div>
+      </section>
     </div>
 
     <Teleport to="body">

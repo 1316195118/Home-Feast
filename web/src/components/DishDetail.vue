@@ -138,12 +138,12 @@ async function order() {
         <button v-if="editable" class="btn btn-soft btn-sm" @click="emit('edit', dish)">补上做法</button>
       </div>
     </div>
-  </div>
 
-  <Teleport to="body">
-    <CookMode
-      v-if="cookOpen" :dish="dish" :recipe="recipe"
-      @close="cookOpen = false" @done="onCookDone"
-    />
-  </Teleport>
+    <Teleport to="body">
+      <CookMode
+        v-if="cookOpen" :dish="dish" :recipe="recipe"
+        @close="cookOpen = false" @done="onCookDone"
+      />
+    </Teleport>
+  </div>
 </template>

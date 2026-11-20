@@ -1,31 +1,31 @@
 {
-  "version": "1.0.2.8",
-  "publishedAt": "2026-11-20T16:56:33",
-  "note": "**新增**\n- 在线更新支持强制重装：不管有没有新版本都重新下载安装一次\n\n**修复**\n- 手机端「检查更新」和「更新设置」按钮紧贴重叠，改为并排 + 间距",
+  "version": "1.0.2.9",
+  "publishedAt": "2026-11-20T19:57:57",
+  "note": "**新增**\n- 设置页按家庭、内容、安全、系统四类重组，增加分类快捷导航与当前分类高亮\n- 在线更新增加检查、下载、安装进度和阶段反馈，刷新后可恢复更新进度\n\n**修复**\n- 修复在线更新跨文件系统替换失败，并完善失败回滚与状态判断\n- 加强备份、菜品、成员与计划接口的数据校验和错误反馈\n\n**优化**\n- 手机端设置改为吸顶分类条、单列大卡、全宽操作按钮和等宽选项\n- 视图按需加载并压缩更新产物，改善首屏加载、访问与下载速度",
   "files": {
     "amd64": {
       "name": "menu-linux-amd64",
-      "sha256": "f5a0785a79d5d5bab74bfb9e1ec191c153bb1e627310086d9a593e396d35f0e6",
-      "size": 10387616,
+      "sha256": "c086b63859385bb9af15befd50a08009a71e62175972429aa5e071bc65055b7f",
+      "size": 10399904,
       "gz": "menu-linux-amd64.gz",
-      "gzSha256": "c486e862cbe85255515ddd7056fa596d5a6ca14269d216068b7da405cc43e8f6",
-      "gzSize": 5059047
+      "gzSha256": "65039662b31fe6e2cbdc38ecd5885cb2928cf4525bdbc97ea31d1bd3f7471fd6",
+      "gzSize": 5063208
     },
     "arm64": {
       "name": "menu-linux-arm64",
-      "sha256": "43560848ac61c0286dae163d001eb447e0a1105fb549553815382fd337f15348",
+      "sha256": "c25da13a5d359ee577935a91574910659f280b4d0a23bcbefae7a471df7f4054",
       "size": 9765024,
       "gz": "menu-linux-arm64.gz",
-      "gzSha256": "466839724839232580c7ae3c1577808aaa5bfa21daf06b62bf76f205732f088c",
-      "gzSize": 4694626
+      "gzSha256": "aad20e9bd9cd258ecfb607e60a4afa39ace1db7344c7ebf6ea0100fa808cb965",
+      "gzSize": 4698761
     },
     "armv7": {
       "name": "menu-linux-armv7",
-      "sha256": "3521328279e7281017ff7c63aa5c1fed66ad7024861b2c782c5a9472c65b29f1",
+      "sha256": "9cc62ab287838a5c238434a4713b72ee2fa824213df204a02e3d5ac1505c3489",
       "size": 10223776,
       "gz": "menu-linux-armv7.gz",
-      "gzSha256": "f2e7f35ef5bf353e4b2f550464f6ab26ff52774dd2ce1ef1cd3db5a4ead925bb",
-      "gzSize": 4921924
+      "gzSha256": "00e2439f955b4b240f73f631c9d259c61bbf6ae7b1738bf4b22f5226dc09b589",
+      "gzSize": 4925415
     }
   }
 }

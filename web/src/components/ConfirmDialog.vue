@@ -14,13 +14,14 @@ const props = defineProps({
 })
 const emit = defineEmits(['confirm', 'cancel', 'extra'])
 const root = ref(null)
+const setRoot = (el) => { root.value = el }
 
 // Esc 取消 + 打开时锁背景滚动 + 焦点归还（栈式，嵌套弹窗只响应最上层）
 useModalBehavior(() => { if (!props.busy) emit('cancel') }, root)
 </script>
 
 <template>
-  <div ref="root" class="modal-backdrop confirm-backdrop" @click.self="emit('cancel')">
+  <div :ref="setRoot" :class="['modal-backdrop', 'confirm-backdrop']" @click.self="emit('cancel')">
     <div class="modal confirm-modal" role="dialog" aria-modal="true" :aria-label="title">
       <div class="modal-head">
         <h2>{{ title }}</h2>

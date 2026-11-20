@@ -136,3 +136,41 @@ func TestCorruptFileDegrades(t *testing.T) {
 		t.Fatalf("应留下 1 份损坏留档，实际 %v", matches)
 	}
 }
+
+func TestSameDataAndConfigDirKeepsSettings(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, settingsFile)
+	writeFile(t, path, `{"familyName":"同一目录","backupKeep":7}`)
+
+	st, err := Open(dir, dir)
+	if err != nil {
+		t.Fatalf("同目录启动失败: %v", err)
+	}
+	if got := st.GetSettings().FamilyName; got != "同一目录" {
+		t.Fatalf("同目录设置被误删或未读取，实际 %q", got)
+	}
+	if _, err := os.Stat(path); err != nil {
+		t.Fatalf("原设置文件不应被迁移逻辑删除: %v", err)
+	}
+}
+
+func TestLegacySettingsMigration(t *testing.T) {
+	dir := t.TempDir()
+	cfg := filepath.Join(dir, "config")
+	legacy := filepath.Join(dir, settingsFile)
+	writeFile(t, legacy, `{"familyName":"旧目录","backupKeep":7}`)
+
+	st, err := Open(dir, cfg)
+	if err != nil {
+		t.Fatalf("迁移启动失败: %v", err)
+	}
+	if got := st.GetSettings().FamilyName; got != "旧目录" {
+		t.Fatalf("迁移后设置错误，实际 %q", got)
+	}
+	if _, err := os.Stat(filepath.Join(cfg, settingsFile)); err != nil {
+		t.Fatalf("新设置文件未生成: %v", err)
+	}
+	if _, err := os.Stat(legacy); !os.IsNotExist(err) {
+		t.Fatalf("迁移成功后旧设置应移除，实际 err=%v", err)
+	}
+}

@@ -1,6 +1,8 @@
 package api
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,9 +15,36 @@ import (
 
 // jsonOK 返回成功 JSON；接口响应一律禁止缓存，避免家庭数据被代理留住。
 func jsonOK(w http.ResponseWriter, value any) {
+	jsonStatus(w, http.StatusOK, value)
+}
+
+// jsonStatus 在写响应体之前设置 JSON 头，供 201/202 等非 200 成功响应复用。
+func jsonStatus(w http.ResponseWriter, status int, value any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-store")
+	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(value)
+}
+
+// jsonRevalidate 用于体积较大、变化不频繁的只读列表。
+// 浏览器每次仍会验证，但内容没变时只返回 304，不再重传整份 JSON。
+func jsonRevalidate(w http.ResponseWriter, r *http.Request, value any) {
+	body, err := json.Marshal(value)
+	if err != nil {
+		jsonErr(w, http.StatusInternalServerError, "生成数据失败")
+		return
+	}
+	sum := sha256.Sum256(body)
+	etag := `"` + hex.EncodeToString(sum[:12]) + `"`
+	w.Header().Set("ETag", etag)
+	w.Header().Set("Cache-Control", "private, no-cache")
+	if r.Header.Get("If-None-Match") == etag {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(body)
 }
 
 func jsonErr(w http.ResponseWriter, status int, message string) {

@@ -1,15 +1,42 @@
 <script setup>
-import { reactive, provide, onMounted, onUnmounted, watch, ref, computed } from 'vue'
+import { reactive, provide, onMounted, onUnmounted, watch, ref, computed, defineAsyncComponent } from 'vue'
 import { api, setAccessCode, getAccessCode } from './api'
 import TodayView from './components/TodayView.vue'
-import MenuView from './components/MenuView.vue'
-import FamilyView from './components/FamilyView.vue'
-import HistoryView from './components/HistoryView.vue'
-import SettingsView from './components/SettingsView.vue'
 import ConfirmDialog from './components/ConfirmDialog.vue'
+import ViewLoading from './components/ViewLoading.vue'
+import ViewLoadError from './components/ViewLoadError.vue'
 import { useModalBehavior } from './modal'
 import { currentMeal } from './utils'
 import { playAdd, playFav, playSave, playRemove, playError } from './audio'
+
+// 首屏只需要「今天」。其余页签按需下载，避免第一次打开时把设置、
+// 历史和编辑器等暂时用不到的代码一起解析。200ms 内加载完成就不闪加载态。
+const viewLoaders = {
+  menu: () => import('./components/MenuView.vue'),
+  family: () => import('./components/FamilyView.vue'),
+  history: () => import('./components/HistoryView.vue'),
+  settings: () => import('./components/SettingsView.vue'),
+}
+const lazyView = (key) => defineAsyncComponent({
+  loader: viewLoaders[key],
+  delay: 200,
+  loadingComponent: ViewLoading,
+  errorComponent: ViewLoadError,
+  timeout: 15000,
+  onError(_error, retry, fail, attempts) {
+    if (attempts <= 1) setTimeout(retry, 300)
+    else fail()
+  },
+})
+const MenuView = lazyView('menu')
+const FamilyView = lazyView('family')
+const HistoryView = lazyView('history')
+const SettingsView = lazyView('settings')
+// 鼠标移到页签或键盘聚焦时就预取，真正点击时通常已经准备好；
+// 不抢占首屏，因为菜单、家人等模块仍要等用户表现出访问意图才下载。
+function prefetchView(key) {
+  viewLoaders[key]?.().catch(() => {})
+}
 
 const tabs = [
   { key: 'today', label: '今天', icon: '🍚' },
@@ -671,6 +698,7 @@ onUnmounted(() => {
         <button
           v-for="t in tabs" :key="t.key"
           class="tab" :class="{ active: state.tab === t.key }"
+          @mouseenter="prefetchView(t.key)" @focus="prefetchView(t.key)"
           @click="state.tab = t.key"
         >
           <span class="tab-icon">{{ t.icon }}</span><span>{{ t.label }}</span>

@@ -172,17 +172,18 @@ func (s *Server) config(w http.ResponseWriter, r *http.Request) {
 // 每次刷新省下 ~32KB 传输，多设备同时开着时尤其明显。
 func (s *Server) bootstrap(w http.ResponseWriter, r *http.Request) {
 	date := today()
+	settings := s.st.GetSettings()
 	payload := map[string]any{
 		"version":   Version,
 		"today":     date,
 		"familyId":  s.familyID(),
-		"settings":  s.st.GetSettings(),
+		"settings":  settings,
 		"meals":     s.st.Meals(), // 生效的用餐时段配置（含旧数据兜底默认三餐）
-		"cuisines":  store.OrderedCuisines(s.st.GetSettings().CuisineOrder),
+		"cuisines":  store.OrderedCuisines(settings.CuisineOrder),
 		"dishes":    s.st.ListDishes(),
 		"members":   s.st.ListMembers(),
 		"plan":      s.st.GetPlan(date),
-		"planCount": len(s.st.ListPlans()),
+		"planCount": s.st.PlanCount(),
 	}
 	body, err := json.Marshal(payload)
 	if err != nil {
@@ -192,7 +193,7 @@ func (s *Server) bootstrap(w http.ResponseWriter, r *http.Request) {
 	sum := sha256.Sum256(body)
 	etag := `"` + hex.EncodeToString(sum[:12]) + `"`
 	w.Header().Set("ETag", etag)
-	w.Header().Set("Cache-Control", "no-cache") // 允许缓存，但每次都要回来验证
+	w.Header().Set("Cache-Control", "private, no-cache") // 允许缓存，但每次都要回来验证
 	if r.Header.Get("If-None-Match") == etag {
 		w.WriteHeader(http.StatusNotModified)
 		return

@@ -53,8 +53,7 @@ func (s *Server) upload(w http.ResponseWriter, r *http.Request) {
 	// 顺手生成列表用的缩略图；失败不影响上传，前端会回落到原图
 	_ = writeThumb(data, uploadDir, base)
 
-	w.WriteHeader(http.StatusCreated)
-	jsonOK(w, map[string]string{"url": "/uploads/" + name})
+	jsonStatus(w, http.StatusCreated, map[string]string{"url": "/uploads/" + name})
 }
 
 func sniffImage(b []byte) string {

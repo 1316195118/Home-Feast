@@ -50,28 +50,57 @@ func (s *Server) writeBackupZip(w io.Writer) error {
 			continue
 		}
 		entry, err := zw.Create(name)
-		if err == nil {
-			_, _ = entry.Write(b)
+		if err != nil {
+			return err
+		}
+		if _, err := entry.Write(b); err != nil {
+			return err
 		}
 	}
-	_ = filepath.WalkDir(filepath.Join(root, "uploads"), func(p string, d fs.DirEntry, err error) error {
+	// 与手动导出保持同一口径：只收当前菜品和订单实际引用的图片，
+	// 避免历史改图留下的孤儿文件把每日备份重新撑到几百 MB。
+	used := s.usedImages()
+	walkErr := filepath.WalkDir(filepath.Join(root, "uploads"), func(p string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
+			return nil
+		}
+		if !used[d.Name()] {
 			return nil
 		}
 		rel, err := filepath.Rel(root, p)
 		if err != nil {
 			return nil
 		}
-		b, err := os.ReadFile(p)
+		f, err := os.Open(p)
 		if err != nil {
 			return nil
 		}
+		defer f.Close()
 		entry, err := zw.Create(filepath.ToSlash(rel))
-		if err == nil {
-			_, _ = entry.Write(b)
+		if err != nil {
+			return err
+		}
+		if _, err := io.Copy(entry, f); err != nil {
+			return err
+		}
+		base := strings.TrimSuffix(d.Name(), filepath.Ext(d.Name()))
+		thumbPath := filepath.Join(filepath.Dir(p), "thumb", base+".jpg")
+		if tf, err := os.Open(thumbPath); err == nil {
+			defer tf.Close()
+			name := filepath.ToSlash(filepath.Join(filepath.Dir(rel), "thumb", base+".jpg"))
+			te, err := zw.Create(name)
+			if err != nil {
+				return err
+			}
+			if _, err := io.Copy(te, tf); err != nil {
+				return err
+			}
 		}
 		return nil
 	})
+	if walkErr != nil {
+		return walkErr
+	}
 	return zw.Close()
 }
 
