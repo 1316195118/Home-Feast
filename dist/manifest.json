@@ -1,31 +1,31 @@
 {
-  "version": "1.0.2.5",
-  "publishedAt": "2026-11-20T14:21:31",
-  "note": "测试 gzip 发布产物",
+  "version": "1.0.2.6",
+  "publishedAt": "2026-11-20T15:28:12",
+  "note": "**2026-11-20 15:27**\n\n**优化**\n- 发布流程改为「先推送、再在线更新」：--publish 默认只推送 dist 产物，不再直接部署；需要时用 --deploy\n\n**2026-11-20 15:22**\n\n**优化**\n- 设置页「在线更新」卡片瘦身：自动检查与代理配置收进「更新设置」二级弹窗，不再把整行卡片撑高\n\n**2026-11-20 15:05**\n\n**新增**\n- 设置页可配置在线更新代理（http/https/socks5），带一键测试连通性\n- 更新下载与检查都走代理，业务接口不受影响\n\n**2026-11-20 14:47**\n\n**修复**\n- 手机端菜谱页看不到「已下单」悬浮：页面切换动画的 transform 把 fixed 捕获成相对定位，改为 Teleport 到 body，并把层级提到导航栏之上\n- 手机端点问号不显示说明：触屏会先合成 mouseenter 再触发 click，导致开了又立刻关，改为只在支持悬停的设备启用 hover\n- 今日菜单头部按钮在手机上溢出被裁，改为整行换行\n- 订单行菜名被挤成「宫…」，评分类按钮改到独立一行\n\n**2026-11-20 14:29**\n\n**优化**\n- 在线更新改用 gzip 产物（9.9MB → 4.8MB），下载失败自动重试 3 次并切换备用源\n- 仓库只保留 gzip 包，未压缩二进制不再入库",
   "files": {
     "amd64": {
       "name": "menu-linux-amd64",
-      "sha256": "05da2022944e21a55b7caa40ee991ed3454ce236e54f8d53aef36c316ddbc459",
-      "size": 10367136,
+      "sha256": "b2cb36122871aef306533057548bc7676293fc61a8fdb2ba01bce055e0bb01a2",
+      "size": 10387616,
       "gz": "menu-linux-amd64.gz",
-      "gzSha256": "a293d6c774a86deab7d130ed04c6fd634e0a75b0f92feec4ce03e3f473f64053",
-      "gzSize": 5051125
+      "gzSha256": "44e6f09c71d3a9bc2ac509d7f9914d0fe07acdbcdb8f1d04ea92b53722c1a0af",
+      "gzSize": 5057698
     },
     "arm64": {
       "name": "menu-linux-arm64",
-      "sha256": "147322ebd1e032f8f09c65e685c2874dc1963ea0eb63c6e5db3c5996b283e81e",
+      "sha256": "ff21093ae88b213e7f9a9f44ac90261ff6e2c910f39ce5fec86e4d75cbf0c250",
       "size": 9765024,
       "gz": "menu-linux-arm64.gz",
-      "gzSha256": "e0c85cbc1aaa1bcb3625b5aeb541debc003d4f21f6b155077d0a7c9446fecb13",
-      "gzSize": 4686916
+      "gzSha256": "7120abfd77f4736ef50781d7451bf48eef99e03c019cf1caa1513ed34d93d47b",
+      "gzSize": 4693405
     },
     "armv7": {
       "name": "menu-linux-armv7",
-      "sha256": "e6240bae8a185e73ffc643554b92f0af0f2173562df7b1b3c311a8601c09af97",
-      "size": 10158240,
+      "sha256": "8e03efc5b5e86c345adb01b877c347b34f65c19a046e8f536e2d74e1f0dcf952",
+      "size": 10223776,
       "gz": "menu-linux-armv7.gz",
-      "gzSha256": "1a5909ff39c647128ee6ddee5f7ddf1126d22e29c6f702803c4a0b8b079ea4c1",
-      "gzSize": 4914253
+      "gzSha256": "1a0b45c031c0eac35c2100ab7d3d4a30aeb1548943d9126222a82a99d34bf436",
+      "gzSize": 4920875
     }
   }
 }
