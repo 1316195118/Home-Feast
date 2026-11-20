@@ -109,12 +109,15 @@ async function pollUpdate() {
   return null
 }
 
-async function doUpdate() {
+async function doUpdate(force = false) {
   if (updateBusy.value) return
+  const latest = updateInfo.value.latest || state.version
   const ok = await confirmDialog({
-    title: '确认在线更新',
-    message: `将当前 v${state.version} 更新到 v${updateInfo.value.latest}。更新时服务会短暂中断几秒，页面会自动重连。确认继续？`,
-    confirmText: '立即更新', danger: true,
+    title: force ? '强制重装' : '确认在线更新',
+    message: force
+      ? `强制重新下载并安装 v${latest}（即使已是最新）。服务会中断几秒，数据不受影响。确认继续？`
+      : `将当前 v${state.version} 更新到 v${latest}。更新时服务会短暂中断几秒，页面会自动重连。确认继续？`,
+    confirmText: force ? '强制重装' : '立即更新', danger: true,
   })
   if (!ok) return
   updateBusy.value = true
@@ -122,7 +125,7 @@ async function doUpdate() {
   updateProgress.value = 0
   updateMsg.value = '准备更新…'
   try {
-    const r = await api.applyUpdate()
+    const r = await api.applyUpdate({ force })
     updateMsg.value = r.message || '更新中…'
     const st = await pollUpdate()
     actions.toast('更新完成，正在重新连接…', 'success')
@@ -657,8 +660,11 @@ async function saveRoster() {
           <button class="btn btn-soft btn-sm" :disabled="updateBusy" @click="checkUpdate(false)">
             {{ updateBusy ? '检查中…' : '🔍 检查更新' }}
           </button>
-          <button v-if="updateInfo.available" class="btn btn-primary btn-sm" :disabled="updateBusy" @click="doUpdate">
+          <button v-if="updateInfo.available" class="btn btn-primary btn-sm" :disabled="updateBusy" @click="doUpdate(false)">
             ⬆️ 更新到 v{{ updateInfo.latest }}
+          </button>
+          <button v-else class="btn btn-soft btn-sm" :disabled="updateBusy" @click="doUpdate(true)">
+            ⚡ 强制重装
           </button>
         </div>
         <button class="btn btn-soft btn-sm cuisine-manage-btn" @click="showUpdateSettings = true">

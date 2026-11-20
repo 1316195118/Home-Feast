@@ -320,6 +320,17 @@ func (s *Server) testProxy(w http.ResponseWriter, r *http.Request) {
 
 // applyUpdate 下载 → 校验 → 备份 → 原子替换 → 延迟 Exec。
 func (s *Server) applyUpdate(w http.ResponseWriter, r *http.Request) {
+	// force=true 时跳过「已是最新」判断，强制重装一次（版本相同也重新下载替换）
+	var in struct {
+		Force bool `json:"force"`
+	}
+	if r.ContentLength > 0 {
+		if err := decodeBody(w, r, &in); err != nil {
+			jsonErr(w, http.StatusBadRequest, err.Error())
+			return
+		}
+	}
+
 	updateMu.Lock()
 	if updateState.Downloading {
 		updateMu.Unlock()
@@ -350,7 +361,7 @@ func (s *Server) applyUpdate(w http.ResponseWriter, r *http.Request) {
 		jsonErr(w, http.StatusBadGateway, "获取更新信息失败: "+err.Error())
 		return
 	}
-	if compareVersion(m.Version, Version) <= 0 {
+	if !in.Force && compareVersion(m.Version, Version) <= 0 {
 		setProgress(100, "已是最新版本")
 		jsonOK(w, map[string]any{"ok": true, "message": "已是最新版本", "version": Version})
 		return
