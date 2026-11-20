@@ -1873,3 +1873,70 @@
   .order-panel { max-height: 88vh; max-height: 88dvh; }
 }
 @media (prefers-reduced-motion: reduce) { .order-fab-count { animation: none; } }
+
+/* ---------- 手机端修复：已下单悬浮被底部导航遮挡 / HelpTip 溢出 / 订单行挤压 ---------- */
+
+/* 1) 已下单悬浮：底部导航约 58px，必须浮在它上方，否则完全看不见 */
+@media (max-width: 720px) {
+  .order-fab {
+    right: 14px;
+    bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+    padding: 10px 15px;
+    z-index: calc(var(--z-fab) + 1);
+    box-shadow: 0 6px 18px rgba(160, 70, 45, .4);
+  }
+  /* 回到顶部按钮同样避让导航 */
+  .back-top {
+    bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+    right: 14px;
+  }
+}
+
+/* 2) HelpTip：手机端固定到屏幕底部居中，彻底避免溢出卡片或被裁掉 */
+@media (max-width: 720px), (hover: none) {
+  .help-pop {
+    position: fixed; left: 50%; right: auto;
+    top: auto; bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    width: auto; max-width: min(320px, 88vw);
+    padding: 11px 14px; border-radius: 12px;
+    font-size: 0.8rem; line-height: 1.65;
+    z-index: calc(var(--z-fab) + 2);
+    pointer-events: auto;
+  }
+  .help-pop::after { display: none; }
+  .help-fade-enter-from, .help-fade-leave-to { opacity: 0; transform: translateX(-50%) translateY(6px); }
+}
+
+/* 3) 订单行：手机上评分按钮换到第二行，菜名不再被挤成「宫…」 */
+@media (max-width: 560px) {
+  .order-row { flex-wrap: wrap; gap: 8px 10px; padding: 9px 10px; }
+  .order-thumb { width: 54px; height: 46px; }
+  .order-main { flex: 1 1 0; min-width: 0; }
+  .order-name { font-size: 0.9rem; }
+  .order-actions { flex: none; }
+  .order-quick-rate {
+    order: 10; flex: 1 0 100%;
+    margin-left: 0; padding-top: 2px;
+    justify-content: flex-start;
+  }
+  .rate-mini { padding: 3px 9px; }
+}
+
+/* 今日菜单头部：手机上按钮多，整行换成两行，避免「去点菜」被裁掉 */
+@media (max-width: 720px) {
+  .panel-head {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    row-gap: 8px;
+  }
+  .panel-head > div:first-child { flex: 1 1 100%; min-width: 0; }
+  .panel-head > .panel-head-actions {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 6px;
+    min-width: 0;
+  }
+  .panel-head > .panel-head-actions .btn { flex: 0 1 auto; }
+}

@@ -10,6 +10,9 @@ const props = defineProps({
 const open = ref(false)
 const root = ref(null)
 let timer = null
+// 触屏设备上 tap 会先合成 mouseenter 再触发 click，
+// 若两者都绑事件，show() 后紧跟 toggle() 会把浮层关掉——只在支持悬停的设备启用 hover。
+const canHover = typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches
 
 function show() {
   clearTimeout(timer)
@@ -34,10 +37,10 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <span ref="root" class="help-wrap" @mouseenter="show" @mouseleave="hideSoon">
+  <span ref="root" class="help-wrap" @mouseenter="canHover && show()" @mouseleave="canHover && hideSoon()">
     <button
       class="help-btn" type="button" :aria-label="label" :aria-expanded="open"
-      @click="toggle" @focus="show" @blur="hideSoon"
+      @click="toggle" @focus="canHover && show()" @blur="canHover && hideSoon()"
     >?</button>
     <Transition name="help-fade">
       <span v-if="open" class="help-pop" role="tooltip">{{ text }}</span>
