@@ -403,8 +403,24 @@ func (s *Server) applyUpdate(w http.ResponseWriter, r *http.Request) {
 		jsonErr(w, http.StatusInternalServerError, "写更新状态失败: "+err.Error())
 		return
 	}
-	// 原子替换：同一文件系统内 rename 覆盖
-	if err := os.Rename(staging, binPath); err != nil {
+	// 原子替换：staging 在数据卷、binPath 在容器可写层，属于不同文件系统，
+	// 直接 rename 会报 "invalid cross-device link"。先复制到目标同目录的临时文件，
+	// 再在同目录内 rename——这一步才是原子的。
+	tmpInTarget := binPath + ".new"
+	if err := copyFileTo(staging, tmpInTarget); err != nil {
+		os.Remove(tmpInTarget)
+		setProgress(0, "")
+		jsonErr(w, http.StatusInternalServerError, "写入新程序失败: "+err.Error())
+		return
+	}
+	if err := os.Chmod(tmpInTarget, 0o755); err != nil {
+		os.Remove(tmpInTarget)
+		setProgress(0, "")
+		jsonErr(w, http.StatusInternalServerError, "设置执行权限失败: "+err.Error())
+		return
+	}
+	if err := os.Rename(tmpInTarget, binPath); err != nil {
+		os.Remove(tmpInTarget)
 		os.Remove(staging)
 		setProgress(0, "")
 		jsonErr(w, http.StatusInternalServerError, "替换程序失败: "+err.Error())
@@ -559,6 +575,28 @@ func gunzipTo(src, dst string) error {
 		return err
 	}
 	if _, err := io.Copy(out, gz); err != nil {
+		out.Close()
+		return err
+	}
+	return out.Close()
+}
+
+// copyFileTo 跨文件系统复制（数据卷 → 容器可写层），保留执行权限由调用方设置。
+func copyFileTo(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	out, err := os.OpenFile(dst, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o755)
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(out, in); err != nil {
+		out.Close()
+		return err
+	}
+	if err := out.Sync(); err != nil {
 		out.Close()
 		return err
 	}
