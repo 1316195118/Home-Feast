@@ -60,7 +60,7 @@ docker buildx build --platform linux/amd64,linux/arm64 -t family-menu:latest .
 | 自己加菜 | 增删改菜品、选菜系、写描述标签、定辣度与耗时、收藏 |
 | 记录与统计 | 按天回看历史菜单、掌勺次数、本月点菜数；删菜后历史仍保留菜名快照 |
 | 备份 | 一键导出 zip（4 份 JSON + 上传的照片），可从 zip 恢复；直接打包数据目录也行 |
-| 可选口令 | 可在网页「设置」里直接改，也可用 `MENU_ACCESS_CODE` 环境变量锁定，防止局域网内外人改菜单 |
+| 可选口令 | 在网页「设置 → 安全与数据」里维护；Docker Compose 不再加入口令环境变量 |
 | 菜品与分类 | 重庆菜已并入「川渝菜」，导入菜按常识重新归类；新增新疆菜 18 道与川渝特色小吃 12 道，每道都写了自己的配料与 6 步做法 |
 | 骰子 PK 定分工 | 每人摇一次，点数落库（换人、刷新都不丢）；都摇完自动定掌勺与洗碗，平局自动加摇；结果动画按人只播一次；音效由 Web Audio 实时合成，**不含任何外部音频文件** |
 | 自定义用餐时段 | 每餐的名字、图标（预设面板点选，也可自定义）、收起时间都能改，过饭点自动从今日菜单收起 |
@@ -133,7 +133,7 @@ docker compose up -d
 
 ### 完整 compose（可直接复制保存）
 
-下面就是仓库根 `docker-compose.yml` 的**完整内容**。用户部署只需要这一个文件，不写镜像版本号，也不必存放源码。改端口、挂载路径、加访问口令，编辑这个文件即可：
+下面就是仓库根 `docker-compose.yml` 的**完整内容**。用户部署只需要这一个文件，不写镜像版本号，也不必存放源码。端口和时区直接写在文件里，数据与配置通过两个固定目录挂载：
 
 ```yaml
 name: family-menu
@@ -267,7 +267,7 @@ menu.exe -port 8090 -data .\data
 | `-data` | 程序旁 `data/` | 数据目录，NAS 上指向挂载卷 |
 | `-version` | — | 打印版本号 |
 
-等价环境变量：`MENU_ADDR`、`MENU_PORT`、`MENU_DATA_DIR`、`MENU_ACCESS_CODE`。命令行显式传入的参数优先级更高。
+单文件模式还支持 `MENU_ADDR`、`MENU_PORT`、`MENU_DATA_DIR`、`MENU_ACCESS_CODE` 环境变量，命令行显式参数优先；这些变量不属于上面的 Docker Compose 用户配置。
 
 ---
 
@@ -311,7 +311,7 @@ config/              家庭配置
 - 每次写入走「写临时文件 → fsync → 原子改名」，断电最多回到上一份完整文件。
 - 点菜记录里冗余保存了菜名与点菜人昵称，删掉菜品或成员后历史依然读得懂。
 - 备份 zip 里 settings.json 保持扁平文件名（兼容旧备份），恢复时自动落到 config/；旧版 `data/settings.json` 与 `data/config/settings.json` 会在首次启动时自动迁移到 `config/settings.json`。
-- 容器里 data → `/data`、config → `/config`（`-data` / `-config` 参数或 `MENU_DATA_DIR` / `MENU_CONFIG_DIR` 环境变量），Docker Compose 已同时挂载两者。
+- 容器里 data → `/data`、config → `/config`。Docker 镜像启动参数已经写好两个目录，Compose 用户只需要挂载 `./data` 与 `./config`。
 - 备份：页面「设置 → 备份与恢复 → 导出 zip」，或直接打包 `data/` 与 `config/`。
 
 ---
