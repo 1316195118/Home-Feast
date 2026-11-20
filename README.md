@@ -146,20 +146,14 @@ services:
     # 群晖 / 绿联等 NAS 若需要指定运行身份，取消下一行注释并按实际 UID:GID 调整：
     # user: "1000:10"
     ports:
-      - "${MENU_HOST_PORT:-8090}:8090"  # 宿主机:容器；容器内端口固定为 8090
+      - "8090:8090"  # 宿主机:容器，改左边即可换端口
     environment:
-      TZ: ${TZ:-Asia/Shanghai}
-      MENU_ADDR: 0.0.0.0
-      MENU_PORT: "8090"
-      MENU_DATA_DIR: /data
-      MENU_CONFIG_DIR: /config
-      # 可选：留空时可在网页「设置 → 安全与数据」里维护访问口令。
-      MENU_ACCESS_CODE: ${MENU_ACCESS_CODE:-}
+      TZ: Asia/Shanghai
     volumes:
       # 菜品、图片、历史、备份；更新时只替换程序，绝不重建这两个卷。
-      - ${MENU_DATA_PATH:-./data}:/data
+      - ./data:/data
       # 家庭设置 settings.json；与 data 平级，不能嵌套进数据目录。
-      - ${MENU_CONFIG_PATH:-./config}:/config
+      - ./config:/config
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8090/api/ping"]
@@ -176,20 +170,11 @@ services:
 
 改完在同一目录执行 `docker compose up -d` 即可，Compose 会按 `pull_policy: always` 检查最新镜像。
 
-端口、挂载位置和访问口令都可在项目根目录的 `.env` 里覆盖，例如：
-
-```dotenv
-MENU_HOST_PORT=8090
-MENU_DATA_PATH=./data
-MENU_CONFIG_PATH=./config
-MENU_ACCESS_CODE=
-```
-
 在线更新代理不在 Compose 里配置，而是在网页「设置 → 系统与更新 → 更新设置」里填写。它只影响 GitHub 检查与下载，业务接口始终直连。
 
 ### 拷到 NAS 上跑
 
-把 `docker-compose.yml` 和按需创建的 `.env` 放到 NAS，例如 `/volume1/docker/family-menu/`，然后：
+把 `docker-compose.yml` 放到 NAS，例如 `/volume1/docker/family-menu/`，然后：
 
 ```bash
 cd /volume1/docker/family-menu
@@ -217,7 +202,7 @@ docker compose up -d
 
 升级不会丢数据：容器内 `/data` 和 `/config` 是两个独立持久化目录，重建镜像或在线更新都不会改动它们。
 
-端口冲突就在 `.env` 里改 `MENU_HOST_PORT=8091`；访问口令可写 `MENU_ACCESS_CODE`，也可留空后在网页「设置 → 安全与数据」里维护。
+端口冲突就把 `ports` 左边改成 `8091`；访问口令始终在网页「设置 → 安全与数据」里维护，不放进 Compose。
 
 镜像由 GitHub Actions 在主分支更新后自动构建并覆盖 `latest`。首次发布完成后，在 GitHub 的 Packages 设置里把 `home-feast` 容器包设为 **Public**，普通用户之后即可匿名拉取，无需登录 GHCR。只有开发者才需要自己构建镜像：
 

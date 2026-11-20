@@ -15,7 +15,7 @@ FROM --platform=$BUILDPLATFORM golang:1.24-alpine AS backend
 # buildx 多架构构建时自动注入目标架构；普通 docker build 回退 amd64
 ARG TARGETARCH=amd64
 WORKDIR /build
-COPY go.mod embed.go ./
+COPY go.mod go.sum embed.go ./
 COPY cmd/ ./cmd/
 COPY internal/ ./internal/
 RUN mkdir -p webapp/dist

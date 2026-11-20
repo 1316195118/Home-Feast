@@ -1,31 +1,31 @@
 {
-  "version": "1.0.3.2",
-  "publishedAt": "2026-11-20T21:18:42",
-  "note": "**优化**\n- Docker 用户部署固定拉取 `ghcr.io/1316195118/home-feast:latest`，不再需要选择版本号或本地构建\n- 新增 GitHub Actions 主分支自动发布 amd64 / arm64 容器镜像\n- Compose 显式声明数据、配置目录和监听参数，继续独立保留 `/data` 与 `/config`",
+  "version": "1.0.3.3",
+  "publishedAt": "2026-11-20T21:21:38",
+  "note": "**修复**\n- 修复 GHCR 多架构镜像构建时未复制 `go.sum` 导致 Docker 编译失败\n- Compose 环境配置精简为只保留端口与 `Asia/Shanghai` 时区，其他参数使用镜像默认值\n**优化**\n- 用户部署继续固定拉取 `ghcr.io/1316195118/home-feast:latest`，数据与配置卷保持不变",
   "files": {
     "amd64": {
       "name": "menu-linux-amd64",
-      "sha256": "2cd5a84337aeca6cb1318e7548c8293eab553282659a671aa1cdc42a91a61905",
+      "sha256": "df3d01a9bd65ca21e0fae2ced453228358899b80c7e7438d67fc69569d43cdab",
       "size": 10440864,
       "gz": "menu-linux-amd64.gz",
-      "gzSha256": "f725cad74c8902644a0e36b21452d317079d4fad3e5ba21a766dfd01dcbc9b9a",
-      "gzSize": 5081913
+      "gzSha256": "cf1d38fa04ac408bf46cf9032c007e5bf5819c382360e8bdd3dd6dece32a6dae",
+      "gzSize": 5082014
     },
     "arm64": {
       "name": "menu-linux-arm64",
-      "sha256": "8a3fa41264bb263230b18b5fab5e0f05c4e032658c68b89d01b1edcd156ce728",
+      "sha256": "d2507eccc216c71ecdb7c9928c6382b907503fc955d531a4a2514b4747dd3610",
       "size": 9830560,
       "gz": "menu-linux-arm64.gz",
-      "gzSha256": "47cecaa90ccd06ecd817a92f5e2c41901330929da578d6bd4cc588ccae5732cf",
-      "gzSize": 4716039
+      "gzSha256": "bf1267d16b88a255f2a9b549e2104b073871df9e09ce9138216f04f0208269bb",
+      "gzSize": 4716168
     },
     "armv7": {
       "name": "menu-linux-armv7",
-      "sha256": "bbbc076266b25c428745b748812ff204f519bbde8431162b22d50b942a03b819",
+      "sha256": "c0eb5d6832695052713bc677ed34633a5d0a20a35f98aea6691bf732f4b7062c",
       "size": 10223776,
       "gz": "menu-linux-armv7.gz",
-      "gzSha256": "11b5ea87983b91be3f61b7a7e19df211a30570f42b56852c73ad305c37a12823",
-      "gzSize": 4942931
+      "gzSha256": "e36be40a3080f28d40bc8b07ac945c201e4c1fd8a747189c101b025cec64336d",
+      "gzSize": 4942975
     }
   }
 }
