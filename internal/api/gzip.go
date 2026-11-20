@@ -59,6 +59,11 @@ func (w *gzipResponseWriter) Flush() {
 	}
 }
 
+// Unwrap 保留底层 ResponseWriter 的高级能力（ResponseController 的 deadline 等）。
+func (w *gzipResponseWriter) Unwrap() http.ResponseWriter {
+	return w.ResponseWriter
+}
+
 func (w *gzipResponseWriter) Close() error {
 	if w.gzipped {
 		return w.gz.Close()

@@ -41,13 +41,14 @@ func (s *Server) updatePlan(w http.ResponseWriter, r *http.Request) {
 		jsonErr(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	members := s.st.ListMembers()
+	planning := s.st.DutySnapshot()
+	members := planning.Members
 	patch := store.PlanPatch{}
 
 	// 按餐分工：餐次必须存在于已配置的用餐时段里
 	if in.DutyMeal != "" {
 		ok := false
-		for _, m := range s.st.Meals() {
+		for _, m := range planning.Meals {
 			if m.Key == in.DutyMeal {
 				ok = true
 				break
@@ -181,7 +182,8 @@ func (s *Server) addOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// 餐别以用户在设置里配置的为准，名字和时间都能改，所以不能写死早/中/晚。
-	meals := s.st.Meals()
+	planning := s.st.Planning()
+	meals := planning.Meals
 	allowed := make(map[string]bool, len(meals))
 	for _, m := range meals {
 		allowed[m.Key] = true
@@ -194,12 +196,12 @@ func (s *Server) addOrder(w http.ResponseWriter, r *http.Request) {
 		jsonErr(w, http.StatusBadRequest, "餐别不在已配置的用餐时段里，请刷新页面重试")
 		return
 	}
-	dish, err := findDish(s.st.ListDishes(), in.DishID)
+	dish, err := findDish(planning.Dishes, in.DishID)
 	if err != nil {
 		jsonErr(w, http.StatusNotFound, err.Error())
 		return
 	}
-	member, err := findMember(s.st.ListMembers(), in.UserID)
+	member, err := findMember(planning.Members, in.UserID)
 	if err != nil {
 		jsonErr(w, http.StatusBadRequest, err.Error())
 		return

@@ -11,25 +11,26 @@ import (
 
 func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		FamilyName     *string           `json:"familyName"`
-		HiddenCuisines *[]string         `json:"hiddenCuisines"`
-		CuisineOrder   *[]string         `json:"cuisineOrder"` // 菜系展示顺序
-		Meals          *[]store.MealSlot `json:"meals"`
-		Roster         *store.Roster     `json:"roster"`  // 每周掌勺 / 洗碗排班
-		Pantry         *[]string         `json:"pantry"`  // 冰箱现有食材
-		PantryAdded    *map[string]string `json:"pantryAdded"` // 食材加入日期
-		AutoBackup     *bool             `json:"autoBackup"`
-		BackupKeep     *int              `json:"backupKeep"`
-		ImageMode      *string           `json:"imageMode"` // auto / full / thumb
-		AutoCheckUpdate *bool            `json:"autoCheckUpdate"`
-		ProxyURL       *string           `json:"proxyUrl"`
-		AccessCode     *string           `json:"accessCode"` // 空串 = 关闭口令
+		FamilyName      *string            `json:"familyName"`
+		HiddenCuisines  *[]string          `json:"hiddenCuisines"`
+		CuisineOrder    *[]string          `json:"cuisineOrder"` // 菜系展示顺序
+		Meals           *[]store.MealSlot  `json:"meals"`
+		Roster          *store.Roster      `json:"roster"`      // 每周掌勺 / 洗碗排班
+		Pantry          *[]string          `json:"pantry"`      // 冰箱现有食材
+		PantryAdded     *map[string]string `json:"pantryAdded"` // 食材加入日期
+		AutoBackup      *bool              `json:"autoBackup"`
+		BackupKeep      *int               `json:"backupKeep"`
+		ImageMode       *string            `json:"imageMode"` // auto / full / thumb
+		AutoCheckUpdate *bool              `json:"autoCheckUpdate"`
+		ProxyURL        *string            `json:"proxyUrl"`
+		AccessCode      *string            `json:"accessCode"` // 空串 = 关闭口令
 	}
 	if err := decodeBody(w, r, &in); err != nil {
 		jsonErr(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	v := s.st.GetSettings()
+	current := s.st.SettingsSnapshot()
+	v := current.Settings
 	if in.FamilyName != nil {
 		name := trimmed(*in.FamilyName, 24)
 		if name == "" {
@@ -89,7 +90,7 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 	}
 	if in.Roster != nil {
 		// 排班里只保留合法星期与真实存在的成员，删掉不存在的 ID
-		v.Roster = store.NormalizeRoster(*in.Roster, s.st.ListMembers())
+		v.Roster = store.NormalizeRoster(*in.Roster, current.Members)
 	}
 	if in.AutoBackup != nil {
 		v.AutoBackup = *in.AutoBackup

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -63,13 +64,35 @@ func TestBootstrapShape(t *testing.T) {
 		t.Fatalf("bootstrap 应 200，实际 %d", w.Code)
 	}
 	m := decode(t, w)
-	for _, key := range []string{"today", "dishes", "members", "cuisines", "meals", "plan", "settings"} {
+	for _, key := range []string{"today", "dishes", "members", "cuisines", "meals", "plan", "plans", "settings"} {
 		if _, ok := m[key]; !ok {
 			t.Fatalf("bootstrap 缺少字段 %s", key)
 		}
 	}
 	if len(m["dishes"].([]any)) == 0 || len(m["members"].([]any)) == 0 {
 		t.Fatal("新库应自动播种菜品与成员")
+	}
+}
+
+func TestConcurrentBootstrapRequests(t *testing.T) {
+	h := newTestHandler(t)
+	const clients = 64
+	var wg sync.WaitGroup
+	errs := make(chan string, clients)
+	for i := 0; i < clients; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			w := do(h, http.MethodGet, "/api/bootstrap", "")
+			if w.Code != http.StatusOK {
+				errs <- w.Body.String()
+			}
+		}()
+	}
+	wg.Wait()
+	close(errs)
+	for body := range errs {
+		t.Fatalf("并发首屏请求失败: %s", body)
 	}
 }
 

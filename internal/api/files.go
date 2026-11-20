@@ -139,7 +139,8 @@ func (s *Server) exportBackup(w http.ResponseWriter, r *http.Request) {
 
 // usedImages 收集当前数据真正引用到的图片文件名（不含路径）。
 func (s *Server) usedImages() map[string]bool {
-	used := make(map[string]bool, len(s.st.ListDishes()))
+	media := s.st.MediaSnapshot()
+	used := make(map[string]bool, len(media.Dishes))
 	add := func(image string) {
 		if image == "" {
 			return
@@ -149,10 +150,10 @@ func (s *Server) usedImages() map[string]bool {
 			used[name] = true
 		}
 	}
-	for _, d := range s.st.ListDishes() {
+	for _, d := range media.Dishes {
 		add(d.Image)
 	}
-	for _, p := range s.st.ListPlans() {
+	for _, p := range media.Plans {
 		for _, o := range p.Orders {
 			add(o.DishImage)
 		}

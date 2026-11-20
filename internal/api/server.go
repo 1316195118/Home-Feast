@@ -166,24 +166,26 @@ func (s *Server) config(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// bootstrap 让前端一次拿到首屏需要的全部数据，省掉一串并发请求。
+// bootstrap 在一次存储读锁内生成完整首屏快照（含历史计划），
+// 前端只发这一条请求；不会先查一半再发起第二条查询拼状态。
 //
 // 带回 ETag：数据没变时返回 304，浏览器直接用本地缓存。
 // 每次刷新省下 ~32KB 传输，多设备同时开着时尤其明显。
 func (s *Server) bootstrap(w http.ResponseWriter, r *http.Request) {
 	date := today()
-	settings := s.st.GetSettings()
+	snapshot := s.st.Bootstrap(date)
 	payload := map[string]any{
 		"version":   Version,
 		"today":     date,
 		"familyId":  s.familyID(),
-		"settings":  settings,
-		"meals":     s.st.Meals(), // 生效的用餐时段配置（含旧数据兜底默认三餐）
-		"cuisines":  store.OrderedCuisines(settings.CuisineOrder),
-		"dishes":    s.st.ListDishes(),
-		"members":   s.st.ListMembers(),
-		"plan":      s.st.GetPlan(date),
-		"planCount": s.st.PlanCount(),
+		"settings":  snapshot.Settings,
+		"meals":     snapshot.Meals, // 生效的用餐时段配置（含旧数据兜底默认三餐）
+		"cuisines":  store.OrderedCuisines(snapshot.Settings.CuisineOrder),
+		"dishes":    snapshot.Dishes,
+		"members":   snapshot.Members,
+		"plan":      snapshot.Plan,
+		"plans":     snapshot.Plans,
+		"planCount": snapshot.PlanCount,
 	}
 	body, err := json.Marshal(payload)
 	if err != nil {
