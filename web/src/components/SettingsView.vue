@@ -135,6 +135,11 @@ async function doUpdate() {
   }
 }
 
+// 更新设置收进二级弹窗：代理这类低频配置不该把卡片撑长
+const showUpdateSettings = ref(false)
+const updateSettingsRoot = ref(null)
+useModalBehavior(() => { showUpdateSettings.value = false }, updateSettingsRoot, showUpdateSettings)
+
 // 代理：只用于在线更新下载（GitHub 直连不稳时填这里）
 const proxyUrl = ref(state.settings.proxyUrl || '')
 const proxyTesting = ref(false)
@@ -656,29 +661,11 @@ async function saveRoster() {
             ⬆️ 更新到 v{{ updateInfo.latest }}
           </button>
         </div>
-        <label class="update-auto tiny muted">
-          <input type="checkbox" :checked="autoCheck" @change="toggleAutoCheck" /> 每天自动检查
-        </label>
-        <div class="proxy-block">
-          <div class="proxy-label">
-            🌐 更新走代理
-            <span class="tiny muted">留空直连；GitHub 下载慢时填这里</span>
-          </div>
-          <div class="proxy-row">
-            <input
-              v-model="proxyUrl" class="input" maxlength="120"
-              placeholder="http://10.10.10.254:7890" aria-label="代理地址"
-              @keyup.enter="saveProxy"
-            />
-            <button class="btn btn-soft btn-sm" :disabled="proxyTesting" @click="testProxy">
-              {{ proxyTesting ? '测试中…' : '测试' }}
-            </button>
-            <button class="btn btn-primary btn-sm" :disabled="pending('settings')" @click="saveProxy">保存</button>
-          </div>
-          <div v-if="proxyResult" class="proxy-result tiny" :class="proxyResult.ok ? 'ok' : 'bad'">
-            {{ proxyResult.ok ? `✓ 可用（${proxyResult.ms}ms，HTTP ${proxyResult.status}）` : `✗ ${proxyResult.error || ('HTTP ' + proxyResult.status)}` }}
-          </div>
-        </div>
+        <button class="btn btn-soft btn-sm cuisine-manage-btn" @click="showUpdateSettings = true">
+          更新设置
+          <span class="cuisine-count">{{ proxyUrl ? '已配代理' : (autoCheck ? '每日检查' : '仅手动') }}</span>
+          <span class="chev">›</span>
+        </button>
       </div>
 
       <div class="card setting-card sc-about">
@@ -732,6 +719,55 @@ async function saveRoster() {
             </div>
             <div class="modal-foot">
               <button class="btn btn-primary btn-sm" @click="showAccessModal = false">完成</button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+
+      <Transition name="modal">
+        <div v-if="showUpdateSettings" ref="updateSettingsRoot" class="modal-backdrop" @click.self="showUpdateSettings = false">
+          <div class="modal" role="dialog" aria-modal="true" aria-label="更新设置">
+            <div class="modal-head">
+              <h2>⬆️ 更新设置</h2>
+              <button class="icon-btn" aria-label="关闭" @click="showUpdateSettings = false">✕</button>
+            </div>
+            <p class="setting-desc">
+              在线更新从 GitHub 拉取新版本，在新版启动失败时会自动回滚
+              <HelpTip text="更新包带 SHA256 校验，下载后原子替换程序并原地重启，容器不会重建、数据不会丢。代理只影响更新下载，业务接口始终直连。" />
+            </p>
+
+            <div class="field">
+              <label class="update-option">
+                <input type="checkbox" :checked="autoCheck" @change="toggleAutoCheck" />
+                <span>
+                  <b>每天自动检查新版本</b>
+                  <span class="tiny muted block">打开设置页时每天静默检查一次，有更新才提示</span>
+                </span>
+              </label>
+            </div>
+
+            <div class="field">
+              <label for="proxy-url">更新走代理</label>
+              <div class="proxy-row">
+                <input
+                  id="proxy-url" v-model="proxyUrl" class="input" maxlength="120"
+                  placeholder="http://10.10.10.254:7890" aria-label="代理地址"
+                  @keyup.enter="saveProxy"
+                />
+                <button class="btn btn-soft btn-sm" :disabled="proxyTesting" @click="testProxy">
+                  {{ proxyTesting ? '测试中…' : '测试' }}
+                </button>
+                <button class="btn btn-primary btn-sm" :disabled="pending('settings')" @click="saveProxy">保存</button>
+              </div>
+              <span class="tiny muted">留空表示直连；支持 http:// / https:// / socks5://</span>
+            </div>
+            <div v-if="proxyResult" class="proxy-result" :class="proxyResult.ok ? 'ok' : 'bad'">
+              {{ proxyResult.ok ? `✓ 代理可用（${proxyResult.ms}ms，HTTP ${proxyResult.status}）` : `✗ ${proxyResult.error || ('HTTP ' + proxyResult.status)}` }}
+            </div>
+
+            <div class="modal-foot">
+              <span class="grow"></span>
+              <button class="btn" @click="showUpdateSettings = false">关闭</button>
             </div>
           </div>
         </div>

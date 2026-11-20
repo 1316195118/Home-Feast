@@ -1952,3 +1952,13 @@
 @media (max-width: 560px) {
   .proxy-row .input { flex: 1 1 100%; }
 }
+
+/* 更新设置弹窗内的选项行 */
+.update-option {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm);
+  background: var(--surface-soft); cursor: pointer;
+}
+.update-option input { margin-top: 2px; accent-color: var(--brand); flex: none; }
+.update-option b { font-size: .88rem; }
+.update-option .block { display: block; margin-top: 3px; }
