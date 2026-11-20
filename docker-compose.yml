@@ -2,20 +2,26 @@ name: family-menu
 
 services:
   family-menu:
-    build: .
-    image: family-menu:local
+    image: ghcr.io/1316195118/home-feast:latest
+    pull_policy: always
     container_name: family-menu
     # 群晖 / 绿联等 NAS 若需要指定运行身份，取消下一行注释并按实际 UID:GID 调整：
     # user: "1000:10"
     ports:
-      - "8090:8090"          # 宿主机:容器，改左边即可换端口
+      - "${MENU_HOST_PORT:-8090}:8090"  # 宿主机:容器；容器内端口固定为 8090
     environment:
-      - TZ=Asia/Shanghai
-      # 可选：设置后网页需要输入访问口令，防止局域网内外人改菜单
-      # - MENU_ACCESS_CODE=please-change-me
+      TZ: ${TZ:-Asia/Shanghai}
+      MENU_ADDR: 0.0.0.0
+      MENU_PORT: "8090"
+      MENU_DATA_DIR: /data
+      MENU_CONFIG_DIR: /config
+      # 可选：留空时可在网页「设置 → 安全与数据」里维护访问口令。
+      MENU_ACCESS_CODE: ${MENU_ACCESS_CODE:-}
     volumes:
-      - ./data:/data          # 用户数据：JSON / 图片 / 备份；NAS 上改成绝对路径
-      - ./config:/config      # 配置：家庭设置（settings.json），与 data 平级
+      # 菜品、图片、历史、备份；更新时只替换程序，绝不重建这两个卷。
+      - ${MENU_DATA_PATH:-./data}:/data
+      # 家庭设置 settings.json；与 data 平级，不能嵌套进数据目录。
+      - ${MENU_CONFIG_PATH:-./config}:/config
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8090/api/ping"]

@@ -109,47 +109,57 @@ docker buildx build --platform linux/amd64,linux/arm64 -t family-menu:latest .
 
 ## 二、Docker 部署到 NAS（推荐）
 
-### 30 秒部署：复制这一条命令
+### 30 秒部署：只拉取 latest
 
 在 NAS / 服务器 / 自己的电脑上（装好 Docker 与 Compose v2）粘贴执行：
 
 ```bash
-git clone --depth 1 https://github.com/1316195118/Home-Feast.git && cd Home-Feast && docker compose up -d --build
+mkdir -p family-menu && cd family-menu
+curl -fsSLO https://raw.githubusercontent.com/1316195118/Home-Feast/refs/heads/main/docker-compose.yml
+docker compose pull
+docker compose up -d
 ```
 
-浏览器打开 `http://<这台机器的 IP>:8090` 就能开始点菜。**不用装 Go、不用装 Node、不用建数据库**，`docker-compose.yml` 已在仓库根，Dockerfile 会在构建阶段自动编译前端和后端；首次约 2 分钟。
+浏览器打开 `http://<这台机器的 IP>:8090` 就能开始点菜。**不用安装 Go、Node、源码或数据库**，Compose 始终拉取 `ghcr.io/1316195118/home-feast:latest`，用户不需要选择版本号。
 
-数据全部落在项目下的 `./data`（已加入 `.gitignore`，不会进仓库）。以后升级：
+菜品、图片和历史落在 `./data`，家庭设置落在与它平级的 `./config`；两者都已加入 `.gitignore`，不会进仓库。以后升级：
 
 ```bash
-git pull && docker compose up -d --build
+docker compose pull
+docker compose up -d
 ```
 
-`data/` 不动，菜单、成员、历史、上传的照片都在。
+`data/` 与 `config/` 都不动，菜单、成员、历史、上传照片和家庭设置都在。
 
 ### 完整 compose（可直接复制保存）
 
-下面就是仓库根 `docker-compose.yml` 的**完整内容**。改端口、改挂载路径、加访问口令，编辑这个文件即可。
-注意 `build: .` 需要同目录里有 `Dockerfile` 和源码，所以请把它放在 clone 下来的项目根目录里（或直接改 clone 下来的那份）：
+下面就是仓库根 `docker-compose.yml` 的**完整内容**。用户部署只需要这一个文件，不写镜像版本号，也不必存放源码。改端口、挂载路径、加访问口令，编辑这个文件即可：
 
 ```yaml
 name: family-menu
 
 services:
   family-menu:
-    build: .
-    image: family-menu:local
+    image: ghcr.io/1316195118/home-feast:latest
+    pull_policy: always
     container_name: family-menu
     # 群晖 / 绿联等 NAS 若需要指定运行身份，取消下一行注释并按实际 UID:GID 调整：
     # user: "1000:10"
     ports:
-      - "8090:8090"          # 宿主机:容器，改左边即可换端口
+      - "${MENU_HOST_PORT:-8090}:8090"  # 宿主机:容器；容器内端口固定为 8090
     environment:
-      - TZ=Asia/Shanghai
-      # 可选：设置后网页需要输入访问口令，防止局域网内外人改菜单
-      # - MENU_ACCESS_CODE=please-change-me
+      TZ: ${TZ:-Asia/Shanghai}
+      MENU_ADDR: 0.0.0.0
+      MENU_PORT: "8090"
+      MENU_DATA_DIR: /data
+      MENU_CONFIG_DIR: /config
+      # 可选：留空时可在网页「设置 → 安全与数据」里维护访问口令。
+      MENU_ACCESS_CODE: ${MENU_ACCESS_CODE:-}
     volumes:
-      - ./data:/data          # NAS 上改成 /volume1/docker/family-menu/data:/data
+      # 菜品、图片、历史、备份；更新时只替换程序，绝不重建这两个卷。
+      - ${MENU_DATA_PATH:-./data}:/data
+      # 家庭设置 settings.json；与 data 平级，不能嵌套进数据目录。
+      - ${MENU_CONFIG_PATH:-./config}:/config
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8090/api/ping"]
@@ -164,15 +174,27 @@ services:
           memory: 256M
 ```
 
-改完在同一目录执行 `docker compose up -d --build` 即可，其它什么都不用配。
+改完在同一目录执行 `docker compose up -d` 即可，Compose 会按 `pull_policy: always` 检查最新镜像。
+
+端口、挂载位置和访问口令都可在项目根目录的 `.env` 里覆盖，例如：
+
+```dotenv
+MENU_HOST_PORT=8090
+MENU_DATA_PATH=./data
+MENU_CONFIG_PATH=./config
+MENU_ACCESS_CODE=
+```
+
+在线更新代理不在 Compose 里配置，而是在网页「设置 → 系统与更新 → 更新设置」里填写。它只影响 GitHub 检查与下载，业务接口始终直连。
 
 ### 拷到 NAS 上跑
 
-把**整个项目目录**拷到 NAS，例如 `/volume1/docker/family-menu/`，然后：
+把 `docker-compose.yml` 和按需创建的 `.env` 放到 NAS，例如 `/volume1/docker/family-menu/`，然后：
 
 ```bash
 cd /volume1/docker/family-menu
-docker compose up -d --build
+docker compose pull
+docker compose up -d
 ```
 
 浏览器打开 `http://<NAS 的 IP>:8090`。
@@ -181,28 +203,30 @@ docker compose up -d --build
 
 ```yaml
     volumes:
-      - /volume1/docker/family-menu/data:/data   # 群晖 DSM 示例
-    # user: "1000:10"                            # 绿联 UGOS Pro 首用户；群晖可省略
+      - /volume1/docker/family-menu/data:/data
+      - /volume1/docker/family-menu/config:/config
+    # user: "1000:10"  # 绿联 UGOS Pro 首用户；群晖可省略
 ```
 
-| NAS / 系统 | volumes 左侧写法 | 备注 |
+| NAS / 系统 | data / config 左侧写法 | 备注 |
 | --- | --- | --- |
-| 群晖 DSM | `/volume1/docker/family-menu/data:/data` | 一般不用设 `user` |
-| 绿联 UGOS Pro | `/volume1/docker/family-menu/data:/data` | 建议 `user: "1000:10"` |
-| 极空间 / 铁威马 / 普通 Linux | `./data:/data` | 相对路径最简单 |
-| Windows + Docker Desktop | `./data:/data` | 也可直接跑 `menu.exe` |
+| 群晖 DSM | `/volume1/docker/family-menu/{data,config}` | 一般不用设 `user` |
+| 绿联 UGOS Pro | `/volume1/docker/family-menu/{data,config}` | 建议 `user: "1000:10"` |
+| 极空间 / 铁威马 / 普通 Linux | `./data`、`./config` | 相对路径最简单 |
+| Windows + Docker Desktop | `./data`、`./config` | 也可直接跑 `menu.exe` |
 
-升级不会丢数据：容器内 `/data` 是唯一持久化目录。
+升级不会丢数据：容器内 `/data` 和 `/config` 是两个独立持久化目录，重建镜像或在线更新都不会改动它们。
 
-端口冲突就改 `ports` 左边，例如 `"8091:8090"`。想加访问口令，取消 `MENU_ACCESS_CODE` 注释并改成自己的值，再 `docker compose up -d --build`。
+端口冲突就在 `.env` 里改 `MENU_HOST_PORT=8091`；访问口令可写 `MENU_ACCESS_CODE`，也可留空后在网页「设置 → 安全与数据」里维护。
 
-也可以手动构建镜像：
+镜像由 GitHub Actions 在主分支更新后自动构建并覆盖 `latest`。首次发布完成后，在 GitHub 的 Packages 设置里把 `home-feast` 容器包设为 **Public**，普通用户之后即可匿名拉取，无需登录 GHCR。只有开发者才需要自己构建镜像：
 
 ```bash
-docker build -t family-menu:local .
+docker build -t family-menu:dev .
 docker run -d --name family-menu -p 8090:8090 \
   -v /volume1/docker/family-menu/data:/data \
-  -e TZ=Asia/Shanghai --restart unless-stopped family-menu:local
+  -v /volume1/docker/family-menu/config:/config \
+  -e TZ=Asia/Shanghai --restart unless-stopped family-menu:dev
 ```
 
 ### 已部署实例：PVE 里的 Docker LXC（2026-11-06）
@@ -213,12 +237,12 @@ docker run -d --name family-menu -p 8090:8090 \
 | PVE 宿主机 | `10.10.10.252`，PVE 9.2.24 |
 | 容器 | CT 100 `docker-LXC`，Debian 13，Docker 29.9.2 / Compose v5.7.0 |
 | 项目目录 | `/opt/family-menu/` |
-| 数据目录 | `/opt/family-menu/data` → 容器内 `/data` |
+| 数据 / 配置 | `/opt/family-menu/data` → `/data`；`/opt/family-menu/config` → `/config` |
 | 源码备份包 | `/opt/family-menu-src.tgz` |
-| 镜像 / 容器名 | `family-menu:local` / `family-menu`，端口 `8090:8090` |
+| 镜像 / 容器名 | 新部署使用 `ghcr.io/1316195118/home-feast:latest` / `family-menu`，端口 `8090:8090` |
 | 访问口令 | 未启用（家庭局域网） |
 
-该 LXC 已配置 Docker Hub 镜像加速；`Dockerfile` 里固定用 `registry.npmmirror.com` 装前端依赖，规避国内网络抖动。首次 `up -d --build` 约 2 分钟。
+该实例早期使用本地构建镜像；迁移到 latest 时先备份 `data/` 与 `config/`，再用仓库最新 `docker-compose.yml` 执行一次 `docker compose pull && docker compose up -d` 即可。
 
 常用运维（在 CT 100 内执行，或由 PVE 宿主机 `pct exec 100 -- <命令>`）：
 
@@ -227,12 +251,13 @@ cd /opt/family-menu
 docker compose ps                     # 状态与健康检查
 docker compose logs -f family-menu    # 看日志
 docker compose restart               # 重启
-docker compose up -d --build          # 更新源码后重建
-docker compose down                   # 回滚/停机，data 目录保留
-cp -a /opt/family-menu/data /opt/family-menu-data-backup-$(date +%F)   # 备份数据
+docker compose pull && docker compose up -d   # 拉取 latest 并更新
+docker compose down                   # 回滚/停机，data/config 目录保留
+cp -a /opt/family-menu/data /opt/family-menu-data-backup-$(date +%F)
+cp -a /opt/family-menu/config /opt/family-menu-config-backup-$(date +%F)
 ```
 
-回滚：先备份 `data/`，`docker compose down` 后如需恢复源码可重新解开 `/opt/family-menu-src.tgz`。部署过程未改动 PVE 宿主机配置、CT 配置或同机其它容器。
+回滚：先备份 `data/` 与 `config/`，再切回上一份 Compose 或镜像。部署过程不改动 PVE 宿主机配置、CT 配置或同机其它容器。
 
 ---
 

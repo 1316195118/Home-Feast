@@ -1,31 +1,31 @@
 {
-  "version": "1.0.3.1",
-  "publishedAt": "2026-11-20T20:50:51",
-  "note": "**修复**\n- 正式发版强制重新构建并同步前端资源，解决版本更新后线上仍显示旧设置页的问题\n- 修复 320px 小屏状态徽标截断、手机横屏首屏内容过低和平板触控按钮偏小\n- 设置页说明按钮保持 18px 视觉尺寸，实际触控范围扩大到 44px\n**优化**\n- 完成 320–1920 多分辨率与手机横屏布局回归，设置分类导航在小屏保持吸顶横向滑动",
+  "version": "1.0.3.2",
+  "publishedAt": "2026-11-20T21:18:42",
+  "note": "**优化**\n- Docker 用户部署固定拉取 `ghcr.io/1316195118/home-feast:latest`，不再需要选择版本号或本地构建\n- 新增 GitHub Actions 主分支自动发布 amd64 / arm64 容器镜像\n- Compose 显式声明数据、配置目录和监听参数，继续独立保留 `/data` 与 `/config`",
   "files": {
     "amd64": {
       "name": "menu-linux-amd64",
-      "sha256": "7d3d4f8cb20ad256f3cea6a03619b218d79b82cedb14590aa8d65def3f0c03ea",
+      "sha256": "2cd5a84337aeca6cb1318e7548c8293eab553282659a671aa1cdc42a91a61905",
       "size": 10440864,
       "gz": "menu-linux-amd64.gz",
-      "gzSha256": "44f44b553f4b3d6609c2bd59a10e3aa6cc83e580d1797db963500df14a9ba6a2",
-      "gzSize": 5081823
+      "gzSha256": "f725cad74c8902644a0e36b21452d317079d4fad3e5ba21a766dfd01dcbc9b9a",
+      "gzSize": 5081913
     },
     "arm64": {
       "name": "menu-linux-arm64",
-      "sha256": "7ce9e4b1feb7ccef342fbee793aeb101571bd3d8883debd9fe9bd6feecd2275b",
+      "sha256": "8a3fa41264bb263230b18b5fab5e0f05c4e032658c68b89d01b1edcd156ce728",
       "size": 9830560,
       "gz": "menu-linux-arm64.gz",
-      "gzSha256": "9fb2838c1e7563daec09b4dbef3974638b06c390e072fb5a5ea655c42f4f2df7",
-      "gzSize": 4715943
+      "gzSha256": "47cecaa90ccd06ecd817a92f5e2c41901330929da578d6bd4cc588ccae5732cf",
+      "gzSize": 4716039
     },
     "armv7": {
       "name": "menu-linux-armv7",
-      "sha256": "ba9dc5da29e1cacdf14b22f6d2bdf5bc50137588e847ca5c0139840d9a0aadd4",
+      "sha256": "bbbc076266b25c428745b748812ff204f519bbde8431162b22d50b942a03b819",
       "size": 10223776,
       "gz": "menu-linux-armv7.gz",
-      "gzSha256": "55600750f49048387a625cd4ab6efb42b786f3bf0fe369e9e8d3996f637f9cc2",
-      "gzSize": 4942770
+      "gzSha256": "11b5ea87983b91be3f61b7a7e19df211a30570f42b56852c73ad305c37a12823",
+      "gzSize": 4942931
     }
   }
 }
