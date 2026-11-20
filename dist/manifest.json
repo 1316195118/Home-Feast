@@ -1,31 +1,31 @@
 {
-  "version": "1.0.3.3",
-  "publishedAt": "2026-11-20T21:21:38",
-  "note": "**修复**\n- 修复 GHCR 多架构镜像构建时未复制 `go.sum` 导致 Docker 编译失败\n- Compose 环境配置精简为只保留端口与 `Asia/Shanghai` 时区，其他参数使用镜像默认值\n**优化**\n- 用户部署继续固定拉取 `ghcr.io/1316195118/home-feast:latest`，数据与配置卷保持不变",
+  "version": "1.0.3.4",
+  "publishedAt": "2026-11-21T02:58:52",
+  "note": "**修复**\n- 首屏初始化和刷新合并为一次一致性快照，避免 bootstrap 与 plans 重叠查询及跨查询数据错位\n- 菜品、成员、计划返回深拷贝，防止多人读写时共享可变数据\n- 并发删除成员改为原子校验，确保至少保留一位家庭成员\n\n**优化**\n- SSE 长连接单独清除写超时并直接广播版本号，多人同时在线不再周期性断开\n- 分工、点菜、设置、Excel 与图片引用改为单次快照读取\n- 完成 80 并发首屏、30 SSE、60 并发点菜、120 并发状态切换的暴力测试",
   "files": {
     "amd64": {
       "name": "menu-linux-amd64",
-      "sha256": "df3d01a9bd65ca21e0fae2ced453228358899b80c7e7438d67fc69569d43cdab",
-      "size": 10440864,
+      "sha256": "7673fdef0f91cca596c5b952495e7b2ba3e25d89d1e98b6589abf49d32bfcd76",
+      "size": 10477728,
       "gz": "menu-linux-amd64.gz",
-      "gzSha256": "cf1d38fa04ac408bf46cf9032c007e5bf5819c382360e8bdd3dd6dece32a6dae",
-      "gzSize": 5082014
+      "gzSha256": "146f8286b5e3676cf647801041d2f28e17289865eb5594bdf790eb2023987d1c",
+      "gzSize": 5092176
     },
     "arm64": {
       "name": "menu-linux-arm64",
-      "sha256": "d2507eccc216c71ecdb7c9928c6382b907503fc955d531a4a2514b4747dd3610",
+      "sha256": "07d37b3c4a4467675de3586717eae13e7462842969cf057bd816b7054394d2f6",
       "size": 9830560,
       "gz": "menu-linux-arm64.gz",
-      "gzSha256": "bf1267d16b88a255f2a9b549e2104b073871df9e09ce9138216f04f0208269bb",
-      "gzSize": 4716168
+      "gzSha256": "de800be018c9495fab711be6fa4b3e715244c168113ebc45dea7978728f585db",
+      "gzSize": 4726537
     },
     "armv7": {
       "name": "menu-linux-armv7",
-      "sha256": "c0eb5d6832695052713bc677ed34633a5d0a20a35f98aea6691bf732f4b7062c",
-      "size": 10223776,
+      "sha256": "2c8a6346c52bf99041e245b098f19bf9a6bce3e07993c74e8fb620043e9cdc8d",
+      "size": 10289312,
       "gz": "menu-linux-armv7.gz",
-      "gzSha256": "e36be40a3080f28d40bc8b07ac945c201e4c1fd8a747189c101b025cec64336d",
-      "gzSize": 4942975
+      "gzSha256": "245ff8994b76edbefffcf5b823742652f5087f262ec55ae32d7cca8c06c0cd04",
+      "gzSize": 4952976
     }
   }
 }

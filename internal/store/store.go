@@ -32,6 +32,9 @@ const (
 	pinsFile = "pins.json"
 )
 
+// ErrLastMember 由 DeleteMember 在同一个写事务内返回，防止两个并发删除把成员清空。
+var ErrLastMember = errors.New("至少保留一位家庭成员")
+
 // configFile 判断某文件是否属于配置目录（目前只有 settings.json）。
 func configFile(name string) bool { return name == settingsFile }
 
@@ -424,7 +427,7 @@ func (s *Store) SetAccessCode(code string) error {
 func (s *Store) ListDishes() []Dish {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return append([]Dish{}, s.dishes...)
+	return cloneDishes(s.dishes)
 }
 
 // DishPatch 是编辑菜品时允许改动的字段，nil 表示保持不变。
@@ -462,7 +465,7 @@ func (s *Store) AddDish(d Dish) (Dish, error) {
 		return Dish{}, err
 	}
 	s.dishes = next
-	return d, nil
+	return cloneDish(d), nil
 }
 
 func (s *Store) UpdateDish(id string, p DishPatch) (Dish, error) {
@@ -486,7 +489,7 @@ func (s *Store) UpdateDish(id string, p DishPatch) (Dish, error) {
 		return Dish{}, err
 	}
 	s.dishes = next
-	return d, nil
+	return cloneDish(d), nil
 }
 
 func applyPatch(d *Dish, p DishPatch) {
@@ -565,11 +568,7 @@ func (s *Store) DeleteDish(id string) error {
 func (s *Store) ListMembers() []Member {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	out := append([]Member{}, s.members...)
-	for i := range out {
-		_, out[i].HasPin = s.pins[out[i].ID]
-	}
-	return out
+	return s.cloneMembersLocked()
 }
 
 // SetMemberPin 设置 / 修改 / 清除成员密码。已设过密码时必须先给对 oldPin，
@@ -644,7 +643,7 @@ func (s *Store) AddMember(m Member) (Member, error) {
 		return Member{}, err
 	}
 	s.members = next
-	return m, nil
+	return cloneMember(m), nil
 }
 
 func (s *Store) UpdateMember(id string, p MemberPatch) (Member, error) {
@@ -679,12 +678,15 @@ func (s *Store) UpdateMember(id string, p MemberPatch) (Member, error) {
 		return Member{}, err
 	}
 	s.members = next
-	return m, nil
+	return cloneMember(m), nil
 }
 
 func (s *Store) DeleteMember(id string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if len(s.members) <= 1 {
+		return ErrLastMember
+	}
 	next := make([]Member, 0, len(s.members))
 	found := false
 	for _, m := range s.members {
@@ -719,6 +721,7 @@ func (s *Store) DeleteMember(id string) error {
 	// 历史订单不动——那里存的是下单时的名字与头像快照，删人后仍应保留记录。
 	plansChanged := false
 	for date, p := range s.plans {
+		p = clonePlan(p)
 		before := len(p.ChefIDs) + len(p.DishwasherIDs) + len(p.PKShown)
 		if p.Dice != nil {
 			if _, has := p.Dice[id]; has {
@@ -776,6 +779,7 @@ func (s *Store) expireToday(date string) {
 	if !ok {
 		return
 	}
+	p = clonePlan(p)
 	if dropExpired(&p, now, effectiveMeals(s.settings.Meals)) {
 		_ = s.persistPlans(p)
 	}
@@ -786,6 +790,7 @@ func (s *Store) GetPlan(date string) Plan {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	if p, ok := s.plans[date]; ok {
+		p = clonePlan(p)
 		if p.Orders == nil {
 			p.Orders = []Order{}
 		}
@@ -801,6 +806,7 @@ func (s *Store) ListPlans() []Plan {
 	defer s.mu.RUnlock()
 	out := make([]Plan, 0, len(s.plans))
 	for _, p := range s.plans {
+		p = clonePlan(p)
 		if p.Orders == nil {
 			p.Orders = []Order{}
 		}
@@ -823,7 +829,7 @@ func (s *Store) PlanCount() int {
 func (s *Store) planList() []Plan {
 	list := make([]Plan, 0, len(s.plans))
 	for _, p := range s.plans {
-		list = append(list, p)
+		list = append(list, clonePlan(p))
 	}
 	return list
 }
@@ -833,7 +839,7 @@ func (s *Store) planList() []Plan {
 func (s *Store) SavePlan(date string, patch PlanPatch) (Plan, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	p := s.plans[date]
+	p := clonePlan(s.plans[date])
 	p.Date = date
 	if p.Orders == nil {
 		p.Orders = []Order{}
@@ -860,7 +866,7 @@ func (s *Store) SavePlan(date string, patch PlanPatch) (Plan, error) {
 			return Plan{}, err
 		}
 		s.plans[date] = p
-		return p, nil
+		return clonePlan(p), nil
 	}
 
 	if patch.ChefIDs != nil {
@@ -908,13 +914,13 @@ func (s *Store) SavePlan(date string, patch PlanPatch) (Plan, error) {
 	if err := s.persistPlans(p); err != nil {
 		return Plan{}, err
 	}
-	return p, nil
+	return clonePlan(p), nil
 }
 
 func (s *Store) AddOrder(date string, o Order) (Plan, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	p := s.plans[date]
+	p := clonePlan(s.plans[date])
 	p.Date = date
 	if p.Orders == nil {
 		p.Orders = []Order{}
@@ -923,7 +929,7 @@ func (s *Store) AddOrder(date string, o Order) (Plan, error) {
 	// 返回当前 plan 而不是报错，保证接口幂等。
 	for _, existing := range p.Orders {
 		if existing.DishID == o.DishID {
-			return p, nil
+			return clonePlan(p), nil
 		}
 	}
 	o.ID = newID("o")
@@ -933,7 +939,7 @@ func (s *Store) AddOrder(date string, o Order) (Plan, error) {
 	if err := s.persistPlans(p); err != nil {
 		return Plan{}, err
 	}
-	return p, nil
+	return clonePlan(p), nil
 }
 
 func (s *Store) RemoveOrder(date, orderID string) (Plan, error) {
@@ -943,6 +949,7 @@ func (s *Store) RemoveOrder(date, orderID string) (Plan, error) {
 	if !ok {
 		return Plan{}, errors.New("这天还没有点菜")
 	}
+	p = clonePlan(p)
 	kept := make([]Order, 0, len(p.Orders))
 	found := false
 	for _, o := range p.Orders {
@@ -960,7 +967,7 @@ func (s *Store) RemoveOrder(date, orderID string) (Plan, error) {
 	if err := s.persistPlans(p); err != nil {
 		return Plan{}, err
 	}
-	return p, nil
+	return clonePlan(p), nil
 }
 
 func (s *Store) ToggleOrder(date, orderID string) (Plan, error) {
@@ -970,6 +977,7 @@ func (s *Store) ToggleOrder(date, orderID string) (Plan, error) {
 	if !ok {
 		return Plan{}, errors.New("这天还没有点菜")
 	}
+	p = clonePlan(p)
 	found := false
 	for i := range p.Orders {
 		if p.Orders[i].ID == orderID {
@@ -985,7 +993,7 @@ func (s *Store) ToggleOrder(date, orderID string) (Plan, error) {
 	if err := s.persistPlans(p); err != nil {
 		return Plan{}, err
 	}
-	return p, nil
+	return clonePlan(p), nil
 }
 
 // persistPlans 必须在持有写锁时调用。
@@ -1015,18 +1023,19 @@ func (s *Store) persistPlans(changed Plan) error {
 func (s *Store) GetSettings() Settings {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return s.settings
+	return cloneSettings(s.settings)
 }
 
 func (s *Store) SaveSettings(v Settings) (Settings, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	v = cloneSettings(v)
 	v.UpdatedAt = now()
 	if err := s.writeJSON(settingsFile, v); err != nil {
 		return Settings{}, err
 	}
 	s.settings = v
-	return v, nil
+	return cloneSettings(v), nil
 }
 
 // ---------- 底层文件读写 ----------

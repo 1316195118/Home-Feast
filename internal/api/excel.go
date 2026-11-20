@@ -88,14 +88,15 @@ func (s *Server) exportExcel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	plan := s.st.GetPlan(date)
-	dishes := s.st.ListDishes()
+	snapshot := s.st.Bootstrap(date)
+	plan := snapshot.Plan
+	dishes := snapshot.Dishes
 	mealNames := map[string]string{}
-	for _, m := range s.st.Meals() {
+	for _, m := range snapshot.Meals {
 		mealNames[m.Key] = m.Label
 	}
 	memberNames := map[string]string{}
-	for _, m := range s.st.ListMembers() {
+	for _, m := range snapshot.Members {
 		memberNames[m.ID] = m.Name
 	}
 	cuisineNames := map[string]string{}

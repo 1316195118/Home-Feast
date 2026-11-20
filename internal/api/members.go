@@ -123,11 +123,11 @@ func (s *Server) verifyMemberPin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) deleteMember(w http.ResponseWriter, r *http.Request) {
-	if len(s.st.ListMembers()) <= 1 {
-		jsonErr(w, http.StatusBadRequest, "至少保留一位家庭成员")
-		return
-	}
 	if err := s.st.DeleteMember(r.PathValue("id")); err != nil {
+		if errors.Is(err, store.ErrLastMember) {
+			jsonErr(w, http.StatusBadRequest, err.Error())
+			return
+		}
 		jsonErr(w, http.StatusNotFound, err.Error())
 		return
 	}

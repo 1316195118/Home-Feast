@@ -190,30 +190,41 @@ function onOnline() {
 }
 
 
+let refreshInFlight = null
 async function refresh() {
-  const [info, plans] = await Promise.all([api.bootstrap(), api.plans()])
-  state.version = info.version
-  state.today = info.today
-  state.meals = info.meals || []
-  // 用户可能在设置里删掉了当前手动选中的那一餐，避免之后点菜提交不存在的 key
-  if (state.mealPick && !state.meals.some((m) => m.key === state.mealPick)) state.mealPick = ''
-  state.now = Date.now()
-  state.meal = currentMeal(state.now, state.meals)
-  state.settings = info.settings || { familyName: '我们家' }
-  state.hiddenCuisines = info.settings?.hiddenCuisines || []
-  state.cuisines = info.cuisines || []
-  state.dishes = info.dishes || []
-  state.members = info.members || []
-  state.plan = info.plan || { date: info.today, orders: [] }
-  state.plans = plans || []
-  if (!state.members.some((m) => m.id === state.currentUserId)) {
-    state.currentUserId = state.members[0]?.id || ''
+  // SSE、定时同步、回到前台和写操作完成可能同时触发刷新。
+  // 只保留一个在途请求，后到的调用直接复用结果，不再叠第二条首屏查询。
+  if (refreshInFlight) return refreshInFlight
+  refreshInFlight = (async () => {
+    const info = await api.bootstrap()
+    state.version = info.version
+    state.today = info.today
+    state.meals = info.meals || []
+    // 用户可能在设置里删掉了当前手动选中的那一餐，避免之后点菜提交不存在的 key
+    if (state.mealPick && !state.meals.some((m) => m.key === state.mealPick)) state.mealPick = ''
+    state.now = Date.now()
+    state.meal = currentMeal(state.now, state.meals)
+    state.settings = info.settings || { familyName: '我们家' }
+    state.hiddenCuisines = info.settings?.hiddenCuisines || []
+    state.cuisines = info.cuisines || []
+    state.dishes = info.dishes || []
+    state.members = info.members || []
+    state.plan = info.plan || { date: info.today, orders: [] }
+    state.plans = info.plans || []
+    if (!state.members.some((m) => m.id === state.currentUserId)) {
+      state.currentUserId = state.members[0]?.id || ''
+    }
+    state.ready = true
+    state.locked = false
+    state.bootError = ''
+    // 只有「用户主动选过」才会写进 localStorage；这里的兜底不写，避免首次被静默记住
+    if (!localStorage.getItem('fm.user') && state.members.length) needsUserPick.value = true
+  })()
+  try {
+    return await refreshInFlight
+  } finally {
+    refreshInFlight = null
   }
-  state.ready = true
-  state.locked = false
-  state.bootError = ''
-  // 只有「用户主动选过」才会写进 localStorage；这里的兜底不写，避免首次被静默记住
-  if (!localStorage.getItem('fm.user') && state.members.length) needsUserPick.value = true
 }
 
 // 显式选择身份：只有用户主动切换/首次选择才持久化

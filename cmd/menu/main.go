@@ -69,9 +69,10 @@ func main() {
 		Addr:              *addr + ":" + *port,
 		Handler:           api.New(st, web, accessCode),
 		ReadHeaderTimeout: 10 * time.Second,
-		ReadTimeout:       30 * time.Second,
+		ReadTimeout:       2 * time.Minute, // 给手机慢速上传照片留足时间
 		WriteTimeout:      60 * time.Second,
-		IdleTimeout:       90 * time.Second,
+		IdleTimeout:       2 * time.Minute, // 多端浏览时复用 keep-alive 连接
+		MaxHeaderBytes:    64 << 10,
 	}
 
 	go func() {
