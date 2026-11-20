@@ -4,6 +4,6 @@ package api
 
 func init() {
 	Version = "1.0.2.5"
-	ReleaseNote = "【优化】\n- 在线更新改用 gzip 产物（9.9MB → 4.8MB），下载失败自动重试 3 次并切换备用源\n- 仓库只保留 gzip 包，未压缩二进制不再入库"
-	BuildTime = "2026-11-20 14:29:40"
+	ReleaseNote = "【修复】\n- 手机端菜谱页看不到「已下单」悬浮：页面切换动画的 transform 把 fixed 捕获成相对定位，改为 Teleport 到 body，并把层级提到导航栏之上\n- 手机端点问号不显示说明：触屏会先合成 mouseenter 再触发 click，导致开了又立刻关，改为只在支持悬停的设备启用 hover\n- 今日菜单头部按钮在手机上溢出被裁，改为整行换行\n- 订单行菜名被挤成「宫…」，评分类按钮改到独立一行"
+	BuildTime = "2026-11-20 14:47:50"
 }

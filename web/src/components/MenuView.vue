@@ -572,7 +572,9 @@ async function savePantry() {
       <DishEditor v-if="editorOpen" :dish="editorDish" @close="editorOpen = false" />
     </Transition>
 
-    <!-- 已下单悬浮入口 -->
+    <!-- 已下单悬浮入口：必须 Teleport 到 body，
+         页面切换动画的 .page-enter-active 带 transform 会把 fixed 捕获成相对定位 -->
+    <Teleport to="body">
     <button
       class="order-fab" type="button"
       :aria-label="`查看已下单的 ${todayOrders.length} 道菜`"
@@ -581,6 +583,7 @@ async function savePantry() {
       🧾 已下单
       <span :key="`fab-${todayOrders.length}`" class="order-fab-count">{{ todayOrders.length }}</span>
     </button>
+    </Teleport>
 
     <OrderPanel v-if="orderPanelOpen" @close="orderPanelOpen = false" />
 
