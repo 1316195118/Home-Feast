@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"compress/gzip"
 	"errors"
 	"fmt"
 	"io"
@@ -32,9 +33,12 @@ const (
 )
 
 type releaseFile struct {
-	Name   string `json:"name"`
-	SHA256 string `json:"sha256"`
-	Size   int64  `json:"size"`
+	Name     string `json:"name"`
+	SHA256   string `json:"sha256"`
+	Size     int64  `json:"size"`
+	Gz       string `json:"gz,omitempty"`       // gzip 版文件名
+	GzSHA256 string `json:"gzSha256,omitempty"` // 压缩包哈希
+	GzSize   int64  `json:"gzSize,omitempty"`
 }
 
 type releaseManifest struct {
@@ -296,94 +300,12 @@ func (s *Server) applyUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 下载到 staging.tmp，边下边算 sha256
+	// 下载并校验：优先 gzip 版（体积约一半，容器到 GitHub 链路不稳时成功率高），
+	// 失败自动换源重试；压缩包校验 gzSha256，解压后再校验二进制 sha256。
 	setProgress(10, "正在下载新版本")
-	tmp := staging + ".tmp"
-	out, err := os.OpenFile(tmp, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o755)
-	if err != nil {
+	if err := downloadRelease(r.Context(), f, staging, setProgress); err != nil {
 		setProgress(0, "")
-		jsonErr(w, http.StatusInternalServerError, "无法写入更新文件: "+err.Error())
-		return
-	}
-	hasher := sha256.New()
-	var downloaded int64
-	var dlErr error
-	for _, base := range updateSources() {
-		downloaded = 0
-		dlErr = nil
-		out.Seek(0, 0)
-		if err := out.Truncate(0); err != nil {
-			dlErr = err
-			break
-		}
-		hasher.Reset()
-		req, err := http.NewRequestWithContext(r.Context(), http.MethodGet, base+f.Name, nil)
-		if err != nil {
-			dlErr = err
-			continue
-		}
-		req.Header.Set("User-Agent", "family-menu-updater")
-		resp, err := (&http.Client{Timeout: 5 * time.Minute}).Do(req)
-		if err != nil {
-			dlErr = err
-			continue
-		}
-		if resp.StatusCode != http.StatusOK {
-			io.Copy(io.Discard, resp.Body)
-			resp.Body.Close()
-			dlErr = fmt.Errorf("HTTP %d", resp.StatusCode)
-			continue
-		}
-		buf := make([]byte, 128*1024)
-		for {
-			n, readErr := resp.Body.Read(buf)
-			if n > 0 {
-				if _, err := out.Write(buf[:n]); err != nil {
-					dlErr = err
-					break
-				}
-				hasher.Write(buf[:n])
-				downloaded += int64(n)
-				p := 10 + int(float64(downloaded)/float64(max64(f.Size, 1))*70)
-				if p > 80 {
-					p = 80
-				}
-				setProgress(p, "正在下载新版本")
-			}
-			if readErr != nil {
-				if readErr != io.EOF {
-					dlErr = readErr
-				}
-				break
-			}
-		}
-		resp.Body.Close()
-		if dlErr == nil {
-			break
-		}
-	}
-	out.Close()
-	if downloaded == 0 || dlErr != nil {
-		os.Remove(tmp)
-		setProgress(0, "")
-		msg := "下载更新失败"
-		if dlErr != nil {
-			msg += ": " + dlErr.Error()
-		}
-		jsonErr(w, http.StatusBadGateway, msg)
-		return
-	}
-	if f.Size > 0 && downloaded != f.Size {
-		os.Remove(tmp)
-		setProgress(0, "")
-		jsonErr(w, http.StatusBadGateway, fmt.Sprintf("文件大小不符: 期望 %d 实际 %d", f.Size, downloaded))
-		return
-	}
-	got := hex.EncodeToString(hasher.Sum(nil))
-	if !strings.EqualFold(got, f.SHA256) {
-		os.Remove(tmp)
-		setProgress(0, "")
-		jsonErr(w, http.StatusBadGateway, "校验失败：sha256 不匹配，已放弃更新")
+		jsonErr(w, http.StatusBadGateway, err.Error())
 		return
 	}
 
@@ -391,7 +313,7 @@ func (s *Server) applyUpdate(w http.ResponseWriter, r *http.Request) {
 	setProgress(85, "正在替换")
 	binPath, err := os.Executable()
 	if err != nil {
-		os.Remove(tmp)
+		os.Remove(staging)
 		setProgress(0, "")
 		jsonErr(w, http.StatusInternalServerError, "无法定位当前程序: "+err.Error())
 		return
@@ -407,20 +329,14 @@ func (s *Server) applyUpdate(w http.ResponseWriter, r *http.Request) {
 	if err := writeUpdaterState(s.st.Dir(), updaterState{
 		Phase: "applying", From: Version, To: m.Version, At: time.Now().Format(time.RFC3339),
 	}); err != nil {
-		os.Remove(tmp)
+		os.Remove(staging)
 		setProgress(0, "")
 		jsonErr(w, http.StatusInternalServerError, "写更新状态失败: "+err.Error())
 		return
 	}
-	if err := os.Chmod(tmp, 0o755); err != nil {
-		os.Remove(tmp)
-		setProgress(0, "")
-		jsonErr(w, http.StatusInternalServerError, "设置执行权限失败: "+err.Error())
-		return
-	}
 	// 原子替换：同一文件系统内 rename 覆盖
-	if err := os.Rename(tmp, binPath); err != nil {
-		os.Remove(tmp)
+	if err := os.Rename(staging, binPath); err != nil {
+		os.Remove(staging)
 		setProgress(0, "")
 		jsonErr(w, http.StatusInternalServerError, "替换程序失败: "+err.Error())
 		return
@@ -445,6 +361,153 @@ func (s *Server) applyUpdate(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}()
+}
+
+
+// downloadRelease 把某个架构的产物下载到 staging，优先 gzip。
+// 每个源重试 3 次，任意一次成功即返回；两次源都失败则报最后一次错误。
+func downloadRelease(ctx context.Context, f releaseFile, staging string, setProgress func(int, string)) error {
+	useGz := f.Gz != "" && f.GzSHA256 != ""
+	remoteName, wantHash, wantSize := f.Name, f.SHA256, f.Size
+	if useGz {
+		// 仓库只存 gz，没有未压缩件可回退
+		remoteName, wantHash, wantSize = f.Gz, f.GzSHA256, f.GzSize
+	}
+	tmp := staging + ".dl"
+	var lastErr error
+	for _, base := range updateSources() {
+		for attempt := 0; attempt < 3; attempt++ {
+			if attempt > 0 {
+				time.Sleep(time.Duration(attempt) * 2 * time.Second)
+				setProgress(10, fmt.Sprintf("重试第 %d 次", attempt))
+			}
+			got, err := fetchToFile(ctx, base+remoteName, tmp, wantSize, setProgress)
+			if err != nil {
+				lastErr = err
+				continue
+			}
+			if got != wantHash {
+				lastErr = fmt.Errorf("校验失败：%s 哈希不匹配", remoteName)
+				continue
+			}
+			// 压缩包：解压到 staging 并校验二进制哈希
+			if useGz {
+				setProgress(82, "正在解压")
+				if err := gunzipTo(tmp, staging); err != nil {
+					lastErr = err
+					continue
+				}
+				os.Remove(tmp)
+				h, size, err := hashFile(staging)
+				if err != nil {
+					lastErr = err
+					continue
+				}
+				if !strings.EqualFold(h, f.SHA256) || (f.Size > 0 && size != f.Size) {
+					lastErr = fmt.Errorf("解压后校验失败：哈希或大小不符")
+					continue
+				}
+			} else if err := os.Rename(tmp, staging); err != nil {
+				lastErr = err
+				continue
+			}
+			_ = os.Chmod(staging, 0o755)
+			return nil
+		}
+	}
+	if lastErr == nil {
+		lastErr = errors.New("下载失败")
+	}
+	return fmt.Errorf("下载更新失败: %v", lastErr)
+}
+
+// fetchToFile 下载到 path，返回 sha256。total 用于进度百分比。
+func fetchToFile(ctx context.Context, url, path string, total int64, setProgress func(int, string)) (string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("User-Agent", "family-menu-updater")
+	resp, err := (&http.Client{Timeout: 10 * time.Minute}).Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		io.Copy(io.Discard, resp.Body)
+		return "", fmt.Errorf("HTTP %d", resp.StatusCode)
+	}
+	out, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
+	if err != nil {
+		return "", err
+	}
+	defer out.Close()
+	hasher := sha256.New()
+	buf := make([]byte, 128*1024)
+	var read int64
+	for {
+		n, rerr := resp.Body.Read(buf)
+		if n > 0 {
+			if _, werr := out.Write(buf[:n]); werr != nil {
+				return "", werr
+			}
+			hasher.Write(buf[:n])
+			read += int64(n)
+			if total > 0 {
+				p := 10 + int(float64(read)/float64(total)*70)
+				if p > 80 {
+					p = 80
+				}
+				setProgress(p, fmt.Sprintf("正在下载 %.1f/%.1f MB", float64(read)/1048576, float64(total)/1048576))
+			}
+		}
+		if rerr != nil {
+			if rerr == io.EOF {
+				break
+			}
+			return "", rerr
+		}
+	}
+	if total > 0 && read != total {
+		return "", fmt.Errorf("文件不完整：%d/%d 字节", read, total)
+	}
+	return hex.EncodeToString(hasher.Sum(nil)), nil
+}
+
+func gunzipTo(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	gz, err := gzip.NewReader(in)
+	if err != nil {
+		return err
+	}
+	defer gz.Close()
+	out, err := os.OpenFile(dst, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o755)
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(out, gz); err != nil {
+		out.Close()
+		return err
+	}
+	return out.Close()
+}
+
+func hashFile(path string) (string, int64, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return "", 0, err
+	}
+	defer f.Close()
+	h := sha256.New()
+	n, err := io.Copy(h, f)
+	if err != nil {
+		return "", 0, err
+	}
+	return hex.EncodeToString(h.Sum(nil)), n, nil
 }
 
 func max64(a, b int64) int64 {
