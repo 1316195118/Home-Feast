@@ -70,6 +70,11 @@ func New(st *store.Store, web fs.FS, envCode string) http.Handler {
 	api.HandleFunc("GET /api/backups", s.listBackups)
 	api.HandleFunc("POST /api/backups/run", s.runBackupNow)
 
+	// 在线自更新：检查 / 进度 / 应用（详见 update.go）
+	api.HandleFunc("GET /api/update/check", s.checkUpdate)
+	api.HandleFunc("GET /api/update/status", s.updateStatus)
+	api.HandleFunc("POST /api/update/apply", s.applyUpdate)
+
 	// 应用内定时备份：随进程启动，不需要宿主机 cron
 	s.startAutoBackup()
 
@@ -115,7 +120,8 @@ func (s *Server) protect(next http.Handler) http.Handler {
 }
 
 func publicAPIPath(path string) bool {
-	return path == "/api/ping" || path == "/api/config" || path == "/api/events"
+	return path == "/api/ping" || path == "/api/config" || path == "/api/events" ||
+		path == "/api/update/check" || path == "/api/update/status"
 }
 
 // effectiveCode 环境变量优先，其次才是网页里保存到 access.json 的口令。

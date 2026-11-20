@@ -190,6 +190,8 @@ type Settings struct {
 	BackupKeep     int        `json:"backupKeep"`      // 自动备份保留份数，0 视为默认 7
 	// ImageMode 控制配图清晰度：auto=局域网原图/外网缩略图（默认），full=总是原图，thumb=总是缩略图。
 	ImageMode      string     `json:"imageMode,omitempty"`
+	// AutoCheckUpdate 是否在设置页每天自动检查新版本，默认 true（空值视为开）。
+	AutoCheckUpdate *bool     `json:"autoCheckUpdate,omitempty"`
 	// FamilyID 是「多家庭隔离」第一阶段的地基：只用于备份命名空间，
 	// 当前所有数据仍共用一份 JSON，不做分仓，旧数据零值兼容。
 	FamilyID       string     `json:"familyId,omitempty"`

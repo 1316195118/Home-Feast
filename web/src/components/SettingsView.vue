@@ -66,6 +66,89 @@ onMounted(() => { ensureChangelog(false) })
 // 构建时间只取日期，卡片上不必显示到秒
 const buildDay = computed(() => (state.buildTime || '').slice(0, 10))
 
+// ---- 容器内在线更新 ----
+const updateInfo = ref({ current: state.version, latest: '', available: false, note: '', published: '' })
+const updateBusy = ref(false)
+const updateProgress = ref(0)
+const updateMsg = ref('')
+const updateErr = ref('')
+const autoCheck = computed(() => state.settings.autoCheckUpdate !== false) // 默认开
+const LAST_CHECK_KEY = 'fm.update.lastCheck'
+
+function fmtNote(note) {
+  return String(note || '').replace(/\*\*([^*]+)\*\*/g, '【$1】').split('\n').filter(Boolean).slice(0, 3)
+}
+
+async function checkUpdate(silent = false) {
+  if (updateBusy.value) return
+  updateBusy.value = true
+  updateErr.value = ''
+  try {
+    const r = await api.checkUpdate()
+    updateInfo.value = r
+    try { localStorage.setItem(LAST_CHECK_KEY, String(Date.now())) } catch { /* 隐私模式忽略 */ }
+    if (!silent && !r.available) actions.toast(`已是最新版本 v${r.current}`, 'success')
+  } catch (e) {
+    updateErr.value = e.message || '检查失败'
+    if (!silent) actions.toast('检查更新失败：' + updateErr.value, 'error')
+  } finally {
+    updateBusy.value = false
+  }
+}
+
+async function pollUpdate() {
+  for (let i = 0; i < 40; i++) {
+    await new Promise((r) => setTimeout(r, 1000))
+    try {
+      const st = await api.updateStatus()
+      updateProgress.value = st.progress || 0
+      updateMsg.value = st.message || ''
+      if (!st.downloading) return st
+    } catch { /* 服务正在切换，忽略 */ }
+  }
+  return null
+}
+
+async function doUpdate() {
+  if (updateBusy.value) return
+  const ok = await confirmDialog({
+    title: '确认在线更新',
+    message: `将当前 v${state.version} 更新到 v${updateInfo.value.latest}。更新时服务会短暂中断几秒，页面会自动重连。确认继续？`,
+    confirmText: '立即更新', danger: true,
+  })
+  if (!ok) return
+  updateBusy.value = true
+  updateErr.value = ''
+  updateProgress.value = 0
+  updateMsg.value = '准备更新…'
+  try {
+    const r = await api.applyUpdate()
+    updateMsg.value = r.message || '更新中…'
+    const st = await pollUpdate()
+    actions.toast('更新完成，正在重新连接…', 'success')
+    setTimeout(() => window.location.reload(), 1600)
+  } catch (e) {
+    updateErr.value = e.message || '更新失败'
+    actions.toast('更新失败：' + updateErr.value, 'error')
+    updateBusy.value = false
+    updateProgress.value = 0
+  }
+}
+
+function toggleAutoCheck() {
+  actions.saveSettings({ autoCheckUpdate: !autoCheck.value })
+}
+
+onMounted(() => {
+  if (!autoCheck.value) return
+  let last = 0
+  try { last = Number(localStorage.getItem(LAST_CHECK_KEY) || 0) } catch { /* 忽略 */ }
+  // 每天自动检查一次（24 小时）
+  if (Date.now() - last > 24 * 3600 * 1000) {
+    setTimeout(() => checkUpdate(true), 2000)
+  }
+})
+
 // 关于与版权：说明文字较长，卡片只留摘要，完整素材与授权说明进二级弹窗
 const showAboutModal = ref(false)
 const aboutRoot = ref(null)
@@ -519,6 +602,38 @@ async function saveRoster() {
           查看更新记录
           <span class="chev">›</span>
         </button>
+      </div>
+
+      <div class="card setting-card sc-update">
+        <div class="setting-title">
+          ⬆️ 在线更新
+          <span class="tag setting-title-tag" :class="updateInfo.available ? 'tag-green' : ''">
+            {{ updateInfo.available ? `发现 v${updateInfo.latest}` : `当前 v${state.version}` }}
+          </span>
+        </div>
+        <p class="setting-desc">
+          从 GitHub 拉取新版本，在容器内直接更新，菜和图片都不会动
+          <HelpTip text="更新包带 SHA256 校验，下载后原子替换程序并原地重启，容器不会重建。若新版启动失败会自动回滚到旧版；检查更新默认每天自动做一次。" />
+        </p>
+        <div v-if="updateInfo.available" class="update-note">
+          <div v-for="(line, i) in fmtNote(updateInfo.note)" :key="i">{{ line }}</div>
+        </div>
+        <div v-if="updateBusy" class="update-progress">
+          <div class="update-bar"><span :style="{ width: updateProgress + '%' }"></span></div>
+          <span class="tiny muted">{{ updateMsg }}</span>
+        </div>
+        <div v-if="updateErr" class="update-error tiny">{{ updateErr }}</div>
+        <div class="setting-actions update-actions">
+          <button class="btn btn-soft btn-sm" :disabled="updateBusy" @click="checkUpdate(false)">
+            {{ updateBusy ? '检查中…' : '🔍 检查更新' }}
+          </button>
+          <button v-if="updateInfo.available" class="btn btn-primary btn-sm" :disabled="updateBusy" @click="doUpdate">
+            ⬆️ 更新到 v{{ updateInfo.latest }}
+          </button>
+        </div>
+        <label class="update-auto tiny muted">
+          <input type="checkbox" :checked="autoCheck" @change="toggleAutoCheck" /> 每天自动检查
+        </label>
       </div>
 
       <div class="card setting-card sc-about">
