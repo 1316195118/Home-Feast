@@ -11,6 +11,7 @@ const viteOut = join(webDir, 'dist')
 const embedDir = join(root, 'webapp', 'dist')
 const viteBin = join(webDir, 'node_modules', 'vite', 'bin', 'vite.js')
 const binary = process.platform === 'win32' ? 'menu.exe' : 'menu'
+const frontendOnly = process.argv.includes('--frontend-only')
 
 function title(text) {
   console.log(`\n> ${text}`)
@@ -43,6 +44,11 @@ writeFileSync(
   JSON.stringify({ app: 'family-menu', builtAt: new Date().toISOString(), by: 'scripts/build.mjs' }, null, 2) + '\n',
 )
 console.log(`已复制 ${readdirSync(embedDir).length} 项到 webapp/dist`)
+
+if (frontendOnly) {
+  console.log('\n前端产物已同步，跳过 Go 编译')
+  process.exit(0)
+}
 
 title('编译 Go 单文件服务端')
 execFileSync('go', ['build', '-trimpath', '-ldflags', '-s -w', '-o', join(root, binary), './cmd/menu'], {
