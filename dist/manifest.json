@@ -1,31 +1,31 @@
 {
-  "version": "1.0.2.7",
-  "publishedAt": "2026-11-20T15:34:15",
-  "note": "**修复**\n- 在线更新替换程序失败：数据卷与容器可写层是不同文件系统，rename 会报 cross-device link；改为先复制到目标同目录再原子改名",
+  "version": "1.0.2.8",
+  "publishedAt": "2026-11-20T16:56:33",
+  "note": "**新增**\n- 在线更新支持强制重装：不管有没有新版本都重新下载安装一次\n\n**修复**\n- 手机端「检查更新」和「更新设置」按钮紧贴重叠，改为并排 + 间距",
   "files": {
     "amd64": {
       "name": "menu-linux-amd64",
-      "sha256": "aa8946dd365daa0a61b379debe13b797e31eacb91fbed988293246589ba0a90d",
+      "sha256": "f5a0785a79d5d5bab74bfb9e1ec191c153bb1e627310086d9a593e396d35f0e6",
       "size": 10387616,
       "gz": "menu-linux-amd64.gz",
-      "gzSha256": "4063c8bd772e3b0867cb2740a9ec074c05a3b18d2d964d8cc0e1132121eb04ef",
-      "gzSize": 5058574
+      "gzSha256": "c486e862cbe85255515ddd7056fa596d5a6ca14269d216068b7da405cc43e8f6",
+      "gzSize": 5059047
     },
     "arm64": {
       "name": "menu-linux-arm64",
-      "sha256": "fb2f6309dcf146c5981fd167388a9f402fcb1bae1e1bd5d929ce0b44ec0ffd41",
+      "sha256": "43560848ac61c0286dae163d001eb447e0a1105fb549553815382fd337f15348",
       "size": 9765024,
       "gz": "menu-linux-arm64.gz",
-      "gzSha256": "e9d7849e7f682a503a7e2c347bcc405e0b18ed93d4028063d4663afa89515a78",
-      "gzSize": 4694163
+      "gzSha256": "466839724839232580c7ae3c1577808aaa5bfa21daf06b62bf76f205732f088c",
+      "gzSize": 4694626
     },
     "armv7": {
       "name": "menu-linux-armv7",
-      "sha256": "5a647ecd5f9d8e066037f1f2113cbc8f15b7d936bf154e27f3d472d26a5b9137",
+      "sha256": "3521328279e7281017ff7c63aa5c1fed66ad7024861b2c782c5a9472c65b29f1",
       "size": 10223776,
       "gz": "menu-linux-armv7.gz",
-      "gzSha256": "71a6df6663e2f81f8317a2af0a2123520a9b39be70b52ce8193178e4f4e911cb",
-      "gzSize": 4921710
+      "gzSha256": "f2e7f35ef5bf353e4b2f550464f6ab26ff52774dd2ce1ef1cd3db5a4ead925bb",
+      "gzSize": 4921924
     }
   }
 }
