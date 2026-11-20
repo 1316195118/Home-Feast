@@ -31,7 +31,7 @@ const T = {
   lb: (main, { spicy = false } = {}) => {
     const needBlanch = ['藕', '木耳', '西兰花', '四季豆', '腐竹', '菠菜', '秋葵', '海带', '金针菇', '笋'].some((k) => main.includes(k))
     return {
-      ingredients: [...splitMain(main), '蒜末 2 瓣', '香醋 1 勺', '生抽 1 勺', '香油 少许', '盐 少许', spicy ? '辣椒油 1 勺' : '白糖 少许'],
+      ingredients: [...splitMain(main), '蒜末 2 瓣', '香醋 1 勺', '生抽 1 勺', '香油 5ml', '盐 2g', spicy ? '辣椒油 1 勺' : '白糖 3g'],
       steps: [
         needBlanch
           ? `${first(main)}洗净切好，入沸水焯 1～2 分钟，捞出立刻过凉开水并沥干。`
@@ -44,7 +44,7 @@ const T = {
   },
   // 凉拌荤菜：鸡爪、白切肉等需要先煮熟
   lj: (main) => ({
-    ingredients: [...splitMain(main), '姜 4 片', '料酒 1 勺', '生抽 2 勺', '香醋 1 勺', '香油 少许', '小米辣 适量', '蒜末 2 瓣'],
+    ingredients: [...splitMain(main), '姜 4 片', '料酒 1 勺', '生抽 2 勺', '香醋 1 勺', '香油 5ml', '小米辣 8g', '蒜末 2 瓣'],
     steps: [
       `${first(main)}冷水下锅，加姜片和料酒，煮开后转中小火煮 12～15 分钟。`,
       `捞出立刻泡进冰水 5 分钟，肉质更紧实弹牙，之后沥干斩成小块。`,
@@ -54,7 +54,7 @@ const T = {
   }),
   // 番茄炒蛋 / 蛋类快炒
   dc: (main) => ({
-    ingredients: [...splitMain(main), '盐 适量', '白糖 少许', '小葱 1 根', '食用油 1 勺'],
+    ingredients: [...splitMain(main), '盐 2g', '白糖 3g', '小葱 1 根', '食用油 1 勺'],
     steps: [
       `鸡蛋打散加一点点盐搅匀；${first(main)}洗净切块备用。`,
       `热锅倒油，倒入蛋液，等边缘凝固再用铲子推成大块，先盛出。`,
@@ -74,7 +74,7 @@ const T = {
   }),
   // 素烧 / 酱烧茄子（不焯血水）
   sv: (main) => ({
-    ingredients: [...splitMain(main), '蒜末 2 瓣', '生抽 1 勺', '老抽 半勺', '白糖 少许', '淀粉 半勺', '食用油 2 勺'],
+    ingredients: [...splitMain(main), '蒜末 2 瓣', '生抽 1 勺', '老抽 半勺', '白糖 3g', '淀粉 半勺', '食用油 2 勺'],
     steps: [
       `${first(main)}洗净切滚刀块，撒少许盐静置 10 分钟后擦干水分。`,
       `平底锅放稍多的油，把主料煎到表面微焦起皱，盛出备用。`,
@@ -84,7 +84,7 @@ const T = {
   }),
   // 清炒 / 炝炒素菜
   qc: (main, { spicy = false } = {}) => ({
-    ingredients: [...splitMain(main), '蒜片 2 瓣', spicy ? '干辣椒 3 个' : '蚝油 半勺', '盐 适量', '生抽 半勺', '食用油 1 勺'],
+    ingredients: [...splitMain(main), '蒜片 2 瓣', spicy ? '干辣椒 3 个' : '蚝油 半勺', '盐 2g', '生抽 半勺', '食用油 1 勺'],
     steps: [
       `${first(main)}洗净切好，充分沥干水分；蒜切片${spicy ? '，干辣椒剪成段' : ''}。`,
       `热锅倒油，下蒜片${spicy ? '和干辣椒' : ''}小火爆出香味。`,
@@ -94,7 +94,7 @@ const T = {
   }),
   // 快炒荤菜
   kc: (main) => ({
-    ingredients: [...splitMain(main), '姜丝 少许', '蒜末 2 瓣', '生抽 1 勺', '料酒 1 勺', '淀粉 1 小勺', '盐 适量', '食用油 1 勺'],
+    ingredients: [...splitMain(main), '姜丝 5g', '蒜末 2 瓣', '生抽 1 勺', '料酒 1 勺', '淀粉 1 小勺', '盐 2g', '食用油 1 勺'],
     steps: [
       `把 ${first(main)} 切成丝或片，加生抽、料酒、淀粉抓匀腌 10 分钟；其余配菜切好备用。`,
       `热锅热油下姜蒜爆香，倒入腌好的主料，快速滑炒到变色先盛出。`,
@@ -104,7 +104,7 @@ const T = {
   }),
   // 干煸
   gb: (main) => ({
-    ingredients: [...splitMain(main), '干辣椒 5 个', '花椒 1 小撮', '蒜末 2 瓣', '生抽 1 勺', '盐 适量', '食用油 2 勺'],
+    ingredients: [...splitMain(main), '干辣椒 5 个', '花椒 1g', '蒜末 2 瓣', '生抽 1 勺', '盐 2g', '食用油 2 勺'],
     steps: [
       `${first(main)}切成长条，尽量擦干水分，这样才煸得干香。`,
       `锅中放稍多的油，中小火下主料慢慢煸到表皮起皱、微微焦黄，盛出备用。`,
@@ -124,7 +124,7 @@ const T = {
   }),
   // 炖煮 / 煲
   dz: (main) => ({
-    ingredients: [...splitMain(main), '姜 4 片', '葱 1 根', '料酒 1 勺', '盐 适量', '清水 适量'],
+    ingredients: [...splitMain(main), '姜 4 片', '葱 1 根', '料酒 1 勺', '盐 3g', '清水 1200ml'],
     steps: [
       `把食材处理好；肉类冷水下锅加姜片、料酒焯水撇沫，火腿、笋和素菜洗净切块即可。`,
       `把食材放进汤锅，一次加足热水和姜片，大火烧开。`,
@@ -134,7 +134,7 @@ const T = {
   }),
   // 清汤 / 羹
   tg: (main) => ({
-    ingredients: [...splitMain(main), '姜丝 少许', '葱花 少许', '盐 适量', '香油 几滴', '清水或高汤 适量'],
+    ingredients: [...splitMain(main), '姜丝 5g', '葱花 5g', '盐 2g', '香油 3ml', '清水或高汤 1000ml'],
     steps: [
       `${first(main)}洗净切细，姜切丝；需要打散的蛋液先在小碗里搅匀。`,
       `锅中加清水或高汤烧开，下耐煮的食材和姜丝煮 3～5 分钟。`,
@@ -144,7 +144,7 @@ const T = {
   }),
   // 蒸
   zh: (main) => ({
-    ingredients: [...splitMain(main), '姜 3 片', '葱 1 根', '料酒 1 勺', '蒸鱼豉油或生抽 1 勺', '香油 少许'],
+    ingredients: [...splitMain(main), '姜 3 片', '葱 1 根', '料酒 1 勺', '蒸鱼豉油或生抽 1 勺', '香油 5ml'],
     steps: [
       `${first(main)}处理干净，用姜片、料酒和少许盐抹匀，腌 15 分钟去腥。`,
       `水烧开后再上蒸锅，摆上姜葱，大火蒸 8～15 分钟（按食材大小调整）。`,
@@ -154,7 +154,7 @@ const T = {
   }),
   // 炸
   za: (main) => ({
-    ingredients: [...splitMain(main), '面粉或淀粉 3 勺', '鸡蛋 1 个', '盐 适量', '花椒粉或椒盐 少许', '食用油 适量'],
+    ingredients: [...splitMain(main), '面粉或淀粉 3 勺', '鸡蛋 1 个', '盐 3g', '花椒粉或椒盐 2g', '食用油 800ml'],
     steps: [
       `${first(main)}切成大小一致的块，加盐和料酒腌 10 分钟后擦干。`,
       `面粉、鸡蛋和少许水调成能挂住筷子的糊，把主料均匀裹一层。`,
@@ -164,7 +164,7 @@ const T = {
   }),
   // 煎
   jian: (main) => ({
-    ingredients: [...splitMain(main), '黄油或食用油 1 勺', '蒜 2 瓣', '盐 适量', '黑胡椒 少许'],
+    ingredients: [...splitMain(main), '黄油或食用油 1 勺', '蒜 2 瓣', '盐 2g', '黑胡椒 1g'],
     steps: [
       `${first(main)}用厨房纸吸干水分，两面撒盐和黑胡椒，室温回温 10 分钟。`,
       `平底锅烧热下油和蒜，放入主料，先别急着翻动。`,
@@ -174,7 +174,7 @@ const T = {
   }),
   // 烤
   ka: (main) => ({
-    ingredients: [...splitMain(main), '生抽 1 勺', '蜂蜜或糖 1 勺', '蒜末 2 瓣', '黑胡椒 少许', '食用油 少许'],
+    ingredients: [...splitMain(main), '生抽 1 勺', '蜂蜜或糖 1 勺', '蒜末 2 瓣', '黑胡椒 1g', '食用油 5ml'],
     steps: [
       `${first(main)}洗净擦干，用叉子或刀背扎几下方便入味。`,
       `生抽、蜂蜜、蒜末和黑胡椒调成腌料，把主料抹匀，冷藏腌 30 分钟以上。`,
@@ -184,7 +184,7 @@ const T = {
   }),
   // 一锅出：麻辣香锅 / 火锅 / 口味虾
   yg: (main) => ({
-    ingredients: [...splitMain(main), '火锅底料 1 小块', '干辣椒 6 个', '花椒 1 小撮', '姜蒜 适量', '生抽 1 勺', '食用油 2 勺', '熟芝麻 少许'],
+    ingredients: [...splitMain(main), '火锅底料 50g', '干辣椒 6 个', '花椒 1g', '姜蒜 20g', '生抽 1 勺', '食用油 2 勺', '熟芝麻 3g'],
     steps: [
       `把主料和配菜分别洗净切好，荤素分开放；耐煮的先焯到半熟。`,
       `锅中放油，下姜蒜、干辣椒、花椒和火锅底料，小火慢慢炒出红油。`,
@@ -194,7 +194,7 @@ const T = {
   }),
   // 鱼片类：水煮鱼 / 酸菜鱼 / 藤椒鱼
   yp: (main) => ({
-    ingredients: [...splitMain(main), '蛋清 1 个', '红薯淀粉 1 勺', '姜蒜 适量', '干辣椒 5 个', '花椒 1 小撮', '料酒 1 勺', '盐 适量'],
+    ingredients: [...splitMain(main), '蛋清 1 个', '红薯淀粉 1 勺', '姜蒜 20g', '干辣椒 5 个', '花椒 1g', '料酒 1 勺', '盐 3g'],
     steps: [
       `鱼肉斜刀片成薄片，加盐、料酒、蛋清和淀粉抓匀上浆，腌 15 分钟。`,
       `锅中下姜蒜和底料（酸菜或豆瓣酱）炒香，加热水或高汤煮开成汤底。`,
@@ -204,7 +204,7 @@ const T = {
   }),
   // 卤 / 白卤 / 浸
   lu: (main) => ({
-    ingredients: [...splitMain(main), '八角 2 颗', '桂皮 1 小段', '姜 4 片', '葱 1 根', '生抽 3 勺', '料酒 1 勺', '冰糖 1 小块'],
+    ingredients: [...splitMain(main), '八角 2 颗', '桂皮 1 小段', '姜 4 片', '葱 1 根', '生抽 3 勺', '料酒 1 勺', '冰糖 10g'],
     steps: [
       `${first(main)}冷水下锅焯水，撇净浮沫后捞出冲净。`,
       `锅里加足量水，放八角、桂皮、姜葱、生抽、料酒和冰糖，煮开成卤汁。`,
@@ -221,7 +221,7 @@ const T = {
       `用饭勺从锅底轻轻翻松，散掉多余水汽，米饭更粒粒分明。`,
     ],
   }) : ({
-    ingredients: [...splitMain(main), '鸡蛋 1 个', '葱花 少许', '盐 适量', '生抽 半勺', '食用油 1 勺'],
+    ingredients: [...splitMain(main), '鸡蛋 1 个', '葱花 5g', '盐 2g', '生抽 半勺', '食用油 1 勺'],
     steps: [
       `大米淘洗到水清，按 1:1.2 加水煮熟；做炒饭最好用隔夜饭，先抓散。`,
       `鸡蛋打散炒成块盛出，配菜切丁。`,
@@ -231,7 +231,7 @@ const T = {
   }),
   // 面 / 粉
   mn: (main) => ({
-    ingredients: [...splitMain(main), '小葱 1 根', '生抽 1 勺', '香醋或蚝油 半勺', '蒜末 少许', '香油 少许'],
+    ingredients: [...splitMain(main), '小葱 1 根', '生抽 1 勺', '香醋或蚝油 半勺', '蒜末 5g', '香油 5ml'],
     steps: [
       `面条按包装时间煮到刚断生，捞出过一下温水，沥干防粘。`,
       `趁热把生抽、香醋、蒜末和香油在碗底调开。`,
@@ -241,7 +241,7 @@ const T = {
   }),
   // 粥 / 甜羹
   zy: (main) => ({
-    ingredients: [...splitMain(main), '冰糖 适量', '清水 适量'],
+    ingredients: [...splitMain(main), '冰糖 40g', '清水 1200ml'],
     steps: [
       `${first(main)}提前淘洗或泡发，难煮的豆类可先浸泡 2 小时。`,
       `锅中加足量清水，下主料大火烧开后转小火。`,
@@ -251,7 +251,7 @@ const T = {
   }),
   // 面点：饼 / 包 / 饺
   bd: (main) => ({
-    ingredients: [...splitMain(main), '中筋面粉 200g', '温水 适量', '盐 少许', '食用油 少许'],
+    ingredients: [...splitMain(main), '中筋面粉 200g', '温水 110ml', '盐 1g', '食用油 5ml'],
     steps: [
       `面粉加温水和一点点盐，揉成光滑面团，盖湿布醒 20 分钟。`,
       `把 ${first(main)} 调好味做成馅料，面团分成小剂子擀开。`,
@@ -261,7 +261,7 @@ const T = {
   }),
   // 甜品 / 饮品
   tp: (main) => ({
-    ingredients: [...splitMain(main), '蜂蜜或炼乳 少许', '坚果碎 少许'],
+    ingredients: [...splitMain(main), '蜂蜜或炼乳 15g', '坚果碎 10g'],
     steps: [
       `${first(main)}洗净切小块，需要提前冷藏的先冰好。`,
       `在杯里按「底料 → 主料 → 配料」的顺序分层铺放。`,
@@ -461,6 +461,11 @@ const SPICY = new Set([
 import HOWTO from './howto-amounts.json'
 import HOWTO_STEPS from './howto-steps.json'
 
+// 做法是纯函数结果：同一道菜在列表、忌口提示、推荐和搜索里会被反复读取。
+// 按对象缓存后，滚动 48 张卡片或搜一个字都不必重新展开配料模板。
+// 菜谱编辑保存后 refresh 会替换 Dish 对象，缓存自然失效。
+const recipeCache = new WeakMap()
+
 /**
  * 取一道菜的做法。优先用用户自己编辑并保存的配料/步骤，
  * 否则按菜名查内置参考做法。返回 { ingredients, steps, custom }。
@@ -472,10 +477,28 @@ const ALIAS = {
 }
 
 export function getRecipe(dish) {
+  if (!dish || typeof dish !== 'object') {
+    return { ingredients: [], steps: [], custom: false, precise: false }
+  }
+  const cached = recipeCache.get(dish)
+  if (
+    cached
+    && cached.name === dish.name
+    && cached.ingredientsRef === dish.ingredients
+    && cached.stepsRef === dish.steps
+  ) {
+    return cached.recipe
+  }
+
   const customIngredients = Array.isArray(dish?.ingredients) ? dish.ingredients.filter(Boolean) : []
   const customSteps = Array.isArray(dish?.steps) ? dish.steps.filter(Boolean) : []
   if (customIngredients.length || customSteps.length) {
-    return { ingredients: customIngredients, steps: customSteps, custom: true, precise: false }
+    return rememberRecipe(dish, {
+      ingredients: customIngredients,
+      steps: customSteps,
+      custom: true,
+      precise: false,
+    })
   }
   const name = ALIAS[dish?.name] || dish?.name
   const preciseList = HOWTO[name]
@@ -497,14 +520,34 @@ export function getRecipe(dish) {
       const auto = key === 'lb' || key === 'qc' ? { spicy: SPICY.has(name) } : {}
       steps = build(main, { ...auto, ...(extra || {}) }).steps
     }
-    return { ingredients: preciseList.slice(), steps, custom: false, precise: true }
+    return rememberRecipe(dish, {
+      ingredients: preciseList.slice(),
+      steps,
+      custom: false,
+      precise: true,
+    })
   }
-  if (!entry) return { ingredients: [], steps: [], custom: false, precise: false }
+  if (!entry) return rememberRecipe(dish, { ingredients: [], steps: [], custom: false, precise: false })
   const [key, main, extra] = entry
   const build = T[key] || T.kc
   const auto = key === 'lb' || key === 'qc' ? { spicy: SPICY.has(name) } : {}
   const result = build(main, { ...auto, ...(extra || {}) })
-  return { ...result, ingredients: dedupe(result.ingredients), custom: false, precise: false }
+  return rememberRecipe(dish, {
+    ...result,
+    ingredients: dedupe(result.ingredients),
+    custom: false,
+    precise: false,
+  })
+}
+
+function rememberRecipe(dish, recipe) {
+  recipeCache.set(dish, {
+    name: dish.name,
+    ingredientsRef: dish.ingredients,
+    stepsRef: dish.steps,
+    recipe,
+  })
+  return recipe
 }
 
 export function hasRecipe(dish) {

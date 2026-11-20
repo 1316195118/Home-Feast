@@ -9,7 +9,7 @@ import (
 )
 
 func (s *Server) listPlans(w http.ResponseWriter, r *http.Request) {
-	jsonOK(w, s.st.ListPlans())
+	jsonRevalidate(w, r, s.st.ListPlans())
 }
 
 func (s *Server) getPlan(w http.ResponseWriter, r *http.Request) {
@@ -30,8 +30,8 @@ func (s *Server) updatePlan(w http.ResponseWriter, r *http.Request) {
 		DutyMeal      string          `json:"dutyMeal"` // 非空表示只改这一餐
 		ChefIDs       *[]string       `json:"chefIds"`
 		DishwasherIDs *[]string       `json:"dishwasherIds"`
-		ChefID        *string         `json:"chefId"`        // 兼容旧前端
-		DishwasherID  *string         `json:"dishwasherId"`  // 兼容旧前端
+		ChefID        *string         `json:"chefId"`       // 兼容旧前端
+		DishwasherID  *string         `json:"dishwasherId"` // 兼容旧前端
 		Note          *string         `json:"note"`
 		Dice          *map[string]int `json:"dice"`
 		DicePhase     *string         `json:"dicePhase"`
@@ -220,8 +220,7 @@ func (s *Server) addOrder(w http.ResponseWriter, r *http.Request) {
 		jsonErr(w, http.StatusInternalServerError, "点菜失败")
 		return
 	}
-	w.WriteHeader(http.StatusCreated)
-	jsonOK(w, plan)
+	jsonStatus(w, http.StatusCreated, plan)
 }
 
 func (s *Server) toggleOrder(w http.ResponseWriter, r *http.Request) {

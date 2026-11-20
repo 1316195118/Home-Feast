@@ -41,8 +41,7 @@ func (s *Server) createDish(w http.ResponseWriter, r *http.Request) {
 		jsonErr(w, http.StatusInternalServerError, "保存菜品失败")
 		return
 	}
-	w.WriteHeader(http.StatusCreated)
-	jsonOK(w, created)
+	jsonStatus(w, http.StatusCreated, created)
 }
 
 func (s *Server) updateDish(w http.ResponseWriter, r *http.Request) {

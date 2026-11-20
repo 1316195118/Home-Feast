@@ -285,7 +285,7 @@ def publish(do_deploy=False, arch='amd64', no_build=False):
             return text[:60]
         return '常规更新'
 
-    msg = f'v{v}：{first_summary(entries[-1][1])}'
+    msg = f'v{v}：{first_summary(entries[0][1])}'
     run_git(['commit', '-m', msg])
     print('已提交:', msg)
     run_git(['push', 'origin', 'main'])
@@ -314,6 +314,12 @@ def main():
         return
 
     if a.publish:
+        if a.no_build:
+            raise SystemExit('--publish 必须重新编译，不能与 --no-build 同用（避免发布旧二进制）')
+        if a.note:
+            # 支持交接里约定的单命令：--note "说明" --publish。
+            # 此前 publish 分支忽略 --note，要求先单独记一次，和文档不一致。
+            append_pending(a.note, datetime.datetime.now())
         publish(do_deploy=a.deploy, arch=a.arch, no_build=a.no_build)
         return
 

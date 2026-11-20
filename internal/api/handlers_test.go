@@ -73,12 +73,38 @@ func TestBootstrapShape(t *testing.T) {
 	}
 }
 
+func TestPlansETag(t *testing.T) {
+	h := newTestHandler(t)
+	w := do(h, "GET", "/api/plans", "")
+	etag := w.Header().Get("ETag")
+	if w.Code != http.StatusOK || etag == "" {
+		t.Fatalf("首次读取 plans 应返回 200 和 ETag，实际 %d / %q", w.Code, etag)
+	}
+	if cc := w.Header().Get("Cache-Control"); !strings.Contains(cc, "private") {
+		t.Fatalf("家庭数据缓存必须是 private，实际 %q", cc)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/plans", nil)
+	req.Header.Set("If-None-Match", etag)
+	got := httptest.NewRecorder()
+	h.ServeHTTP(got, req)
+	if got.Code != http.StatusNotModified {
+		t.Fatalf("内容未变应返回 304，实际 %d：%s", got.Code, got.Body.String())
+	}
+	if got.Body.Len() != 0 {
+		t.Fatalf("304 不应带响应体，实际 %d 字节", got.Body.Len())
+	}
+}
+
 func TestDishCRUD(t *testing.T) {
 	h := newTestHandler(t)
 	// 创建
 	w := do(h, "POST", "/api/dishes", `{"name":"测试菜","cuisine":"homestyle","spicy":1,"minutes":15,"ingredients":["土豆 200g"],"steps":["切片","炒熟"]}`)
 	if w.Code != 201 {
 		t.Fatalf("创建应 201，实际 %d：%s", w.Code, w.Body.String())
+	}
+	if ct := w.Header().Get("Content-Type"); !strings.HasPrefix(ct, "application/json") {
+		t.Fatalf("创建响应应为 JSON，实际 %s", ct)
 	}
 	id := decode(t, w)["id"].(string)
 	// 列表可见

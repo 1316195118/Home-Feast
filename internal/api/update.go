@@ -1,11 +1,11 @@
 package api
 
 import (
+	"compress/gzip"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"compress/gzip"
 	"errors"
 	"fmt"
 	"io"
@@ -50,14 +50,14 @@ type releaseManifest struct {
 }
 
 type updateStatus struct {
-	 Checking     bool   `json:"checking"`
-	 Downloading  bool   `json:"downloading"`
-	 LastCheck    string `json:"lastCheck,omitempty"`
-	 LastError    string `json:"lastError,omitempty"`
-	 Available    bool   `json:"available"`
-	 Latest       string `json:"latest,omitempty"`
-	 Progress     int    `json:"progress"`
-	 Message      string `json:"message,omitempty"`
+	Checking    bool   `json:"checking"`
+	Downloading bool   `json:"downloading"`
+	LastCheck   string `json:"lastCheck,omitempty"`
+	LastError   string `json:"lastError,omitempty"`
+	Available   bool   `json:"available"`
+	Latest      string `json:"latest,omitempty"`
+	Progress    int    `json:"progress"`
+	Message     string `json:"message,omitempty"`
 }
 
 var updateMu sync.Mutex
@@ -215,10 +215,10 @@ func updatePaths(dataDir string) (dir, staging, backup, stateFile string) {
 
 // updaterState 落盘，供启动时自检是否需要回滚。
 type updaterState struct {
-	Phase   string `json:"phase"` // pending / applying / applied / failed
-	From    string `json:"from"`
-	To      string `json:"to"`
-	At      string `json:"at"`
+	Phase string `json:"phase"` // pending / applying / applied / failed
+	From  string `json:"from"`
+	To    string `json:"to"`
+	At    string `json:"at"`
 }
 
 func writeUpdaterState(dataDir string, st updaterState) error {
@@ -342,50 +342,69 @@ func (s *Server) applyUpdate(w http.ResponseWriter, r *http.Request) {
 	updateState.Message = "正在获取版本信息"
 	updateState.LastError = ""
 	updateMu.Unlock()
-	defer func() {
-		updateMu.Lock()
-		updateState.Downloading = false
-		updateMu.Unlock()
-	}()
 
+	// 下载、校验和重试可能在网络差时持续几分钟。接口只负责受理任务，
+	// 长任务在后台继续跑，避免 http.Server 的写超时把进度和结果一起掐掉。
+	jsonStatus(w, http.StatusAccepted, map[string]any{
+		"ok": true, "accepted": true, "message": "更新任务已开始",
+	})
+	go s.runUpdateTask(context.Background(), in.Force)
+}
+
+// runUpdateTask 执行一次在线更新。状态通过 /api/update/status 轮询，
+// 直到 syscall.Exec 成功替换当前进程为止。
+func (s *Server) runUpdateTask(ctx context.Context, force bool) {
 	setProgress := func(p int, msg string) {
 		updateMu.Lock()
 		updateState.Progress = p
 		updateState.Message = msg
 		updateMu.Unlock()
 	}
+	fail := func(err error) {
+		updateMu.Lock()
+		updateState.Downloading = false
+		updateState.LastError = err.Error()
+		updateState.Message = "更新失败"
+		updateMu.Unlock()
+	}
 
 	var m releaseManifest
-	if err := fetchUpdateJSON(r.Context(), "manifest.json", s.st.GetSettings().ProxyURL, &m); err != nil {
+	if err := fetchUpdateJSON(ctx, "manifest.json", s.st.GetSettings().ProxyURL, &m); err != nil {
 		setProgress(0, "")
-		jsonErr(w, http.StatusBadGateway, "获取更新信息失败: "+err.Error())
+		fail(fmt.Errorf("获取更新信息失败: %w", err))
 		return
 	}
-	if !in.Force && compareVersion(m.Version, Version) <= 0 {
+	updateMu.Lock()
+	updateState.Latest = m.Version
+	updateState.Available = compareVersion(m.Version, Version) > 0
+	updateMu.Unlock()
+	if !force && compareVersion(m.Version, Version) <= 0 {
 		setProgress(100, "已是最新版本")
-		jsonOK(w, map[string]any{"ok": true, "message": "已是最新版本", "version": Version})
+		updateMu.Lock()
+		updateState.Downloading = false
+		updateMu.Unlock()
 		return
 	}
 	f, ok := m.Files[goArchKey()]
 	if !ok || f.Name == "" || f.SHA256 == "" {
 		setProgress(0, "")
-		jsonErr(w, http.StatusBadRequest, "此架构没有可用更新: "+goArchKey())
+		fail(fmt.Errorf("此架构没有可用更新: %s", goArchKey()))
 		return
 	}
 
-	dir, staging, backup, _ := updatePaths(s.st.Dir())
+	dir, staging, backup, stateFile := updatePaths(s.st.Dir())
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		setProgress(0, "")
-		jsonErr(w, http.StatusInternalServerError, "创建更新目录失败: "+err.Error())
+		fail(fmt.Errorf("创建更新目录失败: %w", err))
 		return
 	}
 
 	// 下载并校验：优先 gzip 版（体积约一半，容器到 GitHub 链路不稳时成功率高），
 	// 失败自动换源重试；压缩包校验 gzSha256，解压后再校验二进制 sha256。
 	setProgress(10, "正在下载新版本")
-	if err := downloadRelease(r.Context(), f, staging, s.st.GetSettings().ProxyURL, setProgress); err != nil {
+	if err := downloadRelease(ctx, f, staging, s.st.GetSettings().ProxyURL, setProgress); err != nil {
 		setProgress(0, "")
-		jsonErr(w, http.StatusBadGateway, err.Error())
+		fail(err)
 		return
 	}
 
@@ -395,7 +414,7 @@ func (s *Server) applyUpdate(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		os.Remove(staging)
 		setProgress(0, "")
-		jsonErr(w, http.StatusInternalServerError, "无法定位当前程序: "+err.Error())
+		fail(fmt.Errorf("无法定位当前程序: %w", err))
 		return
 	}
 	// 跟随软链接，确保替换的是真文件
@@ -403,15 +422,24 @@ func (s *Server) applyUpdate(w http.ResponseWriter, r *http.Request) {
 		binPath = resolved
 	}
 	orig, err := os.ReadFile(binPath)
-	if err == nil {
-		_ = os.WriteFile(backup, orig, 0o755)
+	if err != nil {
+		os.Remove(staging)
+		setProgress(0, "")
+		fail(fmt.Errorf("读取当前程序失败，已取消更新: %w", err))
+		return
+	}
+	if err := atomicFile(backup, orig); err != nil {
+		os.Remove(staging)
+		setProgress(0, "")
+		fail(fmt.Errorf("备份当前程序失败，已取消更新: %w", err))
+		return
 	}
 	if err := writeUpdaterState(s.st.Dir(), updaterState{
 		Phase: "applying", From: Version, To: m.Version, At: time.Now().Format(time.RFC3339),
 	}); err != nil {
 		os.Remove(staging)
 		setProgress(0, "")
-		jsonErr(w, http.StatusInternalServerError, "写更新状态失败: "+err.Error())
+		fail(fmt.Errorf("写更新状态失败: %w", err))
 		return
 	}
 	// 原子替换：staging 在数据卷、binPath 在容器可写层，属于不同文件系统，
@@ -420,45 +448,49 @@ func (s *Server) applyUpdate(w http.ResponseWriter, r *http.Request) {
 	tmpInTarget := binPath + ".new"
 	if err := copyFileTo(staging, tmpInTarget); err != nil {
 		os.Remove(tmpInTarget)
+		os.Remove(staging)
+		os.Remove(stateFile)
 		setProgress(0, "")
-		jsonErr(w, http.StatusInternalServerError, "写入新程序失败: "+err.Error())
+		fail(fmt.Errorf("写入新程序失败: %w", err))
 		return
 	}
 	if err := os.Chmod(tmpInTarget, 0o755); err != nil {
 		os.Remove(tmpInTarget)
+		os.Remove(staging)
+		os.Remove(stateFile)
 		setProgress(0, "")
-		jsonErr(w, http.StatusInternalServerError, "设置执行权限失败: "+err.Error())
+		fail(fmt.Errorf("设置执行权限失败: %w", err))
 		return
 	}
 	if err := os.Rename(tmpInTarget, binPath); err != nil {
 		os.Remove(tmpInTarget)
 		os.Remove(staging)
+		os.Remove(stateFile)
 		setProgress(0, "")
-		jsonErr(w, http.StatusInternalServerError, "替换程序失败: "+err.Error())
+		fail(fmt.Errorf("替换程序失败: %w", err))
 		return
 	}
-	// 先回复客户端，再原地 Exec
+	// 保持 Downloading=true 到 Exec 发生，前端据此知道服务正在切换，
+	// 不会把短暂的连接中断误判成更新失败。
 	setProgress(100, "更新完成，正在重启服务")
-	jsonOK(w, map[string]any{"ok": true, "version": m.Version, "message": "更新完成，服务即将重启"})
-
-	if flusher, ok := w.(http.Flusher); ok {
-		flusher.Flush()
-	}
-	go func() {
-		time.Sleep(600 * time.Millisecond)
-		args := os.Args
-		env := os.Environ()
-		log.Printf("在线更新：正在切换到版本 %s", m.Version)
-		if err := syscallExec(binPath, args, env); err != nil {
-			log.Printf("在线更新 Exec 失败: %v，尝试回滚", err)
-			writeUpdaterState(s.st.Dir(), updaterState{Phase: "failed", From: Version, To: m.Version, At: time.Now().Format(time.RFC3339)})
-			if len(orig) > 0 {
-				_ = os.WriteFile(binPath, orig, 0o755)
-			}
+	time.Sleep(600 * time.Millisecond)
+	args := os.Args
+	env := os.Environ()
+	log.Printf("在线更新：正在切换到版本 %s", m.Version)
+	if err := syscallExec(binPath, args, env); err != nil {
+		log.Printf("在线更新 Exec 失败: %v，尝试回滚", err)
+		_ = writeUpdaterState(s.st.Dir(), updaterState{Phase: "failed", From: Version, To: m.Version, At: time.Now().Format(time.RFC3339)})
+		rollbackErr := atomicFile(binPath, orig)
+		if rollbackErr == nil {
+			rollbackErr = os.Chmod(binPath, 0o755)
 		}
-	}()
+		if rollbackErr != nil {
+			fail(fmt.Errorf("切换新版本失败，且回滚失败: %v；%w", err, rollbackErr))
+			return
+		}
+		fail(fmt.Errorf("切换新版本失败，已恢复旧版本: %w", err))
+	}
 }
-
 
 // downloadRelease 把某个架构的产物下载到 staging，优先 gzip。
 // 每个源重试 3 次，任意一次成功即返回；两次源都失败则报最后一次错误。
@@ -514,6 +546,9 @@ func downloadRelease(ctx context.Context, f releaseFile, staging, proxyURL strin
 	if lastErr == nil {
 		lastErr = errors.New("下载失败")
 	}
+	// 重试全部失败时清掉半成品，避免下一次更新误用残留文件。
+	_ = os.Remove(tmp)
+	_ = os.Remove(staging)
 	return fmt.Errorf("下载更新失败: %v", lastErr)
 }
 
@@ -637,4 +672,3 @@ func max64(a, b int64) int64 {
 
 // 便于测试注入：实际实现在 update_exec_unix.go
 var syscallExec = execBinary
-

@@ -1,6 +1,14 @@
 package api
 
-import "testing"
+import (
+	"archive/zip"
+	"bytes"
+	"os"
+	"path/filepath"
+	"testing"
+
+	"familymenu/internal/store"
+)
 
 // 备份恢复前必须先判断内容能不能用，避免「写进去再回滚」这种惊险操作。
 func TestValidateBackupJSON(t *testing.T) {
@@ -67,5 +75,52 @@ func TestUploadEntryName(t *testing.T) {
 		if got, good := uploadEntryName(name); good {
 			t.Fatalf("%s 不该被接受，却返回 %q", name, got)
 		}
+	}
+}
+
+func TestAutoBackupIncludesOnlyReferencedImages(t *testing.T) {
+	dir := t.TempDir()
+	st, err := store.Open(dir, filepath.Join(dir, "config"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.AddDish(store.Dish{
+		Name: "备份图片测试", Cuisine: "homestyle",
+		Image: "/uploads/img-used.webp",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	uploadDir := filepath.Join(dir, "uploads")
+	thumbDir := filepath.Join(uploadDir, "thumb")
+	if err := os.MkdirAll(thumbDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"img-used.webp", "img-orphan.webp"} {
+		if err := os.WriteFile(filepath.Join(uploadDir, name), []byte("image"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.WriteFile(filepath.Join(thumbDir, "img-used.jpg"), []byte("thumb"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	s := &Server{st: st}
+	if err := s.writeBackupZip(&buf); err != nil {
+		t.Fatal(err)
+	}
+	zr, err := zip.NewReader(bytes.NewReader(buf.Bytes()), int64(buf.Len()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := map[string]bool{}
+	for _, f := range zr.File {
+		found[f.Name] = true
+	}
+	if !found["uploads/img-used.webp"] || !found["uploads/thumb/img-used.jpg"] {
+		t.Fatalf("自动备份缺少被引用图片或缩略图: %v", found)
+	}
+	if found["uploads/img-orphan.webp"] {
+		t.Fatalf("自动备份不应包含孤儿图片: %v", found)
 	}
 }

@@ -40,8 +40,8 @@ type Store struct {
 	mu         sync.RWMutex
 	dir        string // 用户数据目录（JSON / uploads / backups）
 	configDir  string // 配置目录，与 data 平级（家庭设置 settings.json）
-	dishes   []Dish
-	members  []Member
+	dishes     []Dish
+	members    []Member
 	plans      map[string]Plan
 	settings   Settings
 	accessCode string
@@ -102,12 +102,23 @@ func Open(dir, cfgDir string) (*Store, error) {
 		filepath.Join(dir, settingsFile),
 		filepath.Join(dir, "config", settingsFile),
 	} {
+		if filepath.Clean(old) == filepath.Clean(newSettings) {
+			continue
+		}
 		if _, err := os.Stat(old); err == nil {
-			if _, err2 := os.Stat(newSettings); os.IsNotExist(err2) {
-				if b, err3 := os.ReadFile(old); err3 == nil {
-					_ = os.WriteFile(newSettings, b, 0o644)
+			if _, err = os.Stat(newSettings); errors.Is(err, os.ErrNotExist) {
+				b, readErr := os.ReadFile(old)
+				if readErr != nil {
+					return nil, fmt.Errorf("迁移旧设置 %s: %w", old, readErr)
 				}
+				if writeErr := writeBytesAtomic(newSettings, b, 0o644); writeErr != nil {
+					// 新文件没写成功时绝不删旧文件，避免迁移把唯一一份设置弄丢。
+					return nil, fmt.Errorf("迁移旧设置到 %s: %w", newSettings, writeErr)
+				}
+			} else if err != nil {
+				return nil, fmt.Errorf("检查新设置文件 %s: %w", newSettings, err)
 			}
+			// 到这里新设置已经存在且可读，旧位置删除失败也不影响本次启动。
 			_ = os.Remove(old)
 		}
 	}
@@ -800,6 +811,14 @@ func (s *Store) ListPlans() []Plan {
 	return out
 }
 
+// PlanCount 只返回数量，避免 bootstrap 为了一个数字复制并排序整份历史。
+func (s *Store) PlanCount() int {
+	s.expireToday(time.Now().Format("2006-01-02"))
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return len(s.plans)
+}
+
 // planList 返回全部计划，供写盘使用。
 func (s *Store) planList() []Plan {
 	list := make([]Plan, 0, len(s.plans))
@@ -1047,26 +1066,39 @@ func (s *Store) writeJSON(name string, value any) error {
 	}
 	raw = append(raw, '\n')
 	target := s.pathOf(name)
+	return writeBytesAtomic(target, raw, 0o644)
+}
+
+// writeBytesAtomic 在同目录写临时文件、fsync 后再原子替换。
+// 迁移旧配置和普通 JSON 保存共用这条路径，写失败时不会碰原文件。
+func writeBytesAtomic(target string, raw []byte, mode os.FileMode) error {
 	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
 		return err
 	}
 	tmp := target + ".tmp"
-	f, err := os.OpenFile(tmp, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
+	f, err := os.OpenFile(tmp, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, mode)
 	if err != nil {
 		return err
 	}
 	if _, err = f.Write(raw); err != nil {
 		f.Close()
+		_ = os.Remove(tmp)
 		return err
 	}
 	if err = f.Sync(); err != nil {
 		f.Close()
+		_ = os.Remove(tmp)
 		return err
 	}
 	if err = f.Close(); err != nil {
+		_ = os.Remove(tmp)
 		return err
 	}
-	return os.Rename(tmp, target)
+	if err = os.Rename(tmp, target); err != nil {
+		_ = os.Remove(tmp)
+		return err
+	}
+	return nil
 }
 
 func now() string { return time.Now().Format(time.RFC3339) }

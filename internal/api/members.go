@@ -39,8 +39,7 @@ func (s *Server) createMember(w http.ResponseWriter, r *http.Request) {
 		jsonErr(w, http.StatusInternalServerError, "保存成员失败")
 		return
 	}
-	w.WriteHeader(http.StatusCreated)
-	jsonOK(w, created)
+	jsonStatus(w, http.StatusCreated, created)
 }
 
 func (s *Server) updateMember(w http.ResponseWriter, r *http.Request) {

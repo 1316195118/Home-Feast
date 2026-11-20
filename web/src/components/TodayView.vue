@@ -706,6 +706,8 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
         :today="state.today" :chefs="chefs" :washers="washers"
         @close="shareOpen = false"
       />
+    </Transition>
+    <Transition name="modal">
       <ShoppingList v-if="shoppingOpen" @close="shoppingOpen = false" />
     </Transition>
     <Transition name="modal">
