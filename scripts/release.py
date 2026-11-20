@@ -12,8 +12,9 @@
 
     攒够了、用户明确说「推送」时：
         python scripts/release.py --publish
-        → 把 PENDING 里的说明合并成一条 CHANGELOG、递增版本号、编译、
-          git commit、git push、部署（加 --no-deploy 可跳过部署）
+        → 递增版本号、编译三架构、生成 dist/（gz + manifest）、git commit、git push
+        → 默认【不部署】：推送后在网页「设置 → 在线更新」点一下，容器自己拉取生效
+           （需要老式的直连部署时加 --deploy）
 
     python scripts/release.py --show     # 当前版本 + 待发布条数
     python scripts/release.py --note "..." --no-deploy   # 只记录说明 + 编译
@@ -240,7 +241,7 @@ def run_git(args, capture=False):
                           text=True, capture_output=capture)
 
 
-def publish(do_deploy=True, arch='amd64', no_build=False):
+def publish(do_deploy=False, arch='amd64', no_build=False):
     entries = read_pending()
     if not entries:
         raise SystemExit('没有待发布说明，先用 --note 记录这次改了什么')
@@ -300,7 +301,9 @@ def main():
     ap.add_argument('--no-build', action='store_true', help='不编译')
     ap.add_argument('--arch', default='amd64',
                     help='编译架构：amd64（默认）/ arm64 / armv7 / all（一次全编）')
-    ap.add_argument('--no-deploy', action='store_true', help='不部署')
+    ap.add_argument('--deploy', action='store_true',
+                    help='推送后立刻 scp/pct 部署（默认不做，改用容器内在线更新）')
+    ap.add_argument('--no-deploy', action='store_true', help='兼容旧用法，等价于默认行为')
     a = ap.parse_args()
 
     if a.show:
@@ -311,7 +314,7 @@ def main():
         return
 
     if a.publish:
-        publish(do_deploy=not a.no_deploy, arch=a.arch, no_build=a.no_build)
+        publish(do_deploy=a.deploy, arch=a.arch, no_build=a.no_build)
         return
 
     if not a.note:
