@@ -3,7 +3,7 @@
 package api
 
 func init() {
-	Version = "1.0.3.2"
-	ReleaseNote = "【优化】\n- Docker 用户部署固定拉取 `ghcr.io/1316195118/home-feast:latest`，不再需要选择版本号或本地构建\n- 新增 GitHub Actions 主分支自动发布 amd64 / arm64 容器镜像\n- Compose 显式声明数据、配置目录和监听参数，继续独立保留 `/data` 与 `/config`"
-	BuildTime = "2026-11-20 21:18:42"
+	Version = "1.0.3.3"
+	ReleaseNote = "【修复】\n- 修复 GHCR 多架构镜像构建时未复制 `go.sum` 导致 Docker 编译失败\n- Compose 环境配置精简为只保留端口与 `Asia/Shanghai` 时区，其他参数使用镜像默认值\n【优化】\n- 用户部署继续固定拉取 `ghcr.io/1316195118/home-feast:latest`，数据与配置卷保持不变"
+	BuildTime = "2026-11-20 21:21:38"
 }
