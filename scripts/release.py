@@ -176,8 +176,19 @@ def build(arch='amd64'):
     return out
 
 
+def build_frontend():
+    """重新构建 Vite 并同步到 Go embed 目录。
+
+    发版误用 stage 里残留的 webapp/dist 会导致二进制版本号更新、
+    但用户界面仍是旧页面。所有正式产物都必须先刷新前端嵌入目录。
+    """
+    print('构建前端并同步 webapp/dist: node scripts/build.mjs --frontend-only')
+    subprocess.run(['node', 'scripts/build.mjs', '--frontend-only'], cwd=ROOT, check=True)
+
+
 def build_all():
     """一次产出 amd64 / arm64 / armv7 三个二进制，供不同设备取用。"""
+    build_frontend()
     for arch in ARCHES:
         build(arch)
 
@@ -334,7 +345,11 @@ def main():
     print(f'说明已暂存（版本仍为 {read_version()}）')
 
     if not a.no_build:
-        build_all() if a.arch == 'all' else build(a.arch)
+        if a.arch == 'all':
+            build_all()
+        else:
+            build_frontend()
+            build(a.arch)
     if not a.no_deploy:
         deploy()
     print('提醒：未提交、未推送。确认后执行 release.py --publish')

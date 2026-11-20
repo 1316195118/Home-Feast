@@ -354,14 +354,35 @@ html.font-changing { transition: font-size 0.24s var(--ease); }
 .font-choices .btn { flex: 1; min-width: 0; padding: 5px 8px; }
 
 /* ---------- 字段说明问号 ---------- */
-.help-wrap { position: relative; display: inline-flex; vertical-align: middle; margin-left: 5px; }
-.help-btn {
-  width: 18px; height: 18px; flex: none; padding: 0;
-  font-size: 0.68rem; font-weight: 800; line-height: 1;
-  color: var(--muted); background: var(--paper-deep);
-  border: 1px solid var(--line-strong); border-radius: 50%; cursor: help;
+.help-wrap {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  vertical-align: middle;
+  margin-left: 5px;
 }
-.help-btn:hover, .help-btn:focus-visible { color: var(--brand-dark); border-color: var(--brand); outline: none; }
+.help-btn {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 44px; height: 44px; flex: none; padding: 0;
+  transform: translate(-50%, -50%);
+  font-size: 0.68rem; font-weight: 800; line-height: 1;
+  color: var(--muted); background: transparent;
+  border: 0; border-radius: 50%; cursor: help;
+}
+.help-btn::before {
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 18px; height: 18px;
+  transform: translate(-50%, -50%);
+  background: var(--paper-deep);
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+}
+.help-btn:hover, .help-btn:focus-visible { color: var(--brand-dark); outline: none; }
+.help-btn:hover::before, .help-btn:focus-visible::before { border-color: var(--brand); }
 .help-pop {
   position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%);
   z-index: var(--z-dropdown);
