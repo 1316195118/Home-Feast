@@ -27,7 +27,9 @@ import (
 // 与 ghproxy.net，前者不通。所以更新源固定为 raw，失败再退 ghproxy。
 const (
 	updateRepo   = "1316195118/Home-Feast"
-	updateBranch = "main"
+	// 用完整 ref 而不是 /main/：GitHub Raw 对短分支地址维护独立缓存，
+	// 发版后几分钟内可能仍返回旧 manifest；refs/heads/main 会立即指向最新提交。
+	updateBranch = "refs/heads/main"
 	updateRaw    = "https://raw.githubusercontent.com/" + updateRepo + "/" + updateBranch + "/dist/"
 	updateProxy  = "https://ghproxy.net/" + updateRaw
 	updateDir    = ".update" // 位于 dataDir 下，与业务数据同卷，随备份一起走
@@ -103,6 +105,8 @@ func fetchUpdateJSON(ctx context.Context, path, proxyURL string, dest any) error
 			continue
 		}
 		req.Header.Set("User-Agent", "family-menu-updater")
+		req.Header.Set("Cache-Control", "no-cache")
+		req.Header.Set("Pragma", "no-cache")
 		resp, err := updateClient(proxyURL, 20*time.Second).Do(req)
 		if err != nil {
 			lastErr = err

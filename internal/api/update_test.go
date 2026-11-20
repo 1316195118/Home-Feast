@@ -72,6 +72,19 @@ func TestManifestParse(t *testing.T) {
 	}
 }
 
+func TestUpdateSourcesUseFullBranchRef(t *testing.T) {
+	t.Setenv("MENU_UPDATE_BASE", "")
+	sources := updateSources()
+	if len(sources) < 2 {
+		t.Fatalf("更新源数量不足: %v", sources)
+	}
+	for _, source := range sources {
+		if !strings.Contains(source, "/refs/heads/main/dist/") {
+			t.Fatalf("更新源应固定到完整分支引用，避免 Raw 短地址缓存旧 manifest: %s", source)
+		}
+	}
+}
+
 func TestUpdaterStateRoundtrip(t *testing.T) {
 	dir := t.TempDir()
 	st := updaterState{Phase: "applying", From: "1.0.2.4", To: "1.0.2.5", At: "2026-11-20T12:00:00Z"}
