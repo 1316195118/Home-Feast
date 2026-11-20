@@ -20,6 +20,7 @@
 """
 import argparse
 import datetime
+import gzip
 import hashlib
 import json
 import os
@@ -200,8 +201,23 @@ def publish_dist(version, note, now):
         with open(dst, 'rb') as f:
             for chunk in iter(lambda: f.read(1 << 20), b''):
                 digest.update(chunk)
-        files[arch] = {'name': name, 'sha256': digest.hexdigest(), 'size': os.path.getsize(dst)}
-        print(f'  dist/{name}  {os.path.getsize(dst) / 1024 / 1024:.1f} MB  sha256={digest.hexdigest()[:12]}…')
+        raw_size = os.path.getsize(dst)
+        entry = {'name': name, 'sha256': digest.hexdigest(), 'size': raw_size}
+        # 同时产出 gzip 版：容器到 GitHub 的链路不稳，4.8MB 比 9.9MB 成功率高得多
+        gz_name = name + '.gz'
+        gz_path = os.path.join(DIST, gz_name)
+        with open(dst, 'rb') as src_f, gzip.open(gz_path, 'wb', compresslevel=9) as gz_f:
+            shutil.copyfileobj(src_f, gz_f, 1 << 20)
+        gz_digest = hashlib.sha256()
+        with open(gz_path, 'rb') as f:
+            for chunk in iter(lambda: f.read(1 << 20), b''):
+                gz_digest.update(chunk)
+        entry.update({'gz': gz_name, 'gzSha256': gz_digest.hexdigest(), 'gzSize': os.path.getsize(gz_path)})
+        # 仓库只留 gz（体积减半），未压缩件不进版本库；sha256/size 仍用于解压后校验
+        os.remove(dst)
+        files[arch] = entry
+        print(f'  dist/{name}  {raw_size / 1024 / 1024:.1f} MB  sha256={digest.hexdigest()[:12]}…')
+        print(f'  dist/{gz_name}  {os.path.getsize(gz_path) / 1024 / 1024:.1f} MB (gzip)')
     manifest = {
         'version': version,
         'publishedAt': now.isoformat(timespec='seconds'),
