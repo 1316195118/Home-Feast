@@ -8,9 +8,10 @@
 ## 一、项目关键信息（必读）
 
 - **技术栈（用户明确要求保持 Go + Vue 3）**：后端 Go（运行时零第三方依赖，仅标准库）、前端 Vue 3 + Vite；`node scripts/build.mjs` 构建前端并 embed 进单文件 `menu.exe`。本轮**没有更换技术栈**。
+- **当前 Docker 部署模式（2026-11-20）**：普通用户只拉 `ghcr.io/1316195118/home-feast:latest`，Compose 只保留 `8090` 端口与 `TZ=Asia/Shanghai`，挂载 `./data:/data`、`./config:/config`；不要要求用户填写版本号或本地构建。主分支推送后由 `.github/workflows/publish-image.yml` 自动发布 amd64/arm64 latest 镜像。
 - **数据**：全部纯 JSON 存 `/data`（dishes.json / members.json / plans.json / settings.json / access.json）。**任何 patch / 部署都不要包含 `data/`**。
 - **版权硬约束**：结构可参考 gift-book（MIT），但**不得复制**任何开源项目的源码/CSS/文案/图标/图片；新增依赖先确认许可证（避开 GPL/AGPL）并更新 `NOTICE.md`；素材优先自写 / AI 生成 / 用户照片。音效为 Web Audio 实时合成，无任何音频文件。
-- **部署**：本机无 Docker，镜像必须在 NAS / PVE LXC 上构建；本机用 `menu.exe` 验证。`scripts/_deploy.py`（**含内网 root 凭据，已被 `.gitignore` 排除，绝不进公开仓库**）会自动备份 data、解压 patch、`docker compose up -d --build` 并做健康检查。
+- **部署**：普通用户部署只需 `docker compose pull && docker compose up -d`。现有 PVE 实例仍可继续走应用内在线更新；需要重建容器时改用 GHCR latest。`scripts/_deploy.py`（**含内网 root 凭据，已被 `.gitignore` 排除，绝不进公开仓库**）属于早期本地直连部署工具，不是面向用户的部署方式。
 - **部署包**：用 `git archive --format=tar.gz -o scripts/fm_patch.tgz HEAD` 从 git 提交导出，天然不含 `data/`、`node_modules/`、凭据与工作台数据。
 - **前端验收**：Edge headless `--window-size=390` 会被钳到 innerWidth=504（假象）；要用 CDP `Emulation.setDeviceMetricsOverride(mobile:true)` + `Page.captureScreenshot`，并用 `Runtime.evaluate` 量 innerWidth。本机 `&` 后台起的 `menu.exe` 会随 Bash 调用结束被杀，验证要把「启动服务 + 截图」放同一条命令。
 - **身份**：`fm.user` 只在用户主动选择/切换时写入，绝不在 `refresh()` 兜底时写。
