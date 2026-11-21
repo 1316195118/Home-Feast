@@ -1,12 +1,12 @@
 <script setup>
 import { reactive, provide, onMounted, onUnmounted, watch, ref, computed, defineAsyncComponent } from 'vue'
-import { api, setAccessCode, getAccessCode } from './api'
+import { api, setAccessCode, getAccessCode, getClientId } from './api'
 import TodayView from './components/TodayView.vue'
 import ConfirmDialog from './components/ConfirmDialog.vue'
 import ViewLoading from './components/ViewLoading.vue'
 import ViewLoadError from './components/ViewLoadError.vue'
 import { useModalBehavior } from './modal'
-import { currentMeal } from './utils'
+import { currentMeal, normalizeMeals } from './utils'
 import { playAdd, playFav, playSave, playRemove, playError } from './audio'
 
 // 首屏只需要「今天」。其余页签按需下载，避免第一次打开时把设置、
@@ -186,45 +186,163 @@ function onOffline() {
 function onOnline() {
   offline.value = false
   toast('网络已恢复', 'success')
-  refresh().catch(() => {})
+  requestRefresh(0)
 }
 
 
 let refreshInFlight = null
+let refreshAgain = false
+let refreshTimer = null
+let mealBoundaryTimer = null
+let scrollRestoreTimer = null
+let dataGeneration = 0
+let localMutationDepth = 0
+let remoteDuringMutation = false
+const pageScrollPositions = new Map()
+
+function restorePageScroll(tab) {
+  clearTimeout(scrollRestoreTimer)
+  const top = pageScrollPositions.get(tab) || 0
+  // out-in 会先播放离场再插入新页；等新页结束后再恢复，避免被短暂的空内容钳到 0。
+  scrollRestoreTimer = setTimeout(() => {
+    if (state.tab === tab) window.scrollTo(0, top)
+  }, 340)
+}
+
+function requestRefresh(delay = 220) {
+  clearTimeout(refreshTimer)
+  refreshTimer = setTimeout(() => {
+    refreshTimer = null
+    refresh().catch(() => {})
+  }, Math.max(0, delay))
+}
+
+function applyBootstrap(info) {
+  state.version = info.version
+  state.today = info.today
+  state.meals = normalizeMeals(info.meals)
+  // 用户可能在设置里删掉了当前手动选中的那一餐，避免之后点菜提交不存在的 key
+  if (state.mealPick && !state.meals.some((m) => m.key === state.mealPick)) state.mealPick = ''
+  state.now = Date.now()
+  state.meal = currentMeal(state.now, state.meals)
+  state.settings = info.settings || { familyName: '我们家' }
+  state.hiddenCuisines = info.settings?.hiddenCuisines || []
+  state.cuisines = info.cuisines || []
+  state.dishes = info.dishes || []
+  state.members = info.members || []
+  state.plan = info.plan || { date: info.today, orders: [] }
+  state.plans = info.plans || []
+  if (!state.members.some((m) => m.id === state.currentUserId)) {
+    state.currentUserId = state.members[0]?.id || ''
+  }
+  state.ready = true
+  state.locked = false
+  state.bootError = ''
+  // 只有「用户主动选过」才会写进 localStorage；这里的兜底不写，避免首次被静默记住
+  if (!localStorage.getItem('fm.user') && state.members.length) needsUserPick.value = true
+  scheduleMealBoundary()
+}
+
 async function refresh() {
-  // SSE、定时同步、回到前台和写操作完成可能同时触发刷新。
-  // 只保留一个在途请求，后到的调用直接复用结果，不再叠第二条首屏查询。
-  if (refreshInFlight) return refreshInFlight
+  // SSE、回到前台和兜底轮询可能同时发生。只保留一个在途请求；
+  // 期间又收到更新就排队再拉一次，避免旧响应覆盖刚提交的新状态。
+  if (refreshInFlight) {
+    refreshAgain = true
+    return refreshInFlight
+  }
   refreshInFlight = (async () => {
-    const info = await api.bootstrap()
-    state.version = info.version
-    state.today = info.today
-    state.meals = info.meals || []
-    // 用户可能在设置里删掉了当前手动选中的那一餐，避免之后点菜提交不存在的 key
-    if (state.mealPick && !state.meals.some((m) => m.key === state.mealPick)) state.mealPick = ''
-    state.now = Date.now()
-    state.meal = currentMeal(state.now, state.meals)
-    state.settings = info.settings || { familyName: '我们家' }
-    state.hiddenCuisines = info.settings?.hiddenCuisines || []
-    state.cuisines = info.cuisines || []
-    state.dishes = info.dishes || []
-    state.members = info.members || []
-    state.plan = info.plan || { date: info.today, orders: [] }
-    state.plans = info.plans || []
-    if (!state.members.some((m) => m.id === state.currentUserId)) {
-      state.currentUserId = state.members[0]?.id || ''
-    }
-    state.ready = true
-    state.locked = false
-    state.bootError = ''
-    // 只有「用户主动选过」才会写进 localStorage；这里的兜底不写，避免首次被静默记住
-    if (!localStorage.getItem('fm.user') && state.members.length) needsUserPick.value = true
+    do {
+      refreshAgain = false
+      const generation = dataGeneration
+      const info = await api.bootstrap()
+      if (generation !== dataGeneration) {
+        refreshAgain = true
+        continue
+      }
+      applyBootstrap(info)
+    } while (refreshAgain)
   })()
   try {
     return await refreshInFlight
   } finally {
     refreshInFlight = null
+    if (refreshAgain) requestRefresh(0)
   }
+}
+
+function replacePlanInState(plan) {
+  if (!plan?.date || !Array.isArray(plan.orders)) return false
+  const index = state.plans.findIndex((p) => p.date === plan.date)
+  if (index >= 0) {
+    const next = state.plans.slice()
+    next[index] = plan
+    state.plans = next
+  } else if (plan.date === state.today) {
+    state.plans = [plan, ...state.plans]
+  }
+  if (plan.date === state.today) state.plan = plan
+  return true
+}
+
+function applyDishResult(dish) {
+  if (!dish?.id || !dish.cuisine) return false
+  const index = state.dishes.findIndex((d) => d.id === dish.id)
+  if (index >= 0) {
+    const next = state.dishes.slice()
+    next[index] = dish
+    state.dishes = next
+  } else {
+    state.dishes = [...state.dishes, dish]
+  }
+  return true
+}
+
+function applyMemberResult(member) {
+  if (!member?.id || !member.avatar) return false
+  const index = state.members.findIndex((m) => m.id === member.id)
+  if (index >= 0) {
+    const current = state.members[index]
+    const next = state.members.slice()
+    next[index] = { ...member, hasPin: member.hasPin ?? current.hasPin }
+    state.members = next
+  } else {
+    state.members = [...state.members, member]
+  }
+  return true
+}
+
+function applySettingsResult(settings) {
+  if (!settings || typeof settings !== 'object' || !('familyName' in settings)) return false
+  state.settings = settings
+  state.hiddenCuisines = settings.hiddenCuisines || []
+  state.meals = normalizeMeals(settings.meals)
+  state.now = Date.now()
+  state.meal = currentMeal(state.now, state.meals)
+  if (Array.isArray(settings.cuisineOrder) && settings.cuisineOrder.length && state.cuisines.length) {
+    const byKey = new Map(state.cuisines.map((c) => [c.key, c]))
+    const seen = new Set()
+    const ordered = []
+    for (const key of settings.cuisineOrder) {
+      const cuisine = byKey.get(key)
+      if (cuisine && !seen.has(key)) {
+        ordered.push(cuisine)
+        seen.add(key)
+      }
+    }
+    for (const cuisine of state.cuisines) {
+      if (!seen.has(cuisine.key)) ordered.push(cuisine)
+    }
+    state.cuisines = ordered
+  }
+  scheduleMealBoundary()
+  return true
+}
+
+function applyServerResult(result) {
+  return replacePlanInState(result)
+    || applyDishResult(result)
+    || applyMemberResult(result)
+    || applySettingsResult(result)
 }
 
 // 显式选择身份：只有用户主动切换/首次选择才持久化
@@ -307,24 +425,36 @@ function onConfirmCancel() { finishConfirm('cancel') }
 // key 相同的写操作会互相防连点；组件可用 pending(key) 把按钮置为 loading/禁用。
 const pendingKeys = reactive({})
 function pending(key) { return !!pendingKeys[key] }
-let lastLocalRefresh = 0 // 本机写操作后 guard 刷新过的时间，用来忽略 SSE 回声
 
-async function guard(fn, message, key = '') {
+async function guard(fn, message, key = '', onSuccess = null) {
   if (key && pendingKeys[key]) return null
   if (key) pendingKeys[key] = true
   state.busy++
+  localMutationDepth++
   try {
     const result = await fn()
-    await refresh()
-    lastLocalRefresh = Date.now() // SSE 回声去重：本机刚刷新过就不再重复拉
+    // 写接口返回的是完整结果。先原地更新，让弹窗/按钮立即收起，再让页面继续响应；
+    // 不再为了本机一次写入阻塞式重拉整个首屏。
+    dataGeneration++
+    applyServerResult(result)
+    onSuccess?.(result)
     if (message) toast(message, 'success')
     return result === undefined ? true : result
   } catch (err) {
     toast(err.message || '操作失败，请稍后再试', 'error')
     return null
   } finally {
+    localMutationDepth--
     state.busy--
     if (key) delete pendingKeys[key]
+    if (remoteDuringMutation && localMutationDepth === 0) {
+      remoteDuringMutation = false
+      // 这次写操作期间收到的远端变更，由下面这一次刷新统一吸收；
+      // 同时关闭 SSE 待处理标记，避免回到前台时再刷新第二遍。
+      ssePending = false
+      clearTimeout(sseTimer)
+      requestRefresh(500)
+    }
   }
 }
 
@@ -341,7 +471,11 @@ function withSound(guardPromise, sound) {
 
 const actions = {
   toast,
-  refresh: () => guard(() => Promise.resolve(), ''),
+  refresh: () => refresh(),
+  applyPlan: (plan) => {
+    dataGeneration++
+    return replacePlanInState(plan)
+  },
   addDish: (dish) => guard(() => api.addDish(dish), '菜品已加入菜谱', 'dish'),
   updateDish: (id, patch) => guard(() => api.updateDish(id, patch), '已保存', 'dish'),
   // 删除类操作都留一次「撤销」：菜品删错要重传配图，代价比弹确认框高得多
@@ -357,15 +491,16 @@ const actions = {
     try {
       for (const o of items) {
         try {
-          await api.addOrder(state.today, {
+          const result = await api.addOrder(state.today, {
             dishId: o.dishId, userId: mine, note: o.note || '', meal: o.meal || '',
           })
+          dataGeneration++
+          replacePlanInState(result)
           added++
         } catch {
           skipped++
         }
       }
-      await refresh()
       if (!added) toast('这些菜都已经不在菜谱里了', 'error')
       else if (skipped) toast(`加回 ${added} 道，${skipped} 道已经没有了`, 'success')
       else toast(`已把 ${added} 道菜加回今天`, 'success')
@@ -378,7 +513,12 @@ const actions = {
   setDishRating: (id, rating) => guard(() => api.updateDish(id, { rating }), '', 'rate'),
   deleteDish: (id) => {
     const dish = state.dishes.find((d) => d.id === id)
-    return withSound(guard(() => api.deleteDish(id), '', 'dish'), playRemove).then((ok) => {
+    return withSound(guard(
+      () => api.deleteDish(id),
+      '',
+      'dish',
+      () => { state.dishes = state.dishes.filter((d) => d.id !== id) },
+    ), playRemove).then((ok) => {
       if (!ok || !dish) return ok
       toast('菜品已移除', 'success', {
         label: '撤销',
@@ -398,7 +538,17 @@ const actions = {
 
   addMember: (member) => withSound(guard(() => api.addMember(member), '家里多了一位成员', 'member'), playAdd),
   updateMember: (id, patch) => withSound(guard(() => api.updateMember(id, patch), '已保存', 'member'), playSave),
-  deleteMember: (id) => withSound(guard(() => api.deleteMember(id), '已移除成员', 'member'), playRemove),
+  deleteMember: (id) => withSound(guard(
+    () => api.deleteMember(id),
+    '已移除成员',
+    'member',
+    () => {
+      state.members = state.members.filter((m) => m.id !== id)
+      if (!state.members.some((m) => m.id === state.currentUserId)) {
+        state.currentUserId = state.members[0]?.id || ''
+      }
+    },
+  ), playRemove),
 
   // 分工支持多人，且按餐次独立：默认只改「当前这一餐」
   setDutyList: (role, ids, meal = state.meal) =>
@@ -422,10 +572,8 @@ const actions = {
   saveDice: async (patch) => {
     try {
       const plan = await api.setPlan(state.today, patch)
-      state.plan = plan
-      const i = state.plans.findIndex((p) => p.date === state.today)
-      if (i >= 0) state.plans[i] = plan
-      else state.plans = [...state.plans, plan]
+      dataGeneration++
+      replacePlanInState(plan)
       return plan
     } catch (err) {
       toast(err.message || '骰子结果保存失败', 'error')
@@ -456,8 +604,11 @@ const actions = {
     if (!todo.length) return
     state.busy++
     try {
-      for (const o of todo) await api.toggleOrder(state.today, o.id)
-      await refresh()
+      for (const o of todo) {
+        const result = await api.toggleOrder(state.today, o.id)
+        dataGeneration++
+        replacePlanInState(result)
+      }
       toast(`${todo.length} 道菜全部上桌 🍽️`, 'success')
     } catch {
       toast('有几道没标上，请逐道再试一次', 'error')
@@ -484,17 +635,23 @@ const actions = {
     () => api.saveSettings({ familyName: state.settings.familyName, hiddenCuisines: hidden }),
     '', 'cuisines',
   ),
-  importBackup: (form) => guard(() => api.importBackup(form), '备份已恢复', 'import'),
+  importBackup: (form) => guard(
+    () => api.importBackup(form),
+    '备份已恢复',
+    'import',
+    () => requestRefresh(0),
+  ),
 
   // 改口令不能走 guard：guard 成功后会立刻用「旧口令」刷新，会被 401 挡下。
   // 这里先把本机请求头换成新口令，再刷新。
   async setWebAccessCode(code) {
     state.busy++
     try {
-      await api.saveSettings({ accessCode: code })
+      const settings = await api.saveSettings({ accessCode: code })
       setAccessCode(code)
       state.accessRequired = !!code
-      await refresh()
+      dataGeneration++
+      applySettingsResult(settings)
       toast(code ? '访问口令已开启，其它设备下次打开需要输入' : '访问口令已关闭', 'success')
       return true
     } catch (err) {
@@ -519,9 +676,11 @@ const actions = {
 
 provide('app', { state, actions, tabs, selectUser, confirmDialog, choiceDialog, pending })
 
-watch(() => state.tab, (tab) => {
+watch(() => state.tab, (tab, previous) => {
+  if (previous && previous !== tab) pageScrollPositions.set(previous, window.scrollY)
   window.history.replaceState(null, '', `#${tab}`)
-}, { immediate: true })
+  if (previous) restorePageScroll(tab)
+}, { immediate: true, flush: 'sync' })
 
 function onLocked() {
   state.locked = true
@@ -554,7 +713,25 @@ async function boot() {
 
 // 静默同步：后端会按饭点自动收起已过期的那一餐。
 // 只更新订单列表与当前餐别，不动备注/分工，避免打断正在输入的内容。
-async function syncNow() {
+function scheduleMealBoundary() {
+  clearTimeout(mealBoundaryTimer)
+  const now = new Date()
+  const current = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()
+  let waitSeconds = 24 * 3600 - current
+  for (const meal of state.meals) {
+    const [hours, minutes] = String(meal.end || '').split(':').map(Number)
+    if (!Number.isFinite(hours) || !Number.isFinite(minutes)) continue
+    const end = hours * 3600 + minutes * 60
+    if (end > current) waitSeconds = Math.min(waitSeconds, end - current)
+  }
+  // 饭点结束时立刻向后端确认一次，让该餐已过期但未上桌的菜及时收起。
+  mealBoundaryTimer = setTimeout(
+    () => syncNow('meal-end'),
+    Math.max(300, waitSeconds * 1000 + 120),
+  )
+}
+
+async function syncNow(reason = 'poll') {
   if (!state.ready || state.locked) return
   const stamp = Date.now()
   state.now = stamp
@@ -565,31 +742,22 @@ async function syncNow() {
     try { await refresh() } catch {}
     return
   }
-  try {
-    const plans = await api.plans()
-    // 历史记录页也一起更新，过饭点清理后立刻反映，不用等手动刷新。
-    state.plans = plans || []
-    const today = (plans || []).find((p) => p.date === state.today)
-    const next = today?.orders || []
-    const cur = state.plan.orders || []
-    if (next.length !== cur.length || next.some((o, i) => o.id !== cur[i]?.id)) {
-      state.plan.orders = next
-    }
-    // 分工也要跟上：SSE 断开时只能靠这里，否则别人认领了本机一直显示旧的。
-    // 正在提交认领时跳过，避免请求返回前被旧值覆盖。
-    if (!pending('duty')) {
-      const nextDuty = today?.mealDuties || {}
-      const curDuty = state.plan.mealDuties || {}
-      if (JSON.stringify(nextDuty) !== JSON.stringify(curDuty)) {
-        state.plan.mealDuties = nextDuty
-      }
-    }
-  } catch {}
+  if (document.hidden) return
+  // SSE 在线时的普通轮询没有意义；饭点、回到前台和断线兜底才需要主动拉取。
+  if (reason === 'poll' && state.realtime === 'online') return
+  if (state.busy > 0 || localMutationDepth > 0 || refreshInFlight) {
+    requestRefresh(600)
+    return
+  }
+  try { await refresh() } catch {}
 }
 
 // 从后台切回来时立刻同步一次，不必等下一个 60s 周期。
 function onVisible() {
-  if (document.visibilityState === 'visible') syncNow()
+  if (document.visibilityState === 'visible') {
+    if (ssePending) flushRemoteRefresh()
+    else syncNow('visible')
+  }
 }
 
 // ---------- 多人实时同步（SSE）----------
@@ -598,18 +766,26 @@ function onVisible() {
 let source = null
 let sseTimer = null
 let ssePending = false
+let lastSseVersion = 0
 function isTyping() {
   const el = document.activeElement
   return !!el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) && el.type !== 'checkbox'
 }
 function doRemoteRefresh() {
-  if (document.hidden || isTyping() || state.busy > 0) { ssePending = true; return }
-  if (Date.now() - lastLocalRefresh < 1200) return
-  refresh().catch(() => {})
+  if (document.hidden || isTyping() || state.busy > 0 || localMutationDepth > 0) {
+    if (localMutationDepth > 0) remoteDuringMutation = true
+    ssePending = true
+    return
+  }
+  requestRefresh(0)
 }
 function scheduleRemoteRefresh() {
   if (!state.ready || state.locked) return
-  if (document.hidden || isTyping() || state.busy > 0) { ssePending = true; return }
+  if (document.hidden || isTyping() || state.busy > 0 || localMutationDepth > 0) {
+    if (localMutationDepth > 0) remoteDuringMutation = true
+    ssePending = true
+    return
+  }
   clearTimeout(sseTimer)
   sseTimer = setTimeout(doRemoteRefresh, 350)
 }
@@ -617,25 +793,28 @@ function flushRemoteRefresh() {
   if (!ssePending) return
   ssePending = false
   clearTimeout(sseTimer)
-  sseTimer = setTimeout(doRemoteRefresh, 250)
+  sseTimer = setTimeout(doRemoteRefresh, 120)
 }
 function onFocusOut() { setTimeout(flushRemoteRefresh, 120) }
-function onVisibilityRealtime() {
-  if (document.visibilityState === 'visible') flushRemoteRefresh()
-}
 function installRealtime() {
   if (typeof EventSource === 'undefined') { state.realtime = 'unsupported'; return }
   try {
-    source = new EventSource('/api/events')
+    const clientId = encodeURIComponent(getClientId())
+    source = new EventSource(`/api/events?clientId=${clientId}`)
     source.onopen = () => { state.realtime = 'online' }
-    source.onmessage = () => scheduleRemoteRefresh()
+    source.onmessage = (event) => {
+      let version = 0
+      try { version = Number(JSON.parse(event.data)?.v) || 0 } catch {}
+      if (version && version <= lastSseVersion) return
+      if (version) lastSseVersion = version
+      scheduleRemoteRefresh()
+    }
     source.onerror = () => { state.realtime = 'reconnecting' }
     state.realtime = 'connecting'
   } catch {
     state.realtime = 'unsupported'
   }
   document.addEventListener('focusout', onFocusOut)
-  document.addEventListener('visibilitychange', onVisibilityRealtime)
   window.addEventListener('focus', flushRemoteRefresh)
 }
 
@@ -648,7 +827,8 @@ onMounted(() => {
   window.addEventListener('online', onOnline)
   boot()
   installRealtime()
-  syncTimer = setInterval(syncNow, 60000)
+  // SSE 在线时完全靠事件同步；这里只是断线时的低频兜底，不再每分钟和页面操作抢刷新。
+  syncTimer = setInterval(() => syncNow('poll'), 5 * 60 * 1000)
 })
 onUnmounted(() => {
   window.removeEventListener('fm:locked', onLocked)
@@ -659,10 +839,12 @@ onUnmounted(() => {
   window.removeEventListener('sw-update', onSwUpdate)
   clearTimeout(toastTimer)
   if (syncTimer) clearInterval(syncTimer)
+  clearTimeout(refreshTimer)
+  clearTimeout(mealBoundaryTimer)
+  clearTimeout(scrollRestoreTimer)
   if (source) source.close()
   clearTimeout(sseTimer)
   document.removeEventListener('focusout', onFocusOut)
-  document.removeEventListener('visibilitychange', onVisibilityRealtime)
   window.removeEventListener('focus', flushRemoteRefresh)
 })
 </script>
@@ -727,7 +909,9 @@ onUnmounted(() => {
 
     <main class="main" v-if="state.ready">
       <Transition :name="pageDirection" mode="out-in">
-        <component :is="currentView" :key="state.tab" />
+        <KeepAlive>
+          <component :is="currentView" :key="state.tab" />
+        </KeepAlive>
       </Transition>
     </main>
 

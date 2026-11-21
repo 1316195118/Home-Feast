@@ -1,7 +1,18 @@
 // 轻量接口封装：同源 fetch、统一错误处理、可选访问口令。
 const STORAGE_KEY = 'fm.accessCode'
+const CLIENT_KEY = 'fm.clientId'
 
 let accessCode = localStorage.getItem(STORAGE_KEY) || ''
+let clientId = sessionStorage.getItem(CLIENT_KEY) || ''
+if (!clientId) {
+  clientId = globalThis.crypto?.randomUUID?.()
+    || `tab-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
+  sessionStorage.setItem(CLIENT_KEY, clientId)
+}
+
+export function getClientId() {
+  return clientId
+}
 
 export function setAccessCode(value) {
   accessCode = (value || '').trim()
@@ -16,6 +27,9 @@ export function getAccessCode() {
 async function request(path, { method = 'GET', body, isForm = false, raw = false } = {}) {
   const headers = {}
   if (accessCode) headers['X-Access-Code'] = accessCode
+  // 每个浏览器标签一个 ID：服务端会把写入产生的 SSE 广播发给其他设备，
+  // 但不回声给发起者，避免同一次操作再触发一次整页刷新。
+  headers['X-Client-ID'] = clientId
 
   let payload
   if (body !== undefined) {

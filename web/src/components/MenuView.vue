@@ -1,5 +1,5 @@
 <script setup>
-import { inject, ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { inject, ref, computed, watch, onMounted, onUnmounted, onActivated, onDeactivated, nextTick } from 'vue'
 import DishCard from './DishCard.vue'
 import DishEditor from './DishEditor.vue'
 import PantryFridge from './PantryFridge.vue'
@@ -132,7 +132,6 @@ function onScroll() {
 }
 function scrollTop() { window.scrollTo({ top: 0, behavior: 'smooth' }) }
 onMounted(() => {
-  window.addEventListener('scroll', onScroll, { passive: true })
   // 从首页推荐面板跳过来时，自动打开冰箱食材设置
   try {
     if (sessionStorage.getItem('fm:open-pantry') === '1') {
@@ -141,7 +140,14 @@ onMounted(() => {
     }
   } catch { /* 隐私模式忽略 */ }
 })
-onUnmounted(() => window.removeEventListener('scroll', onScroll))
+function attachScrollListener() {
+  window.addEventListener('scroll', onScroll, { passive: true })
+  onScroll()
+}
+function detachScrollListener() { window.removeEventListener('scroll', onScroll) }
+onActivated(attachScrollListener)
+onDeactivated(detachScrollListener)
+onUnmounted(detachScrollListener)
 
 // 当前选中的分类若是被隐藏了，自动退回「全部」
 watch(

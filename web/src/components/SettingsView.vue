@@ -1,5 +1,5 @@
 <script setup>
-import { inject, ref, watch, computed, reactive, onMounted, onBeforeUnmount } from 'vue'
+import { inject, ref, watch, computed, reactive, onMounted, onBeforeUnmount, onActivated, onDeactivated } from 'vue'
 import { api, setAccessCode } from '../api'
 import { isCuisineHidden, DEFAULT_MEALS, mealEndMinutes, normalizeMeals, mealIconChoices, WEEKDAYS, isLanHost, imageSize } from '../utils'
 import { useModalBehavior } from '../modal'
@@ -102,16 +102,20 @@ function jumpToSettings(id) {
   target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })
   target.focus({ preventScroll: true })
 }
-onMounted(() => {
+function attachSettingsListeners() {
   window.addEventListener('scroll', queueActiveSettingsSync, { passive: true })
   window.addEventListener('resize', queueActiveSettingsSync, { passive: true })
   queueActiveSettingsSync()
-})
-onBeforeUnmount(() => {
+}
+function detachSettingsListeners() {
   window.removeEventListener('scroll', queueActiveSettingsSync)
   window.removeEventListener('resize', queueActiveSettingsSync)
   if (settingsScrollFrame) cancelAnimationFrame(settingsScrollFrame)
-})
+  settingsScrollFrame = 0
+}
+onActivated(attachSettingsListeners)
+onDeactivated(detachSettingsListeners)
+onBeforeUnmount(detachSettingsListeners)
 
 // ---- 容器内在线更新 ----
 const updateInfo = ref({ current: state.version, latest: '', available: false, note: '', published: '' })
