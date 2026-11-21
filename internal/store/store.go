@@ -643,6 +643,7 @@ func (s *Store) AddMember(m Member) (Member, error) {
 		return Member{}, err
 	}
 	s.members = next
+	_, m.HasPin = s.pins[m.ID]
 	return cloneMember(m), nil
 }
 
@@ -678,6 +679,7 @@ func (s *Store) UpdateMember(id string, p MemberPatch) (Member, error) {
 		return Member{}, err
 	}
 	s.members = next
+	_, m.HasPin = s.pins[m.ID]
 	return cloneMember(m), nil
 }
 

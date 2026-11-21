@@ -1,5 +1,5 @@
 <script setup>
-import { inject, computed, ref, watch, onMounted, onUnmounted } from 'vue'
+import { inject, computed, ref, watch, onUnmounted, onActivated, onDeactivated } from 'vue'
 import { imageSize, friendlyDate, memberOf, dishImage, cuisineName, artStyle, isCuisineHidden, normalizeMeals, isMealExpired, rosterForDate, seasonOf, smartSuggest, classifyDish } from '../utils'
 import { getRecipe } from '../recipes'
 import { sparkleFromEvent, celebrate, vibrate } from '../feedback'
@@ -39,8 +39,13 @@ function updateIndicator() {
   ind.style.transform = `translateX(${active.offsetLeft}px)`
 }
 watch([activeMeal, meals], updateIndicator, { flush: 'post' })
-onMounted(() => { updateIndicator(); window.addEventListener('resize', updateIndicator) })
-onUnmounted(() => window.removeEventListener('resize', updateIndicator))
+function attachResizeListener() {
+  updateIndicator()
+  window.addEventListener('resize', updateIndicator)
+}
+function detachResizeListener() { window.removeEventListener('resize', updateIndicator) }
+onActivated(attachResizeListener)
+onDeactivated(detachResizeListener)
 // 当前餐别排最前，其余按配置里的结束时刻顺序，「其他」永远垫底；
 // 已过饭点且没菜的组在模板里折叠成紧凑一行，避免把当前餐挤到屏幕外。
 const mealGroups = computed(() => {
@@ -69,7 +74,10 @@ const noteText = ref(state.plan.note || '')
 const noteSaved = ref(false)
 const noteDirty = computed(() => noteText.value !== (state.plan.note || ''))
 let noteTimer = null
-onUnmounted(() => clearTimeout(noteTimer))
+onUnmounted(() => {
+  detachResizeListener()
+  clearTimeout(noteTimer)
+})
 const suggestions = ref([])
 const suggestSalt = ref(0)
 const suggesting = ref(false) // 换一批时播放一次整块淡入，不重建 DOM
@@ -272,9 +280,9 @@ async function toggleDuty(role) {
     })
     if (choice === 'cancel') return
     if (choice === 'extra') {
+      playClaimAnim(role)
       const replaced = await actions.setDutyList(role, [uid], state.meal)
       if (replaced) {
-        playClaimAnim(role)
         actions.toast(`已经换成你${label}，${others.join('、')} 被换下了`, 'success')
       }
       return
@@ -283,9 +291,9 @@ async function toggleDuty(role) {
 
   // 加入（空位直接加，非空位是用户选了「一起」）
   list.push(uid)
+  playClaimAnim(role)
   const done = await actions.setDutyList(role, list, state.meal)
   if (!done) return
-  playClaimAnim(role)
 
   // 提示要说清「和谁一起」，不能只说「今天你掌勺」——现在是多人分工
   const others = list.filter((id) => id !== uid).map((id) => memberOf(id, state.members)?.name).filter(Boolean)

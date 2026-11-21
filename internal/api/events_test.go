@@ -14,9 +14,9 @@ func TestEventBrokerFanout(t *testing.T) {
 	const clients = 128
 	subs := make([]chan int64, clients)
 	for i := range subs {
-		subs[i] = broker.subscribe()
+		subs[i] = broker.subscribe("")
 	}
-	broker.publish()
+	broker.publish("")
 	for i, ch := range subs {
 		select {
 		case version := <-ch:
@@ -27,6 +27,26 @@ func TestEventBrokerFanout(t *testing.T) {
 			t.Fatalf("客户端 %d 没收到广播", i)
 		}
 		broker.unsubscribe(ch)
+	}
+}
+
+func TestEventBrokerSkipsOriginatingClient(t *testing.T) {
+	broker := newEventBroker()
+	origin := broker.subscribe("tab-a")
+	other := broker.subscribe("tab-b")
+	broker.publish("tab-a")
+	select {
+	case version := <-origin:
+		t.Fatalf("发起写入的标签页不应收到自己的 SSE 回声，却收到 %d", version)
+	default:
+	}
+	select {
+	case version := <-other:
+		if version != 1 {
+			t.Fatalf("其它设备应收到版本 1，实际 %d", version)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("其它设备没收到广播")
 	}
 }
 

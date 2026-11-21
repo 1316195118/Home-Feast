@@ -56,9 +56,10 @@ const tips = computed(() => {
   return out
 })
 
-async function order() {
-  const ok = await actions.order(props.dish.id)
-  if (ok) emit('close')
+function order() {
+  // 弹窗先关，点击反馈立即完成；保存结果在后台更新今日菜单，失败时由统一 toast 提示。
+  emit('close')
+  actions.order(props.dish.id).catch(() => {})
 }
 </script>
 

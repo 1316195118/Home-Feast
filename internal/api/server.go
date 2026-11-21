@@ -115,7 +115,7 @@ func (s *Server) protect(next http.Handler) http.Handler {
 		next.ServeHTTP(sw, r)
 		// 写操作成功后广播一次；前端自己也会 refresh，回声会被前端去重
 		if isWrite && sw.status >= 200 && sw.status < 300 {
-			s.events.publish()
+			s.events.publish(r.Header.Get("X-Client-ID"))
 		}
 	})
 }

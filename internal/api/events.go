@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 )
@@ -11,18 +12,18 @@ import (
 // 前端收到后自己 refresh()，避免维护复杂的增量合并与写冲突策略。
 type eventBroker struct {
 	mu      sync.Mutex
-	subs    map[chan int64]struct{}
+	subs    map[chan int64]string
 	version int64
 }
 
 func newEventBroker() *eventBroker {
-	return &eventBroker{subs: make(map[chan int64]struct{})}
+	return &eventBroker{subs: make(map[chan int64]string)}
 }
 
-func (b *eventBroker) subscribe() chan int64 {
+func (b *eventBroker) subscribe(clientID string) chan int64 {
 	ch := make(chan int64, 1)
 	b.mu.Lock()
-	b.subs[ch] = struct{}{}
+	b.subs[ch] = cleanClientID(clientID)
 	b.mu.Unlock()
 	return ch
 }
@@ -33,11 +34,17 @@ func (b *eventBroker) unsubscribe(ch chan int64) {
 	b.mu.Unlock()
 }
 
-func (b *eventBroker) publish() {
+func (b *eventBroker) publish(origin string) {
 	b.mu.Lock()
 	b.version++
 	version := b.version
-	for ch := range b.subs {
+	origin = cleanClientID(origin)
+	for ch, clientID := range b.subs {
+		// 发起写入的标签页已经拿到写接口结果，不再让 SSE 回声触发第二次刷新。
+		// 没有客户端 ID 的旧页面仍保持广播行为，避免升级瞬间漏同步。
+		if origin != "" && clientID == origin {
+			continue
+		}
 		select {
 		case ch <- version:
 		default: // 慢客户端丢掉中间事件，下一次刷新就能拿到最新数据
@@ -66,7 +73,7 @@ func (s *Server) streamEvents(w http.ResponseWriter, r *http.Request) {
 	}
 	flusher.Flush()
 
-	ch := s.events.subscribe()
+	ch := s.events.subscribe(r.URL.Query().Get("clientId"))
 	defer s.events.unsubscribe(ch)
 	tick := time.NewTicker(25 * time.Second)
 	defer tick.Stop()
@@ -86,6 +93,14 @@ func (s *Server) streamEvents(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+}
+
+func cleanClientID(value string) string {
+	value = strings.TrimSpace(value)
+	if len(value) > 80 {
+		return value[:80]
+	}
+	return value
 }
 
 // statusWriter 让 protect() 能判断写接口是否真的成功，只对 2xx 广播。
