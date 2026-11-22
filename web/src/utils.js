@@ -1,10 +1,25 @@
 // 界面共用的小工具，纯函数，方便单独测试。
+import DISH_PHOTOS from './dish-photo-map.json'
 
 // item 可能是菜品 Dish（字段 image/cuisine），也可能是点菜记录 Order（字段 dishImage/dishCuisine）。
 // 传 dishes 时，订单行优先取菜谱里这道菜「当前」的图片，这样改图后今日菜单会同步；
 // 菜品被删了就退回点菜时存下的快照，最后才用菜系插画。
 // 图片清晰度策略：auto=局域网原图/外网缩略图，full=总是原图，thumb=总是缩略图。
 // 局域网判定：localhost / 私网段（10./172.16-31./192.168.）。
+// 逐道验收过的专属照片随二进制发布，覆盖 /data 里的旧错图或缺图。
+// 它们统一是 4:3，并由 install_dish_photos.py 同时生成缩略图。
+const CURATED_DISH_PHOTOS = Object.freeze(DISH_PHOTOS)
+
+function dishRecord(item, dishes) {
+  if (!item?.dishId || !Array.isArray(dishes)) return null
+  return dishes.find((d) => d.id === item.dishId) || null
+}
+
+function dishIdentity(item, dishes) {
+  const live = dishRecord(item, dishes)
+  return live?.name || item?.dishName || item?.name || ''
+}
+
 export function isLanHost(host) {
   if (typeof window === 'undefined') return true
   const h = String(host || window.location.hostname || '').toLowerCase()
@@ -29,19 +44,25 @@ export function imageSize(mode) {
 // withThumb 把用户上传的图换成 400px 缩略图地址；菜系封面本身就是小图，不动。
 // 缩略图统一是 JPEG（后端用标准库编码），与原图的扩展名无关。
 function withThumb(url) {
-  if (!url.startsWith('/uploads/')) return url
-  const rest = url.slice('/uploads/'.length)
-  const dot = rest.lastIndexOf('.')
-  return '/uploads/thumb/' + (dot > 0 ? rest.slice(0, dot) : rest) + '.jpg'
+  if (url.startsWith('/uploads/')) {
+    const rest = url.slice('/uploads/'.length)
+    const dot = rest.lastIndexOf('.')
+    return '/uploads/thumb/' + (dot > 0 ? rest.slice(0, dot) : rest) + '.jpg'
+  }
+  if (url.startsWith('/dish-photo/') && !url.startsWith('/dish-photo/thumb/')) {
+    return '/dish-photo/thumb/' + url.slice('/dish-photo/'.length)
+  }
+  return url
 }
 
 // size: 'thumb' 用于列表/网格（200~400px 显示），不传则给详情大图
 export function dishImage(item, cuisines, dishes, size) {
   let url
-  if (item?.dishId && Array.isArray(dishes)) {
-    const live = dishes.find((d) => d.id === item.dishId)
-    if (live?.image) url = live.image
-  }
+  const live = dishRecord(item, dishes)
+  const name = live?.name || item?.dishName || item?.name || ''
+  const curated = CURATED_DISH_PHOTOS[name]
+  if (curated) url = `/dish-photo/${curated}.webp`
+  if (!url && live?.image) url = live.image
   if (!url) {
     const snapshot = item?.image || item?.dishImage
     if (snapshot) url = snapshot
@@ -52,6 +73,17 @@ export function dishImage(item, cuisines, dishes, size) {
     url = found ? found.image : '/dishes/homestyle.webp'
   }
   return size === 'thumb' ? withThumb(url) : url
+}
+
+export function hasDishImage(item, dishes) {
+  const live = dishRecord(item, dishes)
+  const name = live?.name || item?.dishName || item?.name || ''
+  return !!(
+    CURATED_DISH_PHOTOS[name] ||
+    live?.image ||
+    item?.image ||
+    item?.dishImage
+  )
 }
 
 export function cuisineName(key, cuisines) {
@@ -74,9 +106,13 @@ export function isCuisineHidden(key, hidden) {
 // 但菜品若有自己的专属配图（逐道写实图），则不做任何扰动——否则每张图的
 // 木纹背景会被 hue-rotate/saturate 染成不同色调，整套看起来反而不统一。
 export function artStyle(item, dishes) {
+  const live = dishRecord(item, dishes)
+  const name = live?.name || item?.dishName || item?.name || ''
   const hasOwnImage = !!(
-    item?.image || item?.dishImage ||
-    (item?.dishId && Array.isArray(dishes) && dishes.find((d) => d.id === item.dishId)?.image)
+    CURATED_DISH_PHOTOS[name] ||
+    item?.image ||
+    item?.dishImage ||
+    live?.image
   )
   if (hasOwnImage) return {}
   // 订单行优先用菜品 id，保证同一道菜在菜谱和今日菜单里的取景/色调完全一致

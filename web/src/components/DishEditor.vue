@@ -48,7 +48,7 @@ const cuisineOptions = computed(() => {
   return opts
 })
 
-const preview = computed(() => form.image || dishImage({ cuisine: form.cuisine }, state.cuisines))
+const preview = computed(() => form.image || dishImage({ name: form.name, cuisine: form.cuisine }, state.cuisines))
 
 // 上传前先压一道：手机原图常有 3~5MB，长边压到 1600 后通常只剩 200~400KB。
 // 压缩失败（老浏览器/异常解码）一律退回原图，绝不能因为优化导致传不了。

@@ -3,6 +3,7 @@ import { reactive, provide, onMounted, onUnmounted, watch, ref, computed, define
 import { api, setAccessCode, getClientId } from './api'
 import TodayView from './components/TodayView.vue'
 import ConfirmDialog from './components/ConfirmDialog.vue'
+import BrandLogo from './components/BrandLogo.vue'
 import ViewLoading from './components/ViewLoading.vue'
 import ViewLoadError from './components/ViewLoadError.vue'
 import { useModalBehavior } from './modal'
@@ -941,7 +942,7 @@ onUnmounted(() => {
     <header class="topbar">
       <div class="topbar-inner">
         <div class="brand">
-          <span class="brand-mark">🍚</span>
+          <BrandLogo />
           <div>
             <div class="brand-name">家里吃点啥</div>
             <div class="brand-sub">{{ state.settings.familyName }} · 今天吃什么，大家一起定</div>

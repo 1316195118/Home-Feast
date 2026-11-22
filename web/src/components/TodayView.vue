@@ -458,6 +458,17 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
   <section>
     <div class="today-hero">
       <span class="hero-deco">🍲</span>
+      <div v-if="suggestions.length" class="hero-photo-stack" aria-hidden="true">
+        <span
+          v-for="(s, i) in suggestions.slice(0, 3)" :key="s.dish.id"
+          class="hero-photo-card" :class="`hero-photo-${i + 1}`"
+        >
+          <img
+            :src="dishImage(s.dish, state.cuisines, null, 'thumb')"
+            :alt="s.dish.name" loading="eager" decoding="async"
+          />
+        </span>
+      </div>
       <div class="hero-label">今日份 · {{ friendlyDate(state.today) }}</div>
       <h1 class="hero-title"><span>今天已点 {{ orders.length }} 道</span></h1>
       <p class="hero-sub">

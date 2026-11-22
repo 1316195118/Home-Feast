@@ -6,7 +6,7 @@ import PantryFridge from './PantryFridge.vue'
 import OrderPanel from './OrderPanel.vue'
 import Food3D from './Food3D.vue'
 import DishDetail from './DishDetail.vue'
-import { normalizeMeals, isCuisineHidden, pantryGroups, pantryVisual, pantryMatches, foodShape, normalizeIngredient } from '../utils'
+import { normalizeMeals, isCuisineHidden, pantryGroups, pantryVisual, pantryMatches, foodShape, normalizeIngredient, hasDishImage } from '../utils'
 import { getRecipe } from '../recipes'
 import { useModalBehavior } from '../modal'
 
@@ -97,7 +97,7 @@ const filtered = computed(() => {
     if (onlyFavorite.value && !d.favorite) return false
     if (quickFilter.value === 'quick' && !((d.minutes || 20) <= 30)) return false
     if (quickFilter.value === 'mild' && (d.spicy || 0) > 0) return false
-    if (quickFilter.value === 'image' && !d.image) return false
+    if (quickFilter.value === 'image' && !hasDishImage(d, state.dishes)) return false
     if (!q) return true
     // 配料也纳入搜索：搜「土豆」能找出所有用到土豆的菜，和冰箱食材推荐口径一致
     return dishSearchText(d).includes(q)

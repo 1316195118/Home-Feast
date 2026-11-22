@@ -91,6 +91,61 @@
 .hero-sep { color: var(--brand); margin: 0 8px; }
 .hero-sub { font-size: 0.86rem; color: var(--ink-soft); margin-top: 4px; }
 .hero-deco { position: absolute; right: 12px; top: -18px; font-size: 7rem; opacity: 0.13; pointer-events: none; transform: rotate(-14deg); animation: float-soft 7s ease-in-out infinite; }
+.hero-label, .hero-title, .hero-sub { position: relative; z-index: 2; }
+.hero-label, .hero-title { max-width: calc(100% - 176px); }
+.hero-title span { position: relative; display: inline-block; }
+.hero-title span::after {
+  content: "";
+  position: absolute;
+  left: 2px;
+  right: -3px;
+  bottom: -3px;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--brand), color-mix(in srgb, var(--amber) 72%, transparent));
+  transform-origin: left;
+  animation: hero-underline 0.72s var(--ease-out) 0.08s both;
+}
+.hero-photo-stack {
+  position: absolute;
+  z-index: 1;
+  top: 14px;
+  right: 20px;
+  width: 154px;
+  height: 100px;
+  pointer-events: none;
+}
+.hero-photo-card {
+  position: absolute;
+  width: 76px;
+  height: 57px;
+  padding: 3px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  border-radius: 13px;
+  background: var(--surface);
+  box-shadow: 0 8px 22px rgba(84, 57, 36, 0.16);
+  transform-origin: center;
+  animation: hero-photo-in 0.52s var(--ease-spring) both;
+}
+.hero-photo-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 9px;
+}
+.hero-photo-1 { left: 0; top: 21px; transform: rotate(-7deg); animation-delay: 0.05s; }
+.hero-photo-2 { left: 39px; top: 3px; transform: rotate(2deg); animation-delay: 0.12s; }
+.hero-photo-3 { left: 72px; top: 27px; transform: rotate(8deg); animation-delay: 0.19s; }
+@keyframes hero-photo-in {
+  from { opacity: 0; translate: 0 12px; scale: 0.9; }
+  to { opacity: 1; translate: 0 0; scale: 1; }
+}
+@keyframes hero-underline {
+  from { opacity: 0; transform: scaleX(0); }
+  to { opacity: 1; transform: scaleX(1); }
+}
 
 .stat-strip { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 11px; }
 .stat-item {
@@ -98,7 +153,9 @@
   background: var(--surface); border: 1px solid var(--line);
   padding: 8px 14px; border-radius: var(--radius);
   font-size: 0.82rem; color: var(--muted);
+  transition: transform var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
 }
+.stat-item:hover { transform: translateY(-2px); border-color: var(--line-strong); box-shadow: var(--shadow-sm); }
 .stat-num { font-size: 1.12rem; font-weight: 800; color: var(--ink); }
 
 /* 右列要放得下三张推荐卡片，别让它们挤成 2+1 两排 */
@@ -1126,6 +1183,8 @@
 /* 平板和触控笔记本也按手指尺寸给按钮留足高度。 */
 @media (max-width: 1024px) {
   .settings-section .btn { min-height: 44px; }
+  .hero-photo-stack { transform: scale(0.86); transform-origin: top right; }
+  .hero-label, .hero-title { max-width: calc(100% - 145px); }
 }
 
 @media (max-width: 860px) {
@@ -1195,6 +1254,8 @@
   /* 今天页：横向滚动条代替换行，减少纵向占用 */
   .today-hero { padding: 18px 16px; }
   .hero-title { font-size: 1.28rem; }
+  .hero-photo-stack { display: none; }
+  .hero-label, .hero-title { max-width: 100%; }
   /* 手机端这句和下方统计条 / 今日菜单速览重复，省掉一行给首屏 */
   .hero-sub { display: none; }
   .hero-deco { font-size: 4.6rem; }
