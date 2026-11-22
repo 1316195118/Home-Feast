@@ -2,7 +2,8 @@
 // 已下单抽屉：在菜谱页直接核对今天点了什么，不必回首页。
 import { ref, computed, inject } from 'vue'
 import { useModalBehavior } from '../modal'
-import { dishImage, imageSize, normalizeMeals } from '../utils'
+import { imageSize, normalizeMeals } from '../utils'
+import DishPhoto from './DishPhoto.vue'
 
 const emit = defineEmits(['close'])
 const { state, actions, pending } = inject('app')
@@ -49,7 +50,10 @@ function togglePick(key) { pick.value = pick.value === key ? '' : key }
         <div v-for="g in shown" :key="g.key" class="order-panel-group">
           <div class="order-panel-head">{{ g.icon }} {{ g.label }} · {{ g.items.length }} 道</div>
           <div v-for="o in g.items" :key="o.id" class="order-panel-row" :class="{ done: o.done }">
-            <img :src="dishImage(o, state.cuisines, state.dishes, imageSize(state.settings.imageMode))" :alt="o.dishName" loading="lazy" />
+            <DishPhoto
+              :item="o" :cuisines="state.cuisines" :dishes="state.dishes"
+              :size="imageSize(state.settings.imageMode)" :alt="o.dishName" loading="lazy"
+            />
             <div class="opr-main">
               <div class="opr-name">{{ o.dishName }}</div>
               <div class="opr-meta tiny muted">

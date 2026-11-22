@@ -24,6 +24,8 @@ func main() {
 	port := flag.String("port", "8090", "监听端口")
 	dataDir := flag.String("data", "", "用户数据目录，默认程序旁的 data/")
 	configDir := flag.String("config", "", "配置目录（家庭设置等），默认程序旁的 config/，与 data 平级")
+	tlsCert := flag.String("tls-cert", "", "可选：HTTPS 证书路径，启用后可协商 HTTP/2")
+	tlsKey := flag.String("tls-key", "", "可选：HTTPS 私钥路径，必须与 --tls-cert 一起使用")
 	showVersion := flag.Bool("version", false, "打印版本号")
 	flag.Parse()
 
@@ -46,11 +48,20 @@ func main() {
 	if v := os.Getenv("MENU_CONFIG_DIR"); v != "" && !explicit["config"] {
 		*configDir = v
 	}
+	if v := os.Getenv("MENU_TLS_CERT"); v != "" && !explicit["tls-cert"] {
+		*tlsCert = v
+	}
+	if v := os.Getenv("MENU_TLS_KEY"); v != "" && !explicit["tls-key"] {
+		*tlsKey = v
+	}
 	if *dataDir == "" {
 		*dataDir = "data"
 	}
 	if *configDir == "" {
 		*configDir = "config"
+	}
+	if (*tlsCert == "") != (*tlsKey == "") {
+		log.Fatal("启用 HTTPS 时必须同时提供 --tls-cert 与 --tls-key")
 	}
 
 	web, err := fs.Sub(familymenu.Assets, familymenu.WebRoot)
@@ -81,11 +92,23 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("家里吃点啥 %s 已启动: http://%s:%s  数据: %s  配置: %s", api.Version, *addr, *port, *dataDir, *configDir)
+		scheme := "http"
+		if *tlsCert != "" {
+			// net/http 会在证书有效且客户端支持时自动协商 HTTP/2；
+			// 同一连接可多路复用图片请求，不再受 HTTP/1.1 单域名 6 连接限制。
+			scheme = "https"
+		}
+		log.Printf("家里吃点啥 %s 已启动: %s://%s:%s  数据: %s  配置: %s", api.Version, scheme, *addr, *port, *dataDir, *configDir)
 		if accessCode != "" {
 			log.Printf("已启用访问口令")
 		}
-		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		var err error
+		if scheme == "https" {
+			err = server.ListenAndServeTLS(*tlsCert, *tlsKey)
+		} else {
+			err = server.ListenAndServe()
+		}
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("服务启动失败: %v", err)
 		}
 	}()

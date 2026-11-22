@@ -1,31 +1,31 @@
 {
-  "version": "1.0.3.8",
-  "publishedAt": "2026-11-22T20:02:39",
-  "note": "**新增**\n- 完成 Seedream 5.5 配图补全与 55 张专属菜品照片，今日页加入动态菜品照片叠层。\n- 新增暖色饭碗品牌 Logo、PWA/favicon 与轻量入场、统计反馈动画。\n- 新增配图、分量、几何和页面巡检脚本及完整说明。\n\n**修复**\n- 按“分量要足”返工优选大盘小份、主料单薄、细料汤羹显空的图片。\n- 修正错菜、器皿不匹配、主体偏移或裁切，并固定高质量候选防止重建覆盖。\n- 完善手机端布局、悬浮入口和字体可读性。\n\n**优化**\n- 8 档分辨率无横向溢出、无过小按钮；手机批量操作与性能测试 16/16。\n- 整图 1200×900、缩略图 480×360 WebP，110 个图片 URL 全部可访问。",
+  "version": "1.0.3.9",
+  "publishedAt": "2026-11-22T20:53:28",
+  "note": "**新增**\n- 缺失缩略图由服务端从原图自动补生成，旧图与恢复备份后的图片无需手工处理。\n\n**修复**\n- 图片偶发加载失败会先对同一地址静默重试，再进入菜系封面回退，减少局域网短暂丢包造成的换图。\n- 手机慢网快速切换页签时保留离场内容并立即显示新页加载态，消除过渡间隙白屏。\n\n**优化**\n- 动态缩略图使用内存缓存与同图并发合并，不写 `/data` 卷；32 张缺失图并发读取全部成功。\n- 列表继续统一使用小缩略图，PWA 离线缓存与浏览器协商缓存协同，减少重复下载。\n- 新增可选 HTTPS + HTTP/2 启动参数，使用受信任证书时可通过一条连接多路复用图片请求。",
   "files": {
     "amd64": {
       "name": "menu-linux-amd64",
-      "sha256": "e62953dc137e9462a29e95b0a31b12629965aea5b806089faf22ca175cbcb31b",
-      "size": 18616480,
+      "sha256": "94aaec6acbdad21bb57fb2ab5c6d840c82260be1f5bedc7343a85a758792b60f",
+      "size": 19972256,
       "gz": "menu-linux-amd64.gz",
-      "gzSha256": "f69d3e68775e442100d7817804b7cd6703cfcd84b8a455cd97f08b42e673faf9",
-      "gzSize": 13192837
+      "gzSha256": "5a8d09edf15e5e8cf39ac33a047e7b93988b27cd7004bf12fa2c8ea6ca8add4f",
+      "gzSize": 14183694
     },
     "arm64": {
       "name": "menu-linux-arm64",
-      "sha256": "c49b0e596f9b6c9b2de665c255b94c2b9dcd4ecb4216d021e3a3d19606ddc6b6",
-      "size": 18022560,
+      "sha256": "e3860e8d2faebc517e6c76e9b067c22f635d8714686ac16687d4bfe86055b7e3",
+      "size": 19333280,
       "gz": "menu-linux-arm64.gz",
-      "gzSha256": "387aa905a7c82c6d39b83eefa623160a2f83ed019165dbe9f9fd2c54b09629c4",
-      "gzSize": 12821067
+      "gzSha256": "6a8f9d6b4ff83e77c6249725b555ea566d1adad911231353b1b1321d78787efc",
+      "gzSize": 13795091
     },
     "armv7": {
       "name": "menu-linux-armv7",
-      "sha256": "649c2ed2ba5cda44d814c9312789496276f32f80947d85fabe0678527f12f48a",
-      "size": 18415776,
+      "sha256": "514b0f3eb351e2f38b07a7987e3dfcdda744c70092e695587a9f3e9ebe6a5099",
+      "size": 19726496,
       "gz": "menu-linux-armv7.gz",
-      "gzSha256": "02c494fa0f02dbda70277e85c8a236a15db220ea895d565f9aab5fffd5b9b9d7",
-      "gzSize": 13048293
+      "gzSha256": "26218d39b823436faac0b5cec04060f99d274f4eadb944831e3ca18c1b68d3c3",
+      "gzSize": 14026332
     }
   }
 }

@@ -1,9 +1,10 @@
 <script setup>
 import { inject, computed, ref } from 'vue'
-import { dishImage, cuisineName, cuisineIcon, spicyText, artStyle } from '../utils'
+import { cuisineName, cuisineIcon, spicyText, artStyle } from '../utils'
 import { getRecipe } from '../recipes'
 import { useModalBehavior } from '../modal'
 import CookMode from './CookMode.vue'
+import DishPhoto from './DishPhoto.vue'
 
 const props = defineProps({
   dish: { type: Object, required: true },
@@ -14,7 +15,6 @@ const { state, actions, pending } = inject('app')
 const root = ref(null)
 useModalBehavior(() => emit('close'), root)
 
-const image = computed(() => dishImage(props.dish, state.cuisines))
 const cuisine = computed(() => cuisineName(props.dish.cuisine, state.cuisines))
 const recipe = computed(() => getRecipe(props.dish))
 const ordering = computed(() => pending(`order:${props.dish.id}`))
@@ -73,7 +73,10 @@ function order() {
 
       <div class="detail-top">
         <div class="detail-photo">
-          <img :src="image" :alt="dish.name" :style="artStyle(dish, state.dishes)" />
+          <DishPhoto
+            :item="dish" :cuisines="state.cuisines" :dishes="state.dishes"
+            :alt="dish.name" :style="artStyle(dish, state.dishes)"
+          />
         </div>
         <div class="detail-info">
           <p class="detail-desc">{{ dish.desc || '家里人都懂的一道菜' }}</p>
@@ -81,7 +84,6 @@ function order() {
             <span class="tag">{{ cuisineIcon(dish.cuisine, state.cuisines) }} {{ cuisine }}</span>
             <span class="tag">⏱ {{ dish.minutes || 20 }} 分钟</span>
             <span class="tag" v-if="dish.spicy > 0">{{ spicyText(dish.spicy) }}</span>
-            <span class="tag tag-green" v-if="!dish.builtin">自家菜</span>
           </div>
           <div class="dish-tags" v-if="(dish.tags || []).length">
             <span class="tag" v-for="t in dish.tags" :key="t">{{ t }}</span>

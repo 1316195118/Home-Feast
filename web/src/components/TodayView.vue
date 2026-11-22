@@ -1,6 +1,7 @@
 <script setup>
 import { inject, computed, ref, watch, onUnmounted, onActivated, onDeactivated } from 'vue'
-import { imageSize, friendlyDate, memberOf, dishImage, cuisineName, artStyle, isCuisineHidden, normalizeMeals, isMealExpired, rosterForDate, seasonOf, smartSuggest, classifyDish } from '../utils'
+import { imageSize, friendlyDate, memberOf, cuisineName, artStyle, isCuisineHidden, normalizeMeals, isMealExpired, rosterForDate, seasonOf, smartSuggest, classifyDish } from '../utils'
+import DishPhoto from './DishPhoto.vue'
 import { getRecipe } from '../recipes'
 import { sparkleFromEvent, celebrate, vibrate } from '../feedback'
 import DishDetail from './DishDetail.vue'
@@ -463,8 +464,8 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
           v-for="(s, i) in suggestions.slice(0, 3)" :key="s.dish.id"
           class="hero-photo-card" :class="`hero-photo-${i + 1}`"
         >
-          <img
-            :src="dishImage(s.dish, state.cuisines, null, 'thumb')"
+          <DishPhoto
+            :item="s.dish" :cuisines="state.cuisines" size="thumb"
             :alt="s.dish.name" loading="eager" decoding="async"
           />
         </span>
@@ -584,7 +585,11 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
                   @pointerleave="cancelPress" @pointercancel="cancelPress"
                 >
                   <div class="order-thumb">
-                    <img :src="dishImage(o, state.cuisines, state.dishes, imageSize(state.settings.imageMode))" :alt="o.dishName" :style="artStyle(o, state.dishes)" loading="lazy" decoding="async" class="img-fade" />
+                    <DishPhoto
+                      :item="o" :cuisines="state.cuisines" :dishes="state.dishes"
+                      :size="imageSize(state.settings.imageMode)" :alt="o.dishName"
+                      :style="artStyle(o, state.dishes)" loading="lazy" decoding="async"
+                    />
                   </div>
                   <div class="order-main">
                     <div class="order-name">{{ o.dishName }}</div>
@@ -673,7 +678,11 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
             @click="quickOrder(s.dish, $event)" @keydown.enter="quickOrder(s.dish, $event)" @keydown.space.prevent="quickOrder(s.dish, $event)"
           >
             <div class="suggest-photo">
-              <img :src="dishImage(s.dish, state.cuisines, null, imageSize(state.settings.imageMode))" :alt="s.dish.name" :style="artStyle(s.dish, state.dishes)" loading="lazy" decoding="async" class="img-fade" />
+              <DishPhoto
+                :item="s.dish" :cuisines="state.cuisines" :dishes="state.dishes"
+                :size="imageSize(state.settings.imageMode)" :alt="s.dish.name"
+                :style="artStyle(s.dish, state.dishes)" loading="lazy" decoding="async"
+              />
               <button class="suggest-recipe" title="看做法" aria-label="看做法" @click.stop="detailId = s.dish.id"><span class="badge-ico">📖</span></button>
               <span v-if="isPicked(s.dish)" class="suggest-picked">✓ 已点</span>
               <span v-else-if="pending(`order:${s.dish.id}`)" class="suggest-adding">加菜中…</span>

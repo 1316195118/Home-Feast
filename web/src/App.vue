@@ -20,7 +20,7 @@ const viewLoaders = {
 }
 const lazyView = (key) => defineAsyncComponent({
   loader: viewLoaders[key],
-  delay: 200,
+  delay: 0,
   loadingComponent: ViewLoading,
   errorComponent: ViewLoadError,
   timeout: 15000,
@@ -36,17 +36,30 @@ const SettingsView = lazyView('settings')
 // 鼠标移到页签或键盘聚焦时就预取，真正点击时通常已经准备好；
 // 不抢占首屏，因为菜单、家人等模块仍要等用户表现出访问意图才下载。
 function prefetchView(key) {
-  viewLoaders[key]?.().catch(() => {})
+  return viewLoaders[key]?.().catch(() => {})
 }
 let idlePrefetchDone = false
 function scheduleIdlePrefetch() {
   if (idlePrefetchDone) return
   idlePrefetchDone = true
-  // 手机首屏稳定后再悄悄取菜谱页，第一次切换通常能直接出现。
+  // 首屏稳定后按空闲顺序预取其余页签。每个 chunk 都很小，全部预取约 44KB gzip；
+  // 换来的是点页签时不再先出现一块空白加载区。
   // 省流量模式和 2G/慢速网络不预取，避免为了「可能访问」抢带宽。
   const conn = navigator.connection
   if (navigator.onLine === false || conn?.saveData || /^(slow-2g|2g)$/.test(conn?.effectiveType || '')) return
-  const run = () => prefetchView('menu')
+  const keys = ['menu', 'settings', 'family', 'history']
+  const prefetchNext = (index) => {
+    if (index >= keys.length) return
+    Promise.resolve(prefetchView(keys[index])).finally(() => {
+      const next = () => prefetchNext(index + 1)
+      if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(next, { timeout: 2600 })
+      } else {
+        setTimeout(next, 420)
+      }
+    })
+  }
+  const run = () => prefetchNext(0)
   if ('requestIdleCallback' in window) {
     window.requestIdleCallback(run, { timeout: 2200 })
   } else {
@@ -220,10 +233,10 @@ const pageScrollPositions = new Map()
 function restorePageScroll(tab) {
   clearTimeout(scrollRestoreTimer)
   const top = pageScrollPositions.get(tab) || 0
-  // out-in 会先播放离场再插入新页；等新页结束后再恢复，避免被短暂的空内容钳到 0。
+  // 新页进场约 260ms；等过渡结束后再恢复，避免被短暂的空内容钳到 0。
   scrollRestoreTimer = setTimeout(() => {
     if (state.tab === tab) window.scrollTo(0, top)
-  }, 340)
+  }, 300)
 }
 
 function requestRefresh(delay = 220) {
@@ -982,7 +995,7 @@ onUnmounted(() => {
     </Transition>
 
     <main class="main" v-if="state.ready">
-      <Transition :name="pageDirection" mode="out-in">
+      <Transition :name="pageDirection">
         <KeepAlive>
           <component :is="currentView" :key="state.tab" />
         </KeepAlive>

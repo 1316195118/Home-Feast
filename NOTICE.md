@@ -13,7 +13,7 @@
 | 菜品描述、标签、辣度、耗时、做法步骤 | 本项目独立编写 | MIT |
 | 184 道菜的精确用量数值（克/毫升） | 公共领域项目 HowToCook | **Unlicense**（公共领域） |
 | 其余 53 道菜的用量 | 本项目按家常份量自写 | MIT |
-| 19 张菜系封面、55 张逐道验收菜品图 | 本项目用 AI 生成 | 随项目分发 |
+| 19 张菜系封面、55 张逐道验收菜品图、食材实物图 | 本项目用 AI 生成 | 随项目分发 |
 | 图标、音效、动效 | 浏览器原生 API + 自写 CSS/JS | MIT |
 | 第三方代码依赖 | Vue 3 / Vite / Go 标准库 | MIT / BSD-3-Clause |
 
@@ -78,6 +78,10 @@ View Transitions / Web Animations / Vibration API 与本项目自写的 CSS 动�
   `web/public/dish-photo/`，其余图片位于使用者自有实例的 `/data/uploads`。
   2026-11-22 的补图与返工通过火山方舟官方 Seedream Skill 调用 `Doubao-Seedream-5.5` 生成，
   再由项目脚本转为 WebP 和缩略图；图片不是任何图库、菜谱网站或摄影作品的复制或再加工。
+- `web/public/pantry/` 是冰箱食材实物图，统一由 `scripts/generate_pantry_images.py`
+  调用同一官方 Seedream Skill 生成，再经 `scripts/install_pantry_images.py` 转为
+  512×512 整图、192×192 缩略图并输出几何检查报告。预设项按名称映射到图片；
+  尚未生成、自定义或网络加载失败的食材自动回退项目原有 CSS 造型，不影响离线使用。
 - `web/public/logo.svg`、`logo-192.png`、`logo-512.png` 是项目自画的碗、蒸汽与筷子品牌图形，
   用作网页 favicon、顶栏 Logo 与 PWA 图标，不含任何第三方图标素材。
 - `docs/images/*.png` 是本项目界面在无头浏览器中的截图，用于 README 展示，非第三方素材。

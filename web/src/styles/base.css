@@ -235,11 +235,19 @@ html.theme-switching :where(body, .card, .panel, .today-hero, .modal, .btn, .chi
    旧页向左退场；返回则相反。离场略快、进场略缓，方向感让层级更好理解。
    水平位移可能短暂超出容器，故 .main 加了 overflow-x: clip 兜底。 */
 .page-enter-active { transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out); }
-.page-leave-active { transition: opacity var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease); }
+.page-leave-active {
+  position: absolute;
+  inset: 0;
+  transition: opacity var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
 .page-enter-from { opacity: 0; transform: translateX(26px); }
 .page-leave-to { opacity: 0; transform: translateX(-18px); }
 .page-back-enter-active { transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out); }
-.page-back-leave-active { transition: opacity var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease); }
+.page-back-leave-active {
+  position: absolute;
+  inset: 0;
+  transition: opacity var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
 .page-back-enter-from { opacity: 0; transform: translateX(-26px); }
 .page-back-leave-to { opacity: 0; transform: translateX(18px); }
 

@@ -391,12 +391,12 @@ useModalBehavior(() => { showAboutModal.value = false }, aboutRoot, showAboutMod
 const showAccessModal = ref(false)
 const accessRoot = ref(null)
 useModalBehavior(() => { showAccessModal.value = false }, accessRoot, showAccessModal)
-// 配图清晰度：auto 按网络自动选（局域网原图 / 外网缩略图），full 总是原图，thumb 总是缩略图
+// 配图清晰度：列表统一先用缩略图保证秒开，详情页始终加载原图。
 const imageMode = computed(() => state.settings.imageMode || 'auto')
 const lanNow = computed(() => isLanHost())
 const currentModeLabel = computed(() => imageSize(imageMode.value) === '' ? '原图' : '缩略图')
 const imageChoices = [
-  { key: 'auto', label: '按网络', icon: '🌐', hint: '局域网原图 · 外网缩略图' },
+  { key: 'auto', label: '智能', icon: '⚡', hint: '列表缩略图秒开 · 详情自动原图' },
   { key: 'full', label: '原图', icon: '🖼️', hint: '始终加载清晰原图' },
   { key: 'thumb', label: '省流量', icon: '📶', hint: '始终加载缩略图' },
 ]

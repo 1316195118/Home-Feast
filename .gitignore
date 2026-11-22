@@ -39,6 +39,7 @@
 /scripts/fm_patch.tgz
 
 # 本地工作台数据（含项目记忆/日志），不进公开仓库
+/.tmp/
 /.workbuddy/
 /.workbuddy-ai/
 
@@ -84,6 +85,8 @@
 /scripts/_cq/_img/portion-*/
 /scripts/_cq/_img/dish-photo-install.json
 /scripts/_cq/_gen_seedream55/
+/scripts/_cq/_gen_pantry55/
+/scripts/_cq/_pantry_audit/
 /scripts/_cq/_img/*.png
 /scripts/_cq/_img/*.webp
 /scripts/_cq/_img/ready/*.webp

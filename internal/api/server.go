@@ -35,9 +35,13 @@ type Server struct {
 	events  *eventBroker // SSE 广播器，写操作成功后通知所有在线设备
 	limit   *failLimiter // 口令 / PIN 的失败退避
 
-	bootstrapMu    sync.RWMutex
-	bootstrapCache *bootstrapCacheEntry
-	staticCache    sync.Map
+	bootstrapMu     sync.RWMutex
+	bootstrapCache  *bootstrapCacheEntry
+	staticCache     sync.Map
+	thumbMu         sync.Mutex
+	thumbCache      map[string]*generatedThumb
+	thumbLoads      map[string]*generatedThumbLoad
+	thumbGeneration uint64
 }
 
 type bootstrapCacheEntry struct {
@@ -47,6 +51,21 @@ type bootstrapCacheEntry struct {
 	gzip     []byte
 	rawETag  string
 	gzipETag string
+}
+
+// generatedThumb 是旧上传图缺失缩略图时的内存缓存，不写入 /data 卷。
+type generatedThumb struct {
+	source  string
+	modTime int64
+	size    int64
+	data    []byte
+	etag    string
+}
+
+type generatedThumbLoad struct {
+	done  chan struct{}
+	thumb *generatedThumb
+	err   error
 }
 
 type closeHandler struct {
@@ -62,7 +81,11 @@ func (h *closeHandler) Close() {
 
 // New 组装全部路由。网页里也能设置访问口令，见 updateSettings。
 func New(st *store.Store, web fs.FS, envCode string) http.Handler {
-	s := &Server{st: st, web: web, envCode: envCode, events: newEventBroker(), limit: newFailLimiter()}
+	s := &Server{
+		st: st, web: web, envCode: envCode, events: newEventBroker(), limit: newFailLimiter(),
+		thumbCache: make(map[string]*generatedThumb),
+		thumbLoads: make(map[string]*generatedThumbLoad),
+	}
 
 	api := http.NewServeMux()
 	api.HandleFunc("GET /api/ping", s.ping)

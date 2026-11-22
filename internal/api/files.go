@@ -324,6 +324,8 @@ func (s *Server) importBackup(w http.ResponseWriter, r *http.Request) {
 			restoredImg++
 		}
 	}
+	// 恢复备份可能原地覆盖同名原图，丢掉旧的内存缩略图，下一次请求按新图重建。
+	s.clearGeneratedThumbs()
 	jsonOK(w, map[string]any{
 		"ok": true, "restored": len(jsons), "images": restoredImg, "snapshot": stamp,
 	})

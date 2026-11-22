@@ -2,12 +2,12 @@ package api
 
 import (
 	"bytes"
+	_ "golang.org/x/image/webp" // 注册 WebP 解码（前端上传的就是 webp）
 	"image"
 	"image/draw"
-	"image/jpeg"
 	_ "image/gif" // 注册 GIF 解码
+	"image/jpeg"
 	_ "image/png" // 注册 PNG 解码
-	_ "golang.org/x/image/webp" // 注册 WebP 解码（前端上传的就是 webp）
 	"os"
 	"path/filepath"
 )
@@ -25,14 +25,28 @@ const thumbJPEGQuality = 78
 // 而 golang.org/x/image 属于额外依赖，本项目坚持运行期零第三方包。
 // 失败不影响上传本身：列表会回落到原图，只是费点流量。
 func writeThumb(data []byte, uploadDir, base string) error {
-	img, _, err := image.Decode(bytes.NewReader(data))
+	thumb, err := renderThumbJPEG(data)
 	if err != nil {
 		return err
+	}
+	dir := filepath.Join(uploadDir, "thumb")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(dir, base+".jpg"), thumb, 0o644)
+}
+
+// renderThumbJPEG 生成列表用的 400px JPEG。上传时写入磁盘；
+// 老数据缺缩略图时也复用它，在请求阶段即时生成并放入内存缓存。
+func renderThumbJPEG(data []byte) ([]byte, error) {
+	img, _, err := image.Decode(bytes.NewReader(data))
+	if err != nil {
+		return nil, err
 	}
 	b := img.Bounds()
 	sw, sh := b.Dx(), b.Dy()
 	if sw <= 0 || sh <= 0 {
-		return nil
+		return nil, nil
 	}
 
 	w, h := sw, sh
@@ -57,13 +71,9 @@ func writeThumb(data []byte, uploadDir, base string) error {
 
 	var buf bytes.Buffer
 	if err := jpeg.Encode(&buf, dst, &jpeg.Options{Quality: thumbJPEGQuality}); err != nil {
-		return err
+		return nil, err
 	}
-	dir := filepath.Join(uploadDir, "thumb")
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return err
-	}
-	return os.WriteFile(filepath.Join(dir, base+".jpg"), buf.Bytes(), 0o644)
+	return buf.Bytes(), nil
 }
 
 // scaleBilinear 用双线性插值缩放，直接操作 Pix 字节，比逐点 At/RGBAAt 快一个数量级。

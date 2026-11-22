@@ -4,9 +4,9 @@ import DishCard from './DishCard.vue'
 import DishEditor from './DishEditor.vue'
 import PantryFridge from './PantryFridge.vue'
 import OrderPanel from './OrderPanel.vue'
-import Food3D from './Food3D.vue'
+import PantryImage from './PantryImage.vue'
 import DishDetail from './DishDetail.vue'
-import { normalizeMeals, isCuisineHidden, pantryGroups, pantryVisual, pantryMatches, foodShape, normalizeIngredient, hasDishImage } from '../utils'
+import { normalizeMeals, isCuisineHidden, pantryGroups, pantryVisual, pantryMatches, normalizeIngredient, hasDishImage } from '../utils'
 import { getRecipe } from '../recipes'
 import { useModalBehavior } from '../modal'
 
@@ -304,8 +304,8 @@ const pantryCustom = ref('')
 const pantryQuery = ref('')
 useModalBehavior(() => { pantryOpen.value = false }, pantryRoot, pantryOpen)
 
-// 70 种食材分 7 类，加搜索与分类快捷跳转，避免长滚动里找不到想要的那一项
-// 搜索驱动：默认只显示「已选食材」，输入关键词才展示匹配结果，不再一进来铺满 73 样
+// 106 种常见生鲜/储存食材分 7 类；图片、搜索和冰箱分层共用同一份预设。
+// 搜索驱动：默认只显示「已选食材」，输入关键词才展示匹配结果，不把整个目录铺满。
 const pantrySearching = computed(() => !!pantryQuery.value.trim())
 const shownPantryGroups = computed(() => {
   const q = pantryQuery.value.trim().toLowerCase()
@@ -638,7 +638,7 @@ async function savePantry() {
             @sticker="onFridgeSticker" @food-click="onFoodClick"
           />
           <p class="setting-desc">
-            点选家里现有的食材，「今天吃啥」和菜谱「优先推荐」会立刻按它们重排。按类别找更快，佐料不参与推荐。
+            点选家里现有的食材，会按冷藏、生鲜托盘和保鲜抽屉真实摆放；「今天吃啥」和菜谱「优先推荐」也会立刻按它们重排。佐料不参与推荐。
           </p>
           <div class="pantry-toolbar">
             <input
@@ -678,7 +678,7 @@ async function savePantry() {
                 @pointerdown="tDown(p.name, $event)" @pointermove="tMove($event)"
                 @pointerup="tUp" @pointercancel="tUp"
               >
-                <span class="pantry-art" :style="{ background: p.tint }"><Food3D :name="p.name" v-bind="foodShape(p.name)" /></span>
+                <span class="pantry-art" :style="{ background: p.tint }"><PantryImage :name="p.name" eager /></span>
                 <span class="pantry-card-name">{{ p.name }}</span>
                 <!-- 放了几天：7 天转黄、14 天转红 -->
                 <span
@@ -700,7 +700,7 @@ async function savePantry() {
                 :aria-pressed="pantryDraft.has(p)" @click="togglePantry(p); !pantryDraft.has(p) && sendDrop(p, $event)"
               >
                 <span class="pantry-art" :style="{ background: pantryVisual(p).tint }">
-                  <Food3D :name="p" v-bind="foodShape(p)" />
+                  <PantryImage :name="p" />
                 </span>
                 <span class="pantry-card-name">{{ p }}</span>
                 <span v-if="pantryDraft.has(p)" class="pantry-check">✓</span>
@@ -717,7 +717,7 @@ async function savePantry() {
                 :aria-pressed="pantryDraft.has(p.name)" @click="togglePantry(p.name)"
               >
                 <span class="pantry-art" :style="{ background: p.tint }">
-                  <Food3D :name="p.name" v-bind="foodShape(p.name)" />
+                  <PantryImage :name="p.name" />
                 </span>
                 <span class="pantry-card-name">{{ p.name }}</span>
                 <span v-if="pantryDraft.has(p.name)" class="pantry-check">✓</span>

@@ -1,14 +1,14 @@
 <script setup>
 import { inject, computed } from 'vue'
-import { dishImage, imageSize, cuisineName, cuisineIcon, spicyText, artStyle, avoidConflicts, splitHighlight } from '../utils'
+import { imageSize, cuisineName, cuisineIcon, spicyText, artStyle, avoidConflicts, splitHighlight } from '../utils'
 import { getRecipe } from '../recipes'
 import { sparkleFromEvent, celebrate, vibrate } from '../feedback'
+import DishPhoto from './DishPhoto.vue'
 
 const props = defineProps({ dish: { type: Object, required: true }, highlight: { type: String, default: '' }, multi: { type: Boolean, default: false }, multiPicked: { type: Boolean, default: false } })
 defineEmits(['edit', 'open', 'multi-toggle'])
 const { state, actions, pending } = inject('app')
 
-const image = computed(() => dishImage(props.dish, state.cuisines, null, imageSize(state.settings.imageMode)))
 const cuisine = computed(() => cuisineName(props.dish.cuisine, state.cuisines))
 const selfMember = computed(() => state.members.find((m) => m.id === state.currentUserId) || null)
 
@@ -43,7 +43,11 @@ const avoidHits = computed(() => {
       @keydown.enter="multi ? $emit('multi-toggle', dish) : $emit('open', dish)"
       @keydown.space.prevent="multi ? $emit('multi-toggle', dish) : $emit('open', dish)"
     >
-      <img :src="image" :alt="dish.name" :style="artStyle(dish, state.dishes)" loading="lazy" decoding="async" class="img-fade" />
+      <DishPhoto
+        :item="dish" :cuisines="state.cuisines" :dishes="state.dishes"
+        :size="imageSize(state.settings.imageMode)" :alt="dish.name"
+        :style="artStyle(dish, state.dishes)" loading="lazy" decoding="async"
+      />
       <button class="dish-recipe" title="看做法" aria-label="看做法" @click.stop="$emit('open', dish)"><span class="badge-ico">📖</span></button>
       <button
         class="dish-fav" :class="{ 'is-fav': dish.favorite }"
@@ -67,7 +71,6 @@ const avoidHits = computed(() => {
       <div class="dish-tags">
         <span class="tag" v-for="t in (dish.tags || []).slice(0, 3)" :key="t">{{ t }}</span>
         <span class="tag tag-spicy" v-if="dish.spicy > 0">{{ spicyText(dish.spicy) }}</span>
-        <span class="tag tag-green" v-if="!dish.builtin">自家菜</span>
         <span class="tag tag-pantry" v-if="dish._pantryHits > 0" title="冰箱里已有的主料命中数，佐料不计">🧊 {{ dish._pantryHits }} 样现成</span>
         <span
           v-if="avoidHits.length" class="tag tag-avoid"

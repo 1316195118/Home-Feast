@@ -1,15 +1,19 @@
 package api
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"io/fs"
 	"mime"
 	"net/http"
+	"os"
 	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type staticAsset struct {
@@ -113,10 +117,124 @@ func (s *Server) serveUpload(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	if sub == "" {
-		w.Header().Set("Cache-Control", "public, max-age=86400")
-	} else {
-		w.Header().Set("Cache-Control", "public, max-age=604800")
+	// 上传图沿用固定文件名，恢复备份或重新上传时内容可能原地变化。
+	// no-cache 允许浏览器长期保存，但每次使用前用 Last-Modified/ETag 校验，
+	// 既不会重复下载未变化图片，也不会再把旧图固定缓存一整天。
+	w.Header().Set("Cache-Control", "public, no-cache")
+	target := filepath.Join(s.st.Dir(), "uploads", sub, name)
+	if sub == "thumb/" {
+		if info, err := os.Stat(target); err == nil && !info.IsDir() {
+			http.ServeFile(w, r, target)
+			return
+		}
+		// 历史图片、恢复备份或旧版本数据可能只有原图没有缩略图。
+		// 这里直接从原图生成并缓存在内存里，避免前端先吃 404 再下载大图。
+		if s.serveGeneratedThumb(w, r, name) {
+			return
+		}
 	}
-	http.ServeFile(w, r, filepath.Join(s.st.Dir(), "uploads", sub, name))
+	http.ServeFile(w, r, target)
+}
+
+var thumbSourceExts = [...]string{".webp", ".jpg", ".jpeg", ".png", ".gif"}
+
+// serveGeneratedThumb 返回 true 表示已经生成了响应；false 表示没有对应原图。
+func (s *Server) serveGeneratedThumb(w http.ResponseWriter, r *http.Request, name string) bool {
+	const ext = ".jpg"
+	if !strings.HasSuffix(strings.ToLower(name), ext) {
+		return false
+	}
+	base := name[:len(name)-len(ext)]
+	if base == "" || strings.ContainsAny(base, `/\`) || strings.Contains(base, "..") {
+		return false
+	}
+	thumb, err := s.generatedUploadThumb(base)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		http.Error(w, "缩略图生成失败", http.StatusInternalServerError)
+		return true
+	}
+	if err != nil {
+		return false
+	}
+
+	w.Header().Set("Content-Type", "image/jpeg")
+	w.Header().Set("Cache-Control", "public, no-cache")
+	w.Header().Set("ETag", thumb.etag)
+	if r.Header.Get("If-None-Match") == thumb.etag {
+		w.WriteHeader(http.StatusNotModified)
+		return true
+	}
+	http.ServeContent(w, r, name, time.Unix(thumb.modTime, 0), bytes.NewReader(thumb.data))
+	return true
+}
+
+// generatedUploadThumb 对同一个缺失缩略图只生成一次。不同图片仍可并行解码，
+// 不会因为一把全局大锁把整页图片串行拖慢。
+func (s *Server) generatedUploadThumb(base string) (*generatedThumb, error) {
+	source, info, err := s.findThumbSource(base)
+	if err != nil {
+		return nil, err
+	}
+
+	s.thumbMu.Lock()
+	if cached := s.thumbCache[base]; cached != nil &&
+		cached.source == source && cached.modTime == info.ModTime().UnixNano() && cached.size == info.Size() {
+		s.thumbMu.Unlock()
+		return cached, nil
+	}
+	if load := s.thumbLoads[base]; load != nil {
+		s.thumbMu.Unlock()
+		<-load.done
+		return load.thumb, load.err
+	}
+	generation := s.thumbGeneration
+	load := &generatedThumbLoad{done: make(chan struct{})}
+	s.thumbLoads[base] = load
+	s.thumbMu.Unlock()
+
+	data, readErr := os.ReadFile(source)
+	var rendered []byte
+	if readErr == nil {
+		rendered, readErr = renderThumbJPEG(data)
+		if readErr == nil && len(rendered) == 0 {
+			readErr = errors.New("原图尺寸无效")
+		}
+	}
+
+	var thumb *generatedThumb
+	if readErr == nil {
+		sum := sha256.Sum256(rendered)
+		thumb = &generatedThumb{
+			source: source, modTime: info.ModTime().UnixNano(), size: info.Size(),
+			data: rendered, etag: `"` + hex.EncodeToString(sum[:12]) + `-generated"`,
+		}
+	}
+
+	s.thumbMu.Lock()
+	if thumb != nil && generation == s.thumbGeneration {
+		s.thumbCache[base] = thumb
+	}
+	load.thumb, load.err = thumb, readErr
+	delete(s.thumbLoads, base)
+	close(load.done)
+	s.thumbMu.Unlock()
+	return thumb, readErr
+}
+
+func (s *Server) findThumbSource(base string) (string, os.FileInfo, error) {
+	dir := filepath.Join(s.st.Dir(), "uploads")
+	for _, ext := range thumbSourceExts {
+		target := filepath.Join(dir, base+ext)
+		if info, err := os.Stat(target); err == nil && !info.IsDir() {
+			return target, info, nil
+		}
+	}
+	return "", nil, os.ErrNotExist
+}
+
+func (s *Server) clearGeneratedThumbs() {
+	s.thumbMu.Lock()
+	s.thumbGeneration++
+	clear(s.thumbCache)
+	s.thumbMu.Unlock()
 }

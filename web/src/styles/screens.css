@@ -68,7 +68,7 @@
 
 /* overflow-x: clip 只裁水平溢出、不创建滚动容器，也不影响 .topbar 的 sticky；
    配合 base.css 里页面切换的左右位移，切页签时不会出现横向滚动条。 */
-.main { width: 100%; max-width: 1180px; margin: 0 auto; padding: 24px 22px 40px; flex: 1; overflow-x: clip; }
+.main { position: relative; width: 100%; max-width: 1180px; margin: 0 auto; padding: 24px 22px 40px; flex: 1; overflow-x: clip; }
 .footer { text-align: center; padding: 6px 20px 26px; font-size: 0.78rem; color: var(--muted); }
 
 .section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-gap); margin: var(--space-page) 0 var(--space-card); }
@@ -876,7 +876,7 @@
 
 /* ---------- 口味避雷 ---------- */
 .tag-avoid { background: var(--amber-soft); color: var(--brand-dark); font-weight: 700; }
-/* 冰箱食材命中标签：与「自家菜」同色系但加一点冷色，和避雷标签区分开 */
+/* 冰箱食材命中标签：带一点冷色，和避雷标签区分开 */
 .tag-pantry { background: var(--pantry-bg); color: var(--pantry-ink); font-weight: 700; }
 .member-avoid { color: var(--brand-dark); margin-top: 2px; }
 .avoid-picker { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
