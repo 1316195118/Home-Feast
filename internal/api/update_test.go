@@ -109,6 +109,55 @@ func TestUpdaterStateRoundtrip(t *testing.T) {
 	}
 }
 
+func TestCheckRecoveryRestoresAppliedUpdateStatus(t *testing.T) {
+	resetUpdateStateForTest(t)
+	dir := t.TempDir()
+	applied := updaterState{
+		Phase: "applied", From: "1.0.4.0", To: "1.0.4.1", At: "2026-11-22T22:30:00Z",
+	}
+	if err := writeUpdaterState(dir, applied); err != nil {
+		t.Fatal(err)
+	}
+
+	CheckRecovery(dir, "")
+
+	updateMu.Lock()
+	got := updateState
+	updateMu.Unlock()
+	if got.Downloading || got.Progress != 100 || got.Latest != applied.To ||
+		got.Message != "更新完成，正在重启服务" || got.LastError != "" {
+		t.Fatalf("启动后没有恢复成功状态: %+v", got)
+	}
+}
+
+func TestCheckRecoveryMarksCurrentVersionApplied(t *testing.T) {
+	resetUpdateStateForTest(t)
+	dir := t.TempDir()
+	if err := writeUpdaterState(dir, updaterState{
+		Phase: "applying", From: "1.0.4.0", To: Version, At: "2026-11-22T22:30:00Z",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	CheckRecovery(dir, "")
+
+	_, _, _, stateFile := updatePaths(dir)
+	b, err := os.ReadFile(stateFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var saved updaterState
+	if err := json.Unmarshal(b, &saved); err != nil || saved.Phase != "applied" {
+		t.Fatalf("启动自检后应落盘 applied，实际 %q / %v", saved.Phase, err)
+	}
+	updateMu.Lock()
+	got := updateState
+	updateMu.Unlock()
+	if got.Progress != 100 || got.Latest != Version || got.Downloading {
+		t.Fatalf("当前版本已启动时状态不正确: %+v", got)
+	}
+}
+
 func TestGoArchKey(t *testing.T) {
 	// 只在常见架构上断言，保证映射不退化
 	k := goArchKey()

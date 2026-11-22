@@ -26,7 +26,7 @@ import (
 // 为什么不用 github.com/api.github.com：实测容器网络只通 raw.githubusercontent.com
 // 与 ghproxy.net，前者不通。所以更新源固定为 raw，失败再退 ghproxy。
 const (
-	updateRepo   = "1316195118/Home-Feast"
+	updateRepo = "1316195118/Home-Feast"
 	// 用完整 ref 而不是 /main/：GitHub Raw 对短分支地址维护独立缓存，
 	// 发版后几分钟内可能仍返回旧 manifest；refs/heads/main 会立即指向最新提交。
 	updateBranch = "refs/heads/main"
@@ -250,18 +250,41 @@ func CheckRecovery(dataDir, binPath string) {
 		return
 	}
 	var st updaterState
-	if json.Unmarshal(b, &st) != nil || st.Phase != "applying" {
+	if json.Unmarshal(b, &st) != nil {
+		return
+	}
+	// 进程已经成功切换，但前端可能在上一个进程退出后才读到新进程状态。
+	// 把落盘的成功阶段恢复为内存状态，避免把空状态误判成“任务提前结束”。
+	if st.Phase == "applied" {
+		markUpdateApplied(st)
+		return
+	}
+	if st.Phase != "applying" {
 		return
 	}
 	// 记录过 applying 但能走到这里，说明新二进制成功启动了（本进程就是新的）
 	if st.To == Version {
-		writeUpdaterState(dataDir, updaterState{Phase: "applied", From: st.From, To: st.To, At: time.Now().Format(time.RFC3339)})
+		applied := updaterState{Phase: "applied", From: st.From, To: st.To, At: time.Now().Format(time.RFC3339)}
+		_ = writeUpdaterState(dataDir, applied)
+		markUpdateApplied(applied)
 		return
 	}
 	// 版本对不上：上一版二进制被重新拉起，说明更新失败，清理 staging
 	_ = os.Remove(backup)
 	_ = os.Remove(stateFile)
 	log.Printf("更新回退完成，当前版本 %s", Version)
+}
+
+func markUpdateApplied(st updaterState) {
+	updateMu.Lock()
+	updateState.Checking = false
+	updateState.Downloading = false
+	updateState.LastError = ""
+	updateState.Available = false
+	updateState.Latest = st.To
+	updateState.Progress = 100
+	updateState.Message = "更新完成，正在重启服务"
+	updateMu.Unlock()
 }
 
 func goArchKey() string {

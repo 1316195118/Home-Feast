@@ -230,7 +230,18 @@ async function pollUpdate() {
         break
       }
       if (!st.downloading) {
-        if (progress >= 100 || st.message === '已是最新版本') return st
+        if (st.phase === 'applied' || progress >= 100 || st.message === '已是最新版本') return st
+        // 新版进程刚启动时内存状态会归零，可能与旧进程最后一次轮询错过。
+        // 这时直接核对实际版本；目标版本已经在线就应继续完成流程，而不是报假失败。
+        const target = st.latest || updateInfo.value.latest
+        if (target) {
+          try {
+            const info = await api.ping()
+            if (info?.version === target) {
+              return { ...st, progress: 100, latest: target, message: '更新完成，正在重启服务' }
+            }
+          } catch { /* 服务仍在切换，下一轮继续 */ }
+        }
         if (sawTask) {
           taskError = new Error('更新任务提前结束，当前版本未改变')
           break
