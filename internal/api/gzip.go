@@ -26,6 +26,11 @@ type gzipResponseWriter struct {
 func (w *gzipResponseWriter) WriteHeader(code int) {
 	if !w.decided {
 		w.decided = true
+		// bootstrap 会缓存并直接下发预压缩内容；已经有编码时绝不能再包一层。
+		if w.Header().Get("Content-Encoding") != "" {
+			w.ResponseWriter.WriteHeader(code)
+			return
+		}
 		// 只有 200 且内容类型可压缩时才真正压
 		if code == http.StatusOK && compressible(w.Header().Get("Content-Type")) {
 			w.gzipped = true

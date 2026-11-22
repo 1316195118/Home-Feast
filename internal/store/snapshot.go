@@ -14,6 +14,7 @@ type BootstrapData struct {
 	Plans     []Plan
 	Plan      Plan
 	PlanCount int
+	Revision  uint64
 }
 
 // PlanningData 是编辑分工、点菜前校验需要的只读快照。
@@ -27,6 +28,16 @@ type PlanningData struct {
 type DutyData struct {
 	Meals   []MealSlot
 	Members []Member
+}
+
+// OrderLookupData 只复制点菜校验真正需要的目标菜品和目标成员。
+// 旧实现的 Planning() 会为一次点菜复制全量 237 道菜，随着菜谱增长会白白放大写锁等待。
+type OrderLookupData struct {
+	Meals       []MealSlot
+	Dish        Dish
+	DishFound   bool
+	Member      Member
+	MemberFound bool
 }
 
 // SettingsData 让设置页只取一次当前设置与成员，不把两次读取拼成可能错位的状态。
@@ -56,6 +67,7 @@ func (s *Store) Bootstrap(date string) BootstrapData {
 		Dishes:    cloneDishes(s.dishes),
 		Members:   s.cloneMembersLocked(),
 		PlanCount: len(s.plans),
+		Revision:  s.revision,
 	}
 	out.Plans = make([]Plan, 0, len(s.plans))
 	for _, p := range s.plans {
@@ -72,6 +84,29 @@ func (s *Store) Bootstrap(date string) BootstrapData {
 	out.Plan.NormalizeDuty()
 	if out.Plan.Orders == nil {
 		out.Plan.Orders = []Order{}
+	}
+	return out
+}
+
+// OrderLookup 在一次读锁内完成目标菜品、成员与有效餐次的校验，
+// 不复制整份菜谱，同时保持三类数据来自同一时刻。
+func (s *Store) OrderLookup(dishID, memberID string) OrderLookupData {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	out := OrderLookupData{Meals: effectiveMeals(s.settings.Meals)}
+	for _, dish := range s.dishes {
+		if dish.ID == dishID {
+			out.Dish = cloneDish(dish)
+			out.DishFound = true
+			break
+		}
+	}
+	for _, member := range s.members {
+		if member.ID == memberID {
+			out.Member = cloneMember(member)
+			out.MemberFound = true
+			break
+		}
 	}
 	return out
 }

@@ -32,25 +32,44 @@ const visibleCuisines = computed(() =>
 const SNACK_TAGS = ['小吃', '点心']
 // 数据层已把小吃菜 cuisine 迁为 snack；标签兜底保证老数据/新加的菜也能进这一栏。
 // 用「包含」而不是「等于」：像「川渝小吃」「广式点心」这类细分标签也要能命中。
-const isSnack = (d) => d.cuisine === 'snack'
-  || (d.tags || []).some((t) => SNACK_TAGS.some((k) => String(t).includes(k)))
-const snackCount = computed(() => state.dishes.filter(
-  (d) => !isCuisineHidden(d.cuisine, state.hiddenCuisines) && isSnack(d),
-).length)
+const snackCache = new WeakMap()
+function isSnack(d) {
+  if (snackCache.has(d)) return snackCache.get(d)
+  const value = d.cuisine === 'snack'
+    || (d.tags || []).some((t) => SNACK_TAGS.some((k) => String(t).includes(k)))
+  snackCache.set(d, value)
+  return value
+}
 
-const counts = computed(() => {
+// 分类计数、可见数量和「小吃」数量共享一次遍历；这些数据与搜索词无关，
+// 不会因为输入每一个字而重复扫 237 道菜。
+const dishStats = computed(() => {
   const map = {}
+  let visible = 0
+  let snacks = 0
   for (const d of state.dishes) {
     if (isCuisineHidden(d.cuisine, state.hiddenCuisines)) continue
-    if (isSnack(d)) continue // 小吃单独成栏，不重复计入地域菜系
+    visible++
+    const snack = isSnack(d)
+    if (snack) snacks++
+    if (snack) continue // 小吃单独成栏，不重复计入地域菜系
     map[d.cuisine] = (map[d.cuisine] || 0) + 1
   }
-  return map
+  return { counts: map, visible, snacks }
 })
+const snackCount = computed(() => dishStats.value.snacks)
+const counts = computed(() => dishStats.value.counts)
+const visibleDishCount = computed(() => dishStats.value.visible)
 
-const visibleDishCount = computed(() =>
-  state.dishes.filter((d) => !isCuisineHidden(d.cuisine, state.hiddenCuisines)).length
-)
+const searchTextCache = new WeakMap()
+function dishSearchText(d) {
+  const cached = searchTextCache.get(d)
+  if (cached !== undefined) return cached
+  const ings = (getRecipe(d)?.ingredients || d.ingredients || []).join(' ')
+  const text = [d.name, d.desc, ...(d.tags || []), ings].join(' ').toLowerCase()
+  searchTextCache.set(d, text)
+  return text
+}
 
 // 「优先推荐」：按冰箱已选主料的命中数实时重排，佐料不参与；
 // 命中数相同保持菜谱原顺序，勾选食材后 computed 自动重算，无需刷新。
@@ -81,8 +100,7 @@ const filtered = computed(() => {
     if (quickFilter.value === 'image' && !d.image) return false
     if (!q) return true
     // 配料也纳入搜索：搜「土豆」能找出所有用到土豆的菜，和冰箱食材推荐口径一致
-    const ings = (getRecipe(d)?.ingredients || d.ingredients || []).join(' ')
-    return [d.name, d.desc, ...(d.tags || []), ings].join(' ').toLowerCase().includes(q)
+    return dishSearchText(d).includes(q)
   })
   if (!priorityPantry.value) return base
   const pantry = state.settings.pantry || []
@@ -112,7 +130,7 @@ function maybeLoadMore() {
 }
 
 watch(
-  () => [activeCuisine.value, keyword.value, onlyFavorite.value, state.hiddenCuisines],
+  () => [activeCuisine.value, keyword.value, onlyFavorite.value, quickFilter.value, priorityPantry.value, state.hiddenCuisines],
   () => { visibleCount.value = PAGE }
 )
 watch([filtered, visibleCount], () => nextTick(maybeLoadMore))

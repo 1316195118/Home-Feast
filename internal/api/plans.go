@@ -1,7 +1,6 @@
 package api
 
 import (
-	"errors"
 	"net/http"
 	"time"
 
@@ -182,8 +181,8 @@ func (s *Server) addOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// 餐别以用户在设置里配置的为准，名字和时间都能改，所以不能写死早/中/晚。
-	planning := s.st.Planning()
-	meals := planning.Meals
+	lookup := s.st.OrderLookup(in.DishID, in.UserID)
+	meals := lookup.Meals
 	allowed := make(map[string]bool, len(meals))
 	for _, m := range meals {
 		allowed[m.Key] = true
@@ -196,24 +195,22 @@ func (s *Server) addOrder(w http.ResponseWriter, r *http.Request) {
 		jsonErr(w, http.StatusBadRequest, "餐别不在已配置的用餐时段里，请刷新页面重试")
 		return
 	}
-	dish, err := findDish(planning.Dishes, in.DishID)
-	if err != nil {
-		jsonErr(w, http.StatusNotFound, err.Error())
+	if !lookup.DishFound {
+		jsonErr(w, http.StatusNotFound, "菜品不存在，可能已被删除")
 		return
 	}
-	member, err := findMember(planning.Members, in.UserID)
-	if err != nil {
-		jsonErr(w, http.StatusBadRequest, err.Error())
+	if !lookup.MemberFound {
+		jsonErr(w, http.StatusBadRequest, "请先选择点菜的人")
 		return
 	}
 	order := store.Order{
-		DishID:      dish.ID,
-		DishName:    dish.Name,
-		DishCuisine: dish.Cuisine,
-		DishImage:   dish.Image,
-		UserID:      member.ID,
-		UserName:    member.Name,
-		UserAvatar:  member.Avatar,
+		DishID:      lookup.Dish.ID,
+		DishName:    lookup.Dish.Name,
+		DishCuisine: lookup.Dish.Cuisine,
+		DishImage:   lookup.Dish.Image,
+		UserID:      lookup.Member.ID,
+		UserName:    lookup.Member.Name,
+		UserAvatar:  lookup.Member.Avatar,
 		Note:        trimmed(in.Note, 100),
 		Meal:        meal,
 	}
@@ -258,24 +255,6 @@ func checkedDate(w http.ResponseWriter, r *http.Request) (string, bool) {
 		return "", false
 	}
 	return date, true
-}
-
-func findDish(list []store.Dish, id string) (store.Dish, error) {
-	for _, d := range list {
-		if d.ID == id {
-			return d, nil
-		}
-	}
-	return store.Dish{}, errors.New("菜品不存在，可能已被删除")
-}
-
-func findMember(list []store.Member, id string) (store.Member, error) {
-	for _, m := range list {
-		if m.ID == id {
-			return m, nil
-		}
-	}
-	return store.Member{}, errors.New("请先选择点菜的人")
 }
 
 func memberExists(list []store.Member, id string) bool {

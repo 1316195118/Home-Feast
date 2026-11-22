@@ -41,6 +41,7 @@ func configFile(name string) bool { return name == settingsFile }
 // Store 是内存中的数据镜像，所有公开方法都可并发调用。
 type Store struct {
 	mu         sync.RWMutex
+	revision   uint64 // 内存数据修订号；每次可见数据成功变化后递增，供 HTTP 快照缓存失效
 	dir        string // 用户数据目录（JSON / uploads / backups）
 	configDir  string // 配置目录，与 data 平级（家庭设置 settings.json）
 	dishes     []Dish
@@ -297,6 +298,19 @@ func (s *Store) repair() {
 		p.ChefIDs = keepKnown(p.ChefIDs, seenMember)
 		p.DishwasherIDs = keepKnown(p.DishwasherIDs, seenMember)
 		p.PKShown = keepKnown(p.PKShown, seenMember)
+		for meal, duty := range p.MealDuties {
+			before := len(duty.ChefIDs) + len(duty.DishwasherIDs)
+			duty.ChefIDs = keepKnown(duty.ChefIDs, seenMember)
+			duty.DishwasherIDs = keepKnown(duty.DishwasherIDs, seenMember)
+			if len(duty.ChefIDs)+len(duty.DishwasherIDs) != before {
+				changedPlans = true
+			}
+			if len(duty.ChefIDs) == 0 && len(duty.DishwasherIDs) == 0 {
+				delete(p.MealDuties, meal)
+			} else {
+				p.MealDuties[meal] = duty
+			}
+		}
 		if p.Dice != nil {
 			for id := range p.Dice {
 				if !seenMember[id] {
@@ -363,6 +377,18 @@ func validDateKey(s string) bool {
 // Dir 返回数据目录，供上传与备份使用。
 func (s *Store) Dir() string { return s.dir }
 
+// Revision 返回当前内存数据修订号。修订号只保证单调递增，不参与持久化。
+func (s *Store) Revision() uint64 {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.revision
+}
+
+// markChangedLocked 必须在持有写锁、且内存状态已经变更后调用。
+func (s *Store) markChangedLocked() {
+	s.revision++
+}
+
 // Path 返回某个逻辑文件名的真实磁盘路径（配置类进 config/，其余进根目录）。
 // 供备份导出/导入使用，使 zip 里保持扁平文件名、落盘时自动分流。
 func (s *Store) Path(name string) string { return s.pathOf(name) }
@@ -401,6 +427,7 @@ func (s *Store) Reload() error {
 	s.accessCode = access.Code
 	// 导入的数据同样过一遍体检：备份可能来自旧版本，或被人手改过。
 	s.repair()
+	s.markChangedLocked()
 	return nil
 }
 
@@ -419,6 +446,7 @@ func (s *Store) SetAccessCode(code string) error {
 		return err
 	}
 	s.accessCode = code
+	s.markChangedLocked()
 	return nil
 }
 
@@ -465,6 +493,7 @@ func (s *Store) AddDish(d Dish) (Dish, error) {
 		return Dish{}, err
 	}
 	s.dishes = next
+	s.markChangedLocked()
 	return cloneDish(d), nil
 }
 
@@ -489,6 +518,7 @@ func (s *Store) UpdateDish(id string, p DishPatch) (Dish, error) {
 		return Dish{}, err
 	}
 	s.dishes = next
+	s.markChangedLocked()
 	return cloneDish(d), nil
 }
 
@@ -560,6 +590,7 @@ func (s *Store) DeleteDish(id string) error {
 		return err
 	}
 	s.dishes = next
+	s.markChangedLocked()
 	return nil
 }
 
@@ -609,6 +640,7 @@ func (s *Store) SetMemberPin(id, pin, oldPin string) error {
 		return err
 	}
 	s.pins = next
+	s.markChangedLocked()
 	return nil
 }
 
@@ -643,6 +675,7 @@ func (s *Store) AddMember(m Member) (Member, error) {
 		return Member{}, err
 	}
 	s.members = next
+	s.markChangedLocked()
 	_, m.HasPin = s.pins[m.ID]
 	return cloneMember(m), nil
 }
@@ -679,6 +712,7 @@ func (s *Store) UpdateMember(id string, p MemberPatch) (Member, error) {
 		return Member{}, err
 	}
 	s.members = next
+	s.markChangedLocked()
 	_, m.HasPin = s.pins[m.ID]
 	return cloneMember(m), nil
 }
@@ -705,6 +739,7 @@ func (s *Store) DeleteMember(id string) error {
 		return err
 	}
 	s.members = next
+	s.markChangedLocked()
 	// 成员删掉后顺手清掉他的密码记录，避免 pins.json 里堆积孤立条目
 	if _, has := s.pins[id]; has {
 		pins := make(map[string]pinRecord, len(s.pins))
@@ -717,14 +752,19 @@ func (s *Store) DeleteMember(id string) error {
 			return err
 		}
 		s.pins = pins
+		s.markChangedLocked()
 	}
 
 	// 分工与骰子记录里若还留着这个人，一并清掉：否则首页会显示一个已经不在的成员。
 	// 历史订单不动——那里存的是下单时的名字与头像快照，删人后仍应保留记录。
 	plansChanged := false
+	nextPlans := make(map[string]Plan, len(s.plans))
 	for date, p := range s.plans {
 		p = clonePlan(p)
 		before := len(p.ChefIDs) + len(p.DishwasherIDs) + len(p.PKShown)
+		for _, duty := range p.MealDuties {
+			before += len(duty.ChefIDs) + len(duty.DishwasherIDs)
+		}
 		if p.Dice != nil {
 			if _, has := p.Dice[id]; has {
 				delete(p.Dice, id)
@@ -734,20 +774,35 @@ func (s *Store) DeleteMember(id string) error {
 		p.ChefIDs = removeID(p.ChefIDs, id)
 		p.DishwasherIDs = removeID(p.DishwasherIDs, id)
 		p.PKShown = removeID(p.PKShown, id)
-		if len(p.ChefIDs)+len(p.DishwasherIDs)+len(p.PKShown) != before {
+		for meal, duty := range p.MealDuties {
+			duty.ChefIDs = removeID(duty.ChefIDs, id)
+			duty.DishwasherIDs = removeID(duty.DishwasherIDs, id)
+			if len(duty.ChefIDs) == 0 && len(duty.DishwasherIDs) == 0 {
+				delete(p.MealDuties, meal)
+			} else {
+				p.MealDuties[meal] = duty
+			}
+		}
+		after := len(p.ChefIDs) + len(p.DishwasherIDs) + len(p.PKShown)
+		for _, duty := range p.MealDuties {
+			after += len(duty.ChefIDs) + len(duty.DishwasherIDs)
+		}
+		if after != before {
 			plansChanged = true
 		}
 		p.NormalizeDuty()
-		s.plans[date] = p
+		nextPlans[date] = p
 	}
 	if plansChanged {
-		list := make([]Plan, 0, len(s.plans))
-		for _, p := range s.plans {
+		list := make([]Plan, 0, len(nextPlans))
+		for _, p := range nextPlans {
 			list = append(list, p)
 		}
 		if err := s.writeJSON(plansFile, list); err != nil {
 			return err
 		}
+		s.plans = nextPlans
+		s.markChangedLocked()
 	}
 	return nil
 }
@@ -868,6 +923,7 @@ func (s *Store) SavePlan(date string, patch PlanPatch) (Plan, error) {
 			return Plan{}, err
 		}
 		s.plans[date] = p
+		s.markChangedLocked()
 		return clonePlan(p), nil
 	}
 
@@ -1017,6 +1073,7 @@ func (s *Store) persistPlans(changed Plan) error {
 		return err
 	}
 	s.plans = next
+	s.markChangedLocked()
 	return nil
 }
 
@@ -1037,6 +1094,7 @@ func (s *Store) SaveSettings(v Settings) (Settings, error) {
 		return Settings{}, err
 	}
 	s.settings = v
+	s.markChangedLocked()
 	return cloneSettings(v), nil
 }
 

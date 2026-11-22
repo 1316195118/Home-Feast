@@ -48,6 +48,41 @@ func TestBootstrapSnapshotIsIndependent(t *testing.T) {
 	}
 }
 
+func TestOrderLookupAndRevision(t *testing.T) {
+	st, err := Open(t.TempDir(), t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	dish := st.ListDishes()[0]
+	member := st.ListMembers()[0]
+	before := st.Revision()
+	lookup := st.OrderLookup(dish.ID, member.ID)
+	if !lookup.DishFound || lookup.Dish.ID != dish.ID || lookup.Dish.Name != dish.Name {
+		t.Fatalf("目标菜品查找失败: %+v", lookup)
+	}
+	if !lookup.MemberFound || lookup.Member.ID != member.ID || lookup.Member.Name != member.Name {
+		t.Fatalf("目标成员查找失败: %+v", lookup)
+	}
+	if len(lookup.Meals) == 0 {
+		t.Fatal("点菜校验应返回有效餐次")
+	}
+	if missing := st.OrderLookup("missing-dish", "missing-member"); missing.DishFound || missing.MemberFound {
+		t.Fatalf("不存在的目标不应被误判为找到: %+v", missing)
+	}
+
+	if _, err := st.UpdateDish(dish.ID, DishPatch{Favorite: boolPtr(true)}); err != nil {
+		t.Fatal(err)
+	}
+	if after := st.Revision(); after <= before {
+		t.Fatalf("写操作后修订号应递增，before=%d after=%d", before, after)
+	}
+	if snapshot := st.Bootstrap("2026-11-21"); snapshot.Revision != st.Revision() {
+		t.Fatalf("快照修订号应与数据一致，snapshot=%d store=%d", snapshot.Revision, st.Revision())
+	}
+}
+
+func boolPtr(v bool) *bool { return &v }
+
 func TestConcurrentReadPlanWhileWriting(t *testing.T) {
 	st, err := Open(t.TempDir(), t.TempDir())
 	if err != nil {

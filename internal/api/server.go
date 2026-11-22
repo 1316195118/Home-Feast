@@ -2,6 +2,8 @@
 package api
 
 import (
+	"bytes"
+	"compress/gzip"
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/hex"
@@ -9,7 +11,9 @@ import (
 	"io/fs"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"familymenu/internal/store"
@@ -30,6 +34,30 @@ type Server struct {
 	envCode string       // MENU_ACCESS_CODE 环境变量；非空时优先于网页里设置的口令
 	events  *eventBroker // SSE 广播器，写操作成功后通知所有在线设备
 	limit   *failLimiter // 口令 / PIN 的失败退避
+
+	bootstrapMu    sync.RWMutex
+	bootstrapCache *bootstrapCacheEntry
+	staticCache    sync.Map
+}
+
+type bootstrapCacheEntry struct {
+	revision uint64
+	date     string
+	raw      []byte
+	gzip     []byte
+	rawETag  string
+	gzipETag string
+}
+
+type closeHandler struct {
+	http.Handler
+	close func()
+}
+
+func (h *closeHandler) Close() {
+	if h.close != nil {
+		h.close()
+	}
 }
 
 // New 组装全部路由。网页里也能设置访问口令，见 updateSettings。
@@ -84,7 +112,7 @@ func New(st *store.Store, web fs.FS, envCode string) http.Handler {
 	root.HandleFunc("/uploads/", s.serveUpload)
 	root.HandleFunc("/", s.serveFrontend)
 	// 最外层压缩：JSON/JS/CSS/HTML 实测能省 65%~80% 传输量（见 gzip.go）
-	return withGzip(root)
+	return &closeHandler{Handler: withGzip(root), close: s.events.close}
 }
 
 // protect 做两件小事：写接口校验同源，口令开启时校验自定义请求头。
@@ -167,17 +195,49 @@ func (s *Server) config(w http.ResponseWriter, r *http.Request) {
 }
 
 // bootstrap 在一次存储读锁内生成完整首屏快照（含历史计划），
-// 前端只发这一条请求；不会先查一半再发起第二条查询拼状态。
-//
-// 带回 ETag：数据没变时返回 304，浏览器直接用本地缓存。
-// 每次刷新省下 ~32KB 传输，多设备同时开着时尤其明显。
+// 再按存储修订号缓存序列化与 gzip 结果。多人同时刷新时不再重复排序、复制和压缩
+// 同一份 237 道菜的数据；任意写操作成功后修订号变化，下一次请求自动重建。
 func (s *Server) bootstrap(w http.ResponseWriter, r *http.Request) {
 	date := today()
+	entry := s.cachedBootstrap(date, s.st.Revision())
+	if entry == nil {
+		s.bootstrapMu.Lock()
+		entry = s.bootstrapCache
+		if entry == nil || entry.date != date || entry.revision != s.st.Revision() {
+			built, err := s.buildBootstrapCache(date)
+			if err != nil {
+				s.bootstrapMu.Unlock()
+				jsonErr(w, http.StatusInternalServerError, "生成数据失败")
+				return
+			}
+			entry = built
+			s.bootstrapCache = built
+		}
+		s.bootstrapMu.Unlock()
+	}
+	s.serveBootstrap(w, r, entry)
+}
+
+func (s *Server) cachedBootstrap(date string, revision uint64) *bootstrapCacheEntry {
+	s.bootstrapMu.RLock()
+	defer s.bootstrapMu.RUnlock()
+	if entry := s.bootstrapCache; entry != nil && entry.date == date && entry.revision == revision {
+		return entry
+	}
+	return nil
+}
+
+func (s *Server) buildBootstrapCache(date string) (*bootstrapCacheEntry, error) {
 	snapshot := s.st.Bootstrap(date)
+	familyID := strings.TrimSpace(snapshot.Settings.FamilyID)
+	if familyID == "" {
+		familyID = "default"
+	}
 	payload := map[string]any{
 		"version":   Version,
+		"revision":  snapshot.Revision,
 		"today":     date,
-		"familyId":  s.familyID(),
+		"familyId":  familyID,
 		"settings":  snapshot.Settings,
 		"meals":     snapshot.Meals, // 生效的用餐时段配置（含旧数据兜底默认三餐）
 		"cuisines":  store.OrderedCuisines(snapshot.Settings.CuisineOrder),
@@ -189,17 +249,54 @@ func (s *Server) bootstrap(w http.ResponseWriter, r *http.Request) {
 	}
 	body, err := json.Marshal(payload)
 	if err != nil {
-		jsonErr(w, http.StatusInternalServerError, "生成数据失败")
-		return
+		return nil, err
+	}
+	gzipped, err := gzipBody(body)
+	if err != nil {
+		return nil, err
 	}
 	sum := sha256.Sum256(body)
-	etag := `"` + hex.EncodeToString(sum[:12]) + `"`
+	gzipSum := sha256.Sum256(gzipped)
+	return &bootstrapCacheEntry{
+		revision: snapshot.Revision,
+		date:     date,
+		raw:      body,
+		gzip:     gzipped,
+		rawETag:  `"` + hex.EncodeToString(sum[:12]) + `"`,
+		gzipETag: `"` + hex.EncodeToString(gzipSum[:12]) + `-gzip"`,
+	}, nil
+}
+
+func gzipBody(body []byte) ([]byte, error) {
+	var buf bytes.Buffer
+	zw := gzip.NewWriter(&buf)
+	if _, err := zw.Write(body); err != nil {
+		return nil, err
+	}
+	if err := zw.Close(); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+func (s *Server) serveBootstrap(w http.ResponseWriter, r *http.Request, entry *bootstrapCacheEntry) {
+	useGzip := strings.Contains(r.Header.Get("Accept-Encoding"), "gzip")
+	body, etag := entry.raw, entry.rawETag
+	if useGzip {
+		body, etag = entry.gzip, entry.gzipETag
+	}
 	w.Header().Set("ETag", etag)
-	w.Header().Set("Cache-Control", "private, no-cache") // 允许缓存，但每次都要回来验证
+	w.Header().Set("Cache-Control", "private, no-cache")
+	w.Header().Set("Vary", "Accept-Encoding")
 	if r.Header.Get("If-None-Match") == etag {
 		w.WriteHeader(http.StatusNotModified)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("Content-Length", strconv.Itoa(len(body)))
+	if useGzip {
+		w.Header().Set("Content-Encoding", "gzip")
+	}
+	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(body)
 }

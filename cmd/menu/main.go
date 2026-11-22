@@ -65,14 +65,19 @@ func main() {
 	api.CheckRecovery(*dataDir, "")
 	accessCode := os.Getenv("MENU_ACCESS_CODE")
 
+	handler := api.New(st, web, accessCode)
 	server := &http.Server{
 		Addr:              *addr + ":" + *port,
-		Handler:           api.New(st, web, accessCode),
+		Handler:           handler,
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       2 * time.Minute, // 给手机慢速上传照片留足时间
 		WriteTimeout:      60 * time.Second,
 		IdleTimeout:       2 * time.Minute, // 多端浏览时复用 keep-alive 连接
 		MaxHeaderBytes:    64 << 10,
+	}
+	// SSE 是长连接。退出时先结束事件流，否则 Shutdown 会一直等在线设备断开。
+	if closer, ok := handler.(interface{ Close() }); ok {
+		server.RegisterOnShutdown(closer.Close)
 	}
 
 	go func() {
@@ -93,5 +98,6 @@ func main() {
 	defer cancel()
 	if err := server.Shutdown(shutdownCtx); err != nil {
 		log.Printf("关闭超时: %v", err)
+		_ = server.Close()
 	}
 }

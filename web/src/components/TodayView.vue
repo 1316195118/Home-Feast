@@ -11,12 +11,14 @@ import WeekMenu from './WeekMenu.vue'
 
 const { state, actions, pending, confirmDialog, choiceDialog } = inject('app')
 const detailId = ref(null)
-const detailDish = computed(() => state.dishes.find((d) => d.id === detailId.value) || null)
+const dishMap = computed(() => new Map(state.dishes.map((dish) => [dish.id, dish])))
+const detailDish = computed(() => dishMap.value.get(detailId.value) || null)
 const pkOpen = ref(false)
 const shoppingOpen = ref(false)
 const shareOpen = ref(false)
 
 const orders = computed(() => state.plan.orders || [])
+const pickedDishIds = computed(() => new Set(orders.value.map((order) => order.dishId).filter(Boolean)))
 // 餐别完全来自后端下发：名字、图标、结束时刻都能在设置里改，这里不写死。
 const meals = computed(() => normalizeMeals(state.meals))
 // 默认自动跟随当前时段；用户手动选过之后全局生效（菜谱页/详情弹窗点菜也归这一餐）。
@@ -106,7 +108,7 @@ const recentIds = computed(() => {
 function todayBalance() {
   const c = { meat: 0, veg: 0, soup: 0, staple: 0, dessert: 0 }
   for (const o of state.plan.orders || []) {
-    const d = state.dishes.find((x) => x.id === o.dishId)
+    const d = dishMap.value.get(o.dishId)
     if (!d) continue
     const cat = classifyDish(d, getRecipe(d).ingredients || [])
     if (cat in c) c[cat]++
@@ -373,12 +375,12 @@ async function saveNote() {
 }
 
 function isPicked(dish) {
-  return orders.value.some((o) => o.dishId === dish.id)
+  return pickedDishIds.value.has(dish.id)
 }
 
 // 点完菜保留当前这三张卡片，只标记「已点」，避免图片突然换掉让人以为点错了
 // 上桌后顺手评价：不用钻进详情页，直接给这道菜打分
-function dishById(id) { return state.dishes.find((d) => d.id === id) || null }
+function dishById(id) { return dishMap.value.get(id) || null }
 function quickRate(order, v) {
   const d = dishById(order.dishId)
   if (!d) return
@@ -447,7 +449,7 @@ async function quickOrder(dish, event) {
 const doneCount = computed(() => orders.value.filter((o) => o.done).length)
 const peopleCount = computed(() => new Set(orders.value.map((o) => o.userId)).size)
 const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
-  const dish = state.dishes.find((d) => d.id === o.dishId)
+  const dish = dishMap.value.get(o.dishId)
   return sum + (dish?.minutes || 20)
 }, 0))
 </script>

@@ -31,7 +31,8 @@ func TestRepairOnOpen(t *testing.T) {
 		{"id":"u1","name":"重复成员"}
 	]`)
 	writeFile(t, filepath.Join(dir, "plans.json"), `[
-		{"date":"2026-01-01","chefIds":["u1","ghost"],"dishwasherIds":["ghost"]},
+		{"date":"2026-01-01","chefIds":["u1","ghost"],"dishwasherIds":["ghost"],
+		 "mealDuties":{"lunch":{"chefIds":["u1","ghost"],"dishwasherIds":["ghost"]}}},
 		{"date":"bad-date","chefIds":["u1"]}
 	]`)
 
@@ -67,6 +68,10 @@ func TestRepairOnOpen(t *testing.T) {
 	if len(p.DishwasherIDs) != 0 {
 		t.Fatalf("全是悬空引用的洗碗名单应清空: %v", p.DishwasherIDs)
 	}
+	lunch := p.MealDuties["lunch"]
+	if len(lunch.ChefIDs) != 1 || lunch.ChefIDs[0] != "u1" || len(lunch.DishwasherIDs) != 0 {
+		t.Fatalf("按餐分工里的悬空引用未清理: %+v", lunch)
+	}
 	if got := st.GetPlan("bad-date"); len(got.Orders) != 0 || len(got.ChefIDs) != 0 {
 		t.Fatalf("非法日期的安排应被丢弃，实际 %+v", got)
 	}
@@ -93,6 +98,11 @@ func TestDeleteMemberCleansDuty(t *testing.T) {
 	if _, err := st.SavePlan("2026-02-02", PlanPatch{ChefIDs: &ids}); err != nil {
 		t.Fatalf("写分工失败: %v", err)
 	}
+	if _, err := st.SavePlan("2026-02-02", PlanPatch{
+		DutyMeal: "lunch", ChefIDs: &ids, DishwasherIDs: &ids,
+	}); err != nil {
+		t.Fatalf("写按餐分工失败: %v", err)
+	}
 	dice := map[string]int{m1.ID: 5, m2.ID: 3}
 	if _, err := st.SavePlan("2026-02-02", PlanPatch{Dice: &dice}); err != nil {
 		t.Fatalf("写骰子失败: %v", err)
@@ -105,6 +115,11 @@ func TestDeleteMemberCleansDuty(t *testing.T) {
 	p := st.GetPlan("2026-02-02")
 	if len(p.ChefIDs) != 1 || p.ChefIDs[0] != m2.ID {
 		t.Fatalf("被删成员应只剩另一个人: %v", p.ChefIDs)
+	}
+	lunch := p.MealDuties["lunch"]
+	if len(lunch.ChefIDs) != 1 || lunch.ChefIDs[0] != m2.ID ||
+		len(lunch.DishwasherIDs) != 1 || lunch.DishwasherIDs[0] != m2.ID {
+		t.Fatalf("按餐分工里仍有被删成员: %+v", lunch)
 	}
 	if _, has := p.Dice[m1.ID]; has {
 		t.Fatalf("骰子记录里仍有被删成员")

@@ -149,11 +149,13 @@ func safeImage(v string) string {
 
 func cleanTags(tags []string) []string {
 	out := make([]string, 0, len(tags))
+	seen := make(map[string]bool, len(tags))
 	for _, t := range tags {
 		v := trimmed(t, 12)
-		if v == "" {
+		if v == "" || seen[v] {
 			continue
 		}
+		seen[v] = true
 		out = append(out, v)
 		if len(out) == 6 {
 			break

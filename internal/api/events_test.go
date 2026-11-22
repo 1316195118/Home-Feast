@@ -50,6 +50,31 @@ func TestEventBrokerSkipsOriginatingClient(t *testing.T) {
 	}
 }
 
+func TestEventBrokerClosesSubscribers(t *testing.T) {
+	broker := newEventBroker()
+	sub := broker.subscribe("tab-a")
+	broker.close()
+	select {
+	case _, ok := <-sub:
+		if ok {
+			t.Fatal("broker 关闭后订阅通道应关闭")
+		}
+	case <-time.After(time.Second):
+		t.Fatal("broker 关闭后订阅者没有及时退出")
+	}
+	// 关闭后再次订阅也不能阻塞，得到的是已关闭通道。
+	late := broker.subscribe("tab-b")
+	select {
+	case _, ok := <-late:
+		if ok {
+			t.Fatal("关闭后的新订阅应立即结束")
+		}
+	case <-time.After(time.Second):
+		t.Fatal("关闭后的新订阅没有立即结束")
+	}
+	broker.publish("") // 关闭后广播应安全地成为空操作
+}
+
 type deadlineRecorder struct {
 	header   http.Header
 	body     bytes.Buffer

@@ -81,6 +81,19 @@ async function run(width, height, tag, mobile) {
   ws.close(); proc.kill()
 }
 
-await run(1280, 900, 'desktop', false)
-await run(390, 844, 'phone', true)
+const DEFAULT_SIZES = [
+  [1280, 900, 'desktop', false],
+  [390, 844, 'phone', true],
+]
+const sizes = process.env.SIZES
+  ? process.env.SIZES.split(',').map((item) => {
+    const [width, height] = item.trim().split('x').map(Number)
+    if (!width || !height) throw new Error(`无效尺寸 ${item}`)
+    return [width, height, `${width}x${height}`, width <= 600]
+  })
+  : DEFAULT_SIZES
+
+for (const [width, height, tag, mobile] of sizes) {
+  await run(width, height, tag, mobile)
+}
 console.log('\nDONE')

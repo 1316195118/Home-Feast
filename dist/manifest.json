@@ -1,31 +1,31 @@
 {
-  "version": "1.0.3.5",
-  "publishedAt": "2026-11-21T15:10:58",
-  "note": "优化点菜反馈、页面切换与实时同步，减少重复刷新和卡顿",
+  "version": "1.0.3.6",
+  "publishedAt": "2026-11-22T14:15:09",
+  "note": "**新增**\n- 增加可复跑接口压力与性能基准脚本，覆盖并发读写、SSE 与故障输入\n\n**修复**\n- 修复菜系排序实时不更新、删除成员后按餐分工残留、手机长昵称撑宽页面\n- 修复多人实时连接下服务退出等待和标签重复问题\n\n**优化**\n- 优化首屏快照与静态资源缓存，预生成 gzip 和 ETag，减少重复压缩与序列化\n- 优化点菜查询、菜单检索和今日数据索引，降低多人访问时的锁等待与页面重建",
   "files": {
     "amd64": {
       "name": "menu-linux-amd64",
-      "sha256": "bb20d8fb667b3e8c4a2306b0c91618186943efe2af9ab85666e903f8f67c1cff",
-      "size": 10485920,
+      "sha256": "5b76f77aa413b8273f8e9e1cd0c94e291c54cf0290934dbe4d9d1abe77003d7f",
+      "size": 10506400,
       "gz": "menu-linux-amd64.gz",
-      "gzSha256": "41da45afec9e2b167eee8deb15a81bebfaadd50438deb9dcca5f4c615776d59e",
-      "gzSize": 5094526
+      "gzSha256": "62df1de9fec9f883171d99b58e80fcf62f5025023fcb9a48ea61b3e1cb5bbd40",
+      "gzSize": 5102355
     },
     "arm64": {
       "name": "menu-linux-arm64",
-      "sha256": "d0949d122a97c0ceaa54c660096885a1b913feb831fb3ff42c998f086fdd1378",
-      "size": 9830560,
+      "sha256": "46b2107ee69d34d117c8714bf7d69802a31f437cca8bdeff50c64a6a96e35a59",
+      "size": 9896096,
       "gz": "menu-linux-arm64.gz",
-      "gzSha256": "5ac068758d270b78b7e46f4bc336887ed63227fca224d5f27ecbaa81237afabd",
-      "gzSize": 4728752
+      "gzSha256": "e0a0adbc8fc5e5bcc04ad9297da1c24fbfc3a80ad910b247b35e992a42e84599",
+      "gzSize": 4735123
     },
     "armv7": {
       "name": "menu-linux-armv7",
-      "sha256": "905ea110918dde51e5e805ddc73b4bdb301066a02cc59ab7a05f688828e0e75f",
+      "sha256": "af35ab1d4051b6840940bfe3f4190cb0aa1beb6fb181cc0707f13a325a7b0112",
       "size": 10354848,
       "gz": "menu-linux-armv7.gz",
-      "gzSha256": "8b984c67c8db1f608f197ab362c89823bd1550767dbdc3623b0df9d4b64decb8",
-      "gzSize": 4955649
+      "gzSha256": "7654fb95c0b4d492f499864157e6ae5f03f03fc06629cde19870397d4d234d91",
+      "gzSize": 4963686
     }
   }
 }

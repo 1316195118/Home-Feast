@@ -70,6 +70,7 @@ const state = reactive({
   busy: 0,           // 进行中的写操作数量，用于顶部进度条与防连点
   tab: 'today',
   version: '',
+  revision: 0,
   releaseNote: '',   // 本次构建的更新说明，随二进制一起编译进来
   buildTime: '',     // 构建时间，用来判断线上跑的是哪一版
   today: '',
@@ -217,21 +218,68 @@ function requestRefresh(delay = 220) {
   }, Math.max(0, delay))
 }
 
+function sameValue(a, b) {
+  if (a === b) return true
+  try { return JSON.stringify(a) === JSON.stringify(b) } catch { return false }
+}
+
+// bootstrap 每次都会传回完整 JSON。若直接整体替换，237 道菜会全部变成新对象，
+// DishCard 重渲染、getRecipe 的 WeakMap 缓存也会全丢。这里只替换真正变化的条目，
+// 未变化时连数组引用都保留，让 Vue 能跳过整块更新。
+function mergeByKey(previous, next, keyOf) {
+  if (!Array.isArray(previous) || !Array.isArray(next)) return next
+  const oldByKey = new Map(previous.map((item) => [keyOf(item), item]))
+  let changed = previous.length !== next.length
+  const merged = new Array(next.length)
+  for (let i = 0; i < next.length; i++) {
+    const item = next[i]
+    const old = oldByKey.get(keyOf(item))
+    // 顺序本身就是数据：用户调整菜系顺序时，条目对象可能一个都没变，
+    // 只是换了位置。若这里仍返回旧数组，界面会一直显示调整前的排序。
+    if (old && previous[i] === old && sameValue(old, item)) {
+      merged[i] = old
+    } else {
+      merged[i] = item
+      changed = true
+    }
+  }
+  return changed ? merged : previous
+}
+
 function applyBootstrap(info) {
+  if (
+    state.ready
+    && state.today === info.today
+    && state.version === info.version
+    && state.revision === Number(info.revision || 0)
+  ) {
+    state.now = Date.now()
+    state.meal = currentMeal(state.now, state.meals)
+    scheduleMealBoundary()
+    return
+  }
   state.version = info.version
+  state.revision = Number(info.revision || 0)
   state.today = info.today
-  state.meals = normalizeMeals(info.meals)
+  const nextMeals = normalizeMeals(info.meals)
+  state.meals = sameValue(state.meals, nextMeals) ? state.meals : nextMeals
   // 用户可能在设置里删掉了当前手动选中的那一餐，避免之后点菜提交不存在的 key
   if (state.mealPick && !state.meals.some((m) => m.key === state.mealPick)) state.mealPick = ''
   state.now = Date.now()
   state.meal = currentMeal(state.now, state.meals)
-  state.settings = info.settings || { familyName: '我们家' }
-  state.hiddenCuisines = info.settings?.hiddenCuisines || []
-  state.cuisines = info.cuisines || []
-  state.dishes = info.dishes || []
-  state.members = info.members || []
-  state.plan = info.plan || { date: info.today, orders: [] }
-  state.plans = info.plans || []
+  const nextSettings = info.settings || { familyName: '我们家' }
+  state.settings = sameValue(state.settings, nextSettings) ? state.settings : nextSettings
+  const nextHidden = nextSettings.hiddenCuisines || []
+  state.hiddenCuisines = sameValue(state.hiddenCuisines, nextHidden) ? state.hiddenCuisines : nextHidden
+  state.cuisines = mergeByKey(state.cuisines, info.cuisines || [], (c) => c.key)
+  state.dishes = mergeByKey(state.dishes, info.dishes || [], (d) => d.id)
+  state.members = mergeByKey(state.members, info.members || [], (m) => m.id)
+  const nextPlans = mergeByKey(state.plans, info.plans || [], (p) => p.date)
+  state.plans = nextPlans
+  const planFromList = nextPlans.find((p) => p.date === info.today)
+  const nextPlan = info.plan || { date: info.today, orders: [] }
+  state.plan = planFromList
+    || (state.plan?.date === info.today && sameValue(state.plan, nextPlan) ? state.plan : nextPlan)
   if (!state.members.some((m) => m.id === state.currentUserId)) {
     state.currentUserId = state.members[0]?.id || ''
   }

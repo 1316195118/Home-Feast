@@ -4,14 +4,17 @@ package api
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
+	"testing/fstest"
 	"time"
 
 	"familymenu/internal/store"
@@ -71,6 +74,93 @@ func TestBootstrapShape(t *testing.T) {
 	}
 	if len(m["dishes"].([]any)) == 0 || len(m["members"].([]any)) == 0 {
 		t.Fatal("新库应自动播种菜品与成员")
+	}
+}
+
+func TestBootstrapCompressedCacheAndInvalidation(t *testing.T) {
+	h := newTestHandler(t)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/bootstrap", nil)
+	req.Header.Set("Accept-Encoding", "gzip")
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("bootstrap 应 200，实际 %d：%s", w.Code, w.Body.String())
+	}
+	if got := w.Header().Get("Content-Encoding"); got != "gzip" {
+		t.Fatalf("bootstrap 应预压缩为 gzip，实际 %q", got)
+	}
+	if got := w.Header().Get("Vary"); !strings.Contains(got, "Accept-Encoding") {
+		t.Fatalf("bootstrap 应声明 Vary: Accept-Encoding，实际 %q", got)
+	}
+	zr, err := gzip.NewReader(bytes.NewReader(w.Body.Bytes()))
+	if err != nil {
+		t.Fatalf("gzip 头无效: %v", err)
+	}
+	plain, err := io.ReadAll(zr)
+	if err != nil {
+		t.Fatalf("解压 bootstrap: %v", err)
+	}
+	if len(plain) == 0 || plain[0] != '{' {
+		t.Fatalf("不应被重复 gzip，解压后开头 %q", string(plain[:min(len(plain), 8)]))
+	}
+	etag := w.Header().Get("ETag")
+	if etag == "" {
+		t.Fatal("bootstrap 应带 ETag")
+	}
+
+	req = httptest.NewRequest(http.MethodGet, "/api/bootstrap", nil)
+	req.Header.Set("Accept-Encoding", "gzip")
+	req.Header.Set("If-None-Match", etag)
+	w = httptest.NewRecorder()
+	h.ServeHTTP(w, req)
+	if w.Code != http.StatusNotModified || w.Body.Len() != 0 {
+		t.Fatalf("缓存命中应返回空 304，实际 %d，%d 字节", w.Code, w.Body.Len())
+	}
+
+	w = do(h, http.MethodPost, "/api/dishes", `{"name":"缓存失效测试菜","cuisine":"homestyle"}`)
+	if w.Code != http.StatusCreated {
+		t.Fatalf("新增菜品应 201，实际 %d：%s", w.Code, w.Body.String())
+	}
+	w = do(h, http.MethodGet, "/api/bootstrap", "")
+	if w.Code != http.StatusOK || !strings.Contains(w.Body.String(), "缓存失效测试菜") {
+		t.Fatalf("写操作后 bootstrap 应重建并包含新菜，实际 %d：%s", w.Code, w.Body.String())
+	}
+	if got := w.Header().Get("ETag"); got == "" || got == etag {
+		t.Fatalf("数据变化后 ETag 必须变化，旧 %q，新 %q", etag, got)
+	}
+}
+
+func TestStaticAssetPrecompression(t *testing.T) {
+	st, err := store.Open(t.TempDir(), t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	index := "<!doctype html><title>家庭点菜</title>" + strings.Repeat(" ", 2048)
+	h := New(st, fstest.MapFS{
+		"index.html": &fstest.MapFile{Data: []byte(index)},
+	}, "")
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("Accept-Encoding", "gzip")
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, req)
+	if w.Code != http.StatusOK || w.Header().Get("Content-Encoding") != "gzip" {
+		t.Fatalf("静态首页应预压缩，实际 %d / %q", w.Code, w.Header().Get("Content-Encoding"))
+	}
+	if got := w.Header().Get("Content-Length"); got != strconv.Itoa(w.Body.Len()) {
+		t.Fatalf("Content-Length 应为压缩后长度，header=%s body=%d", got, w.Body.Len())
+	}
+	zr, err := gzip.NewReader(bytes.NewReader(w.Body.Bytes()))
+	if err != nil {
+		t.Fatalf("静态 gzip 头无效: %v", err)
+	}
+	plain, err := io.ReadAll(zr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(plain) != index {
+		t.Fatalf("预压缩内容不一致，解压后 %d 字节", len(plain))
 	}
 }
 

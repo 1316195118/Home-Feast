@@ -14,6 +14,7 @@ type eventBroker struct {
 	mu      sync.Mutex
 	subs    map[chan int64]string
 	version int64
+	closed  bool
 }
 
 func newEventBroker() *eventBroker {
@@ -23,6 +24,11 @@ func newEventBroker() *eventBroker {
 func (b *eventBroker) subscribe(clientID string) chan int64 {
 	ch := make(chan int64, 1)
 	b.mu.Lock()
+	if b.closed {
+		close(ch)
+		b.mu.Unlock()
+		return ch
+	}
 	b.subs[ch] = cleanClientID(clientID)
 	b.mu.Unlock()
 	return ch
@@ -36,6 +42,10 @@ func (b *eventBroker) unsubscribe(ch chan int64) {
 
 func (b *eventBroker) publish(origin string) {
 	b.mu.Lock()
+	if b.closed {
+		b.mu.Unlock()
+		return
+	}
 	b.version++
 	version := b.version
 	origin = cleanClientID(origin)
@@ -51,6 +61,19 @@ func (b *eventBroker) publish(origin string) {
 		}
 	}
 	b.mu.Unlock()
+}
+
+func (b *eventBroker) close() {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if b.closed {
+		return
+	}
+	b.closed = true
+	for ch := range b.subs {
+		close(ch)
+	}
+	b.subs = make(map[chan int64]string)
 }
 
 // streamEvents 保持一条长连接；25 秒一次注释心跳，避免中间设备把空闲连接掐掉。
@@ -79,7 +102,10 @@ func (s *Server) streamEvents(w http.ResponseWriter, r *http.Request) {
 	defer tick.Stop()
 	for {
 		select {
-		case version := <-ch:
+		case version, ok := <-ch:
+			if !ok {
+				return
+			}
 			if _, err := fmt.Fprintf(w, "data: {\"v\":%d}\n\n", version); err != nil {
 				return
 			}
