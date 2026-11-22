@@ -1,6 +1,8 @@
 package api
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"io/fs"
 	"mime"
 	"net/http"
@@ -14,6 +16,8 @@ type staticAsset struct {
 	data        []byte
 	gzip        []byte
 	contentType string
+	etag        string
+	gzipETag    string
 }
 
 func (s *Server) loadStatic(name string) (*staticAsset, bool) {
@@ -32,9 +36,13 @@ func (s *Server) loadStatic(name string) (*staticAsset, bool) {
 		contentType = "application/octet-stream"
 	}
 	asset := &staticAsset{data: data, contentType: contentType}
+	sum := sha256.Sum256(data)
+	asset.etag = `"` + hex.EncodeToString(sum[:12]) + `"`
 	if len(data) >= 1024 && compressible(contentType) {
 		if gz, gzipErr := gzipBody(data); gzipErr == nil {
 			asset.gzip = gz
+			gzipSum := sha256.Sum256(gz)
+			asset.gzipETag = `"` + hex.EncodeToString(gzipSum[:12]) + `-gzip"`
 		}
 	}
 	actual, _ := s.staticCache.LoadOrStore(name, asset)
@@ -70,11 +78,20 @@ func (s *Server) serveFrontend(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-cache")
 	}
 	body := asset.data
+	etag := asset.etag
 	useGzip := len(asset.gzip) > 0 && strings.Contains(r.Header.Get("Accept-Encoding"), "gzip")
 	if useGzip {
 		body = asset.gzip
+		etag = asset.gzipETag
 		w.Header().Set("Content-Encoding", "gzip")
 		w.Header().Set("Vary", "Accept-Encoding")
+	}
+	if etag != "" {
+		w.Header().Set("ETag", etag)
+		if r.Header.Get("If-None-Match") == etag {
+			w.WriteHeader(http.StatusNotModified)
+			return
+		}
 	}
 	w.Header().Set("Content-Length", strconv.Itoa(len(body)))
 	w.WriteHeader(http.StatusOK)

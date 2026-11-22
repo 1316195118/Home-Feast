@@ -157,6 +157,45 @@ async function baseline() {
     if (!result.response.ok) throw new Error(`清理临时订单失败 ${result.response.status}`)
   }
   console.log(`已清理 ${createdOrders.length} 条临时订单。`)
+
+  // 批量事务基准：页面「批量点菜 / 再来一桌」共用此链路。
+  const occupied = new Set((boot.data.plan?.orders || []).map((order) => order.dishId))
+  const batchDishIDs = boot.data.dishes
+    .map((dish) => dish.id)
+    .filter((id) => !occupied.has(id))
+    .slice(0, 40)
+  const batch = await timedFetch(`/api/plans/${today}/orders/batch`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Client-ID': `perf-batch-${Date.now()}`,
+    },
+    body: JSON.stringify({
+      userId: memberId,
+      items: batchDishIDs.map((dishId) => ({ dishId, note: '批量性能基准临时数据' })),
+    }),
+  })
+  if (!batch.response.ok) throw new Error(`批量点菜失败 ${batch.response.status}`)
+  const batchPlan = JSON.parse(new TextDecoder().decode(batch.body))
+  const batchOrderIDs = (batchPlan.plan?.orders || [])
+    .filter((order) => batchDishIDs.includes(order.dishId))
+    .map((order) => order.id)
+  console.log(`${'批量点菜 40 道'.padEnd(24)} ${batch.ms.toFixed(1)}ms（单次事务，新增 ${batchPlan.added} 道）`)
+
+  const done = await timedFetch(`/api/plans/${today}/orders/batch`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Client-ID': `perf-batch-done-${Date.now()}`,
+    },
+    body: JSON.stringify({ orderIds: batchOrderIDs, done: true }),
+  })
+  if (!done.response.ok) throw new Error(`批量上桌失败 ${done.response.status}`)
+  console.log(`${'批量上桌 40 道'.padEnd(24)} ${done.ms.toFixed(1)}ms（单次事务）`)
+  for (const orderId of batchOrderIDs) {
+    const result = await timedFetch(`/api/plans/${today}/orders/${orderId}`, { method: 'DELETE' })
+    if (!result.response.ok) throw new Error(`清理批量订单失败 ${result.response.status}`)
+  }
 }
 
 baseline().catch((error) => {

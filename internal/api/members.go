@@ -20,7 +20,7 @@ type memberInput struct {
 }
 
 func (s *Server) listMembers(w http.ResponseWriter, r *http.Request) {
-	jsonOK(w, s.st.ListMembers())
+	jsonRevalidate(w, r, s.st.ListMembers())
 }
 
 func (s *Server) createMember(w http.ResponseWriter, r *http.Request) {

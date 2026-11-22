@@ -1,31 +1,31 @@
 {
-  "version": "1.0.3.6",
-  "publishedAt": "2026-11-22T14:15:09",
-  "note": "**新增**\n- 增加可复跑接口压力与性能基准脚本，覆盖并发读写、SSE 与故障输入\n\n**修复**\n- 修复菜系排序实时不更新、删除成员后按餐分工残留、手机长昵称撑宽页面\n- 修复多人实时连接下服务退出等待和标签重复问题\n\n**优化**\n- 优化首屏快照与静态资源缓存，预生成 gzip 和 ETag，减少重复压缩与序列化\n- 优化点菜查询、菜单检索和今日数据索引，降低多人访问时的锁等待与页面重建",
+  "version": "1.0.3.7",
+  "publishedAt": "2026-11-22T14:45:33",
+  "note": "**新增**\n\n- 增加批量点菜与批量上桌事务接口，多选点菜、全部上桌和「再来一桌」不再逐道落盘\n- 增加首屏单请求、批量事务和手机端回归脚本，可持续复跑\n\n**修复**\n\n- 修复首次安装离线缓存后 Service Worker 自动刷新导致的重复首屏请求\n- 修复静态资源与列表接口重复传输未变化内容\n- 修复幂等写请求和暂时上传图片仍向其它设备广播刷新的问题\n\n**优化**\n\n- 首屏元数据合并进同一份快照，移除配置接口串行等待\n- 静态 JS/CSS/HTML 增加 ETag，菜谱与成员列表支持 304 验证\n- 手机端点页签时提前加载，并在首屏空闲时预取常用菜谱页",
   "files": {
     "amd64": {
       "name": "menu-linux-amd64",
-      "sha256": "5b76f77aa413b8273f8e9e1cd0c94e291c54cf0290934dbe4d9d1abe77003d7f",
-      "size": 10506400,
+      "sha256": "97ebfbfbe1011822ca05b2b00b583329f0b0ae25301aaf5467cddaf9bafe097a",
+      "size": 10530976,
       "gz": "menu-linux-amd64.gz",
-      "gzSha256": "62df1de9fec9f883171d99b58e80fcf62f5025023fcb9a48ea61b3e1cb5bbd40",
-      "gzSize": 5102355
+      "gzSha256": "5ee45b378070aa947c90c80c8b0d7be706a453b4d6f72e17d183324f4cbadba8",
+      "gzSize": 5112207
     },
     "arm64": {
       "name": "menu-linux-arm64",
-      "sha256": "46b2107ee69d34d117c8714bf7d69802a31f437cca8bdeff50c64a6a96e35a59",
-      "size": 9896096,
+      "sha256": "a1cacf6ba9f056069ada5df50034d37867030b2a5d4cfe2fceaa2696ecb1d967",
+      "size": 9961632,
       "gz": "menu-linux-arm64.gz",
-      "gzSha256": "e0a0adbc8fc5e5bcc04ad9297da1c24fbfc3a80ad910b247b35e992a42e84599",
-      "gzSize": 4735123
+      "gzSha256": "2d9bd5d72f5990c856f843c78af8dfc3c9200fca0d3f69dbf68c558005c46bd1",
+      "gzSize": 4741914
     },
     "armv7": {
       "name": "menu-linux-armv7",
-      "sha256": "af35ab1d4051b6840940bfe3f4190cb0aa1beb6fb181cc0707f13a325a7b0112",
+      "sha256": "1a0769b1382732af32dc79e21f1afa675e5e341893d5d322aade91fe1b661601",
       "size": 10354848,
       "gz": "menu-linux-armv7.gz",
-      "gzSha256": "7654fb95c0b4d492f499864157e6ae5f03f03fc06629cde19870397d4d234d91",
-      "gzSize": 4963686
+      "gzSha256": "c6452a9e5fe1f235620c08a1c1f3f7c2b5a8fcee096083bc7e6445efd864577d",
+      "gzSize": 4971277
     }
   }
 }

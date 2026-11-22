@@ -74,6 +74,8 @@ export const api = {
 
   setPlan: (date, patch) => request(`/api/plans/${date}`, { method: 'PUT', body: patch }),
   addOrder: (date, body) => request(`/api/plans/${date}/orders`, { method: 'POST', body }),
+  addOrders: (date, body) => request(`/api/plans/${date}/orders/batch`, { method: 'POST', body }),
+  setOrdersDone: (date, body) => request(`/api/plans/${date}/orders/batch`, { method: 'PUT', body }),
   toggleOrder: (date, id) => request(`/api/plans/${date}/orders/${id}`, { method: 'PUT' }),
   removeOrder: (date, id) => request(`/api/plans/${date}/orders/${id}`, { method: 'DELETE' }),
 

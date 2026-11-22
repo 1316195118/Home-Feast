@@ -217,15 +217,13 @@ function togglePick(id) {
 async function addAllPicked() {
   const ids = [...multiSet.value]
   if (!ids.length) return
-  let okCount = 0
-  state.busy++
   try {
-    for (const id of ids) {
-      if (await actions.order(id, '', state.meal)) okCount++
-    }
-    if (okCount) actions.toast(`已把 ${okCount} 道菜加进今日菜单 🍽️`, 'success')
+    const result = await actions.orderMany(ids.map((dishId) => ({ dishId, meal: state.meal })))
+    if (!result) return
+    const added = Number(result.added) || 0
+    if (added) actions.toast(`已把 ${added} 道菜一次性加进今日菜单 🍽️`, 'success')
+    else actions.toast('这些菜已经在今日菜单里了', 'warn')
   } finally {
-    state.busy--
     multiSet.value = new Set()
     multiMode.value = false
   }

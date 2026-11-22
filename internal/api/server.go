@@ -87,6 +87,8 @@ func New(st *store.Store, web fs.FS, envCode string) http.Handler {
 	api.HandleFunc("GET /api/plans/{date}", s.getPlan)
 	api.HandleFunc("PUT /api/plans/{date}", s.updatePlan)
 	api.HandleFunc("POST /api/plans/{date}/orders", s.addOrder)
+	api.HandleFunc("POST /api/plans/{date}/orders/batch", s.addOrders)
+	api.HandleFunc("PUT /api/plans/{date}/orders/batch", s.setOrdersDone)
 	api.HandleFunc("PUT /api/plans/{date}/orders/{orderId}", s.toggleOrder)
 	api.HandleFunc("DELETE /api/plans/{date}/orders/{orderId}", s.removeOrder)
 
@@ -121,6 +123,10 @@ func (s *Server) protect(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-store")
 		isWrite := r.Method != http.MethodGet && r.Method != http.MethodHead
+		revisionBefore := uint64(0)
+		if isWrite {
+			revisionBefore = s.st.Revision()
+		}
 		if isWrite && !sameOrigin(r) {
 			jsonErr(w, http.StatusForbidden, "跨站请求已拒绝")
 			return
@@ -141,8 +147,9 @@ func (s *Server) protect(next http.Handler) http.Handler {
 		}
 		sw := &statusWriter{ResponseWriter: w}
 		next.ServeHTTP(sw, r)
-		// 写操作成功后广播一次；前端自己也会 refresh，回声会被前端去重
-		if isWrite && sw.status >= 200 && sw.status < 300 {
+		// 只有数据真的变了才广播。幂等点菜、重复保存、上传暂存图等 2xx
+		// 不应让其它设备白刷新一次；真实写入成功后修订号必然递增。
+		if isWrite && sw.status >= 200 && sw.status < 300 && s.st.Revision() != revisionBefore {
 			s.events.publish(r.Header.Get("X-Client-ID"))
 		}
 	})
@@ -234,18 +241,22 @@ func (s *Server) buildBootstrapCache(date string) (*bootstrapCacheEntry, error) 
 		familyID = "default"
 	}
 	payload := map[string]any{
-		"version":   Version,
-		"revision":  snapshot.Revision,
-		"today":     date,
-		"familyId":  familyID,
-		"settings":  snapshot.Settings,
-		"meals":     snapshot.Meals, // 生效的用餐时段配置（含旧数据兜底默认三餐）
-		"cuisines":  store.OrderedCuisines(snapshot.Settings.CuisineOrder),
-		"dishes":    snapshot.Dishes,
-		"members":   snapshot.Members,
-		"plan":      snapshot.Plan,
-		"plans":     snapshot.Plans,
-		"planCount": snapshot.PlanCount,
+		"version":          Version,
+		"releaseNote":      ReleaseNote,
+		"buildTime":        BuildTime,
+		"accessRequired":   s.effectiveCode() != "",
+		"accessEnvManaged": s.envCode != "",
+		"revision":         snapshot.Revision,
+		"today":            date,
+		"familyId":         familyID,
+		"settings":         snapshot.Settings,
+		"meals":            snapshot.Meals, // 生效的用餐时段配置（含旧数据兜底默认三餐）
+		"cuisines":         store.OrderedCuisines(snapshot.Settings.CuisineOrder),
+		"dishes":           snapshot.Dishes,
+		"members":          snapshot.Members,
+		"plan":             snapshot.Plan,
+		"plans":            snapshot.Plans,
+		"planCount":        snapshot.PlanCount,
 	}
 	body, err := json.Marshal(payload)
 	if err != nil {

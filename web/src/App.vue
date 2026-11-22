@@ -1,6 +1,6 @@
 <script setup>
 import { reactive, provide, onMounted, onUnmounted, watch, ref, computed, defineAsyncComponent } from 'vue'
-import { api, setAccessCode, getAccessCode, getClientId } from './api'
+import { api, setAccessCode, getClientId } from './api'
 import TodayView from './components/TodayView.vue'
 import ConfirmDialog from './components/ConfirmDialog.vue'
 import ViewLoading from './components/ViewLoading.vue'
@@ -36,6 +36,21 @@ const SettingsView = lazyView('settings')
 // 不抢占首屏，因为菜单、家人等模块仍要等用户表现出访问意图才下载。
 function prefetchView(key) {
   viewLoaders[key]?.().catch(() => {})
+}
+let idlePrefetchDone = false
+function scheduleIdlePrefetch() {
+  if (idlePrefetchDone) return
+  idlePrefetchDone = true
+  // 手机首屏稳定后再悄悄取菜谱页，第一次切换通常能直接出现。
+  // 省流量模式和 2G/慢速网络不预取，避免为了「可能访问」抢带宽。
+  const conn = navigator.connection
+  if (navigator.onLine === false || conn?.saveData || /^(slow-2g|2g)$/.test(conn?.effectiveType || '')) return
+  const run = () => prefetchView('menu')
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(run, { timeout: 2200 })
+  } else {
+    setTimeout(run, 1200)
+  }
 }
 
 const tabs = [
@@ -259,6 +274,10 @@ function applyBootstrap(info) {
     return
   }
   state.version = info.version
+  state.releaseNote = info.releaseNote || state.releaseNote
+  state.buildTime = info.buildTime || state.buildTime
+  state.accessRequired = !!info.accessRequired
+  state.accessEnvManaged = !!info.accessEnvManaged
   state.revision = Number(info.revision || 0)
   state.today = info.today
   const nextMeals = normalizeMeals(info.meals)
@@ -286,6 +305,7 @@ function applyBootstrap(info) {
   state.ready = true
   state.locked = false
   state.bootError = ''
+  scheduleIdlePrefetch()
   // 只有「用户主动选过」才会写进 localStorage；这里的兜底不写，避免首次被静默记住
   if (!localStorage.getItem('fm.user') && state.members.length) needsUserPick.value = true
   scheduleMealBoundary()
@@ -387,7 +407,7 @@ function applySettingsResult(settings) {
 }
 
 function applyServerResult(result) {
-  return replacePlanInState(result)
+  return replacePlanInState(result?.plan || result)
     || applyDishResult(result)
     || applyMemberResult(result)
     || applySettingsResult(result)
@@ -517,6 +537,24 @@ function withSound(guardPromise, sound) {
   return guardPromise.then((ok) => { if (ok) sound(); return ok })
 }
 
+// 服务端单次最多 80 道。超过时按 80 一批顺序提交，仍远少于逐道请求；
+// 每次返回的计划逐步合并，最后一次就是完整结果。
+async function addOrdersInBatches(items) {
+  let added = 0
+  let skipped = 0
+  let plan = null
+  for (let i = 0; i < items.length; i += 80) {
+    const result = await api.addOrders(state.today, {
+      userId: state.currentUserId,
+      items: items.slice(i, i + 80),
+    })
+    added += Number(result.added) || 0
+    skipped += Number(result.skipped) || 0
+    plan = result.plan || plan
+  }
+  return { plan, added, skipped }
+}
+
 const actions = {
   toast,
   refresh: () => refresh(),
@@ -527,34 +565,28 @@ const actions = {
   addDish: (dish) => guard(() => api.addDish(dish), '菜品已加入菜谱', 'dish'),
   updateDish: (id, patch) => guard(() => api.updateDish(id, patch), '已保存', 'dish'),
   // 删除类操作都留一次「撤销」：菜品删错要重传配图，代价比弹确认框高得多
-  // 「再来一桌」：把某天点过的菜原样加回今天。逐条加，跳过已删的菜。
+  // 「再来一桌」：一次事务把某天点过的菜加回今天，跳过已删/已存在的菜。
   reorderDay: async (plan) => {
-    if (state.busy > 0) return
     const items = (plan?.orders || []).filter((o) => o.dishId)
     if (!items.length) return
     const mine = state.currentUserId || items[0].userId
-    state.busy++
-    let added = 0
-    let skipped = 0
-    try {
-      for (const o of items) {
-        try {
-          const result = await api.addOrder(state.today, {
-            dishId: o.dishId, userId: mine, note: o.note || '', meal: o.meal || '',
-          })
-          dataGeneration++
-          replacePlanInState(result)
-          added++
-        } catch {
-          skipped++
-        }
-      }
-      if (!added) toast('这些菜都已经不在菜谱里了', 'error')
-      else if (skipped) toast(`加回 ${added} 道，${skipped} 道已经没有了`, 'success')
-      else toast(`已把 ${added} 道菜加回今天`, 'success')
-    } finally {
-      state.busy--
-    }
+    const mealKeys = new Set((state.meals || []).map((m) => m.key))
+    const fallbackMeal = state.mealPick || state.meal
+    state.currentUserId = mine
+    const result = await withSound(guard(() => addOrdersInBatches(
+      items.map((o) => ({
+        dishId: o.dishId,
+        note: o.note || '',
+        meal: mealKeys.has(o.meal) ? o.meal : fallbackMeal,
+      })),
+    ), '', 'orders:batch'), playAdd)
+    if (!result) return null
+    const added = Number(result.added) || 0
+    const skipped = Number(result.skipped) || 0
+    if (!added) toast('这些菜都已经在今日菜单里，或已从菜谱移除', 'warn')
+    else if (skipped) toast(`加回 ${added} 道，${skipped} 道已存在或已移除`, 'success')
+    else toast(`已把 ${added} 道菜一次性加回今天`, 'success')
+    return result
   },
 
   // 做完之后的评价，只影响推荐权重
@@ -645,24 +677,24 @@ const actions = {
       '点好啦，等开饭 🍚', `order:${dishId}`,
     ), playAdd)
   },
+  orderMany: (items) => {
+    if (!Array.isArray(items) || !items.length) return Promise.resolve(null)
+    return withSound(guard(
+      () => addOrdersInBatches(items),
+      '',
+      'orders:batch',
+    ), playAdd)
+  },
   toggleOrder: (orderId) => guard(() => api.toggleOrder(state.today, orderId), '', `toggle:${orderId}`),
-  // 做完饭一道道点上桌太麻烦：一次把今天还没上桌的全标记掉
+  // 做完饭一道道点上桌太麻烦：一次事务把今天还没上桌的全标记掉。
   finishAllOrders: async () => {
     const todo = (state.plan.orders || []).filter((o) => !o.done)
     if (!todo.length) return
-    state.busy++
-    try {
-      for (const o of todo) {
-        const result = await api.toggleOrder(state.today, o.id)
-        dataGeneration++
-        replacePlanInState(result)
-      }
-      toast(`${todo.length} 道菜全部上桌 🍽️`, 'success')
-    } catch {
-      toast('有几道没标上，请逐道再试一次', 'error')
-    } finally {
-      state.busy--
-    }
+    const result = await guard(() => api.setOrdersDone(state.today, {
+      orderIds: todo.map((o) => o.id),
+      done: true,
+    }), '', 'orders:batch')
+    if (result) toast(`${Number(result.updated) || todo.length} 道菜全部上桌 🍽️`, 'success')
   },
   removeOrder: (orderId) => {
     const order = (state.plan.orders || []).find((o) => o.id === orderId)
@@ -742,20 +774,12 @@ function onHashChange() {
 }
 
 async function boot() {
+  state.bootError = ''
   try {
-    const cfg = await api.config()
-    state.accessRequired = cfg.accessRequired
-    state.accessEnvManaged = !!cfg.accessEnvManaged
-    state.version = cfg.version || ''
-    state.releaseNote = cfg.releaseNote || ''
-    state.buildTime = cfg.buildTime || ''
-    if (cfg.accessRequired && !getAccessCode()) {
-      state.locked = true
-      return
-    }
     await refresh()
   } catch (err) {
-    state.bootError = err.message || '连不上服务端'
+    // 401 会由 request() 广播 fm:locked，直接显示口令框，不把「需要口令」误报成断网。
+    if (!state.locked) state.bootError = err.message || '连不上服务端'
   }
 }
 
@@ -940,6 +964,7 @@ onUnmounted(() => {
           v-for="t in tabs" :key="t.key"
           class="tab" :class="{ active: state.tab === t.key }"
           @mouseenter="prefetchView(t.key)" @focus="prefetchView(t.key)"
+          @touchstart.passive="prefetchView(t.key)"
           @click="state.tab = t.key"
         >
           <span class="tab-icon">{{ t.icon }}</span><span>{{ t.label }}</span>

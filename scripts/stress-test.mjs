@@ -326,6 +326,47 @@ try {
       `HTTP ${[...new Set(deleteCodes.map((r) => r.status))].join(',')}`)
     created.orders.length = 0
 
+    // 批量接口只写盘一次：用独立一批菜验证新增与全部上桌，再逐条清理临时订单。
+    const batchDishIDs = boot.dishes
+      .map((item) => item.id)
+      .filter((id) => id !== testDishId && !occupied.has(id))
+      .slice(0, 16)
+    const batchStarted = performance.now()
+    const batch = await jsonRequest(`/api/plans/${today}/orders/batch`, {
+      method: 'POST',
+      headers: { 'X-Client-ID': `stress-batch-${stamp}` },
+      body: {
+        userId: testMemberId,
+        items: batchDishIDs.map((dishId, i) => ({
+          dishId,
+          meal: firstMeal,
+          note: `批量临时订单 ${i}`,
+        })),
+      },
+    })
+    const batchElapsed = performance.now() - batchStarted
+    const batchOrderIDs = (batch.data?.plan?.orders || [])
+      .filter((item) => batchDishIDs.includes(item.dishId))
+      .map((item) => item.id)
+    check('16 道菜单事务批量点菜', batch.status === 200
+      && batch.data?.added === 16 && batchOrderIDs.length === 16,
+    `${batchElapsed.toFixed(0)} ms`)
+
+    const batchDone = await jsonRequest(`/api/plans/${today}/orders/batch`, {
+      method: 'PUT',
+      headers: { 'X-Client-ID': `stress-batch-done-${stamp}` },
+      body: { orderIds: batchOrderIDs, done: true },
+    })
+    check('16 道菜单事务批量上桌', batchDone.status === 200
+      && batchDone.data?.updated === 16
+      && (batchDone.data?.plan?.orders || [])
+        .filter((item) => batchOrderIDs.includes(item.id))
+        .every((item) => item.done === true))
+    const batchDelete = await Promise.all(batchOrderIDs.map((id) => {
+      return request(`/api/plans/${today}/orders/${id}`, { method: 'DELETE' })
+    }))
+    check('批量测试订单清理完成', batchDelete.every((r) => r.status === 200))
+
     if (originalPlan) {
       const restore = await jsonRequest(`/api/plans/${today}`, {
         method: 'PUT',

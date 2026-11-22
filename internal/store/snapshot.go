@@ -40,6 +40,15 @@ type OrderLookupData struct {
 	MemberFound bool
 }
 
+// OrderBatchLookupData 在一次读锁内解析批量点菜需要的菜品、成员与餐次。
+// 菜品按请求 ID 去重后最多取一份，避免为一次「批量点菜」反复复制整份菜谱。
+type OrderBatchLookupData struct {
+	Meals       []MealSlot
+	Dishes      map[string]Dish
+	Member      Member
+	MemberFound bool
+}
+
 // SettingsData 让设置页只取一次当前设置与成员，不把两次读取拼成可能错位的状态。
 type SettingsData struct {
 	Settings Settings
@@ -99,6 +108,34 @@ func (s *Store) OrderLookup(dishID, memberID string) OrderLookupData {
 			out.Dish = cloneDish(dish)
 			out.DishFound = true
 			break
+		}
+	}
+	for _, member := range s.members {
+		if member.ID == memberID {
+			out.Member = cloneMember(member)
+			out.MemberFound = true
+			break
+		}
+	}
+	return out
+}
+
+func (s *Store) OrderBatchLookup(dishIDs []string, memberID string) OrderBatchLookupData {
+	wanted := make(map[string]bool, len(dishIDs))
+	for _, id := range dishIDs {
+		if id != "" {
+			wanted[id] = true
+		}
+	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	out := OrderBatchLookupData{
+		Meals:  effectiveMeals(s.settings.Meals),
+		Dishes: make(map[string]Dish, len(wanted)),
+	}
+	for _, dish := range s.dishes {
+		if wanted[dish.ID] {
+			out.Dishes[dish.ID] = cloneDish(dish)
 		}
 	}
 	for _, member := range s.members {

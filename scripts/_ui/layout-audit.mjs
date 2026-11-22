@@ -11,8 +11,9 @@ const TABS = ['today', 'menu', 'family', 'history', 'settings']
 const AUDIT = `(()=>{
   const de=document.documentElement, vw=de.clientWidth;
   const inScroller=(el)=>{let p=el.parentElement;while(p&&p!==document.body){const s=getComputedStyle(p);if(s.overflowX==='auto'||s.overflowX==='scroll')return true;p=p.parentElement}return false};
+  const clippedByAncestor=(el)=>{let p=el.parentElement;while(p&&p!==document.body){const s=getComputedStyle(p);if(s.overflow==='hidden'||s.overflowX==='hidden'||s.overflow==='clip'||s.overflowX==='clip')return true;p=p.parentElement}return false};
   const all=[...document.querySelectorAll('body *')].filter(e=>{const s=getComputedStyle(e);return s.display!=='none'&&s.visibility!=='hidden'&&s.position!=='fixed'});
-  const overflow=all.filter(e=>!inScroller(e)&&e.getBoundingClientRect().right>vw+1).slice(0,6).map(e=>e.className||e.tagName);
+  const overflow=all.filter(e=>!inScroller(e)&&!clippedByAncestor(e)&&e.getBoundingClientRect().right>vw+1).slice(0,6).map(e=>e.className||e.tagName);
   const clipped=all.filter(e=>{const s=getComputedStyle(e);return (s.overflow==='hidden'||s.textOverflow==='ellipsis')&&e.scrollWidth>e.clientWidth+2&&e.clientWidth>0}).slice(0,6).map(e=>e.className||e.tagName);
   const small=[...document.querySelectorAll('.btn,.chip,.tab,.icon-btn')].filter(e=>{const r=e.getBoundingClientRect();return r.width>0&&(r.width<40||r.height<36)}).slice(0,8).map(e=>(e.className||'').trim()+':'+Math.round(e.getBoundingClientRect().width)+'x'+Math.round(e.getBoundingClientRect().height));
   const toast=document.querySelector('.toast');
@@ -55,7 +56,14 @@ async function run(width, height, tag, mobile) {
   console.log(`\n=== ${tag} ${width}x${height} ===`)
   for (const tab of TABS) {
     await ev(`window.location.hash='#${tab}'`)
-    await sleep(650)
+    // 异步页签要先下载 chunk，再等 out-in 过渡彻底结束；过早采样会把 26px
+    // 的入场位移误判成布局横向溢出。
+    for (let i = 0; i < 20; i++) {
+      const stable = await ev(`!document.querySelector('.page-enter-active,.page-leave-active') && !!document.querySelector('main .section-title')`)
+      if (stable) break
+      await sleep(100)
+    }
+    await sleep(120)
     const a = JSON.parse(await ev(AUDIT))
     console.log(`${tab.padEnd(9)} 溢出=${a.overflow.length} 截断=${a.clipped.length} 小按钮=${a.small.length} scrollW=${a.scrollW}/${a.vw} gutter=${a.gutter} toast=${a.toast ? a.toast.w + 'x' + a.toast.h : '无'}`)
     if (a.overflow.length) console.log('   横向溢出:', a.overflow.join(' | '))

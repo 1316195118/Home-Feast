@@ -26,6 +26,7 @@ if ('serviceWorker' in navigator) {
       .catch(() => {})
   } else {
     window.addEventListener('load', () => {
+      let reloadingForUpdate = false
       navigator.serviceWorker.register('/sw.js').then((reg) => {
         if (reg.waiting) window.dispatchEvent(new CustomEvent('sw-update'))
         reg.addEventListener('updatefound', () => {
@@ -40,12 +41,17 @@ if ('serviceWorker' in navigator) {
 
       // 用户点「更新」：让等待中的新版本立即接管，随后 controllerchange 触发刷新
       window.addEventListener('sw-reload', () => {
+        reloadingForUpdate = true
         navigator.serviceWorker.getRegistration().then((reg) => {
           if (reg && reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' })
         })
       })
-      // 新的 service worker 接管后，刷新页面以加载新资源
-      navigator.serviceWorker.addEventListener('controllerchange', () => location.reload())
+      // 第一次安装时 SW 的 clients.claim() 也会触发 controllerchange；那不代表有
+      // 新资源，刷新只会把首屏 bootstrap / SSE 重建一次。只有用户确认升级后的
+      // SKIP_WAITING 接管才刷新。
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (reloadingForUpdate) location.reload()
+      })
     })
   }
 }

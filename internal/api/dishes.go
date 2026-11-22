@@ -22,7 +22,7 @@ type dishInput struct {
 }
 
 func (s *Server) listDishes(w http.ResponseWriter, r *http.Request) {
-	jsonOK(w, s.st.ListDishes())
+	jsonRevalidate(w, r, s.st.ListDishes())
 }
 
 func (s *Server) createDish(w http.ResponseWriter, r *http.Request) {

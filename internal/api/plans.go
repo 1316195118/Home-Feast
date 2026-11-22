@@ -222,6 +222,136 @@ func (s *Server) addOrder(w http.ResponseWriter, r *http.Request) {
 	jsonStatus(w, http.StatusCreated, plan)
 }
 
+// addOrders 是一次事务的批量点菜入口。它只复制请求涉及的菜品和成员，
+// 跳过已经不存在的菜，并且整批只写盘一次，避免逐道落盘阻塞全家其它请求。
+func (s *Server) addOrders(w http.ResponseWriter, r *http.Request) {
+	date, ok := checkedDate(w, r)
+	if !ok {
+		return
+	}
+	var in struct {
+		UserID string `json:"userId"`
+		Items  []struct {
+			DishID string `json:"dishId"`
+			Note   string `json:"note"`
+			Meal   string `json:"meal"`
+		} `json:"items"`
+	}
+	if err := decodeBody(w, r, &in); err != nil {
+		jsonErr(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if len(in.Items) == 0 {
+		jsonErr(w, http.StatusBadRequest, "请至少选择一道菜")
+		return
+	}
+	if len(in.Items) > 80 {
+		jsonErr(w, http.StatusBadRequest, "一次最多批量点 80 道菜")
+		return
+	}
+	userID := trimmed(in.UserID, 64)
+	dishIDs := make([]string, 0, len(in.Items))
+	seenDish := make(map[string]bool, len(in.Items))
+	for _, item := range in.Items {
+		id := trimmed(item.DishID, 64)
+		if id != "" && !seenDish[id] {
+			seenDish[id] = true
+			dishIDs = append(dishIDs, id)
+		}
+	}
+	lookup := s.st.OrderBatchLookup(dishIDs, userID)
+	if !lookup.MemberFound {
+		jsonErr(w, http.StatusBadRequest, "请先选择点菜的人")
+		return
+	}
+	allowed := make(map[string]bool, len(lookup.Meals))
+	for _, meal := range lookup.Meals {
+		allowed[meal.Key] = true
+	}
+	orders := make([]store.Order, 0, len(in.Items))
+	skipped := 0
+	seenOrder := make(map[string]bool, len(in.Items))
+	for _, item := range in.Items {
+		dishID := trimmed(item.DishID, 64)
+		dish, found := lookup.Dishes[dishID]
+		if !found || seenOrder[dishID] {
+			skipped++
+			continue
+		}
+		meal := trimmed(item.Meal, 32)
+		if meal == "" {
+			meal = store.CurrentMeal(time.Now(), lookup.Meals)
+		}
+		if !allowed[meal] {
+			jsonErr(w, http.StatusBadRequest, "餐别不在已配置的用餐时段里，请刷新页面重试")
+			return
+		}
+		orders = append(orders, store.Order{
+			DishID:      dish.ID,
+			DishName:    dish.Name,
+			DishCuisine: dish.Cuisine,
+			DishImage:   dish.Image,
+			UserID:      lookup.Member.ID,
+			UserName:    lookup.Member.Name,
+			UserAvatar:  lookup.Member.Avatar,
+			Note:        trimmed(item.Note, 100),
+			Meal:        meal,
+		})
+		seenOrder[dishID] = true
+	}
+	if len(orders) == 0 {
+		jsonOK(w, map[string]any{"plan": s.st.GetPlan(date), "added": 0, "skipped": skipped})
+		return
+	}
+	plan, added, err := s.st.AddOrders(date, orders)
+	if err != nil {
+		jsonErr(w, http.StatusInternalServerError, "批量点菜失败")
+		return
+	}
+	jsonOK(w, map[string]any{
+		"plan": plan, "added": added, "skipped": skipped + len(orders) - added,
+	})
+}
+
+// setOrdersDone 在同一事务内批量设置上桌状态，替代「全部上桌」逐道请求。
+func (s *Server) setOrdersDone(w http.ResponseWriter, r *http.Request) {
+	date, ok := checkedDate(w, r)
+	if !ok {
+		return
+	}
+	var in struct {
+		OrderIDs []string `json:"orderIds"`
+		Done     *bool    `json:"done"`
+	}
+	if err := decodeBody(w, r, &in); err != nil {
+		jsonErr(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if len(in.OrderIDs) == 0 || len(in.OrderIDs) > 200 {
+		jsonErr(w, http.StatusBadRequest, "请选择 1–200 道要更新的菜")
+		return
+	}
+	ids := make([]string, 0, len(in.OrderIDs))
+	seen := make(map[string]bool, len(in.OrderIDs))
+	for _, raw := range in.OrderIDs {
+		id := trimmed(raw, 80)
+		if id != "" && !seen[id] {
+			seen[id] = true
+			ids = append(ids, id)
+		}
+	}
+	done := true
+	if in.Done != nil {
+		done = *in.Done
+	}
+	plan, updated, err := s.st.SetOrdersDone(date, ids, done)
+	if err != nil {
+		jsonErr(w, http.StatusNotFound, err.Error())
+		return
+	}
+	jsonOK(w, map[string]any{"plan": plan, "updated": updated})
+}
+
 func (s *Server) toggleOrder(w http.ResponseWriter, r *http.Request) {
 	date, ok := checkedDate(w, r)
 	if !ok {

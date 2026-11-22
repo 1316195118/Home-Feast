@@ -67,7 +67,10 @@ func TestBootstrapShape(t *testing.T) {
 		t.Fatalf("bootstrap 应 200，实际 %d", w.Code)
 	}
 	m := decode(t, w)
-	for _, key := range []string{"today", "dishes", "members", "cuisines", "meals", "plan", "plans", "settings"} {
+	for _, key := range []string{
+		"today", "dishes", "members", "cuisines", "meals", "plan", "plans", "settings",
+		"version", "releaseNote", "buildTime", "accessRequired", "accessEnvManaged",
+	} {
 		if _, ok := m[key]; !ok {
 			t.Fatalf("bootstrap 缺少字段 %s", key)
 		}
@@ -162,6 +165,19 @@ func TestStaticAssetPrecompression(t *testing.T) {
 	if string(plain) != index {
 		t.Fatalf("预压缩内容不一致，解压后 %d 字节", len(plain))
 	}
+
+	etag := w.Header().Get("ETag")
+	if etag == "" {
+		t.Fatal("静态资源应带 ETag")
+	}
+	req = httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("Accept-Encoding", "gzip")
+	req.Header.Set("If-None-Match", etag)
+	w = httptest.NewRecorder()
+	h.ServeHTTP(w, req)
+	if w.Code != http.StatusNotModified || w.Body.Len() != 0 {
+		t.Fatalf("静态资源未变应返回空 304，实际 %d / %d 字节", w.Code, w.Body.Len())
+	}
 }
 
 func TestConcurrentBootstrapRequests(t *testing.T) {
@@ -206,6 +222,65 @@ func TestPlansETag(t *testing.T) {
 	}
 	if got.Body.Len() != 0 {
 		t.Fatalf("304 不应带响应体，实际 %d 字节", got.Body.Len())
+	}
+}
+
+func TestBatchOrdersAreSingleRevisionAndIdempotent(t *testing.T) {
+	h := newTestHandler(t)
+	boot := decode(t, do(h, http.MethodGet, "/api/bootstrap", ""))
+	today := boot["today"].(string)
+	meal := boot["meals"].([]any)[0].(map[string]any)["key"].(string)
+	member := boot["members"].([]any)[0].(map[string]any)["id"].(string)
+	dishes := boot["dishes"].([]any)
+	items := make([]map[string]string, 0, 3)
+	for _, raw := range dishes[:3] {
+		items = append(items, map[string]string{
+			"dishId": raw.(map[string]any)["id"].(string),
+			"meal":   meal,
+			"note":   "批量事务测试",
+		})
+	}
+	body, err := json.Marshal(map[string]any{"userId": member, "items": items})
+	if err != nil {
+		t.Fatal(err)
+	}
+	before := boot["revision"].(float64)
+	first := decode(t, do(h, http.MethodPost, "/api/plans/"+today+"/orders/batch", string(body)))
+	if first["added"] != float64(3) || first["skipped"] != float64(0) {
+		t.Fatalf("批量点菜应新增 3 道，实际 %#v", first)
+	}
+	afterFirst := decode(t, do(h, http.MethodGet, "/api/bootstrap", ""))
+	if got := afterFirst["revision"].(float64); got != before+1 {
+		t.Fatalf("一次批量写应只增加 1 个修订号，实际 %v -> %v", before, got)
+	}
+
+	retry := decode(t, do(h, http.MethodPost, "/api/plans/"+today+"/orders/batch", string(body)))
+	if retry["added"] != float64(0) || retry["skipped"] != float64(3) {
+		t.Fatalf("重复批量点菜应全部跳过，实际 %#v", retry)
+	}
+	afterRetry := decode(t, do(h, http.MethodGet, "/api/bootstrap", ""))
+	if got := afterRetry["revision"].(float64); got != before+1 {
+		t.Fatalf("没有实际变化的幂等重试不应增加修订号，实际 %v", got)
+	}
+
+	plan := first["plan"].(map[string]any)
+	orderIDs := make([]string, 0, 3)
+	for _, raw := range plan["orders"].([]any) {
+		orderIDs = append(orderIDs, raw.(map[string]any)["id"].(string))
+	}
+	doneBody, _ := json.Marshal(map[string]any{"orderIds": orderIDs, "done": true})
+	done := decode(t, do(h, http.MethodPut, "/api/plans/"+today+"/orders/batch", string(doneBody)))
+	if done["updated"] != float64(3) {
+		t.Fatalf("批量上桌应更新 3 道，实际 %#v", done)
+	}
+	for _, raw := range done["plan"].(map[string]any)["orders"].([]any) {
+		if raw.(map[string]any)["done"] != true {
+			t.Fatalf("批量上桌后订单状态不正确：%#v", raw)
+		}
+	}
+	afterDone := decode(t, do(h, http.MethodGet, "/api/bootstrap", ""))
+	if got := afterDone["revision"].(float64); got != before+2 {
+		t.Fatalf("批量上桌应只再增加 1 个修订号，实际 %v", got)
 	}
 }
 

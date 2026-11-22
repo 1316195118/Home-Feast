@@ -322,8 +322,12 @@ config/              家庭配置
 cd web && npm install && npm run dev     # 前端热更新，代理到本机 8090
 node scripts/build.mjs                  # 前端 + Go 一步构建
 BASE=http://127.0.0.1:8090 node scripts/api-test.mjs   # 接口冒烟测试
+BASE=http://127.0.0.1:8090 node scripts/perf-test.mjs  # 首屏 / 并发性能基准
+BASE=http://127.0.0.1:8090 WRITE=1 node scripts/stress-test.mjs  # 接口压力与故障输入（写测试请用临时副本）
 BASE=http://127.0.0.1:8090 node scripts/_ui/fx-verify.mjs        # 动效与即时反馈验收
 BASE=http://127.0.0.1:8090 node scripts/_ui/layout-audit.mjs     # 双视口布局/位移审计
+BASE=http://127.0.0.1:8090 node scripts/_ui/performance-verify.mjs  # 首屏请求数 / 批量事务 / 手机交互
+CODE=测试口令 BASE=http://127.0.0.1:8090 node scripts/_ui/lock-verify.mjs  # 访问口令锁屏回归
 go vet ./... && go test ./...           # 后端静态检查
 go run scripts/optimize-images.go       # 把 docs/artwork 的 PNG 重新转成 JPEG
 ```

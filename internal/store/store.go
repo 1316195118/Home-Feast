@@ -1000,6 +1000,73 @@ func (s *Store) AddOrder(date string, o Order) (Plan, error) {
 	return clonePlan(p), nil
 }
 
+// AddOrders 在一次写锁和一次落盘内加入多道菜。
+// 同一天已有的菜会跳过，返回实际新增数量和最终计划，保证批量重试幂等。
+func (s *Store) AddOrders(date string, incoming []Order) (Plan, int, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	p := clonePlan(s.plans[date])
+	p.Date = date
+	if p.Orders == nil {
+		p.Orders = []Order{}
+	}
+	seen := make(map[string]bool, len(p.Orders)+len(incoming))
+	for _, existing := range p.Orders {
+		seen[existing.DishID] = true
+	}
+	added := 0
+	for _, o := range incoming {
+		if o.DishID == "" || seen[o.DishID] {
+			continue
+		}
+		o.ID = newID("o")
+		o.CreatedAt = now()
+		p.Orders = append(p.Orders, o)
+		seen[o.DishID] = true
+		added++
+	}
+	if added == 0 {
+		return clonePlan(p), 0, nil
+	}
+	p.UpdatedAt = now()
+	if err := s.persistPlans(p); err != nil {
+		return Plan{}, 0, err
+	}
+	return clonePlan(p), added, nil
+}
+
+// SetOrdersDone 批量设置上桌状态；只改真正发生变化的订单并只落盘一次。
+func (s *Store) SetOrdersDone(date string, orderIDs []string, done bool) (Plan, int, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	p, ok := s.plans[date]
+	if !ok {
+		return Plan{}, 0, errors.New("这天还没有点菜")
+	}
+	p = clonePlan(p)
+	targets := make(map[string]bool, len(orderIDs))
+	for _, id := range orderIDs {
+		if id != "" {
+			targets[id] = true
+		}
+	}
+	updated := 0
+	for i := range p.Orders {
+		if targets[p.Orders[i].ID] && p.Orders[i].Done != done {
+			p.Orders[i].Done = done
+			updated++
+		}
+	}
+	if updated == 0 {
+		return clonePlan(p), 0, nil
+	}
+	p.UpdatedAt = now()
+	if err := s.persistPlans(p); err != nil {
+		return Plan{}, 0, err
+	}
+	return clonePlan(p), updated, nil
+}
+
 func (s *Store) RemoveOrder(date, orderID string) (Plan, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
