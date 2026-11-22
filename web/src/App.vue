@@ -9,6 +9,7 @@ import ViewLoadError from './components/ViewLoadError.vue'
 import { useModalBehavior } from './modal'
 import { currentMeal, normalizeMeals } from './utils'
 import { playAdd, playFav, playSave, playRemove, playError } from './audio'
+import { invalidateThumbCache } from './thumb-cache'
 
 // 首屏只需要「今天」。其余页签按需下载，避免第一次打开时把设置、
 // 历史和编辑器等暂时用不到的代码一起解析。200ms 内加载完成就不闪加载态。
@@ -733,7 +734,10 @@ const actions = {
     () => api.importBackup(form),
     '备份已恢复',
     'import',
-    () => requestRefresh(0),
+    () => {
+      void invalidateThumbCache()
+      requestRefresh(0)
+    },
   ),
 
   // 改口令不能走 guard：guard 成功后会立刻用「旧口令」刷新，会被 401 挡下。

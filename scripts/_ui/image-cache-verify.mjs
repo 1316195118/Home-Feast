@@ -58,16 +58,18 @@ for (let attempt = 0; attempt < 40; attempt++) {
 }
 
 const cached = await evaluate(`(async()=>{
-  const image = document.querySelector('.dish-card img')?.getAttribute('src');
-  if (!image) throw new Error('页面里没有菜品图片');
-  await fetch(image, { cache: 'reload' });
   await fetch('/api/bootstrap', { cache: 'reload' });
   const keys = await caches.keys();
-  const cache = await caches.open('fm-shell-v3');
+  const cache = await caches.open('fm-shell-v4');
+  const bundleRequest = (await cache.keys()).find((request) =>
+    new URL(request.url).pathname.startsWith('/__thumb-bundle/')
+  );
+  if (!bundleRequest) throw new Error('页面没有缓存批量缩略图');
+  const image = bundleRequest.url;
   return {
     image,
     keys,
-    imageCached: !!(await cache.match(image)),
+    imageCached: !!(await cache.match(bundleRequest)),
     apiCached: !!(await cache.match('/api/bootstrap')),
   };
 })()`, true)
@@ -84,7 +86,7 @@ const offline = await evaluate(`(async()=>{
   return { ok: response.ok, status: response.status, type: response.type };
 })()`, true)
 
-const pass = cached.keys.includes('fm-shell-v3') &&
+const pass = cached.keys.includes('fm-shell-v4') &&
   cached.imageCached &&
   !cached.apiCached &&
   offline.ok

@@ -103,3 +103,23 @@ func TestWithGzipSkipsRangeRequest(t *testing.T) {
 		t.Fatalf("Range 请求不应压缩: %q", got)
 	}
 }
+
+func TestAcceptsEncodingHonorsQuality(t *testing.T) {
+	tests := []struct {
+		header string
+		target string
+		want   bool
+	}{
+		{"gzip, br", "br", true},
+		{"br;q=0, gzip;q=1", "br", false},
+		{"gzip, *;q=0.5", "br", true},
+		{"gzip;q=0.8, *;q=0", "br", false},
+		{"gzip", "br", false},
+		{"", "br", false},
+	}
+	for _, test := range tests {
+		if got := acceptsEncoding(test.header, test.target); got != test.want {
+			t.Errorf("acceptsEncoding(%q, %q) = %v，期望 %v", test.header, test.target, got, test.want)
+		}
+	}
+}

@@ -6,9 +6,10 @@ import PantryFridge from './PantryFridge.vue'
 import OrderPanel from './OrderPanel.vue'
 import PantryImage from './PantryImage.vue'
 import DishDetail from './DishDetail.vue'
-import { normalizeMeals, isCuisineHidden, pantryGroups, pantryVisual, pantryMatches, normalizeIngredient, hasDishImage } from '../utils'
+import { normalizeMeals, isCuisineHidden, pantryGroups, pantryVisual, pantryMatches, normalizeIngredient, hasDishImage, dishImage } from '../utils'
 import { getRecipe } from '../recipes'
 import { useModalBehavior } from '../modal'
+import { cacheThumb } from '../thumb-cache'
 
 const { state, actions, pending } = inject('app')
 const activeCuisine = ref('all')
@@ -108,6 +109,170 @@ const filtered = computed(() => {
     .map((d, i) => ({ d, i, hits: pantryMatches(d, pantry, recipeIngredients).count }))
     .sort((a, b) => b.hits - a.hits || a.i - b.i)
     .map(({ d, hits }) => ({ ...d, _pantryHits: hits }))
+})
+
+// 卡片仍使用懒加载，避免同时解码 237 张大图；但缩略图在后台批量预热。
+// 浏览器原生懒加载只会追赶视口，连续下拉时新卡片总要等一轮网络和解码。
+// 一页缩略图（实测约 5.5 MB）合并成一个请求并保存为会话内 Blob；
+// 批量接口不可用时才退回 6 路单图预取，单张失败仍由卡片自己的回退兜底。
+const THUMB_PREFETCH_WORKERS = 6
+const THUMB_BUNDLE_SIZE = 300
+const prefetchedThumbs = new Set()
+let prefetchTimer = 0
+let prefetchRun = 0
+let prefetchAbort = null
+
+function thumbBundleKey(urls) {
+  let first = 2166136261
+  let second = 2246822507 ^ urls.length
+  for (const url of urls) {
+    for (let index = 0; index < url.length; index++) {
+      const code = url.charCodeAt(index)
+      first = Math.imul(first ^ code, 16777619)
+      second = Math.imul(second ^ code, 3266489909)
+    }
+    first = Math.imul(first ^ 0xff, 16777619)
+    second = Math.imul(second ^ 0xff, 3266489909)
+  }
+  return `/__thumb-bundle/${urls.length}-${(first >>> 0).toString(36)}${(second >>> 0).toString(36)}`
+}
+
+async function cacheThumbBundle(urls, run, signal) {
+  const bundleKeys = []
+  let lastCache = null
+  for (let start = 0; start < urls.length; start += THUMB_BUNDLE_SIZE) {
+    if (run !== prefetchRun) return
+    const chunk = urls.slice(start, start + THUMB_BUNDLE_SIZE)
+    const cacheKey = thumbBundleKey(chunk)
+    bundleKeys.push(cacheKey)
+    let data = null
+    let cache = null
+    try {
+      cache = 'caches' in window ? await caches.open('fm-shell-v4') : null
+      lastCache = cache
+      const hit = await cache?.match(cacheKey)
+      if (hit) data = await hit.arrayBuffer()
+    } catch {
+      // Cache Storage 被禁用时直接走网络。
+    }
+    if (!data) {
+      const response = await fetch('/thumb-bundle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        signal,
+        body: JSON.stringify({ urls: chunk }),
+      })
+      if (!response.ok) throw new Error(`缩略图包请求失败：${response.status}`)
+      data = await response.arrayBuffer()
+      if (cache) {
+        try {
+          await cache.put(cacheKey, new Response(data.slice(0), {
+            headers: {
+              'Content-Type': 'application/octet-stream',
+              'Cache-Control': 'public, no-cache',
+            },
+          }))
+        } catch {
+          // 空间不足时仍使用本次已取回的图片。
+        }
+      }
+    }
+    if (data.byteLength < 4) throw new Error('缩略图包为空')
+    const view = new DataView(data)
+    const headerLength = view.getUint32(0, false)
+    if (headerLength < 2 || 4 + headerLength > data.byteLength) throw new Error('缩略图索引损坏')
+    const entries = JSON.parse(new TextDecoder().decode(new Uint8Array(data, 4, headerLength)))
+    const bodyOffset = 4 + headerLength
+    for (const entry of entries) {
+      if (run !== prefetchRun) return
+      if (!entry?.url || !entry.size) continue
+      const bytes = new Uint8Array(data, bodyOffset + entry.offset, entry.size)
+      cacheThumb(entry.url, new Blob([bytes], { type: entry.type || 'image/jpeg' }))
+      prefetchedThumbs.add(entry.url)
+    }
+  }
+  if (lastCache && run === prefetchRun) {
+    try {
+      const keep = new Set(bundleKeys)
+      const old = (await lastCache.keys()).filter((request) =>
+        new URL(request.url).pathname.startsWith('/__thumb-bundle/') &&
+        !keep.has(new URL(request.url).pathname)
+      )
+      await Promise.all(old.map((request) => lastCache.delete(request)))
+    } catch {
+      // 清理失败不影响本次显示，旧缓存会在后续成功刷新时再清理。
+    }
+  }
+}
+
+async function prefetchIndividually(urls, run, signal) {
+  let cursor = 0
+  const worker = async () => {
+    while (run === prefetchRun) {
+      const url = urls[cursor++]
+      if (!url) return
+      if (prefetchedThumbs.has(url)) continue
+      try {
+        const response = await fetch(url, {
+          cache: 'force-cache',
+          credentials: 'same-origin',
+          priority: 'low',
+          signal,
+        })
+        if (!response.ok) continue
+        const blob = await response.blob()
+        if (!blob.type.startsWith('image/')) continue
+        cacheThumb(url, blob)
+        prefetchedThumbs.add(url)
+      } catch {
+        // 单张图片失败不影响列表；卡片自己的重试与封面回退仍会兜底。
+      }
+    }
+  }
+  await Promise.all(Array.from({ length: THUMB_PREFETCH_WORKERS }, worker))
+}
+
+async function prefetchThumbnails(dishes, run, signal) {
+  const urls = [...new Set(dishes.map((dish) =>
+    dishImage(dish, state.cuisines, state.dishes, 'thumb')
+  ).filter(Boolean))]
+  try {
+    await cacheThumbBundle(urls, run, signal)
+  } catch (error) {
+    if (error?.name === 'AbortError' || run !== prefetchRun) return
+    const remaining = urls.filter((url) => !prefetchedThumbs.has(url))
+    await prefetchIndividually(remaining, run, signal)
+  }
+}
+function scheduleThumbPrefetch() {
+  const run = ++prefetchRun
+  clearTimeout(prefetchTimer)
+  prefetchAbort?.abort()
+  prefetchAbort = null
+  const connection = navigator.connection
+  const downlink = Number(connection?.downlink)
+  const constrained = connection?.saveData ||
+    /(^|-)2g$|(^|-)3g$/.test(connection?.effectiveType || '') ||
+    (Number.isFinite(downlink) && downlink > 0 && downlink < 1)
+  if (constrained) return
+  const snapshot = filtered.value.slice()
+  const controller = new AbortController()
+  prefetchAbort = controller
+  // 先让用户可见的首屏图片获得连接，再在空闲前预热后续缩略图。
+  prefetchTimer = setTimeout(() => {
+    void prefetchThumbnails(snapshot, run, controller.signal)
+  }, 120)
+}
+watch(
+  [filtered, () => state.settings.imageMode],
+  scheduleThumbPrefetch,
+  { immediate: true },
+)
+onUnmounted(() => {
+  prefetchRun++
+  clearTimeout(prefetchTimer)
+  prefetchAbort?.abort()
 })
 
 // 切换分类时让网格整体淡入一次（只按分类触发，搜索输入时列表保持不重建）

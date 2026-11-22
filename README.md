@@ -338,6 +338,9 @@ go run scripts/optimize-images.go       # 把 docs/artwork 的 PNG 重新转成 
 `api-test.mjs` 会临时建一道测试菜、点一次菜再清理，并还原当天的掌勺人与备注。
 开启了访问口令时用 `CODE=你的口令 node scripts/api-test.mjs`。
 
+`scripts/build.mjs` 会同时生成 `.br` 与 `.gz`；服务端优先使用 Brotli，旧浏览器自动回退 gzip。
+静态资源和首屏快照都带强 ETag，内容未变化时只返回 304。
+
 局域网默认继续使用 HTTP，浏览器对同一 HTTP/1.1 域名通常只开 6 个并发连接；
 Go 服务端本身没有这个限制。若已有手机和电脑都信任的局域网证书，可在启动参数中加
 `--tls-cert=/path/cert.pem --tls-key=/path/key.pem` 或设置
@@ -351,7 +354,7 @@ Go 服务端本身没有这个限制。若已有手机和电脑都信任的局�
 用户特别关心这一点，这里说清楚：
 
 - **全部源码、CSS、文案独立编写**，MIT 许可。只参考了 gift-book 的「目录怎么分、构建怎么串」，**没有复制它的任何代码、样式、文案、图标或图片**。
-- 运行时零第三方 Go 依赖；构建期依赖 Vue 3 / Vite / @vitejs/plugin-vue（均 MIT），Go 标准库（BSD-3-Clause）。未引入 GPL/AGPL 代码、商业模板、UI 组件库。
+- 运行时仅使用 MIT 许可的 `github.com/andybalholm/brotli` 做 Brotli 编解码；构建期依赖 Vue 3 / Vite / @vitejs/plugin-vue（均 MIT），Go 标准库（BSD-3-Clause）。未引入 GPL/AGPL 代码、商业模板、UI 组件库。
 - 菜名、菜系与地域归属属于通用饮食常识；描述、标签、辣度、耗时为自行撰写，**未摘录任何菜谱网站或图书**。
 - **做法步骤全部自写**；**用量数值**中 184 道取自公共领域项目 [HowToCook](https://github.com/Anduin2017/HowToCook)（Unlicense，公共领域），其余 53 道按家常份量自写，已在 NOTICE 中标注来源。
 - **图片**：19 张菜系封面与 173 张菜品图均为本项目用 AI 生成，原始图留档在 `docs/artwork/`，未使用任何图库照片、菜谱网站图片或摄影作品。

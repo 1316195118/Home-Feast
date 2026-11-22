@@ -123,3 +123,30 @@ func withGzip(next http.Handler) http.Handler {
 		next.ServeHTTP(gw, r)
 	})
 }
+
+// acceptsEncoding 解析 Accept-Encoding 的 q 值，避免把 "br" 当作任意单词里的子串。
+func acceptsEncoding(header, target string) bool {
+	target = strings.ToLower(target)
+	matched := -1.0
+	wildcard := -1.0
+	for _, part := range strings.Split(header, ",") {
+		fields := strings.Split(strings.TrimSpace(part), ";")
+		name := strings.ToLower(strings.TrimSpace(fields[0]))
+		quality := 1.0
+		for _, param := range fields[1:] {
+			key, value, ok := strings.Cut(strings.TrimSpace(param), "=")
+			if ok && strings.EqualFold(strings.TrimSpace(key), "q") {
+				if parsed, err := strconv.ParseFloat(strings.TrimSpace(value), 64); err == nil {
+					quality = parsed
+				}
+			}
+		}
+		switch name {
+		case target:
+			matched = quality
+		case "*":
+			wildcard = quality
+		}
+	}
+	return matched > 0 || (matched < 0 && wildcard > 0)
+}

@@ -7,7 +7,10 @@ import { performance } from 'node:perf_hooks'
 
 const BASE = (process.env.BASE || 'http://127.0.0.1:8090').replace(/\/+$/, '')
 const WRITE = process.env.WRITE === '1'
-const HEADERS = { Accept: 'application/json, text/plain, */*' }
+const HEADERS = {
+  Accept: 'application/json, text/plain, */*',
+  'Accept-Encoding': 'br, gzip',
+}
 if (process.env.CODE) HEADERS['X-Access-Code'] = process.env.CODE
 
 function percentile(values, p) {

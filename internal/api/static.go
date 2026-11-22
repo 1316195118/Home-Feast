@@ -14,14 +14,18 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/andybalholm/brotli"
 )
 
 type staticAsset struct {
 	data        []byte
 	gzip        []byte
+	brotli      []byte
 	contentType string
 	etag        string
 	gzipETag    string
+	brotliETag  string
 }
 
 func (s *Server) loadStatic(name string) (*staticAsset, bool) {
@@ -43,9 +47,23 @@ func (s *Server) loadStatic(name string) (*staticAsset, bool) {
 	sum := sha256.Sum256(data)
 	asset.etag = `"` + hex.EncodeToString(sum[:12]) + `"`
 	if len(data) >= 1024 && compressible(contentType) {
-		if gz, gzipErr := gzipBody(data); gzipErr == nil {
+		// 构建脚本会预生成 .br / .gz；直接嵌入，避免线上第一次请求承担压缩成本。
+		if precompressed, readErr := fs.ReadFile(s.web, name+".br"); readErr == nil && len(precompressed) > 0 {
+			asset.brotli = precompressed
+		} else if br, brotliErr := brotliBody(data); brotliErr == nil {
+			asset.brotli = br
+		}
+		if len(asset.brotli) > 0 {
+			brotliSum := sha256.Sum256(asset.brotli)
+			asset.brotliETag = `"` + hex.EncodeToString(brotliSum[:12]) + `-br"`
+		}
+		if precompressed, readErr := fs.ReadFile(s.web, name+".gz"); readErr == nil && len(precompressed) > 0 {
+			asset.gzip = precompressed
+		} else if gz, gzipErr := gzipBody(data); gzipErr == nil {
 			asset.gzip = gz
-			gzipSum := sha256.Sum256(gz)
+		}
+		if len(asset.gzip) > 0 {
+			gzipSum := sha256.Sum256(asset.gzip)
 			asset.gzipETag = `"` + hex.EncodeToString(gzipSum[:12]) + `-gzip"`
 		}
 	}
@@ -83,8 +101,13 @@ func (s *Server) serveFrontend(w http.ResponseWriter, r *http.Request) {
 	}
 	body := asset.data
 	etag := asset.etag
-	useGzip := len(asset.gzip) > 0 && strings.Contains(r.Header.Get("Accept-Encoding"), "gzip")
-	if useGzip {
+	acceptEncoding := r.Header.Get("Accept-Encoding")
+	if len(asset.brotli) > 0 && acceptsEncoding(acceptEncoding, "br") {
+		body = asset.brotli
+		etag = asset.brotliETag
+		w.Header().Set("Content-Encoding", "br")
+		w.Header().Set("Vary", "Accept-Encoding")
+	} else if len(asset.gzip) > 0 && acceptsEncoding(acceptEncoding, "gzip") {
 		body = asset.gzip
 		etag = asset.gzipETag
 		w.Header().Set("Content-Encoding", "gzip")
@@ -102,6 +125,18 @@ func (s *Server) serveFrontend(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodHead {
 		_, _ = w.Write(body)
 	}
+}
+
+func brotliBody(body []byte) ([]byte, error) {
+	var buf bytes.Buffer
+	zw := brotli.NewWriter(&buf)
+	if _, err := zw.Write(body); err != nil {
+		return nil, err
+	}
+	if err := zw.Close(); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
 // serveUpload 提供用户自己上传的菜品照片，路径只允许单层文件名。

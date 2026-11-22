@@ -3,11 +3,18 @@
 
 html, body, #app { min-height: 100%; }
 /* 常驻滚动条槽位：切菜系/切页签时页面高度变化，滚动条出现或消失会让内容横向跳 10px */
-html { scrollbar-gutter: stable; }
+html {
+  scrollbar-gutter: stable;
+  background: var(--paper);
+  /* 长列表滚到尽头后继续拖动时，不让浏览器把页面拉出画布露出白底，
+     也不触发下拉刷新。PWA 内刷新必须由应用自己的更新按钮控制。 */
+  overscroll-behavior-y: none;
+}
 
 body {
   margin: 0;
   background: var(--paper);
+  overscroll-behavior-y: none;
   color: var(--ink);
   font-family: var(--font);
   font-size: 15px;

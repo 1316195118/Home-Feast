@@ -1,8 +1,12 @@
 // 家里吃点啥 · 离线缓存
 // /api/ 一律走网络；页面导航走 network-first；带 hash 的构建资源走 cache-first；
 // 菜品图片走 stale-while-revalidate：先秒开缓存，再在后台校验并更新。
-const CACHE = 'fm-shell-v3'
+const CACHE = 'fm-shell-v4'
 const SHELL = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png', '/dishes/homestyle.webp']
+const REVALIDATE_WORKERS = 2
+let revalidateActive = 0
+const revalidateQueue = []
+const revalidatePending = new Map()
 
 function isHashedAsset(pathname) {
   return pathname.startsWith('/assets/') && /\.[a-z0-9_-]{8,}\.(?:js|css|woff2?)$/i.test(pathname)
@@ -43,20 +47,48 @@ async function cacheFirst(request) {
   return putIfFresh(cache, request, response)
 }
 
+async function fetchAndStore(request) {
+  const response = await fetch(request)
+  const cache = await caches.open(CACHE)
+  return putIfFresh(cache, request, response)
+}
+
+function pumpRevalidateQueue() {
+  while (revalidateActive < REVALIDATE_WORKERS && revalidateQueue.length) {
+    revalidateActive++
+    const task = revalidateQueue.shift()
+    fetchAndStore(task.request)
+      .catch(() => null)
+      .finally(() => {
+        revalidateActive--
+        revalidatePending.delete(task.key)
+        task.resolve()
+        pumpRevalidateQueue()
+      })
+  }
+}
+
+// 缓存命中时立即返回旧图，但后台校验严格限 2 并发。
+// 否则一次打开 237 道菜会排队 237 个校验请求，后面的未缓存图片反而迟迟拿不到连接。
+function queueRevalidate(request) {
+  const key = request.url
+  const pending = revalidatePending.get(key)
+  if (pending) return pending
+  const promise = new Promise((resolve) => {
+    revalidateQueue.push({ request, key, resolve })
+    pumpRevalidateQueue()
+  })
+  revalidatePending.set(key, promise)
+  return promise
+}
+
 async function staleWhileRevalidate(request, event) {
   const cached = await caches.match(request)
-  const network = fetch(request)
-    .then(async (response) => {
-      const cache = await caches.open(CACHE)
-      return putIfFresh(cache, request, response)
-    })
-    .catch(() => null)
-  // 缓存命中时立即返回，同时让浏览器把后台刷新任务跑完。
   if (cached) {
-    event.waitUntil(network)
+    event.waitUntil(queueRevalidate(request))
     return cached
   }
-  return (await network) || Response.error()
+  return (await fetchAndStore(request).catch(() => null)) || Response.error()
 }
 
 self.addEventListener('install', (event) => {

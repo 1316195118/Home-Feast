@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { dishImage } from '../utils'
+import { cachedThumb } from '../thumb-cache'
 
 const props = defineProps({
   item: { type: Object, required: true },
@@ -13,8 +14,9 @@ const props = defineProps({
 // 先试当前清晰度；缩略图缺失时退回原图；原图损坏再退回菜系封面，
 // 最后固定回退家常封面。这样任何一张上传图异常都不会留下破图。
 const candidates = computed(() => {
+  const preferred = dishImage(props.item, props.cuisines, props.dishes, props.size)
   const urls = [
-    dishImage(props.item, props.cuisines, props.dishes, props.size),
+    cachedThumb(preferred) || preferred,
     dishImage(props.item, props.cuisines, props.dishes, ''),
   ]
   const key = props.item?.cuisine || props.item?.dishCuisine

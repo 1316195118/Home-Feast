@@ -282,8 +282,23 @@
 .dish-grid.grid-in .dish-card:nth-child(10) { animation-delay: var(--dur-mid); }
 .dish-grid.grid-in .dish-card:nth-child(11) { animation-delay: var(--dur-mid); }
 .dish-grid.grid-in .dish-card:nth-child(12) { animation-delay: var(--dur-mid); }
+/* 首屏 12 张保留错峰入场；后续长列表不再为几十张离屏卡片同时建立动画层。 */
+.dish-grid.grid-in .dish-card:nth-child(n + 13) { animation: none; }
 @media (prefers-reduced-motion: reduce) { .dish-grid.grid-in .dish-card { animation: none; } }
-.dish-card { overflow: hidden; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); transition: transform var(--dur-mid) var(--ease), box-shadow var(--dur-mid) var(--ease), border-color var(--dur-mid) var(--ease); }
+.dish-card {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--dur-mid) var(--ease), box-shadow var(--dur-mid) var(--ease), border-color var(--dur-mid) var(--ease);
+  /* 237 道菜全部铺在 DOM 里时，浏览器可跳过视口外卡片的内容绘制；
+     auto 会记住真实高度，滚动条不会因为离屏跳过而反复跳动。 */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 430px;
+}
 /* 触屏没有真 hover，避免点按后卡片「粘」在抬起状态 */
 @media (hover: hover) {
   .dish-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); border-color: var(--line-strong); }
@@ -307,12 +322,12 @@
 .dish-recipe::before, .dish-fav::before, .suggest-recipe::before, .suggest-add::before {
   content: ""; position: absolute; inset: 6px;
   border-radius: 50%;
-  background: var(--badge-bg);
+  /* 每张卡片有两个角标。长列表里逐层实时 backdrop blur 会累积大量
+     GPU 图层，部分手机滚到底部会整屏发白；改用高不透明度底色。 */
+  background: var(--badge-bg-strong);
   border: 1px solid var(--badge-line);
   box-shadow: 0 1px 4px rgba(60, 50, 41, 0.12);
-  -webkit-backdrop-filter: blur(3px);
-  backdrop-filter: blur(3px);
-  opacity: 0.82;
+  opacity: 0.76;
   transition: opacity var(--dur-mid) var(--ease), transform var(--dur-mid) var(--ease), background var(--dur-mid) var(--ease);
 }
 .dish-recipe .badge-ico, .dish-fav .badge-ico, .suggest-recipe .badge-ico, .suggest-add .badge-ico {

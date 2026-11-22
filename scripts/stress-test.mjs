@@ -97,9 +97,14 @@ async function waitForSSE(trigger) {
   }
 }
 
-async function parseJSONFile(file) {
-  const raw = await fs.readFile(file, 'utf8')
-  return JSON.parse(raw)
+async function parseJSONFile(file, fallback) {
+  try {
+    const raw = await fs.readFile(file, 'utf8')
+    return JSON.parse(raw)
+  } catch (error) {
+    if (error?.code === 'ENOENT' && fallback !== undefined) return fallback
+    throw error
+  }
 }
 
 const created = { dishes: [], members: [], orders: [] }
@@ -113,27 +118,27 @@ try {
   const ping = await request('/api/ping')
   check('健康检查', ping.status === 200 && ping.data?.ok === true, `HTTP ${ping.status}`)
 
-  const boot0 = await request('/api/bootstrap', { headers: { 'Accept-Encoding': 'gzip' } })
+  const boot0 = await request('/api/bootstrap', { headers: { 'Accept-Encoding': 'br, gzip' } })
   const boot = boot0.data
   check('bootstrap 返回完整数据', boot0.status === 200 && boot?.dishes?.length >= 50)
-  // Node fetch 会自动解压 body，但响应头仍保留 gzip；内容必须是可直接解析的单层 JSON。
-  check('bootstrap 预压缩未二次压缩', boot0.headers.get('content-encoding') === 'gzip'
+  // Node fetch 会自动解压 body，但响应头仍保留 br；内容必须是可直接解析的单层 JSON。
+  check('bootstrap 优先使用预压缩 Brotli', boot0.headers.get('content-encoding') === 'br'
     && boot0.body[0] === 0x7b)
-  check('bootstrap 带强 ETag', /^"[0-9a-f]{24}-gzip"$/.test(boot0.headers.get('etag') || ''))
+  check('bootstrap 带强 ETag', /^"[0-9a-f]{24}-br"$/.test(boot0.headers.get('etag') || ''))
 
   const cached = await request('/api/bootstrap', {
-    headers: { 'Accept-Encoding': 'gzip', 'If-None-Match': boot0.headers.get('etag') },
+    headers: { 'Accept-Encoding': 'br, gzip', 'If-None-Match': boot0.headers.get('etag') },
   })
   check('ETag 命中返回空 304', cached.status === 304 && cached.body.length === 0)
 
-  const index = await request('/', { headers: { 'Accept-Encoding': 'gzip' } })
+  const index = await request('/', { headers: { 'Accept-Encoding': 'br, gzip' } })
   const html = index.body.toString('utf8')
   const asset = html.match(/<script[^>]+src="([^"]+\.js)"/)?.[1]
   check('首页返回构建入口', index.status === 200 && Boolean(asset))
   if (asset) {
-    const js = await request(asset, { headers: { 'Accept-Encoding': 'gzip' } })
-    check('静态资源启用 gzip 与长缓存', js.status === 200
-      && js.headers.get('content-encoding') === 'gzip'
+    const js = await request(asset, { headers: { 'Accept-Encoding': 'br, gzip' } })
+    check('静态资源启用 Brotli 与长缓存', js.status === 200
+      && js.headers.get('content-encoding') === 'br'
       && /immutable/.test(js.headers.get('cache-control') || ''), `${js.body.length} 字节`)
   }
 
@@ -398,7 +403,9 @@ try {
     if (DATA_DIR) {
       const files = ['dishes.json', 'members.json', 'plans.json', 'pins.json']
       const parsed = {}
-      for (const name of files) parsed[name] = await parseJSONFile(path.join(DATA_DIR, name))
+      for (const name of files) {
+        parsed[name] = await parseJSONFile(path.join(DATA_DIR, name), name === 'pins.json' ? {} : undefined)
+      }
       const dishIDs = parsed['dishes.json'].map((d) => d.id)
       const memberIDs = parsed['members.json'].map((m) => m.id)
       const orderIDs = parsed['plans.json'].flatMap((p) => (p.orders || []).map((o) => o.id))

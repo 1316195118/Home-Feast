@@ -45,12 +45,14 @@ type Server struct {
 }
 
 type bootstrapCacheEntry struct {
-	revision uint64
-	date     string
-	raw      []byte
-	gzip     []byte
-	rawETag  string
-	gzipETag string
+	revision   uint64
+	date       string
+	raw        []byte
+	gzip       []byte
+	brotli     []byte
+	rawETag    string
+	gzipETag   string
+	brotliETag string
 }
 
 // generatedThumb 是旧上传图缺失缩略图时的内存缓存，不写入 /data 卷。
@@ -134,6 +136,7 @@ func New(st *store.Store, web fs.FS, envCode string) http.Handler {
 
 	root := http.NewServeMux()
 	root.Handle("/api/", s.protect(api))
+	root.HandleFunc("POST /thumb-bundle", s.serveThumbBundle)
 	root.HandleFunc("/uploads/", s.serveUpload)
 	root.HandleFunc("/", s.serveFrontend)
 	// 最外层压缩：JSON/JS/CSS/HTML 实测能省 65%~80% 传输量（见 gzip.go）
@@ -289,15 +292,22 @@ func (s *Server) buildBootstrapCache(date string) (*bootstrapCacheEntry, error) 
 	if err != nil {
 		return nil, err
 	}
+	br, err := brotliBody(body)
+	if err != nil {
+		return nil, err
+	}
 	sum := sha256.Sum256(body)
 	gzipSum := sha256.Sum256(gzipped)
+	brotliSum := sha256.Sum256(br)
 	return &bootstrapCacheEntry{
-		revision: snapshot.Revision,
-		date:     date,
-		raw:      body,
-		gzip:     gzipped,
-		rawETag:  `"` + hex.EncodeToString(sum[:12]) + `"`,
-		gzipETag: `"` + hex.EncodeToString(gzipSum[:12]) + `-gzip"`,
+		revision:   snapshot.Revision,
+		date:       date,
+		raw:        body,
+		gzip:       gzipped,
+		brotli:     br,
+		rawETag:    `"` + hex.EncodeToString(sum[:12]) + `"`,
+		gzipETag:   `"` + hex.EncodeToString(gzipSum[:12]) + `-gzip"`,
+		brotliETag: `"` + hex.EncodeToString(brotliSum[:12]) + `-br"`,
 	}, nil
 }
 
@@ -314,10 +324,15 @@ func gzipBody(body []byte) ([]byte, error) {
 }
 
 func (s *Server) serveBootstrap(w http.ResponseWriter, r *http.Request, entry *bootstrapCacheEntry) {
-	useGzip := strings.Contains(r.Header.Get("Accept-Encoding"), "gzip")
 	body, etag := entry.raw, entry.rawETag
-	if useGzip {
+	encoding := ""
+	acceptEncoding := r.Header.Get("Accept-Encoding")
+	if len(entry.brotli) > 0 && acceptsEncoding(acceptEncoding, "br") {
+		body, etag = entry.brotli, entry.brotliETag
+		encoding = "br"
+	} else if len(entry.gzip) > 0 && acceptsEncoding(acceptEncoding, "gzip") {
 		body, etag = entry.gzip, entry.gzipETag
+		encoding = "gzip"
 	}
 	w.Header().Set("ETag", etag)
 	w.Header().Set("Cache-Control", "private, no-cache")
@@ -328,8 +343,8 @@ func (s *Server) serveBootstrap(w http.ResponseWriter, r *http.Request, entry *b
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Header().Set("Content-Length", strconv.Itoa(len(body)))
-	if useGzip {
-		w.Header().Set("Content-Encoding", "gzip")
+	if encoding != "" {
+		w.Header().Set("Content-Encoding", encoding)
 	}
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(body)

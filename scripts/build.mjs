@@ -1,8 +1,9 @@
 // 统一构建脚本：前端 -> Go embed 目录 -> 单文件可执行程序。
 // 只用 Node 内置模块；直接调 Vite 的 JS 入口，绕开不同系统上 npm.cmd 的差异。
 import { execFileSync, execSync } from 'node:child_process'
-import { copyFileSync, mkdirSync, readdirSync, rmSync, writeFileSync, existsSync } from 'node:fs'
-import { join, resolve } from 'node:path'
+import { brotliCompressSync, constants as zlibConstants, gzipSync } from 'node:zlib'
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { extname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)))
@@ -28,6 +29,45 @@ function copyDir(from, to) {
   }
 }
 
+const precompressExts = new Set(['.html', '.js', '.css', '.json', '.svg'])
+
+// 构建时用最高级别预压缩一次，浏览器请求时直接下发 .br / .gz。
+// 小于 1 KiB 的文件不生成，避免压缩头比正文还大。
+function precompressDir(dir) {
+  let generated = 0
+  let originalBytes = 0
+  let brotliBytes = 0
+  let gzipBytes = 0
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const target = join(dir, entry.name)
+    if (entry.isDirectory()) {
+      const nested = precompressDir(target)
+      generated += nested.generated
+      originalBytes += nested.originalBytes
+      brotliBytes += nested.brotliBytes
+      gzipBytes += nested.gzipBytes
+      continue
+    }
+    if (!entry.isFile() || !precompressExts.has(extname(entry.name).toLowerCase())) continue
+    const data = readFileSync(target)
+    if (data.length < 1024) continue
+    const compressed = brotliCompressSync(data, {
+      params: {
+        [zlibConstants.BROTLI_PARAM_QUALITY]: zlibConstants.BROTLI_MAX_QUALITY,
+        [zlibConstants.BROTLI_PARAM_SIZE_HINT]: data.length,
+      },
+    })
+    const gzipped = gzipSync(data, { level: 9 })
+    writeFileSync(target + '.br', compressed)
+    writeFileSync(target + '.gz', gzipped)
+    generated += 1
+    originalBytes += data.length
+    brotliBytes += compressed.length
+    gzipBytes += gzipped.length
+  }
+  return { generated, originalBytes, brotliBytes, gzipBytes }
+}
+
 if (!existsSync(join(webDir, 'node_modules'))) {
   title('安装前端依赖 npm install')
   execSync('npm install --no-audit --no-fund', { cwd: webDir, stdio: 'inherit' })
@@ -35,6 +75,16 @@ if (!existsSync(join(webDir, 'node_modules'))) {
 
 title('构建前端 vite build')
 execFileSync(process.execPath, [viteBin, 'build'], { cwd: webDir, stdio: 'inherit' })
+
+title('预压缩可缓存文本资源 Brotli')
+const br = precompressDir(viteOut)
+const brotliSaving = br.originalBytes ? ((1 - br.brotliBytes / br.originalBytes) * 100).toFixed(1) : '0.0'
+const gzipSaving = br.originalBytes ? ((1 - br.gzipBytes / br.originalBytes) * 100).toFixed(1) : '0.0'
+console.log(
+  `${br.generated} 个文件：${(br.originalBytes / 1024).toFixed(1)} KB -> `
+  + `Brotli ${(br.brotliBytes / 1024).toFixed(1)} KB（节省 ${brotliSaving}%） / `
+  + `gzip ${(br.gzipBytes / 1024).toFixed(1)} KB（节省 ${gzipSaving}%）`,
+)
 
 title('同步前端产物到 Go embed 目录')
 rmSync(embedDir, { recursive: true, force: true })

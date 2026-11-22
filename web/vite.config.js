@@ -23,6 +23,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': apiProxy,
+      '/thumb-bundle': apiProxy,
       '/uploads': {
         target: API_TARGET,
         changeOrigin: true,

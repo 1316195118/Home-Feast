@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"familymenu/internal/store"
+	"github.com/andybalholm/brotli"
 )
 
 func newTestHandler(t *testing.T) http.Handler {
@@ -134,6 +135,34 @@ func TestBootstrapCompressedCacheAndInvalidation(t *testing.T) {
 	}
 }
 
+func TestBootstrapPrefersBrotli(t *testing.T) {
+	h := newTestHandler(t)
+	req := httptest.NewRequest(http.MethodGet, "/api/bootstrap", nil)
+	req.Header.Set("Accept-Encoding", "gzip, br")
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("bootstrap 应 200，实际 %d：%s", w.Code, w.Body.String())
+	}
+	if got := w.Header().Get("Content-Encoding"); got != "br" {
+		t.Fatalf("支持 Brotli 时应优先返回 br，实际 %q", got)
+	}
+	if !strings.HasSuffix(w.Header().Get("ETag"), `-br"`) {
+		t.Fatalf("Brotli ETag 标识不正确: %q", w.Header().Get("ETag"))
+	}
+	plain, err := io.ReadAll(brotli.NewReader(bytes.NewReader(w.Body.Bytes())))
+	if err != nil {
+		t.Fatalf("解压 Brotli bootstrap: %v", err)
+	}
+	if len(plain) == 0 || plain[0] != '{' {
+		t.Fatalf("Brotli 解压后不是单层 JSON 对象，开头 %q", string(plain[:min(len(plain), 8)]))
+	}
+	if got := w.Header().Get("Content-Length"); got != strconv.Itoa(w.Body.Len()) {
+		t.Fatalf("Content-Length 应为 Brotli 长度，header=%s body=%d", got, w.Body.Len())
+	}
+}
+
 func TestStaticAssetPrecompression(t *testing.T) {
 	st, err := store.Open(t.TempDir(), t.TempDir())
 	if err != nil {
@@ -177,6 +206,45 @@ func TestStaticAssetPrecompression(t *testing.T) {
 	h.ServeHTTP(w, req)
 	if w.Code != http.StatusNotModified || w.Body.Len() != 0 {
 		t.Fatalf("静态资源未变应返回空 304，实际 %d / %d 字节", w.Code, w.Body.Len())
+	}
+}
+
+func TestStaticAssetUsesPrecompressedBrotli(t *testing.T) {
+	st, err := store.Open(t.TempDir(), t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	script := "console.log('家庭点菜')" + strings.Repeat(";", 2048)
+	compressed, err := brotliBody([]byte(script))
+	if err != nil {
+		t.Fatal(err)
+	}
+	h := New(st, fstest.MapFS{
+		"assets/app.js":    &fstest.MapFile{Data: []byte(script)},
+		"assets/app.js.br": &fstest.MapFile{Data: compressed},
+	}, "")
+
+	req := httptest.NewRequest(http.MethodGet, "/assets/app.js", nil)
+	req.Header.Set("Accept-Encoding", "gzip, br")
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, req)
+	if w.Code != http.StatusOK || w.Header().Get("Content-Encoding") != "br" {
+		t.Fatalf("静态资源应优先使用 Brotli，实际 %d / %q", w.Code, w.Header().Get("Content-Encoding"))
+	}
+	plain, err := io.ReadAll(brotli.NewReader(bytes.NewReader(w.Body.Bytes())))
+	if err != nil {
+		t.Fatalf("静态 Brotli 头无效: %v", err)
+	}
+	if string(plain) != script {
+		t.Fatalf("预压缩内容不一致，解压后 %d 字节", len(plain))
+	}
+
+	req = httptest.NewRequest(http.MethodGet, "/assets/app.js", nil)
+	req.Header.Set("Accept-Encoding", "gzip")
+	w = httptest.NewRecorder()
+	h.ServeHTTP(w, req)
+	if w.Code != http.StatusOK || w.Header().Get("Content-Encoding") != "gzip" {
+		t.Fatalf("旧客户端应回退 gzip，实际 %d / %q", w.Code, w.Header().Get("Content-Encoding"))
 	}
 }
 
