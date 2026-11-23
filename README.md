@@ -59,7 +59,7 @@ docker buildx build --platform linux/amd64,linux/arm64 -t family-menu:latest .
 | 选择困难 | 从菜谱随机捞三道，点一下直接加进今日菜单 |
 | 自己加菜 | 增删改菜品、选菜系、写描述标签、定辣度与耗时、收藏 |
 | 记录与统计 | 按天回看历史菜单、掌勺次数、本月点菜数；删菜后历史仍保留菜名快照 |
-| 备份 | 一键导出 zip（4 份 JSON + 上传的照片），可从 zip 恢复；直接打包数据目录也行 |
+| 备份 | 一键导出 zip（4 份 JSON + 上传照片）并从 zip 恢复；备份/恢复串行执行，ZIP 与图片都先写临时文件再原子替换；直接打包数据目录也行 |
 | 可选口令 | 在网页「设置 → 安全与数据」里维护；Docker Compose 不再加入口令环境变量 |
 | 菜品与分类 | 重庆菜已并入「川渝菜」，导入菜按常识重新归类；新增新疆菜 18 道与川渝特色小吃 12 道，每道都写了自己的配料与 6 步做法 |
 | 骰子 PK 定分工 | 每人摇一次，点数落库（换人、刷新都不丢）；都摇完自动定掌勺与洗碗，平局自动加摇；结果动画按人只播一次；音效由 Web Audio 实时合成，**不含任何外部音频文件** |
@@ -282,7 +282,7 @@ menu.exe -port 8090 -data .\data
 ./menu -port 8090 -data ./data
 ```
 
-构建需要 Node 20+ 与 Go 1.24+；**运行只需要那一个可执行文件**。打开 `http://127.0.0.1:8090`。
+构建需要 Node 24+ 与 Go 1.27.4+；**运行只需要那一个可执行文件**。打开 `http://127.0.0.1:8090`。
 
 | 参数 | 默认值 | 说明 |
 | --- | --- | --- |
@@ -343,7 +343,7 @@ config/              家庭配置
 ## 六、开发与验证
 
 ```bash
-cd web && npm install && npm run dev     # 前端热更新，代理到本机 8090
+cd web && npm ci && npm run dev          # 前端热更新，代理到本机 8090
 node scripts/build.mjs                  # 前端 + Go 一步构建
 BASE=http://127.0.0.1:8090 node scripts/api-test.mjs   # 接口冒烟测试
 BASE=http://127.0.0.1:8090 node scripts/perf-test.mjs  # 首屏 / 并发性能基准
@@ -355,7 +355,11 @@ BASE=http://127.0.0.1:8090 node scripts/_ui/image-concurrency-verify.mjs  # 225 
 BASE=http://127.0.0.1:8090 node scripts/_ui/mobile-navigation-verify.mjs  # 手机慢网连续切页白屏回归
 BASE=http://127.0.0.1:8090 node scripts/_ui/load-perf-verify.mjs          # 手机 4Mbps 首屏与懒加载
 CODE=测试口令 BASE=http://127.0.0.1:8090 node scripts/_ui/lock-verify.mjs  # 访问口令锁屏回归
+go mod verify
+go mod tidy -diff
 go vet ./... && go test ./...           # 后端静态检查
+go run golang.org/x/vuln/cmd/govulncheck@v1.10.0 ./...
+npm --prefix web audit --audit-level=high
 go run scripts/optimize-images.go       # 把 docs/artwork 的 PNG 重新转成 JPEG
 ```
 
@@ -378,7 +382,7 @@ Go 服务端本身没有这个限制。若已有手机和电脑都信任的局�
 用户特别关心这一点，这里说清楚：
 
 - **全部源码、CSS、文案独立编写**，MIT 许可。只参考了 gift-book 的「目录怎么分、构建怎么串」，**没有复制它的任何代码、样式、文案、图标或图片**。
-- 运行时仅使用 MIT 许可的 `github.com/andybalholm/brotli` 做 Brotli 编解码；构建期依赖 Vue 3 / Vite / @vitejs/plugin-vue（均 MIT），Go 标准库（BSD-3-Clause）。未引入 GPL/AGPL 代码、商业模板、UI 组件库。
+- 运行时仅使用 MIT 许可的 `github.com/andybalholm/brotli` 做 Brotli 编解码，以及 BSD-3-Clause 的 `golang.org/x/image` WebP 解码器；构建期依赖 Vue 3 / Vite / @vitejs/plugin-vue（均 MIT），Go 标准库（BSD-3-Clause）。未引入 GPL/AGPL 代码、商业模板、UI 组件库。
 - 菜名、菜系与地域归属属于通用饮食常识；描述、标签、辣度、耗时为自行撰写，**未摘录任何菜谱网站或图书**。
 - **做法步骤全部自写**；**用量数值**中 184 道取自公共领域项目 [HowToCook](https://github.com/Anduin2017/HowToCook)（Unlicense，公共领域），其余 53 道按家常份量自写，已在 NOTICE 中标注来源。
 - **图片**：19 张菜系封面与 173 张菜品图均为本项目用 AI 生成，原始图留档在 `docs/artwork/`，未使用任何图库照片、菜谱网站图片或摄影作品。
@@ -391,7 +395,7 @@ Go 服务端本身没有这个限制。若已有手机和电脑都信任的局�
 
 ## 八、后续可以继续优化的方向
 
-做法配料、购物清单（237 道精确用量）、每周排班、口味避雷、PWA 离线、智能推荐、Excel 导出、深色主题、多人实时同步（SSE）、每日自动备份均已陆续完成。多家庭隔离已留零破坏地基（分仓方案待确认），详见 `HANDOFF.md` 第三节与第十一节；这类不可逆的架构级改动建议逐项出方案后再动手。剩余 64 道菜的统一底图待生成额度恢复后续跑。
+做法配料、购物清单（237 道精确用量）、每周排班、口味避雷、PWA 离线、智能推荐、Excel 导出、深色主题、多人实时同步（SSE）、每日自动备份均已陆续完成。多家庭隔离已留零破坏地基（分仓方案待确认），详见 `HANDOFF.md` 第三节与第十一节；这类不可逆的架构级改动建议逐项出方案后再动手。237 道菜均已有可见配图，后续只需按新增菜品继续沿用现有配图与验收规范。
 
 ---
 

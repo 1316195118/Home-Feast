@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -83,58 +82,41 @@ func randomName() string {
 // 历史上这里会把整个 uploads 目录打进去，包含大量改图留下的孤儿文件，
 // 备份动辄 170MB+，反而超过导入上限、恢复不回来。现在只收菜品与订单实际引用的图片。
 func (s *Server) exportBackup(w http.ResponseWriter, r *http.Request) {
+	// 手动导出、恢复和定时备份共享同一组数据/图片文件。串行化后不会出现
+	// 导出到一半时图片被恢复任务覆盖，得到内部不一致的 ZIP。
+	s.backupMu.Lock()
+	defer s.backupMu.Unlock()
+
+	tmp, err := os.CreateTemp("", "fm-export-*.zip")
+	if err != nil {
+		jsonErr(w, http.StatusInternalServerError, "无法创建备份文件")
+		return
+	}
+	tmpPath := tmp.Name()
+	defer func() {
+		_ = tmp.Close()
+		_ = os.Remove(tmpPath)
+	}()
+	if err := s.writeBackupZip(tmp); err != nil {
+		jsonErr(w, http.StatusInternalServerError, "生成备份失败："+err.Error())
+		return
+	}
+	if err := tmp.Close(); err != nil {
+		jsonErr(w, http.StatusInternalServerError, "生成备份失败："+err.Error())
+		return
+	}
+	f, err := os.Open(tmpPath)
+	if err != nil {
+		jsonErr(w, http.StatusInternalServerError, "读取备份失败")
+		return
+	}
+	defer f.Close()
+
+	name := fmt.Sprintf("family-menu-%s.zip", time.Now().Format("20060102"))
 	w.Header().Set("Content-Type", "application/zip")
 	w.Header().Set("Cache-Control", "no-store")
-	w.Header().Set("Content-Disposition",
-		fmt.Sprintf(`attachment; filename="family-menu-%s.zip"`, time.Now().Format("20060102")))
-	zw := zip.NewWriter(w)
-	defer zw.Close()
-
-	for _, name := range jsonNames {
-		b, err := os.ReadFile(s.st.Path(name))
-		if err != nil {
-			continue
-		}
-		entry, err := zw.Create(name)
-		if err == nil {
-			_, _ = entry.Write(b)
-		}
-	}
-
-	used := s.usedImages()
-	root := s.st.Dir()
-	_ = filepath.WalkDir(filepath.Join(root, "uploads"), func(p string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() {
-			return nil
-		}
-		if !used[d.Name()] {
-			return nil // 没人引用的旧图不打包
-		}
-		rel, err := filepath.Rel(root, p)
-		if err != nil {
-			return nil
-		}
-		f, err := os.Open(p)
-		if err != nil {
-			return nil
-		}
-		defer f.Close()
-		entry, err := zw.Create(filepath.ToSlash(rel))
-		if err == nil {
-			_, _ = io.Copy(entry, f)
-		}
-		// 缩略图一起打包：否则恢复后列表只能回落原图（128KB vs 23KB），流量翻几倍。
-		base := strings.TrimSuffix(d.Name(), filepath.Ext(d.Name()))
-		thumbPath := filepath.Join(filepath.Dir(p), "thumb", base+".jpg")
-		if tf, err := os.Open(thumbPath); err == nil {
-			defer tf.Close()
-			name := filepath.ToSlash(filepath.Join(filepath.Dir(rel), "thumb", base+".jpg"))
-			if te, err := zw.Create(name); err == nil {
-				_, _ = io.Copy(te, tf)
-			}
-		}
-		return nil
-	})
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, name))
+	http.ServeContent(w, r, name, time.Now(), f)
 }
 
 // usedImages 收集当前数据真正引用到的图片文件名（不含路径）。
@@ -242,6 +224,10 @@ func (s *Server) importBackup(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		if base, ok := uploadEntryName(name); ok {
+			if zf.UncompressedSize64 > 8<<20 {
+				jsonErr(w, http.StatusBadRequest, fmt.Sprintf("%s 单张图片超过 8MB", filepath.Base(name)))
+				return
+			}
 			total += int64(zf.UncompressedSize64)
 			if total > maxBackup {
 				jsonErr(w, http.StatusBadRequest, "备份里的图片总量过大")
@@ -254,6 +240,9 @@ func (s *Server) importBackup(w http.ResponseWriter, r *http.Request) {
 		jsonErr(w, http.StatusBadRequest, "备份里没有可恢复的数据文件")
 		return
 	}
+
+	s.backupMu.Lock()
+	defer s.backupMu.Unlock()
 
 	// 恢复前的回滚点（只针对 JSON；图片不可逆但也不影响数据自洽）
 	stamp := time.Now().Format("20060102-150405")
@@ -304,31 +293,56 @@ func (s *Server) importBackup(w http.ResponseWriter, r *http.Request) {
 	imgDir := filepath.Join(s.st.Dir(), "uploads")
 	_ = os.MkdirAll(imgDir, 0o755)
 	restoredImg := 0
+	failedImg := 0
 	for _, it := range images {
-		rc, err := it.zf.Open()
-		if err != nil {
-			continue
-		}
-		f, err := os.Create(filepath.Join(imgDir, it.base))
-		if err != nil {
-			_ = rc.Close()
-			continue
-		}
-		_, cerr := io.Copy(f, io.LimitReader(rc, 8<<20))
-		_ = rc.Close()
-		if cerr == nil {
-			_ = f.Sync()
-		}
-		_ = f.Close()
-		if cerr == nil {
+		if err := extractZipFileAtomic(imgDir, it.base, it.zf); err != nil {
+			failedImg++
+		} else {
 			restoredImg++
 		}
 	}
 	// 恢复备份可能原地覆盖同名原图，丢掉旧的内存缩略图，下一次请求按新图重建。
 	s.clearGeneratedThumbs()
 	jsonOK(w, map[string]any{
-		"ok": true, "restored": len(jsons), "images": restoredImg, "snapshot": stamp,
+		"ok": true, "restored": len(jsons), "images": restoredImg,
+		"imagesFailed": failedImg, "snapshot": stamp,
 	})
+}
+
+func extractZipFileAtomic(root, name string, zf *zip.File) error {
+	dest := filepath.Join(root, filepath.FromSlash(name))
+	if err := os.MkdirAll(filepath.Dir(dest), 0o755); err != nil {
+		return err
+	}
+	rc, err := zf.Open()
+	if err != nil {
+		return err
+	}
+	defer rc.Close()
+
+	tmp, err := os.CreateTemp(filepath.Dir(dest), "."+filepath.Base(dest)+".*.tmp")
+	if err != nil {
+		return err
+	}
+	tmpPath := tmp.Name()
+	defer func() {
+		_ = tmp.Close()
+		_ = os.Remove(tmpPath)
+	}()
+	n, err := io.Copy(tmp, io.LimitReader(rc, 8<<20+1))
+	if err != nil {
+		return err
+	}
+	if n > 8<<20 || n != int64(zf.UncompressedSize64) {
+		return errors.New("解压后的图片大小不一致")
+	}
+	if err := tmp.Sync(); err != nil {
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+	return os.Rename(tmpPath, dest)
 }
 
 // validateBackupJSON 在写入之前判断备份里的数据文件是否可用：

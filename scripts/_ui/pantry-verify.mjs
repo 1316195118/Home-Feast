@@ -4,6 +4,7 @@ import { spawn } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
+import { killProcessTree } from './browser-cleanup.mjs'
 
 const EDGE = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'
 const BASE = process.env.BASE || 'http://127.0.0.1:18090'
@@ -166,6 +167,6 @@ for (const [index, size] of SIZES.entries()) {
   }))
 
   browser.socket.close()
-  browser.process.kill()
+  killProcessTree(browser.process)
   await sleep(250)
 }

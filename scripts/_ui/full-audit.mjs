@@ -3,6 +3,7 @@
 import { spawn } from 'node:child_process'
 import { setTimeout as sleep } from 'node:timers/promises'
 import fs from 'node:fs'
+import { killProcessTree } from './browser-cleanup.mjs'
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8090'
 const OUT = 'C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_ui/audit-report.json'
@@ -76,7 +77,7 @@ async function run(width, height, tag, mobile) {
     const d = report[tag][tab]
     console.log(`${tag}/${tab.padEnd(9)} 按钮${String(d.buttons.length).padStart(3)} 小目标${String(d.smallTargets.length).padStart(2)} 输入框${String(d.inputs.length).padStart(2)} 动画元素${String(d.animCount).padStart(3)} 时长${d.durations.length}种 卡宽${d.cardWidths.length}种 溢出${d.overflow}`)
   }
-  ws.close(); proc.kill()
+  ws.close(); killProcessTree(proc)
   return report[tag]
 }
 

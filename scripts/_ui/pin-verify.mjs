@@ -2,6 +2,7 @@
 // 会临时给第一位成员设密码，结束时一定清除（见 main 的 finally）。
 import { spawn } from 'node:child_process'
 import { setTimeout as sleep } from 'node:timers/promises'
+import { killProcessTree } from './browser-cleanup.mjs'
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8090'
 
@@ -148,7 +149,7 @@ try {
     }))())`))
     console.log('家人页 卡片', s.cards, '| 已设密码标识', s.pinTag, '| 改密码按钮', s.changeBtn, '| 设密码按钮', s.setBtn)
     console.log('  横向溢出', s.overflow, '| 过小控件', s.smallBtns, '| JS 异常', errors.length)
-    ws.close(); proc.kill()
+    ws.close(); killProcessTree(proc)
   }
   await run(1280, 900, 'desktop', false)
   await run(390, 844, 'phone', true)

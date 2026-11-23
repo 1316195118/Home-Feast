@@ -5,7 +5,13 @@ import { getRecipe } from '../recipes'
 import { sparkleFromEvent, celebrate, vibrate } from '../feedback'
 import DishPhoto from './DishPhoto.vue'
 
-const props = defineProps({ dish: { type: Object, required: true }, highlight: { type: String, default: '' }, multi: { type: Boolean, default: false }, multiPicked: { type: Boolean, default: false } })
+const props = defineProps({
+  dish: { type: Object, required: true },
+  highlight: { type: String, default: '' },
+  multi: { type: Boolean, default: false },
+  multiPicked: { type: Boolean, default: false },
+  priority: { type: Boolean, default: false },
+})
 defineEmits(['edit', 'open', 'multi-toggle'])
 const { state, actions, pending } = inject('app')
 
@@ -45,8 +51,10 @@ const avoidHits = computed(() => {
     >
       <DishPhoto
         :item="dish" :cuisines="state.cuisines" :dishes="state.dishes"
-        :size="imageSize(state.settings.imageMode)" :alt="dish.name"
-        :style="artStyle(dish, state.dishes)" width="480" height="360" loading="lazy" decoding="async"
+        :size="imageSize(state.settings.imageMode)" :alt="dish.name" :priority="priority"
+        :style="artStyle(dish, state.dishes)" width="480" height="360"
+        :loading="priority ? 'eager' : 'lazy'" :fetchpriority="priority ? 'high' : 'auto'"
+        decoding="async"
       />
       <button class="dish-recipe" title="看做法" aria-label="看做法" @click.stop="$emit('open', dish)"><span class="badge-ico">📖</span></button>
       <button

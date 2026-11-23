@@ -2,6 +2,7 @@
 // 骰子 CTA / 购物清单用量 / 双视口布局。会临时改设置与订单，结束时恢复。
 import { spawn } from 'node:child_process'
 import { setTimeout as sleep } from 'node:timers/promises'
+import { killProcessTree } from './browser-cleanup.mjs'
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8090'
 async function api(method, path, body) {
@@ -135,7 +136,7 @@ try {
       smallBtns: [...document.querySelectorAll('.btn,.chip,.tab')].filter(e=>{const r=e.getBoundingClientRect();return r.width>0&&(r.width<40||r.height<36)}).length,
     }))())`))
     console.log('排班弹窗 行数', s.rows, '| 下拉', s.selects, '| 横向溢出', s.overflow, '| 过小控件', s.smallBtns, '| JS 异常', errors.length)
-    ws.close(); proc.kill()
+    ws.close(); killProcessTree(proc)
   }
   await run(1280, 900, 'desktop', false)
   await run(390, 844, 'phone', true)

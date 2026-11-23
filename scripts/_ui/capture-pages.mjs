@@ -2,6 +2,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { spawn } from 'node:child_process'
 import { setTimeout as sleep } from 'node:timers/promises'
+import { killProcessTree } from './browser-cleanup.mjs'
 
 const EDGE = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'
 const BASE = (process.env.BASE || 'http://127.0.0.1:18092').replace(/\/+$/, '')
@@ -93,7 +94,7 @@ async function capture(width, height, tag, mobile) {
     }
   }
   ws.close()
-  proc.kill()
+  killProcessTree(proc)
 }
 
 await capture(390, 844, 'phone', true)

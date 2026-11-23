@@ -2,18 +2,16 @@
 # 三阶段构建：前端静态产物 -> 嵌入 Go 单文件 -> 极简运行镜像。
 # 运行镜像里没有 Node.js、没有数据库，只有一个二进制和时区证书。
 
-FROM --platform=$BUILDPLATFORM node:20-alpine AS frontend
+FROM --platform=$BUILDPLATFORM node:24-alpine AS frontend
 WORKDIR /build
-# 国内网络下固定使用可达的 npm 镜像，只影响构建容器，不改变源码配置。
-ENV NPM_CONFIG_REGISTRY=https://registry.npmmirror.com
-COPY web/package.json ./web/package.json
-RUN npm --prefix web install --no-audit --no-fund
+COPY web/package.json web/package-lock.json ./web/
+RUN npm --prefix web ci --no-audit --no-fund
 COPY web/ ./web/
 COPY scripts/build.mjs ./scripts/build.mjs
 # 与本地发布共用同一构建入口，确保前端产物同时生成 .br / .gz。
 RUN node scripts/build.mjs --frontend-only
 
-FROM --platform=$BUILDPLATFORM golang:1.24-alpine AS backend
+FROM --platform=$BUILDPLATFORM golang:1.27.4-alpine AS backend
 # buildx 多架构构建时自动注入目标架构；普通 docker build 回退 amd64
 ARG TARGETARCH=amd64
 WORKDIR /build
@@ -24,7 +22,7 @@ RUN mkdir -p webapp/dist
 COPY --from=frontend /build/web/dist/ ./webapp/dist/
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go build -trimpath -ldflags "-s -w" -o /out/menu ./cmd/menu
 
-FROM alpine:3.21
+FROM alpine:3.23
 RUN apk add --no-cache tzdata ca-certificates wget
 ENV TZ=Asia/Shanghai
 COPY --from=backend /out/menu /usr/local/bin/menu

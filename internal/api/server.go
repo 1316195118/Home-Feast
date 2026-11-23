@@ -11,6 +11,7 @@ import (
 	"io/fs"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -42,6 +43,7 @@ type Server struct {
 	thumbCache      map[string]*generatedThumb
 	thumbLoads      map[string]*generatedThumbLoad
 	thumbGeneration uint64
+	backupMu        sync.Mutex
 }
 
 type bootstrapCacheEntry struct {
@@ -202,14 +204,18 @@ func sameOrigin(r *http.Request) bool {
 		return true
 	}
 	u, err := url.Parse(origin)
-	if err != nil {
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
 		return false
 	}
-	host := r.Header.Get("X-Forwarded-Host")
-	if host == "" {
-		host = r.Host
+	expectedHost := r.Host
+	// 反向代理若改写了 Host，必须显式配置公开站点地址。绝不直接信任
+	// 客户端可伪造的 X-Forwarded-Host，否则同源保护可被绕过。
+	if configured := strings.TrimSpace(os.Getenv("MENU_SITE_URL")); configured != "" {
+		if site, err := url.Parse(configured); err == nil && site.Host != "" {
+			expectedHost = site.Host
+		}
 	}
-	return strings.EqualFold(u.Host, host)
+	return expectedHost != "" && strings.EqualFold(u.Host, expectedHost)
 }
 
 func (s *Server) ping(w http.ResponseWriter, r *http.Request) {

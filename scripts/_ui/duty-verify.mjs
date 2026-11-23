@@ -3,6 +3,7 @@
 // 脚本先记下当前身份与分工，测完恢复，不影响线上数据。
 import { spawn } from 'node:child_process'
 import { setTimeout as sleep } from 'node:timers/promises'
+import { killProcessTree } from './browser-cleanup.mjs'
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8090'
 async function api(method, path, body) {
@@ -75,5 +76,5 @@ console.log('JS 异常:', errors.length)
 // 恢复分工
 await api('PUT', `/api/plans/${today}`, { chefId: backup.chefId, dishwasherId: backup.dishwasherId })
 console.log('已恢复分工')
-ws.close(); proc.kill()
+ws.close(); killProcessTree(proc)
 process.exit(0)

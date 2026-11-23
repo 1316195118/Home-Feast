@@ -2,6 +2,7 @@
 // 以及页面是否出现横向溢出或运行时报错。
 import { spawn } from 'node:child_process'
 import { setTimeout as sleep } from 'node:timers/promises'
+import { killProcessTree } from './browser-cleanup.mjs'
 
 const EDGE = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'
 const BASE = process.env.BASE || 'http://127.0.0.1:8090'
@@ -23,7 +24,7 @@ for (let attempt = 0; attempt < 60; attempt++) {
   await sleep(250)
 }
 if (!targets?.some((target) => target.type === 'page')) {
-  processHandle.kill()
+  killProcessTree(processHandle)
   throw new Error('无法连接 Edge 调试端口')
 }
 
@@ -132,5 +133,5 @@ console.log(JSON.stringify({
 }, null, 2))
 
 socket.close()
-processHandle.kill()
+killProcessTree(processHandle)
 if (!pass) process.exit(1)

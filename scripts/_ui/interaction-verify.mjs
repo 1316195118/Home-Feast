@@ -4,6 +4,7 @@
 // 验证本轮新增交互：食材搜索/分类跳转/清空、骰子弹窗去重文本、设置页折叠
 import { spawn } from 'node:child_process'
 import { setTimeout as sleep } from 'node:timers/promises'
+import { killProcessTree } from './browser-cleanup.mjs'
 const BASE = process.env.BASE || 'http://127.0.0.1:8090'
 const PORT = 9961
 const proc = spawn('C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', [
@@ -57,4 +58,4 @@ await ev(`document.querySelector('.pk-modal .icon-btn:last-child')?.click()`); a
 await ev(`window.location.hash='#settings'`); await sleep(700)
 console.log('关于折叠', await ev(`JSON.stringify({details:!!document.querySelector('.setting-details'),open:document.querySelector('.setting-details')?.open,sub:document.querySelector('.settings-grid .section-sub')?.textContent.trim()})`))
 console.log('JS 异常', errors.length)
-ws.close(); proc.kill(); process.exit(0)
+ws.close(); killProcessTree(proc); process.exit(0)

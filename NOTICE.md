@@ -1,6 +1,6 @@
 # 版权与素材说明
 
-> 最后更新：2026-11-22（237 道菜、19 个菜系）
+> 最后更新：2026-11-23（237 道菜、19 个菜系）
 
 本项目重视版权与授权清晰。下面把「哪些是自写的、哪些来自第三方、各自什么许可」逐项写清楚，
 使用者与二次开发者可以据此判断能否商用、是否需要保留声明。
@@ -35,6 +35,7 @@
 | 组件 | 用途 | 许可证 |
 | --- | --- | --- |
 | Go 标准库（含 `embed`、`archive/zip`、`image/jpeg`、`compress/gzip`） | 后端、静态资源嵌入、备份、图片转码、传输压缩 | BSD-3-Clause |
+| `github.com/andybalholm/brotli` | 预压缩静态资源的 Brotli 编解码 | MIT |
 | `golang.org/x/image`（仅 `webp` 解码器） | 把上传的 WebP 图压成列表缩略图 | BSD-3-Clause |
 | Vue 3 | 前端响应式框架 | MIT |
 | Vite、`@vitejs/plugin-vue` | 前端构建工具 | MIT |
@@ -69,11 +70,9 @@ View Transitions / Web Animations / Vibration API 与本项目自写的 CSS 动�
 
 ## 4. 图片与视觉素材
 
-- `web/public/dishes/*.jpg`（**19 张**，对应 19 个菜系）为本项目通过 AI 绘图生成的
-  **写实菜系封面**：浅木纹桌面、俯拍、暖光，4:3 JPG，用于菜品卡片与分类展示。
+- `web/public/dishes/*.webp`（**19 张**，对应 19 个菜系）为本项目通过 AI 绘图生成的
+  **写实菜系封面**：浅木纹桌面、俯拍、暖光，800×600、4:3 WebP，用于菜品卡片与分类展示。
   原始生成图留档为 `docs/artwork/`（含生成平台标识，备查）。
-  其中「东北菜」「本帮菜」两张当前借用「地三鲜」「无锡酱排骨」的实拍风图占位，
-  后续会替换为专属封面。
 - 237 道菜均已有可见配图。其中 55 张经过逐张视觉验收的专属图随源码分发在
   `web/public/dish-photo/`，其余图片位于使用者自有实例的 `/data/uploads`。
   2026-11-22 的补图与返工通过火山方舟官方 Seedream Skill 调用 `Doubao-Seedream-5.5` 生成，

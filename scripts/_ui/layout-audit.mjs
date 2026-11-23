@@ -3,6 +3,7 @@
 // 可设 BASE=http://10.10.10.251:8090 直接审计线上。
 import { spawn } from 'node:child_process'
 import { setTimeout as sleep } from 'node:timers/promises'
+import { killProcessTree } from './browser-cleanup.mjs'
 
 const EDGE = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'
 const BASE = process.env.BASE || 'http://127.0.0.1:8090'
@@ -109,7 +110,7 @@ async function run(width, height, tag, mobile) {
     if (a.small.length) console.log('   过小控件:', a.small.join(' | '))
   }
 
-  ws.close(); proc.kill()
+  ws.close(); killProcessTree(proc)
 }
 
 const DEFAULT_SIZES = [

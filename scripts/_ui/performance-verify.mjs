@@ -4,6 +4,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { spawn } from 'node:child_process'
 import { setTimeout as sleep } from 'node:timers/promises'
+import { killProcessTree } from './browser-cleanup.mjs'
 
 const BASE = (process.env.BASE || 'http://127.0.0.1:8090').replace(/\/+$/, '')
 const EDGE = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'
@@ -162,6 +163,9 @@ try {
   check('全部上桌只发一次批量写请求', putBatch.length === 1, `${putBatch.length} 次`)
 
   await openTab('记录')
+  // 上桌事务返回后，记录页还要完成一次响应式渲染。固定只等 100ms
+  // 会在慢机器上抢跑，误报「再来一桌」不存在。
+  await waitFor(`!!document.querySelector('.history-reorder')`, 5000)
   const reorder = await clickText('.history-reorder', '再来一桌')
   check('历史记录「再来一桌」可用', reorder)
   if (reorder) {
@@ -204,6 +208,6 @@ try {
   const failed = results.filter((result) => !result.ok)
   console.log(`\n结果：${results.length - failed.length}/${results.length} 通过，${failed.length} 失败`)
   ws.close()
-  proc.kill()
+  killProcessTree(proc)
   if (failed.length) process.exitCode = 1
 }

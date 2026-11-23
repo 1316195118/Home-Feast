@@ -2,6 +2,7 @@ package api
 
 import (
 	"archive/zip"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -46,8 +47,11 @@ func (s *Server) writeBackupZip(w io.Writer) error {
 	root := s.st.Dir()
 	for _, name := range jsonNames {
 		b, err := os.ReadFile(s.st.Path(name))
-		if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
 			continue
+		}
+		if err != nil {
+			return err
 		}
 		entry, err := zw.Create(name)
 		if err != nil {
@@ -71,30 +75,14 @@ func (s *Server) writeBackupZip(w io.Writer) error {
 		if err != nil {
 			return nil
 		}
-		f, err := os.Open(p)
-		if err != nil {
-			return nil
-		}
-		defer f.Close()
-		entry, err := zw.Create(filepath.ToSlash(rel))
-		if err != nil {
-			return err
-		}
-		if _, err := io.Copy(entry, f); err != nil {
+		if err := addBackupFile(zw, filepath.ToSlash(rel), p); err != nil {
 			return err
 		}
 		base := strings.TrimSuffix(d.Name(), filepath.Ext(d.Name()))
 		thumbPath := filepath.Join(filepath.Dir(p), "thumb", base+".jpg")
-		if tf, err := os.Open(thumbPath); err == nil {
-			defer tf.Close()
-			name := filepath.ToSlash(filepath.Join(filepath.Dir(rel), "thumb", base+".jpg"))
-			te, err := zw.Create(name)
-			if err != nil {
-				return err
-			}
-			if _, err := io.Copy(te, tf); err != nil {
-				return err
-			}
+		name := filepath.ToSlash(filepath.Join(filepath.Dir(rel), "thumb", base+".jpg"))
+		if err := addBackupFile(zw, name, thumbPath); err != nil {
+			return err
 		}
 		return nil
 	})
@@ -104,25 +92,59 @@ func (s *Server) writeBackupZip(w io.Writer) error {
 	return zw.Close()
 }
 
+func addBackupFile(zw *zip.Writer, name, source string) error {
+	f, err := os.Open(source)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	entry, err := zw.Create(name)
+	if err != nil {
+		return err
+	}
+	_, err = io.Copy(entry, f)
+	return err
+}
+
 func (s *Server) runBackup() (string, int64, error) {
+	// 自动任务和多台设备的手动备份可能同时触发。串行化后既避免同名文件
+	// 互相覆盖，也避免两个 ZIP 同时读写导致的损坏。
+	s.backupMu.Lock()
+	defer s.backupMu.Unlock()
+
 	dir := s.backupDir()
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return "", 0, err
 	}
-	name := fmt.Sprintf("family-menu-%s-%s.zip", s.familyID(), time.Now().Format("20060102-1504"))
+	now := time.Now()
+	suffix := strings.TrimPrefix(randomName(), "img")
+	name := fmt.Sprintf("family-menu-%s-%s-%s.zip", s.familyID(), now.Format("20060102-150405"), suffix)
 	path := filepath.Join(dir, name)
-	f, err := os.Create(path)
+	tmp, err := os.CreateTemp(dir, ".family-menu-*.zip.tmp")
 	if err != nil {
 		return "", 0, err
 	}
-	writeErr := s.writeBackupZip(f)
-	closeErr := f.Close()
-	if writeErr != nil || closeErr != nil {
-		_ = os.Remove(path)
+	tmpPath := tmp.Name()
+	cleanup := func() { _ = os.Remove(tmpPath) }
+	defer cleanup()
+
+	writeErr := s.writeBackupZip(tmp)
+	syncErr := tmp.Sync()
+	closeErr := tmp.Close()
+	if writeErr != nil || syncErr != nil || closeErr != nil {
 		if writeErr != nil {
 			return "", 0, writeErr
 		}
+		if syncErr != nil {
+			return "", 0, syncErr
+		}
 		return "", 0, closeErr
+	}
+	if err := os.Rename(tmpPath, path); err != nil {
+		return "", 0, err
 	}
 	info, err := os.Stat(path)
 	if err != nil {

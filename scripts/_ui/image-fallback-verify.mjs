@@ -1,6 +1,7 @@
 // 配图容错回归：主动拦截全部 /uploads/ 图片，确认会顺次回退到菜系或家常封面。
 import { spawn } from 'node:child_process'
 import { setTimeout as sleep } from 'node:timers/promises'
+import { killProcessTree } from './browser-cleanup.mjs'
 
 const EDGE = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'
 const BASE = process.env.BASE || 'http://127.0.0.1:18090'
@@ -65,6 +66,7 @@ const result = JSON.parse(await evaluate(`JSON.stringify((()=>{
     brokenSrc:images.filter((image)=>image.complete&&image.naturalWidth===0).map((image)=>image.currentSrc||image.src),
     uploads:images.filter((image)=>String(image.currentSrc||image.src).includes('/uploads/')&&image.naturalWidth>0).length,
     cuisineFallbacks:images.filter((image)=>String(image.currentSrc||image.src).includes('/dishes/')&&image.naturalWidth>0).length,
+    sources:images.filter((image)=>image.naturalWidth>0).slice(0,6).map((image)=>String(image.currentSrc||image.src)),
     fallbackLevels:images.map((image)=>Number(image.dataset.fallbackLevel||0)),
     overflow:document.documentElement.scrollWidth>document.documentElement.clientWidth,
   };
@@ -72,5 +74,5 @@ const result = JSON.parse(await evaluate(`JSON.stringify((()=>{
 const pass = result.total > 0 && result.broken === 0 && result.cuisineFallbacks > 0 && !result.overflow
 console.log(JSON.stringify({ pass, ...result }))
 socket.close()
-processHandle.kill()
+killProcessTree(processHandle)
 if (!pass) process.exit(1)

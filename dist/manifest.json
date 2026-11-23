@@ -1,31 +1,31 @@
 {
-  "version": "1.0.4.2",
-  "publishedAt": "2026-11-23T16:34:24",
-  "note": "**新增**\n\n- 新增隐私政策、服务条款与自定义 404，补齐社交预览、站点图标、sitemap 和 robots。\n\n**修复**\n\n- 修复图片预取与 Service Worker 缓存版本不一致；修复快速切页时的过渡异常。\n- 动态接口补充前端与后端校验，配料必须写明精确用量，新菜必须选择菜系。\n\n**优化**\n\n- 优化移动端 44px 触控区、筛选切换稳定性和多分辨率布局。\n- 压缩大图、完善懒加载与失败回退，并补齐安全响应头与公开页服务端元数据。",
+  "version": "1.0.4.3",
+  "publishedAt": "2026-11-23T18:31:53",
+  "note": "**修复**\n- 修复代理主机头同源绕过、备份并发覆盖与缩略图缓存失配\n**优化**\n- 慢网首屏 LCP 从约 5.1 秒降至 2.5–3.0 秒，并减少首屏缩略图预取\n**安全**\n- 升级 Go 1.27.4 与 x/image v0.48.0，并增加发布测试与漏洞门禁",
   "files": {
     "amd64": {
       "name": "menu-linux-amd64",
-      "sha256": "3ae3cdf2c138ec03c8d551c816d288a67468a11aa4e6517ceb7bf8d06362d301",
-      "size": 20189344,
+      "sha256": "40838ddee01fa1be607478f9ba80fba6da4fdb63d4350d3dd6da689933f16840",
+      "size": 20238496,
       "gz": "menu-linux-amd64.gz",
-      "gzSha256": "ee122c41dab48d2588bfbf8341b0423ddd79f468e69274347902f4313eaa6371",
-      "gzSize": 13867517
+      "gzSha256": "c411fb0f50403ef2ac7ad840b9000ba4eee0f741bddaa4c1579f584897f883fd",
+      "gzSize": 13918832
     },
     "arm64": {
       "name": "menu-linux-arm64",
-      "sha256": "7c1353f9568bd805af596e92244b77254659b5bd36d09f9b67cdcb15a8ca78db",
-      "size": 19464352,
+      "sha256": "98613bee2562fd439deb0e966b4eed8ac7e5edf0766bc0e52612ba8039f03c8c",
+      "size": 19529888,
       "gz": "menu-linux-arm64.gz",
-      "gzSha256": "5e3a0d3c1638be54b827355ceb159b4e4779414ce17eca0b8b34e242a9a49437",
-      "gzSize": 13454855
+      "gzSha256": "be31466af4ed2b38be27c5793f4a682510136c0aa18bffe675907697f8689d9a",
+      "gzSize": 13505927
     },
     "armv7": {
       "name": "menu-linux-armv7",
-      "sha256": "f0487e4029bd358662c4ff931ad0e30dd4b55dce6e91c3c0def70bcaec8a02e8",
-      "size": 19857568,
+      "sha256": "3be90af92b8b9a5fe25e85bb5af1af05838f1b4a5c7c3556feb2dd82bda14111",
+      "size": 19923104,
       "gz": "menu-linux-armv7.gz",
-      "gzSha256": "07893e60c8b7e4dbda20c2c3efb3d319e6adb7b1f2eccbe3b6ed681fe719b27b",
-      "gzSize": 13678575
+      "gzSha256": "9973b7a33ff564714201e93d1661e0a0010dd91ea50461eb058a67890ad77346",
+      "gzSize": 13729320
     }
   }
 }

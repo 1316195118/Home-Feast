@@ -9,6 +9,7 @@ const props = defineProps({
   dishes: { type: Array, default: null },
   size: { type: String, default: '' },
   alt: { type: String, default: '' },
+  priority: { type: Boolean, default: false },
 })
 
 // 先试当前清晰度；缩略图缺失时退回原图；原图损坏再退回菜系封面，

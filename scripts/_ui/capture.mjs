@@ -2,6 +2,7 @@
 import { spawn } from 'node:child_process'
 import { setTimeout as sleep } from 'node:timers/promises'
 import fs from 'node:fs'
+import { killProcessTree } from './browser-cleanup.mjs'
 
 const EDGE = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'
 const BASE = 'http://127.0.0.1:8090'
@@ -64,7 +65,7 @@ async function run(width, height, tag, mobile) {
     fs.writeFileSync(`${OUT}/${tag}-${tab}.png`, Buffer.from(shot.data, 'base64'))
     console.log(`${tag}/${tab}`, info)
   }
-  ws.close(); proc.kill()
+  ws.close(); killProcessTree(proc)
 }
 
 await run(1280, 900, 'desktop', false)

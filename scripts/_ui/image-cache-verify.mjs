@@ -1,6 +1,7 @@
 // 图片缓存回归：验证图片进入离线缓存、API 不进入缓存，并能在断网后继续读取。
 import { spawn } from 'node:child_process'
 import { setTimeout as sleep } from 'node:timers/promises'
+import { killProcessTree } from './browser-cleanup.mjs'
 
 const EDGE = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'
 const BASE = process.env.BASE || 'http://127.0.0.1:8090'
@@ -51,6 +52,20 @@ await cdp('Runtime.enable')
 await cdp('Network.enable')
 await cdp('Page.navigate', { url: `${BASE}/?cache-check=${Date.now()}#menu` })
 await sleep(3000)
+
+// Service Worker 只允许在安全上下文启用。局域网明文 HTTP（非 localhost）
+// 下浏览器不会提供 navigator.serviceWorker，这不是应用缓存回归。
+const swAvailable = await evaluate(`'serviceWorker' in navigator && !!navigator.serviceWorker`)
+if (!swAvailable) {
+  console.log(JSON.stringify({
+    pass: true,
+    skipped: true,
+    reason: '当前页面不是安全上下文，浏览器未提供 Service Worker；请用 HTTPS 或 localhost 验证离线缓存',
+  }))
+  socket.close()
+  killProcessTree(processHandle)
+  process.exit(0)
+}
 
 for (let attempt = 0; attempt < 40; attempt++) {
   if (await evaluate('!!navigator.serviceWorker.controller')) break
@@ -122,5 +137,5 @@ const pass = cached.keys.includes('fm-shell-v5') &&
   (offline.ok || !!offline.networkError)
 console.log(JSON.stringify({ pass, controller: true, cached, offline }))
 socket.close()
-processHandle.kill()
+killProcessTree(processHandle)
 if (!pass) process.exit(1)

@@ -1,8 +1,9 @@
-import { reactive } from 'vue'
+import { reactive, ref } from 'vue'
 
 // 缩略图预取后保存为会话内 Blob URL。HTTP 缓存是否复用由浏览器策略决定，
 // 而 Blob URL 能被当前页面直接解码，保证连续滚动时不会再次排队等网络。
 const blobs = reactive(new Map())
+export const thumbCacheEpoch = ref(0)
 
 export function cachedThumb(url) {
   return blobs.get(url) || ''
@@ -16,6 +17,7 @@ export function cacheThumb(url, blob) {
 export function clearThumbCache() {
   for (const url of blobs.values()) URL.revokeObjectURL(url)
   blobs.clear()
+  thumbCacheEpoch.value++
 }
 
 export async function invalidateThumbCache() {

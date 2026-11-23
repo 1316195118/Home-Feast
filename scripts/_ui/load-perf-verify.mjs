@@ -1,6 +1,7 @@
 // 移动网络首屏回归：4 Mbps + 80ms 延迟下检查缩略图、首屏耗时和白屏/破图。
 import { spawn } from 'node:child_process'
 import { setTimeout as sleep } from 'node:timers/promises'
+import { killProcessTree } from './browser-cleanup.mjs'
 
 const EDGE = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'
 const BASE = process.env.BASE || 'http://127.0.0.1:8090'
@@ -52,9 +53,16 @@ await cdp('Network.enable')
 await cdp('Page.addScriptToEvaluateOnNewDocument', {
   source: `
     window.__fmLcp = 0;
+    window.__fmLcpElement = '';
     try {
       new PerformanceObserver((list) => {
-        for (const entry of list.getEntries()) window.__fmLcp = entry.startTime;
+        for (const entry of list.getEntries()) {
+          window.__fmLcp = entry.startTime;
+          const element = entry.element;
+          window.__fmLcpElement = element
+            ? element.tagName + '.' + [...element.classList].join('.')
+            : '';
+        }
       }).observe({ type: 'largest-contentful-paint', buffered: true });
     } catch {}
   `,
@@ -96,6 +104,7 @@ const metrics = await evaluate(`(()=>{
     domMs: Math.round(nav.domContentLoadedEventEnd || 0),
     loadMs: Math.round(nav.loadEventEnd || 0),
     lcpMs: Math.round(window.__fmLcp || 0),
+    lcpElement: window.__fmLcpElement,
     paints,
     cards: document.querySelectorAll('.dish-card').length,
     images: images.length,
@@ -121,5 +130,5 @@ const pass = metrics.cards > 0 &&
   !metrics.overflow
 console.log(JSON.stringify({ pass, ...metrics }))
 socket.close()
-processHandle.kill()
+killProcessTree(processHandle)
 if (!pass) process.exit(1)

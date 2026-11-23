@@ -2,6 +2,7 @@
 // 先用 API 造好数据，再用 CDP 双视口检查 UI；BASE 可指向线上。
 import { spawn } from 'node:child_process'
 import { setTimeout as sleep } from 'node:timers/promises'
+import { killProcessTree } from './browser-cleanup.mjs'
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8090'
 
@@ -111,7 +112,7 @@ async function run(width, height, tag, mobile) {
   console.log('设置页 hash', setInfo.hash, '| 卡片数', setInfo.cards, '| 标题', JSON.stringify(setInfo.titles))
   console.log('设置页 排班弹窗入口', setInfo.rosterBtn, '| 食材卡已移出设置页', !setInfo.pantryInSettings, '| 保存按钮', JSON.stringify(setInfo.saveBtns))
   console.log('  横向溢出', setInfo.overflow, '| 过小控件', setInfo.smallBtns, '| JS 异常', errors.length)
-  ws.close(); proc.kill()
+  ws.close(); killProcessTree(proc)
 }
 
 await run(1280, 900, 'desktop', false)

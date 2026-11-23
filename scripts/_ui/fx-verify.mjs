@@ -4,6 +4,7 @@
 // 各步之间留足等待，避免触发 Vue Transition 在极限时序下的既有竞态。
 import { spawn } from 'node:child_process'
 import { setTimeout as sleep } from 'node:timers/promises'
+import { killProcessTree } from './browser-cleanup.mjs'
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8090'
 const PORT = 9956
@@ -168,5 +169,5 @@ await sleep(250)
 console.log('减少动效降级', await ev(`getComputedStyle(document.getElementById('fx-layer')).display === 'none'`))
 console.log('真实 JS 异常', errors.length, '| 已知 Transition 竞态', knownTransitionRace.length, '(上一版同样存在，不影响功能)')
 ws.close()
-proc.kill()
+killProcessTree(proc)
 process.exit(0)

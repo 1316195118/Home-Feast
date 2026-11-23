@@ -9,7 +9,7 @@ import DishDetail from './DishDetail.vue'
 import { normalizeMeals, isCuisineHidden, pantryGroups, pantryVisual, pantryMatches, normalizeIngredient, hasDishImage, dishImage } from '../utils'
 import { getRecipe } from '../recipes'
 import { useModalBehavior } from '../modal'
-import { cacheThumb } from '../thumb-cache'
+import { cacheThumb, thumbCacheEpoch } from '../thumb-cache'
 
 const { state, actions, pending } = inject('app')
 const activeCuisine = ref('all')
@@ -111,14 +111,19 @@ const filtered = computed(() => {
     .map(({ d, hits }) => ({ ...d, _pantryHits: hits }))
 })
 
+// 分批渲染：首批 48 张，滚到接近底部再补 48 张；筛选条件一变就回到首批。
+const PAGE = 48
+const visibleCount = ref(PAGE)
+
 // 卡片仍使用懒加载，避免同时解码 237 张大图；但缩略图在后台批量预热。
 // 浏览器原生懒加载只会追赶视口，连续下拉时新卡片总要等一轮网络和解码。
 // 一页缩略图（实测约 5.5 MB）合并成一个请求并保存为会话内 Blob；
 // 批量接口不可用时才退回 6 路单图预取，单张失败仍由卡片自己的回退兜底。
 const THUMB_PREFETCH_WORKERS = 6
-const THUMB_BUNDLE_SIZE = 300
+const THUMB_BUNDLE_SIZE = PAGE
 const prefetchedThumbs = new Set()
 let prefetchTimer = 0
+let prefetchIdle = 0
 let prefetchRun = 0
 let prefetchAbort = null
 
@@ -138,18 +143,14 @@ function thumbBundleKey(urls) {
 }
 
 async function cacheThumbBundle(urls, run, signal) {
-  const bundleKeys = []
-  let lastCache = null
   for (let start = 0; start < urls.length; start += THUMB_BUNDLE_SIZE) {
     if (run !== prefetchRun) return
     const chunk = urls.slice(start, start + THUMB_BUNDLE_SIZE)
     const cacheKey = thumbBundleKey(chunk)
-    bundleKeys.push(cacheKey)
     let data = null
     let cache = null
     try {
       cache = 'caches' in window ? await caches.open('fm-shell-v5') : null
-      lastCache = cache
       const hit = await cache?.match(cacheKey)
       if (hit) data = await hit.arrayBuffer()
     } catch {
@@ -192,18 +193,6 @@ async function cacheThumbBundle(urls, run, signal) {
       prefetchedThumbs.add(entry.url)
     }
   }
-  if (lastCache && run === prefetchRun) {
-    try {
-      const keep = new Set(bundleKeys)
-      const old = (await lastCache.keys()).filter((request) =>
-        new URL(request.url).pathname.startsWith('/__thumb-bundle/') &&
-        !keep.has(new URL(request.url).pathname)
-      )
-      await Promise.all(old.map((request) => lastCache.delete(request)))
-    } catch {
-      // 清理失败不影响本次显示，旧缓存会在后续成功刷新时再清理。
-    }
-  }
 }
 
 async function prefetchIndividually(urls, run, signal) {
@@ -237,51 +226,74 @@ async function prefetchThumbnails(dishes, run, signal) {
   const urls = [...new Set(dishes.map((dish) =>
     dishImage(dish, state.cuisines, state.dishes, 'thumb')
   ).filter(Boolean))]
+  const pending = urls.filter((url) => !prefetchedThumbs.has(url))
+  if (!pending.length) return
   try {
-    await cacheThumbBundle(urls, run, signal)
+    await cacheThumbBundle(pending, run, signal)
   } catch (error) {
     if (error?.name === 'AbortError' || run !== prefetchRun) return
-    const remaining = urls.filter((url) => !prefetchedThumbs.has(url))
+    const remaining = pending.filter((url) => !prefetchedThumbs.has(url))
     await prefetchIndividually(remaining, run, signal)
   }
 }
-function scheduleThumbPrefetch() {
-  const run = ++prefetchRun
+
+function cancelThumbPrefetch() {
   clearTimeout(prefetchTimer)
+  prefetchTimer = 0
+  if (prefetchIdle && 'cancelIdleCallback' in window) {
+    window.cancelIdleCallback(prefetchIdle)
+  }
+  prefetchIdle = 0
   prefetchAbort?.abort()
   prefetchAbort = null
+}
+
+function scheduleThumbPrefetch() {
+  const run = ++prefetchRun
+  cancelThumbPrefetch()
   const connection = navigator.connection
   const downlink = Number(connection?.downlink)
   const constrained = connection?.saveData ||
     /(^|-)2g$|(^|-)3g$/.test(connection?.effectiveType || '') ||
     (Number.isFinite(downlink) && downlink > 0 && downlink < 1)
   if (constrained) return
-  const snapshot = filtered.value.slice()
+  // 只预热当前已渲染批次。首屏先让卡片自己的懒加载抢连接，剩余批次
+  // 等滚动扩展 visibleCount 后再预取，避免 237 张图在慢网下阻塞 LCP。
+  const snapshot = filtered.value.slice(0, visibleCount.value)
   const controller = new AbortController()
   prefetchAbort = controller
-  // 先让用户可见的首屏图片获得连接，再在空闲前预热后续缩略图。
+  const start = () => {
+    prefetchIdle = 0
+    if (run === prefetchRun) void prefetchThumbnails(snapshot, run, controller.signal)
+  }
   prefetchTimer = setTimeout(() => {
-    void prefetchThumbnails(snapshot, run, controller.signal)
-  }, 120)
+    if (run !== prefetchRun) return
+    if ('requestIdleCallback' in window) {
+      prefetchIdle = window.requestIdleCallback(start, { timeout: 1800 })
+    } else {
+      start()
+    }
+  }, 500)
 }
 watch(
-  [filtered, () => state.settings.imageMode],
+  [filtered, visibleCount, () => state.settings.imageMode],
   scheduleThumbPrefetch,
   { immediate: true },
 )
+watch(thumbCacheEpoch, () => {
+  // 恢复备份会同时清空 Blob 与 Cache Storage；这里的 URL 集合也必须
+  // 失效，否则会被误判为“已经预取”，导致新图片一直不补。
+  prefetchedThumbs.clear()
+  scheduleThumbPrefetch()
+})
 onUnmounted(() => {
   prefetchRun++
-  clearTimeout(prefetchTimer)
-  prefetchAbort?.abort()
+  cancelThumbPrefetch()
 })
 
 // 切换分类时让网格整体淡入一次（只按分类触发，搜索输入时列表保持不重建）
 const gridKey = computed(() => activeCuisine.value)
 
-// 分批渲染：184 道菜全量铺开会堆出 3000+ DOM 节点，低端机滚动发涩。
-// 首批 48 张，滚到接近底部再补 48 张；筛选条件一变就回到首批。
-const PAGE = 48
-const visibleCount = ref(PAGE)
 const visibleDishes = computed(() => filtered.value.slice(0, visibleCount.value))
 const hasMore = computed(() => visibleCount.value < filtered.value.length)
 const loadMoreEl = ref(null)
@@ -326,10 +338,15 @@ onMounted(() => {
 function attachScrollListener() {
   window.addEventListener('scroll', onScroll, { passive: true })
   onScroll()
+  scheduleThumbPrefetch()
 }
 function detachScrollListener() { window.removeEventListener('scroll', onScroll) }
 onActivated(attachScrollListener)
-onDeactivated(detachScrollListener)
+onDeactivated(() => {
+  detachScrollListener()
+  prefetchRun++
+  cancelThumbPrefetch()
+})
 onUnmounted(detachScrollListener)
 
 // 当前选中的分类若是被隐藏了，自动退回「全部」
@@ -737,8 +754,9 @@ async function savePantry() {
          增删菜品是低频操作，稳定的静态网格比 0.3s 动画更重要。 -->
     <div v-if="filtered.length" :key="gridKey" class="dish-grid grid-in">
       <DishCard
-        v-for="d in visibleDishes" :key="d.id" :dish="d" :highlight="keyword"
+        v-for="(d, i) in visibleDishes" :key="d.id" :dish="d" :highlight="keyword"
         :multi="multiMode" :multi-picked="multiSet.has(d.id)"
+        :priority="i < 4"
         @multi-toggle="togglePick(d.id)" @edit="openEdit" @open="openDetail"
       />
     </div>

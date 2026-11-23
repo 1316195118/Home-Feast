@@ -2,6 +2,7 @@
 // 用法：CODE=测试口令 BASE=http://127.0.0.1:18093 node scripts/_ui/lock-verify.mjs
 import { spawn } from 'node:child_process'
 import { setTimeout as sleep } from 'node:timers/promises'
+import { killProcessTree } from './browser-cleanup.mjs'
 
 const BASE = (process.env.BASE || 'http://127.0.0.1:8090').replace(/\/+$/, '')
 const CODE = process.env.CODE || ''
@@ -89,5 +90,5 @@ try {
   if (!locked || !unlocked || errors.length) process.exitCode = 1
 } finally {
   ws.close()
-  proc.kill()
+  killProcessTree(proc)
 }
