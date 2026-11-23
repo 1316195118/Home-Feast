@@ -10,7 +10,8 @@ import PrivacyView from './components/PrivacyView.vue'
 import TermsView from './components/TermsView.vue'
 import NotFoundView from './components/NotFoundView.vue'
 import { useModalBehavior } from './modal'
-import { currentMeal, normalizeMeals } from './utils'
+import { allergyConflicts, currentMeal, normalizeMeals } from './utils'
+import { getRecipe } from './recipes'
 import { playAdd, playFav, playSave, playRemove, playError } from './audio'
 import { invalidateThumbCache } from './thumb-cache'
 import { applyPageMeta } from './meta'
@@ -643,6 +644,28 @@ async function addOrdersInBatches(items) {
   return { plan, added, skipped }
 }
 
+function dishAllergyConflicts(dishId) {
+  const dish = state.dishes.find((item) => item.id === dishId)
+  if (!dish) return []
+  const recipe = getRecipe(dish)
+  return allergyConflicts(
+    { ...dish, ingredients: [...(dish.ingredients || []), ...(recipe.ingredients || [])] },
+    state.members,
+  )
+}
+
+async function confirmAllergyConflicts(conflicts) {
+  if (!conflicts.length) return true
+  const text = [...new Set(conflicts.map((item) => `${item.memberName}对「${item.allergen}」过敏`))].join('；')
+  return confirmDialog({
+    title: '过敏原提醒',
+    message: `${text}。当前菜品可能含有该成分，请确认实际配料后再添加。`,
+    confirmText: '确认仍然添加',
+    cancelText: '换一道',
+    danger: true,
+  })
+}
+
 const actions = {
   toast,
   selectDate,
@@ -752,12 +775,13 @@ const actions = {
   setNote: (note) => guard(() => api.setPlan(activeDate(), { note }), '', 'note'),
   // 手动选的餐别放在全局 state：今天页、菜谱卡片、菜品详情弹窗三个入口归到同一餐。
   setMealPick: (key) => { state.mealPick = key || '' },
-  order: (dishId, note = '', meal = '') => {
+  order: async (dishId, note = '', meal = '') => {
     // 同一道菜今天已经在菜单里就不再重复添加；返回 true 让详情弹窗也能正常关闭
     if ((state.plan.orders || []).some((o) => o.dishId === dishId)) {
       toast('这道菜已经在今日菜单里啦', 'warn')
       return Promise.resolve(true)
     }
+    if (!(await confirmAllergyConflicts(dishAllergyConflicts(dishId)))) return null
     return withSound(guard(
       () => api.addOrder(activeDate(), {
         dishId, userId: state.currentUserId, note,
@@ -766,8 +790,10 @@ const actions = {
       '点好啦，等开饭 🍚', `order:${dishId}`,
     ), playAdd)
   },
-  orderMany: (items) => {
+  orderMany: async (items) => {
     if (!Array.isArray(items) || !items.length) return Promise.resolve(null)
+    const conflicts = items.flatMap((item) => dishAllergyConflicts(item?.dishId))
+    if (!(await confirmAllergyConflicts(conflicts))) return null
     return withSound(guard(
       () => addOrdersInBatches(items),
       '',
@@ -800,6 +826,10 @@ const actions = {
   },
 
   saveSettings: (patch) => withSound(guard(() => api.saveSettings(patch), '设置已保存', 'settings'), playSave),
+  setShoppingMarks: (items, date = activeDate()) => guard(
+    () => api.setShoppingMarks({ date, userId: state.currentUserId, items }),
+    '', 'shopping',
+  ),
   setHiddenCuisines: (hidden) => guard(
     () => api.saveSettings({ familyName: state.settings.familyName, hiddenCuisines: hidden }),
     '', 'cuisines',

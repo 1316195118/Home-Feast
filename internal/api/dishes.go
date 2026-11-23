@@ -17,6 +17,7 @@ type dishInput struct {
 	Image       string   `json:"image"`
 	Spicy       int      `json:"spicy"`
 	Minutes     int      `json:"minutes"`
+	Servings    int      `json:"servings"`
 	Ingredients []string `json:"ingredients"`
 	Steps       []string `json:"steps"`
 	Rating      int      `json:"rating"`
@@ -95,6 +96,13 @@ func (s *Server) updateDish(w http.ResponseWriter, r *http.Request) {
 		v := clamp(*p.Minutes, 0, 600)
 		p.Minutes = &v
 	}
+	if p.Servings != nil {
+		v := clamp(*p.Servings, 1, 20)
+		if *p.Servings == 0 {
+			v = 2
+		}
+		p.Servings = &v
+	}
 	updated, err := s.st.UpdateDish(r.PathValue("id"), p)
 	if err != nil {
 		jsonErr(w, http.StatusNotFound, err.Error())
@@ -124,6 +132,11 @@ func normalizeDish(in dishInput) (store.Dish, error) {
 	if err := validateIngredientAmounts(ingredients); err != nil {
 		return store.Dish{}, err
 	}
+	servings := clamp(in.Servings, 1, 20)
+	if in.Servings == 0 {
+		// 旧版编辑器不提交份数；新菜默认按两人份处理。
+		servings = 2
+	}
 	return store.Dish{
 		Name:        name,
 		Cuisine:     cuisine,
@@ -132,6 +145,7 @@ func normalizeDish(in dishInput) (store.Dish, error) {
 		Image:       safeImage(in.Image),
 		Spicy:       clamp(in.Spicy, 0, 3),
 		Minutes:     clamp(in.Minutes, 0, 600),
+		Servings:    servings,
 		Ingredients: ingredients,
 		Steps:       cleanList(in.Steps, 200, 20),
 		Rating:      clamp(in.Rating, 0, 3),

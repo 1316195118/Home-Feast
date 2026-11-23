@@ -4,6 +4,7 @@ import { planWeekMenu, classifyDish } from '../utils'
 import { getRecipe } from '../recipes'
 import { useModalBehavior } from '../modal'
 import WeChatShareActions from './WeChatShareActions.vue'
+import ShoppingList from './ShoppingList.vue'
 
 const props = defineProps({
   startDate: { type: String, default: '' },
@@ -17,6 +18,7 @@ const people = ref(Math.max(2, Math.min(6, (state.members?.length || 0) || 3)))
 const peopleOptions = [2, 3, 4, 5, 6]
 const week = ref([])
 const salt = ref(0)
+const shoppingOpen = ref(false)
 const KIND_LABEL = { meat: '荤', veg: '素', soup: '汤', staple: '主食', dessert: '甜品' }
 
 function generate() {
@@ -26,6 +28,7 @@ function generate() {
     salt: salt.value,
     pantry: state.settings.pantry || [],
     member: state.members.find((m) => m.id === state.currentUserId) || null,
+    members: state.members,
     hiddenCuisines: state.hiddenCuisines,
     recentIds: [],
     ingredientsOf: (d) => getRecipe(d).ingredients || [],
@@ -37,6 +40,12 @@ function shuffleWeek() { salt.value += 1; generate() }
 
 const totalDishes = computed(() => week.value.reduce((n, d) => n + d.dishes.length, 0))
 const previewAlt = computed(() => `本周菜单图，${people.value} 人份，共 ${totalDishes.value} 道菜`)
+const weekRange = computed(() => week.value.length
+  ? `${week.value[0].label} – ${week.value[week.value.length - 1].label}`
+  : '')
+const weekOrders = computed(() => week.value.flatMap((day) =>
+  day.dishes.map((dish) => ({ dishId: dish.id }))
+))
 
 // 导出图片：纯 Canvas 自绘，暖米纸底 + 每天一行菜名（自动换行），保存/分享同购物清单
 const preview = ref('')
@@ -182,6 +191,7 @@ function buildImage() {
       </div>
 
       <div class="setting-actions">
+        <button class="btn btn-primary btn-sm" :disabled="!week.length" @click="shoppingOpen = true">🛒 整周采购清单</button>
         <button class="btn btn-soft btn-sm" :disabled="!week.length" @click="buildImage">🖼️ 导出图片</button>
         <WeChatShareActions
           v-if="preview" :image-data="preview" :filename="`本周菜单-${startDate || state.today}.png`"
@@ -196,6 +206,16 @@ function buildImage() {
         <img :src="preview" :alt="previewAlt" width="1440" :height="previewHeight" loading="lazy" decoding="async" />
         <div class="shopping-preview-hint">📱 点「分享到微信」直接发给家人；微信内受限时可长按图片发送</div>
       </div>
+      <Transition name="modal">
+        <ShoppingList
+          v-if="shoppingOpen"
+          :orders="weekOrders"
+          :label="`本周采购清单 · ${weekRange}`"
+          :scope-key="`week-${startDate || state.today}`"
+          :people="people"
+          @close="shoppingOpen = false"
+        />
+      </Transition>
     </div>
   </div>
 </template>

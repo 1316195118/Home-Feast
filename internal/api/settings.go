@@ -11,19 +11,20 @@ import (
 
 func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		FamilyName      *string            `json:"familyName"`
-		HiddenCuisines  *[]string          `json:"hiddenCuisines"`
-		CuisineOrder    *[]string          `json:"cuisineOrder"` // 菜系展示顺序
-		Meals           *[]store.MealSlot  `json:"meals"`
-		Roster          *store.Roster      `json:"roster"`      // 每周掌勺 / 洗碗排班
-		Pantry          *[]string          `json:"pantry"`      // 冰箱现有食材
-		PantryAdded     *map[string]string `json:"pantryAdded"` // 食材加入日期
-		AutoBackup      *bool              `json:"autoBackup"`
-		BackupKeep      *int               `json:"backupKeep"`
-		ImageMode       *string            `json:"imageMode"` // auto / full / thumb
-		AutoCheckUpdate *bool              `json:"autoCheckUpdate"`
-		ProxyURL        *string            `json:"proxyUrl"`
-		AccessCode      *string            `json:"accessCode"` // 空串 = 关闭口令
+		FamilyName      *string                       `json:"familyName"`
+		HiddenCuisines  *[]string                     `json:"hiddenCuisines"`
+		CuisineOrder    *[]string                     `json:"cuisineOrder"` // 菜系展示顺序
+		Meals           *[]store.MealSlot             `json:"meals"`
+		Roster          *store.Roster                 `json:"roster"`      // 每周掌勺 / 洗碗排班
+		Pantry          *[]string                     `json:"pantry"`      // 冰箱现有食材
+		PantryAdded     *map[string]string            `json:"pantryAdded"` // 食材加入日期
+		PantryStock     *map[string]store.PantryStock `json:"pantryStock"`
+		AutoBackup      *bool                         `json:"autoBackup"`
+		BackupKeep      *int                          `json:"backupKeep"`
+		ImageMode       *string                       `json:"imageMode"` // auto / full / thumb
+		AutoCheckUpdate *bool                         `json:"autoCheckUpdate"`
+		ProxyURL        *string                       `json:"proxyUrl"`
+		AccessCode      *string                       `json:"accessCode"` // 空串 = 关闭口令
 	}
 	if err := decodeBody(w, r, &in); err != nil {
 		jsonErr(w, http.StatusBadRequest, err.Error())
@@ -167,6 +168,36 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		v.Pantry = clean
+	}
+	if in.PantryStock != nil {
+		clean := make(map[string]store.PantryStock, len(*in.PantryStock))
+		for rawName, stock := range *in.PantryStock {
+			name := stripControl(strings.TrimSpace(rawName))
+			if name == "" || len(name) > 20 || len(clean) >= 40 {
+				continue
+			}
+			if stock.Quantity < 0 || stock.Quantity > 100000 {
+				stock.Quantity = 0
+			}
+			stock.Unit = strings.TrimSpace(stock.Unit)
+			switch stock.Unit {
+			case "", "g", "kg", "ml", "l", "个", "根", "袋", "盒", "瓶", "把", "块", "片":
+			default:
+				stock.Unit = ""
+			}
+			if stock.Added != "" {
+				if _, err := time.Parse("2006-01-02", stock.Added); err != nil {
+					stock.Added = ""
+				}
+			}
+			if stock.Expires != "" {
+				if _, err := time.Parse("2006-01-02", stock.Expires); err != nil {
+					stock.Expires = ""
+				}
+			}
+			clean[name] = stock
+		}
+		v.PantryStock = clean
 	}
 	// 访问口令：先校验（失败不产生任何改动），设置保存成功后再写独立文件。
 	var newCode *string

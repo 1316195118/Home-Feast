@@ -1,6 +1,6 @@
 <script setup>
 import { inject, computed, ref, watch, onUnmounted } from 'vue'
-import { imageSize, friendlyDate, memberOf, cuisineName, artStyle, isCuisineHidden, isMealExpired, normalizeMeals, rosterForDate, seasonOf, smartSuggest, classifyDish } from '../utils'
+import { imageSize, friendlyDate, memberOf, cuisineName, artStyle, isCuisineHidden, isMealExpired, normalizeMeals, rosterForDate, seasonOf, smartSuggest, classifyDish, pantryExpiry } from '../utils'
 import DishPhoto from './DishPhoto.vue'
 import { getRecipe } from '../recipes'
 import { sparkleFromEvent, celebrate, vibrate } from '../feedback'
@@ -9,6 +9,7 @@ import DicePK from './DicePK.vue'
 import MenuShare from './MenuShare.vue'
 import ShoppingList from './ShoppingList.vue'
 import WeekMenu from './WeekMenu.vue'
+import MealTimeline from './MealTimeline.vue'
 
 const { state, actions, pending, confirmDialog, choiceDialog } = inject('app')
 const detailId = ref(null)
@@ -16,6 +17,7 @@ const dishMap = computed(() => new Map(state.dishes.map((dish) => [dish.id, dish
 const detailDish = computed(() => dishMap.value.get(detailId.value) || null)
 const pkOpen = ref(false)
 const shoppingOpen = ref(false)
+const timelineOpen = ref(false)
 const shareOpen = ref(false)
 
 const selectedDate = computed(() => state.selectedDate || state.today)
@@ -119,6 +121,13 @@ const suggesting = ref(false) // 换一批时播放一次整块淡入，不重�
 const season = computed(() => seasonOf(selectedDate.value))
 const selfMember = computed(() => state.members.find((m) => m.id === state.currentUserId) || null)
 const pantryCount = computed(() => (state.settings.pantry || []).length)
+const expiringItems = computed(() => Object.entries(state.settings.pantryStock || {})
+  .flatMap(([name, stock]) => {
+    const expiry = pantryExpiry(stock, state.today)
+    return expiry && expiry.days >= 0 && expiry.days <= 5 ? [{ name, ...expiry }] : []
+  })
+  .sort((a, b) => a.days - b.days || a.name.localeCompare(b.name, 'zh')))
+const expiringPantry = computed(() => expiringItems.value.map((item) => item.name))
 // 近 7 天(不含今天)点过的菜，推荐时降权，避免「来来回回就那几样」
 const recentIds = computed(() => {
   const set = new Set()
@@ -159,6 +168,8 @@ function computeSuggestions(excludeIds = [], limit = 3) {
     excludeIds,
     recentIds: recentIds.value,
     meal: activeMeal.value,
+    members: state.members,
+    expiringPantry: expiringPantry.value,
     balance: todayBalance(),
     salt: suggestSalt.value,
     limit,
@@ -193,6 +204,8 @@ const snackPicks = computed(() => {
     member: selfMember.value,
     hiddenCuisines: state.hiddenCuisines,
     orders: state.plan.orders || [],
+    members: state.members,
+    expiringPantry: expiringPantry.value,
     salt: snackSalt.value,
     limit: 3,
     ingredientsOf: (d) => getRecipe(d).ingredients || [],
@@ -206,6 +219,10 @@ function shuffleSnacks() {
 
 // 「本周菜单」：按人数配「荤 + 素 + 汤（+ 主食）」，整周不重样，可导出图片
 const weekOpen = ref(false)
+const timelineOrders = computed(() => state.mealPick
+  ? orders.value.filter((order) => order.meal === state.mealPick)
+  : orders.value)
+const timelineMealLabel = computed(() => selectedMealName.value || '这一餐')
 
 // 每周排班提醒：只在「排班已开启 + 今天有安排 + 当前分工不一致」时出现，可一键套用。
 const rosterToday = computed(() => rosterForDate(state.settings.roster, selectedDate.value))
@@ -254,7 +271,10 @@ watch(() => state.plan.date, () => {
 })
 watch(() => state.plan.note, (v) => { if (!noteDirty.value) noteText.value = v || '' })
 watch(
-  () => [selectedDate.value, state.dishes, state.settings.pantry, state.hiddenCuisines, state.plan.orders],
+  () => [
+    selectedDate.value, state.dishes, state.settings.pantry, state.settings.pantryStock,
+    state.hiddenCuisines, state.plan.orders, state.members, state.currentUserId,
+  ],
   refreshSuggestions,
   { immediate: true },
 )
@@ -652,6 +672,10 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
               class="btn btn-soft btn-sm" :disabled="!orders.length"
               @click="shareOpen = true"
             >📤 分享</button>
+            <button
+              class="btn btn-soft btn-sm" :disabled="!orders.length"
+              @click="timelineOpen = true"
+            >⏱ 做饭时间线</button>
             <button class="btn btn-soft btn-sm" @click="shoppingOpen = true">🛒 购物清单</button>
             <button class="btn btn-soft btn-sm" @click="state.tab = 'menu'">{{ orders.length ? '再加一道菜' : '开始点菜 ＋' }}</button>
           </div>
@@ -737,6 +761,18 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
           </div>
         </div>
 
+        <div v-if="expiringItems.length" class="pantry-expiry-banner">
+          <span class="pantry-expiry-icon" aria-hidden="true">⏳</span>
+          <span>
+            <b>先吃掉临期食材：</b>
+            <span v-for="(item, index) in expiringItems.slice(0, 4)" :key="item.name">
+              {{ item.name }}<template v-if="item.days === 0">今天到期</template><template v-else>{{ item.days }} 天后到期</template><template v-if="index < Math.min(expiringItems.length, 4) - 1">、</template>
+            </span>
+            <span v-if="expiringItems.length > 4">等 {{ expiringItems.length }} 样</span>
+          </span>
+          <button class="btn btn-ghost btn-sm" type="button" @click="gotoPantry">管理库存</button>
+        </div>
+
         <div v-if="!pantryCount" class="suggest-nudge">
           <span>🍽️ 推荐现在只按季节和耗时挑。告诉家里冰箱有啥，命中食材的菜会被优先推荐。</span>
           <button class="btn btn-soft btn-sm" type="button" @click="gotoPantry">🧊 添加冰箱食材</button>
@@ -812,6 +848,15 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
     </Transition>
     <Transition name="modal">
       <ShoppingList v-if="shoppingOpen" @close="shoppingOpen = false" />
+    </Transition>
+    <Transition name="modal">
+      <MealTimeline
+        v-if="timelineOpen"
+        :orders="timelineOrders"
+        :dishes="state.dishes"
+        :meal-label="timelineMealLabel"
+        @close="timelineOpen = false"
+      />
     </Transition>
     <Transition name="modal">
       <WeekMenu v-if="weekOpen" :start-date="selectedDate" @close="weekOpen = false" />

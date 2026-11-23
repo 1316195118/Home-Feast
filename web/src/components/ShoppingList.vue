@@ -1,30 +1,51 @@
 <script setup>
 import { inject, computed, ref } from 'vue'
-import { shoppingList, shoppingGroups, normalizeIngredient, shoppingKind } from '../utils'
+import {
+  applyPantryStock, dishServings, normalizeIngredient, scaleIngredients,
+  shoppingGroups, shoppingKind, shoppingList,
+} from '../utils'
 import { getRecipe } from '../recipes'
 import { useModalBehavior } from '../modal'
 import WeChatShareActions from './WeChatShareActions.vue'
 
 const emit = defineEmits(['close'])
+const props = defineProps({
+  orders: { type: Array, default: null },
+  label: { type: String, default: '' },
+  scopeKey: { type: String, default: '' },
+  people: { type: Number, default: 0 },
+})
 const { state, actions } = inject('app')
 const root = ref(null)
 useModalBehavior(() => emit('close'), root)
 const activeDate = computed(() => state.selectedDate || state.today)
+const scopeDate = computed(() => props.scopeKey || activeDate.value)
+const sourceOrders = computed(() => props.orders || state.plan.orders || [])
+const people = ref(Math.max(1, props.people || state.members?.length || 3))
+const scopeTitle = computed(() => props.label || `${activeDate.value} 购物清单`)
 
 // 内置菜的配料由 recipes.js 按「技法模板 + 主料表」动态生成，dish.ingredients 本身是空的；
 // 用户在编辑器里自己填的配料优先（getRecipe 已处理），这里把它展开后再聚合。
 const dishesWithIngredients = computed(() => state.dishes.map((d) => {
   const r = getRecipe(d)
-  return { ...d, ingredients: r.ingredients.length ? r.ingredients : (d.ingredients || []), precise: !!r.precise }
+  const base = r.ingredients.length ? r.ingredients : (d.ingredients || [])
+  return {
+    ...d,
+    ingredients: scaleIngredients(base, people.value / dishServings(d)),
+    precise: !!r.precise,
+  }
 }))
-const list = computed(() => shoppingList(state.plan.orders || [], dishesWithIngredients.value))
+const rawList = computed(() => shoppingList(sourceOrders.value, dishesWithIngredients.value))
+const stockedList = computed(() => applyPantryStock(rawList.value, state.settings.pantryStock || {}))
+const list = computed(() => stockedList.value.filter((item) => !item.pantryCovered))
+const coveredCount = computed(() => stockedList.value.filter((item) => item.pantryCovered).length)
 const preciseCount = computed(() => {
   const byId = new Map(dishesWithIngredients.value.map((d) => [d.id, d]))
-  return (state.plan.orders || []).filter((o) => byId.get(o.dishId)?.precise).length
+  return sourceOrders.value.filter((o) => byId.get(o.dishId)?.precise).length
 })
 // 冰箱里已有什么（仅主料，调味料不当作「已有」）：用来在清单上标注「🧊 冰箱有」
 const pantrySet = computed(() => new Set(
-  (state.pantry || [])
+  (state.settings.pantry || [])
     .map((x) => normalizeIngredient(String(x)))
     .filter((x) => shoppingKind(x) !== '佐料'),
 ))
@@ -39,38 +60,45 @@ const groups = computed(() => shoppingGroups(enriched.value).map((g) => {
   items.sort((a, b) => Number(checkedToday(a.text)) - Number(checkedToday(b.text)) || Number(checkedBefore(a.text)) - Number(checkedBefore(b.text)))
   return { ...g, items }
 }))
-// 跨天记忆：勾选状态存「食材 → 勾选日期」，不随清单日期重置。
-// 今天勾的照常置灰沉底；昨天（更早）勾过的标「昨天买过」，知道最近买过什么。
-const STORE_KEY = 'fm.shopping.checkedMap'
-
-function readChecked() {
-  try { return new Map(Object.entries(JSON.parse(localStorage.getItem(STORE_KEY) || '{}'))) } catch { return new Map() }
+// 采购状态存服务端 settings，所有设备实时共享。status 为 claimed / bought。
+const marks = computed(() => state.settings.shoppingMarks || {})
+const markKey = (text) => `${scopeDate.value}::${text}`
+const markOf = (text) => {
+  const scoped = marks.value[markKey(text)]
+  if (scoped) return scoped
+  // 兼容上一轮开发版没有作用域前缀的记录，只在每日清单里兜底。
+  return props.scopeKey ? null : marks.value[text] || null
 }
-const checked = ref(readChecked())
 // 今天勾的才算「已买」；历史勾选只用于提示
-const checkedToday = (t) => checked.value.get(t) === activeDate.value
-const checkedBefore = (t) => !!checked.value.has(t) && checked.value.get(t) !== activeDate.value
-function persist() {
-  try { localStorage.setItem(STORE_KEY, JSON.stringify(Object.fromEntries(checked.value))) } catch { /* 隐私模式忽略 */ }
+const checkedToday = (t) => {
+  const mark = markOf(t)
+  return mark?.status === 'bought' && mark.date === state.today
 }
-function toggle(text) {
-  const next = new Map(checked.value)
-  if (checkedToday(text)) next.delete(text)
-  else next.set(text, activeDate.value)
-  checked.value = next
-  persist()
+const checkedBefore = (t) => {
+  const mark = markOf(t)
+  return mark?.status === 'bought' && mark.date && mark.date < state.today
+}
+const claimOf = (t) => {
+  const mark = markOf(t)
+  return mark?.status === 'claimed' && mark.date === state.today ? mark : null
+}
+async function setMarks(items) {
+  return actions.setShoppingMarks(
+    items.map((item) => ({ ...item, key: markKey(item.key) })),
+    state.today,
+  )
+}
+async function toggle(text) {
+  await setMarks([{ key: text, status: checkedToday(text) ? '' : 'bought' }])
+}
+async function claim(text) {
+  await setMarks([{ key: text, status: 'claimed' }])
 }
 // 按超市区域整组勾选；已全选时再点即整组取消
-function toggleGroup(group) {
+async function toggleGroup(group) {
   const items = group.items
-  const next = new Map(checked.value)
   const allChecked = items.every((x) => checkedToday(x.text))
-  for (const x of items) {
-    if (allChecked) next.delete(x.text)
-    else next.set(x.text, activeDate.value)
-  }
-  checked.value = next
-  persist()
+  await setMarks(items.map((x) => ({ key: x.text, status: allChecked ? '' : 'bought' })))
   actions.toast(
     `${group.key} ${items.length} 项${allChecked ? '已取消全选' : '已全部勾选'}`,
     allChecked ? 'info' : 'success',
@@ -85,28 +113,25 @@ const checkedCount = computed(() => groups.value.reduce(
 ))
 const allChecked = computed(() => list.value.length > 0 && checkedCount.value === list.value.length)
 const checkedPercent = computed(() => list.value.length ? Math.round((checkedCount.value / list.value.length) * 100) : 0)
-function toggleAll() {
-  const next = new Map(checked.value)
+async function toggleAll() {
   const select = !allChecked.value
-  for (const item of list.value) {
-    if (select) next.set(item.text, activeDate.value)
-    else if (checkedToday(item.text)) next.delete(item.text)
-  }
-  checked.value = next
-  persist()
+  await setMarks(list.value.map((item) => ({
+    key: item.text,
+    status: select ? 'bought' : (checkedToday(item.text) ? '' : markOf(item.text)?.status || ''),
+  })))
   actions.toast(
     select ? `已全选 ${list.value.length} 项` : '已取消所选日期的全部勾选',
     select ? 'success' : 'info',
   )
 }
-function clearChecked() {
-  checked.value = new Map()
-  persist()
-  actions.toast('勾选记录已清空', 'info')
+async function clearChecked() {
+  await setMarks([...new Set(list.value.map((item) => item.text))]
+    .map((key) => ({ key, status: '' })))
+  actions.toast('这份清单的采购状态已清空', 'info')
 }
 const previewAlt = computed(() => {
   const count = groups.value.reduce(
-    (sum, group) => sum + group.items.filter((item) => checked.value.has(item.text)).length,
+    (sum, group) => sum + group.items.filter((item) => checkedToday(item.text)).length,
     0,
   )
   return `${activeDate.value} 购物清单图，已选 ${count} 项`
@@ -114,10 +139,10 @@ const previewAlt = computed(() => {
 async function copyList() {
   const lines = groups.value.flatMap((g) => g.items.length
     ? [`【${g.key}】`, ...g.items.map(
-        (x) => `${checkedToday(x.text) ? '☑' : checkedBefore(x.text) ? '◔' : '☐'} ${x.inPantry ? '🧊 ' : ''}${x.text}${x.amount ? ` · ${x.amount}` : ''}${x.count > 1 ? ` ×${x.count}` : ''}`,
+        (x) => `${checkedToday(x.text) ? '☑' : claimOf(x.text) ? '◉' : checkedBefore(x.text) ? '◔' : '☐'} ${x.inPantry ? '🧊 ' : ''}${x.text}${x.amount ? ` · ${x.amount}` : ''}${x.count > 1 ? ` ×${x.count}` : ''}`,
       )]
     : [])
-  const text = `家里吃点啥 · ${activeDate.value} 购物清单\n${lines.join('\n')}`
+  const text = `家里吃点啥 · ${scopeTitle.value}（${people.value} 人份）\n${lines.join('\n')}`
   try {
     await navigator.clipboard.writeText(text)
   } catch {
@@ -131,10 +156,10 @@ async function copyList() {
   actions.toast('清单已复制，可以直接发给买菜的人', 'success')
 }
 const shareText = computed(() => {
-  const lines = groups.value.flatMap((g) => g.items.filter((x) => checked.value.has(x.text)).map(
+    const lines = groups.value.flatMap((g) => g.items.filter((x) => checkedToday(x.text)).map(
     (x) => `${x.inPantry ? '🧊 ' : ''}${x.text}${x.amount ? ` · ${x.amount}` : ''}${x.count > 1 ? ` ×${x.count}` : ''}`,
   ))
-  return `家里吃点啥 · ${activeDate.value} 购物清单\n${lines.join('\n') || '这份清单还没有勾选要买的食材'}\n今天也要好好吃饭～`
+  return `家里吃点啥 · ${scopeTitle.value}（${people.value} 人份）\n${lines.join('\n') || '这份清单还没有勾选要买的食材'}\n今天也要好好吃饭～`
 })
 
 // 生成清单图：纯 Canvas 自绘，不引入任何图片素材 / 第三方库，可直接保存或发给家人
@@ -155,7 +180,7 @@ function roundRect(ctx, x, y, w, h, r) {
 function buildImage() {
   // 清单图只画已勾选的项：没勾的就是不打算买的，不进图片
   const shown = groups.value
-    .map((g) => ({ ...g, items: g.items.filter((x) => checked.value.has(x.text)) }))
+    .map((g) => ({ ...g, items: g.items.filter((x) => checkedToday(x.text)) }))
     .filter((g) => g.items.length)
   if (!shown.length) {
     actions.toast('先勾选要买的东西，再生成清单图', 'warn')
@@ -197,7 +222,7 @@ function buildImage() {
   ctx.fillText('家里吃点啥 · 购物清单', PAD + 24, 76)
   ctx.fillStyle = '#948576'
   ctx.font = `16px ${FONT}`
-  ctx.fillText(`${activeDate.value} · 共 ${list.value.length} 项 · ${(state.plan.orders || []).length} 道菜`, PAD + 24, 106)
+    ctx.fillText(`${scopeTitle.value} · ${people.value} 人份 · 共 ${list.value.length} 项 · ${sourceOrders.value.length} 道菜`, PAD + 24, 106)
 
   let y = TOP
   for (const g of shown) {
@@ -215,7 +240,7 @@ function buildImage() {
     y += GROUP_HEAD
 
     for (const item of g.items) {
-      const done = checked.value.has(item.text)
+      const done = checkedToday(item.text)
       roundRect(ctx, PAD, y, W - PAD * 2, ROW - 6, 10)
       ctx.fillStyle = done ? '#f0ebe2' : '#fffdf9'; ctx.fill()
       ctx.strokeStyle = '#eee3d2'; ctx.lineWidth = 1; ctx.stroke()
@@ -266,8 +291,17 @@ function buildImage() {
         <button class="icon-btn" aria-label="关闭" @click="emit('close')">✕</button>
       </div>
       <p class="setting-desc">
-        按所选日期已点菜品的配料自动归并，同名只列一条；勾选状态记在这台设备上（{{ activeDate }}）。
+        {{ scopeTitle }}按配料自动归并，用量已按 {{ people }} 人份换算；勾选状态全家实时共享。
       </p>
+      <div class="shopping-scope-bar">
+        <label>人数
+          <select v-model.number="people" class="select">
+            <option v-for="n in [2, 3, 4, 5, 6, 7, 8]" :key="n" :value="n">{{ n }} 人</option>
+          </select>
+        </label>
+        <span v-if="coveredCount" class="shopping-covered">🧊 冰箱库存已覆盖 {{ coveredCount }} 项，无需购买</span>
+        <span class="tiny muted">采购条目：{{ list.length }} 项</span>
+      </div>
       <p v-if="preciseCount" class="shopping-precise">📏 {{ preciseCount }} 道菜用量已精确到克/毫升（公共菜谱数据），「少许」不再是猜的。</p>
       <div v-if="list.length" class="shopping-list">
         <div class="shopping-list-summary">
@@ -299,26 +333,33 @@ function buildImage() {
             >
               <input type="checkbox" :checked="checkedToday(item.text)" @change="toggle(item.text)" />
               <span class="shopping-name">{{ item.text }}</span>
-              <span v-if="checkedBefore(item.text) && !checkedToday(item.text)" class="shopping-before" :title="`${checked.get(item.text)} 买过，今天点菜后又出现在清单`">昨天买过</span>
-              <span v-if="item.inPantry" class="shopping-pantry" title="冰箱里已有，不用买">🧊 冰箱有</span>
+              <span v-if="checkedBefore(item.text) && !checkedToday(item.text)" class="shopping-before" :title="`${markOf(item.text)?.date} 买过，今天点菜后又出现在清单`">昨天买过</span>
+              <span v-if="item.inPantry" class="shopping-pantry" title="冰箱里已有库存">🧊 冰箱有{{ item.pantryStock?.quantity ? ` ${item.pantryStock.quantity}${item.pantryStock.unit}` : '' }}</span>
+              <span v-if="item.pantryDeducted" class="shopping-deducted" title="采购量已扣除冰箱库存">已扣库存</span>
               <span v-if="item.amount" class="shopping-amount">{{ item.amount }}</span>
               <span v-if="item.count > 1" class="shopping-count">×{{ item.count }}</span>
+              <button
+                v-if="!checkedToday(item.text)" type="button"
+                class="shopping-claim" :class="{ active: !!claimOf(item.text) }"
+                @click.stop.prevent="claim(item.text)"
+              >{{ claimOf(item.text) ? `${claimOf(item.text).userName} 正在买` : '我来买' }}</button>
+              <span v-else class="shopping-buyer">{{ markOf(item.text)?.userName }} 已买</span>
               <span class="shopping-from tiny muted">{{ item.from.join('、') }}</span>
             </label>
           </template>
         </div>
       </div>
       <div v-else class="empty pad-18">
-        <span class="empty-icon">🧺</span>今天还没点菜，或者这些菜还没填配料
+        <span class="empty-icon">🧺</span>{{ coveredCount ? '冰箱库存已经覆盖这份清单' : '还没点菜，或者这些菜还没填配料' }}
       </div>
       <div class="setting-actions">
         <button class="btn btn-soft btn-sm" :disabled="!list.length" @click="copyList">📋 复制清单</button>
         <button class="btn btn-soft btn-sm" :disabled="!list.length" @click="buildImage">🖼️ 生成清单图</button>
         <WeChatShareActions
-          v-if="preview" :image-data="preview" :filename="`购物清单-${activeDate}.png`"
-          :title="`购物清单 ${activeDate}`" :text="shareText"
+          v-if="preview" :image-data="preview" :filename="`购物清单-${scopeDate}.png`"
+          :title="scopeTitle" :text="shareText"
         />
-        <button class="btn btn-ghost btn-sm" :disabled="!checked.size" @click="clearChecked">清空勾选</button>
+        <button class="btn btn-ghost btn-sm" :disabled="!list.length" @click="clearChecked">清空这份清单</button>
         <span class="grow"></span>
         <button class="btn btn-primary btn-sm" @click="emit('close')">完成</button>
       </div>

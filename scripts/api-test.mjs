@@ -29,6 +29,8 @@ async function call(path, { method = 'GET', body, raw = false } = {}) {
 
 const createdDishes = []
 const createdOrders = []
+let memberId = ''
+let allergyMemberId = ''
 
 try {
   console.log(`\n测试目标：${BASE}\n`)
@@ -49,18 +51,21 @@ try {
 
   const today = boot.today
   const originalPlan = boot.plan
-  const memberId = boot.members[0].id
+  memberId = boot.members[0].id
   const stamp = Date.now()
+  const shoppingKey = `接口测试食材${stamp}`
 
   const dish = await call('/api/dishes', {
     method: 'POST',
     body: {
       name: `接口测试菜-${stamp}`, cuisine: 'homestyle', desc: '测试用，稍后删除',
-      tags: ['测试'], spicy: 1, minutes: 12,
+      tags: ['测试'], spicy: 1, minutes: 12, servings: 4,
+      ingredients: ['嫩豆腐 300g'],
     },
   })
   createdDishes.push(dish.id)
   assert.equal(dish.builtin, false)
+  assert.equal(dish.servings, 4)
   ok('添加自定义菜品')
 
   const renamed = await call(`/api/dishes/${dish.id}`, {
@@ -69,6 +74,22 @@ try {
   assert.equal(renamed.favorite, true)
   assert.equal(renamed.desc, '改过的描述')
   ok('编辑菜品 / 收藏')
+
+  const allergyMember = await call('/api/members', {
+    method: 'POST',
+    body: { name: `过敏测试-${stamp}`, avatar: '🙂', color: '#d9a066', allergies: ['花生'] },
+  })
+  allergyMemberId = allergyMember.id
+  assert.deepEqual(allergyMember.allergies, ['花生'])
+  ok('保存成员过敏原')
+
+  const marked = await call('/api/shopping/marks', {
+    method: 'POST',
+    body: { date: today, userId: memberId, items: [{ key: shoppingKey, status: 'claimed' }] },
+  })
+  assert.equal(marked.shoppingMarks[shoppingKey].status, 'claimed')
+  assert.equal(marked.shoppingMarks[shoppingKey].date, today)
+  ok('跨设备共享采购认领状态')
 
   const planned = await call(`/api/plans/${today}`, {
     method: 'PUT', body: { chefId: memberId, dishwasherId: memberId, note: `接口测试备注-${stamp}` },
@@ -138,4 +159,16 @@ try {
   for (const id of createdDishes) {
     try { await call(`/api/dishes/${id}`, { method: 'DELETE' }) } catch {}
   }
+  if (allergyMemberId) {
+    try { await call(`/api/members/${allergyMemberId}`, { method: 'DELETE' }) } catch {}
+  }
+  try {
+    const current = await call('/api/bootstrap')
+    if (current.settings?.shoppingMarks?.[shoppingKey]) {
+      await call('/api/shopping/marks', {
+        method: 'POST',
+        body: { date: current.today, userId: memberId, items: [{ key: shoppingKey, status: '' }] },
+      })
+    }
+  } catch {}
 }

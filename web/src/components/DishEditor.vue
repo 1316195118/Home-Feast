@@ -1,7 +1,7 @@
 <script setup>
 import { inject, reactive, ref, computed } from 'vue'
 import { api } from '../api'
-import { dishImage } from '../utils'
+import { dishImage, dishServings } from '../utils'
 import { getRecipe } from '../recipes'
 import { useModalBehavior } from '../modal'
 import { shake } from '../feedback'
@@ -30,6 +30,7 @@ const form = reactive({
   tags: (props.dish?.tags || []).join('、'),
   spicy: props.dish?.spicy || 0,
   minutes: props.dish?.minutes || 20,
+  servings: dishServings(props.dish),
   image: props.dish?.image || '',
   ingredients: (ownIngredients.length ? ownIngredients : reference.ingredients).join('\n'),
   steps: (ownSteps.length ? ownSteps : reference.steps).join('\n'),
@@ -140,6 +141,7 @@ async function save() {
     tags: form.tags.split(/[、,，\s]+/).filter(Boolean).slice(0, 6),
     spicy: Number(form.spicy) || 0,
     minutes: Number(form.minutes) || 20,
+    servings: Math.max(1, Math.min(20, Number(form.servings) || 2)),
     image: form.image,
     ingredients,
     steps: form.steps.split('\n').map((s) => s.trim()).filter(Boolean).slice(0, 20),
@@ -209,6 +211,11 @@ async function remove() {
         <div class="field">
           <label for="dish-minutes">大概要多久（分钟）</label>
           <input id="dish-minutes" v-model="form.minutes" class="input" type="number" min="0" max="600" />
+        </div>
+        <div class="field">
+          <label for="dish-servings">这份配料够几人吃</label>
+          <input id="dish-servings" v-model="form.servings" class="input" type="number" min="1" max="20" />
+          <span class="tiny muted">采购清单和时间线会按家庭人数自动换算</span>
         </div>
 
         <div class="field span-2">

@@ -1,6 +1,6 @@
 <script setup>
 import { inject, computed } from 'vue'
-import { imageSize, cuisineName, cuisineIcon, spicyText, artStyle, avoidConflicts, splitHighlight } from '../utils'
+import { imageSize, cuisineName, cuisineIcon, spicyText, artStyle, avoidConflicts, allergyConflicts, splitHighlight } from '../utils'
 import { getRecipe } from '../recipes'
 import { sparkleFromEvent, celebrate, vibrate } from '../feedback'
 import DishPhoto from './DishPhoto.vue'
@@ -33,6 +33,11 @@ const avoidHits = computed(() => {
   const r = getRecipe(props.dish)
   const enriched = { ...props.dish, ingredients: [...(props.dish.ingredients || []), ...r.ingredients] }
   return avoidConflicts(enriched, selfMember.value)
+})
+const allergyHits = computed(() => {
+  const r = getRecipe(props.dish)
+  const enriched = { ...props.dish, ingredients: [...(props.dish.ingredients || []), ...r.ingredients] }
+  return allergyConflicts(enriched, state.members)
 })
 </script>
 
@@ -79,6 +84,10 @@ const avoidHits = computed(() => {
       <div class="dish-tags">
         <span class="tag" v-for="t in (dish.tags || []).slice(0, 3)" :key="t">{{ t }}</span>
         <span class="tag tag-spicy" v-if="dish.spicy > 0">{{ spicyText(dish.spicy) }}</span>
+        <span
+          v-if="allergyHits.length" class="tag tag-allergy"
+          :title="allergyHits.map((hit) => `${hit.memberName}对${hit.allergen}过敏`).join('；')"
+        >🚫 {{ [...new Set(allergyHits.map((hit) => hit.allergen))].join('、') }}</span>
         <span class="tag tag-pantry" v-if="dish._pantryHits > 0" title="冰箱里已有的主料命中数，佐料不计">🧊 {{ dish._pantryHits }} 样现成</span>
         <span
           v-if="avoidHits.length" class="tag tag-avoid"

@@ -4,34 +4,38 @@ import "sort"
 
 // Dish 是菜品库中的一道菜。Builtin 为 true 表示随程序内置，自定义菜品可自由编辑。
 type Dish struct {
-	ID        string   `json:"id"`
-	Name      string   `json:"name"`
-	Cuisine   string   `json:"cuisine"`
-	Desc      string   `json:"desc"`
-	Tags      []string `json:"tags"`
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Cuisine     string   `json:"cuisine"`
+	Desc        string   `json:"desc"`
+	Tags        []string `json:"tags"`
 	Image       string   `json:"image"`
 	Spicy       int      `json:"spicy"`
 	Minutes     int      `json:"minutes"`
 	Ingredients []string `json:"ingredients"` // 配料，一行一项（可带用量）
 	Steps       []string `json:"steps"`       // 做法步骤，按数组顺序编号
-	Favorite    bool     `json:"favorite"`
+	// Servings 是当前配料用量的基准份数；0 时前端按 2 人份处理，兼容旧菜谱。
+	Servings int  `json:"servings,omitempty"`
+	Favorite bool `json:"favorite"`
 	// Rating 是「做过之后觉得怎么样」：0 未评、1 一般、2 好吃、3 超赞。
 	// 只影响推荐权重，不参与任何统计口径。
-	Rating      int      `json:"rating"`
-	Builtin   bool     `json:"builtin"`
-	CreatedAt string   `json:"createdAt"`
+	Rating    int    `json:"rating"`
+	Builtin   bool   `json:"builtin"`
+	CreatedAt string `json:"createdAt"`
 }
 
 // Member 是家庭中的一个人，用头像 emoji 与昵称区分，不收集任何个人信息。
 type Member struct {
-	ID        string   `json:"id"`
-	Name      string   `json:"name"`
-	Avatar    string   `json:"avatar"`
-	Color     string   `json:"color"`
-	Avoid     []string `json:"avoid,omitempty"` // 忌口 / 口味避雷标签，omitempty 兼容旧 members.json
+	ID     string   `json:"id"`
+	Name   string   `json:"name"`
+	Avatar string   `json:"avatar"`
+	Color  string   `json:"color"`
+	Avoid  []string `json:"avoid,omitempty"` // 忌口 / 口味避雷标签，omitempty 兼容旧 members.json
+	// Allergies 是硬性过敏原：自动配餐直接排除，手动点菜必须二次确认。
+	Allergies []string `json:"allergies,omitempty"`
 	// HasPin 是计算字段：由 ListMembers() 按 pins.json 填充，不落盘、不含任何密码材料。
-	HasPin    bool     `json:"hasPin,omitempty"`
-	CreatedAt string   `json:"createdAt"`
+	HasPin    bool   `json:"hasPin,omitempty"`
+	CreatedAt string `json:"createdAt"`
 }
 
 // Order 是一次点菜。除了引用 ID，还留下菜名、菜系与点菜人快照，
@@ -61,18 +65,18 @@ type Plan struct {
 	DishwasherIDs []string `json:"dishwasherIds,omitempty"`
 	// MealDuties 按餐次分别记录分工（key 是餐次 key，如 breakfast/lunch/dinner）。
 	// 顶层的 ChefIDs/DishwasherIDs 只作为旧数据兼容与「全天」语义，界面按餐读取。
-	MealDuties map[string]MealDuty `json:"mealDuties,omitempty"`
-	ChefID        string   `json:"chefId"`
-	DishwasherID  string   `json:"dishwasherId"`
-	Note          string   `json:"note"`
-	Orders        []Order  `json:"orders"`
-	UpdatedAt     string   `json:"updatedAt"`
+	MealDuties   map[string]MealDuty `json:"mealDuties,omitempty"`
+	ChefID       string              `json:"chefId"`
+	DishwasherID string              `json:"dishwasherId"`
+	Note         string              `json:"note"`
+	Orders       []Order             `json:"orders"`
+	UpdatedAt    string              `json:"updatedAt"`
 	// 骰子 PK：Dice 保存每人点数，DicePhase 为 rolling/tied/done，
 	// PKShown 记录已经看过结果动画的成员（按用户维度只播一次）。
 	// omitempty 保证旧的 plans.json / 备份不含这些字段也能直接读。
 	Dice      map[string]int `json:"dice,omitempty"`
-	DicePhase string          `json:"dicePhase,omitempty"`
-	PKShown   []string        `json:"pkShown,omitempty"`
+	DicePhase string         `json:"dicePhase,omitempty"`
+	PKShown   []string       `json:"pkShown,omitempty"`
 }
 
 // NormalizeDuty 把旧数据里的单人字段补进数组，并把数组首位同步回单人字段。
@@ -149,6 +153,24 @@ type Roster struct {
 	Days    map[string]RosterDay `json:"days"`
 }
 
+// PantryStock 是某样冰箱食材的数量、单位和保质期。
+// Pantry 仍保留纯名称数组，旧前端与旧备份无需迁移；数量信息为空时只做「冰箱有」提示。
+type PantryStock struct {
+	Quantity float64 `json:"quantity,omitempty"`
+	Unit     string  `json:"unit,omitempty"`
+	Added    string  `json:"added,omitempty"`
+	Expires  string  `json:"expires,omitempty"`
+}
+
+// ShoppingMark 是全家共享的采购状态。Status 为 claimed（有人去买）或 bought（已买到）。
+type ShoppingMark struct {
+	Date      string `json:"date"`
+	Status    string `json:"status"`
+	UserID    string `json:"userId,omitempty"`
+	UserName  string `json:"userName,omitempty"`
+	UpdatedAt string `json:"updatedAt,omitempty"`
+}
+
 // NormalizeRoster 校验排班：只保留合法的星期 key 与确实存在的成员 ID，
 // 防止前端手滑写进脏数据；同时避免同一天掌勺和洗碗是同一人（家庭场景没意义）。
 func NormalizeRoster(in Roster, members []Member) Roster {
@@ -180,25 +202,29 @@ type Settings struct {
 	FamilyName     string     `json:"familyName"`
 	HiddenCuisines []string   `json:"hiddenCuisines"` // 用户选择不展示的菜系 key 列表
 	CuisineOrder   []string   `json:"cuisineOrder"`   // 菜系展示顺序（空 = 用内置顺序）
-	Meals          []MealSlot `json:"meals"`           // 空表示使用默认三餐
-	Roster         Roster     `json:"roster"`          // 每周掌勺 / 洗碗排班
-	Pantry         []string   `json:"pantry"`          // 冰箱里现有的食材，供智能推荐匹配
+	Meals          []MealSlot `json:"meals"`          // 空表示使用默认三餐
+	Roster         Roster     `json:"roster"`         // 每周掌勺 / 洗碗排班
+	Pantry         []string   `json:"pantry"`         // 冰箱里现有的食材，供智能推荐匹配
 	// PantryAdded 记录每样食材加入冰箱的日期（YYYY-MM-DD），用于「放了几天」提醒。
 	// 与 Pantry 分开存：老数据没有这个字段也能正常工作，食材本身仍是纯字符串数组。
 	PantryAdded map[string]string `json:"pantryAdded,omitempty"`
-	AutoBackup     bool       `json:"autoBackup"`      // 每天 03:30 自动打包到 data/backups/
-	BackupKeep     int        `json:"backupKeep"`      // 自动备份保留份数，0 视为默认 7
+	// PantryStock 记录数量、单位与保质期，用于整周采购自动扣除库存和临期提醒。
+	PantryStock map[string]PantryStock `json:"pantryStock,omitempty"`
+	// ShoppingMarks 跨设备共享采购状态，key 为归一化后的食材名。
+	ShoppingMarks map[string]ShoppingMark `json:"shoppingMarks,omitempty"`
+	AutoBackup    bool                    `json:"autoBackup"` // 每天 03:30 自动打包到 data/backups/
+	BackupKeep    int                     `json:"backupKeep"` // 自动备份保留份数，0 视为默认 7
 	// ImageMode 控制配图清晰度：auto=局域网原图/外网缩略图（默认），full=总是原图，thumb=总是缩略图。
-	ImageMode      string     `json:"imageMode,omitempty"`
+	ImageMode string `json:"imageMode,omitempty"`
 	// AutoCheckUpdate 是否在设置页每天自动检查新版本，默认 true（空值视为开）。
-	AutoCheckUpdate *bool     `json:"autoCheckUpdate,omitempty"`
+	AutoCheckUpdate *bool `json:"autoCheckUpdate,omitempty"`
 	// ProxyURL 在线更新走 HTTP/SOCKS5 代理，例如 http://10.10.10.254:7890；空表示直连。
 	// 只影响更新下载，业务接口不受影响。
-	ProxyURL       string     `json:"proxyUrl,omitempty"`
+	ProxyURL string `json:"proxyUrl,omitempty"`
 	// FamilyID 是「多家庭隔离」第一阶段的地基：只用于备份命名空间，
 	// 当前所有数据仍共用一份 JSON，不做分仓，旧数据零值兼容。
-	FamilyID       string     `json:"familyId,omitempty"`
-	UpdatedAt      string     `json:"updatedAt"`
+	FamilyID  string `json:"familyId,omitempty"`
+	UpdatedAt string `json:"updatedAt"`
 }
 
 // Cuisine 是菜系分类。Image 为 AI 绘制的菜系插画，菜品未单独配图时复用它。

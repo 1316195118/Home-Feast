@@ -6,7 +6,7 @@ import PantryFridge from './PantryFridge.vue'
 import OrderPanel from './OrderPanel.vue'
 import PantryImage from './PantryImage.vue'
 import DishDetail from './DishDetail.vue'
-import { normalizeMeals, isCuisineHidden, pantryGroups, pantryVisual, pantryMatches, normalizeIngredient, hasDishImage, dishImage, friendlyDate } from '../utils'
+import { normalizeMeals, isCuisineHidden, pantryGroups, pantryVisual, pantryMatches, normalizeIngredient, hasDishImage, dishImage, friendlyDate, pantryExpiry } from '../utils'
 import { getRecipe } from '../recipes'
 import { useModalBehavior } from '../modal'
 import { cacheThumb, thumbCacheEpoch } from '../thumb-cache'
@@ -423,6 +423,7 @@ async function addAllPicked() {
 const pantryDraft = ref(new Set(state.settings.pantry || []))
 // 食材 → 加入日期（YYYY-MM-DD），用于「放了几天」提醒
 const pantryAdded = ref({ ...(state.settings.pantryAdded || {}) })
+const pantryStockDraft = ref(JSON.parse(JSON.stringify(state.settings.pantryStock || {})))
 const todayStr = () => state.today || new Date().toISOString().slice(0, 10)
 function daysInFridge(name) {
   const d = pantryAdded.value[name]
@@ -431,6 +432,34 @@ function daysInFridge(name) {
   const s0 = new Date(`${d}T12:00:00`).getTime()
   if (!Number.isFinite(t) || !Number.isFinite(s0)) return 0
   return Math.max(0, Math.round((t - s0) / 86400000))
+}
+const UNIT_OPTIONS = ['g', 'kg', 'ml', 'l', '个', '根', '袋', '盒', '瓶', '把', '块', '片']
+function stockOf(name) {
+  if (!pantryStockDraft.value[name]) pantryStockDraft.value[name] = { quantity: 0, unit: 'g', added: pantryAdded.value[name] || todayStr(), expires: '' }
+  return pantryStockDraft.value[name]
+}
+function suggestedExpiry(name) {
+  const group = pantryGroups.find((item) => item.items.includes(name))?.key || ''
+  const days = { meat: 3, seafood: 2, dairy: 7, veg: 7, fruit: 10, mushroom: 5, staple: 30 }[group] || 7
+  const d = new Date(`${todayStr()}T12:00:00`)
+  d.setDate(d.getDate() + days)
+  const p = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+}
+function fillSuggestedExpiry(name) {
+  const stock = stockOf(name)
+  stock.expires = suggestedExpiry(name)
+  scheduleSavePantry()
+}
+function expiryOf(name) {
+  return pantryExpiry(stockOf(name), todayStr())
+}
+function expiryLabel(name) {
+  const stateValue = expiryOf(name)
+  if (!stateValue) return ''
+  if (stateValue.days < 0) return `已过期 ${Math.abs(stateValue.days)} 天`
+  if (stateValue.days === 0) return '今天到期'
+  return `${stateValue.days} 天后到期`
 }
 // 拖动排序：拖动已选卡片调整顺序，常用的放前面
 const dragName = ref('')
@@ -507,7 +536,15 @@ const shownPantryGroups = computed(() => {
 })
 const selectedPantryCards = computed(() => [...pantryDraft.value].map((n) => {
   const g = pantryGroups.find((x) => x.items.includes(n))
-  return { name: n, tint: g?.tint || pantryVisual(n).tint, group: g?.label || '', ...pantryVisual(n) }
+  const stock = pantryStockDraft.value[n] || null
+  return {
+    name: n,
+    tint: g?.tint || pantryVisual(n).tint,
+    group: g?.label || '',
+    stock,
+    expiry: stock ? pantryExpiry(stock, todayStr()) : null,
+    ...pantryVisual(n),
+  }
 }))
 function jumpToGroup(key) {
   const g = pantryGroups.find((x) => x.key === key)
@@ -516,6 +553,7 @@ function jumpToGroup(key) {
 function clearPantry() {
   pantryDraft.value = new Set()
   pantryAdded.value = {}
+  pantryStockDraft.value = {}
   scheduleSavePantry()
 }
 
@@ -530,6 +568,14 @@ const pantryCustomCards = computed(() => {
 function openPantry() {
   pantryDraft.value = new Set(state.settings.pantry || [])
   pantryAdded.value = { ...(state.settings.pantryAdded || {}) }
+  pantryStockDraft.value = JSON.parse(JSON.stringify(state.settings.pantryStock || {}))
+  for (const name of pantryDraft.value) {
+    if (!pantryStockDraft.value[name]) {
+      pantryStockDraft.value[name] = {
+        quantity: 0, unit: 'g', added: pantryAdded.value[name] || todayStr(), expires: suggestedExpiry(name),
+      }
+    }
+  }
   pantryCustom.value = ''
   pantryQuery.value = ''
   orderPanelOpen.value = false
@@ -541,7 +587,11 @@ let pantryTimer = null
 function scheduleSavePantry() {
   clearTimeout(pantryTimer)
   pantryTimer = setTimeout(() => {
-    actions.saveSettings({ pantry: [...pantryDraft.value], pantryAdded: pantryAdded.value })
+    actions.saveSettings({
+      pantry: [...pantryDraft.value],
+      pantryAdded: pantryAdded.value,
+      pantryStock: pantryStockDraft.value,
+    })
   }, 500)
 }
 onUnmounted(() => clearTimeout(pantryTimer))
@@ -552,9 +602,16 @@ function togglePantry(name) {
   if (next.has(name)) {
     next.delete(name)
     delete added[name]
+    delete pantryStockDraft.value[name]
   } else {
     next.add(name)
     added[name] = todayStr() // 新放的记今天，用于保质期提醒
+    pantryStockDraft.value[name] = {
+      quantity: 0,
+      unit: 'g',
+      added: added[name],
+      expires: suggestedExpiry(name),
+    }
   }
   pantryDraft.value = next
   pantryAdded.value = added
@@ -665,6 +722,9 @@ function addBatchPantry(text) {
     const name = w.replace(/[0-9一二三四五六七八九十半两]+(斤|个|把|根|颗|头|片|块|袋|盒|瓶)$/g, '').trim() || w
     next.add(name)
     if (!added[name]) added[name] = todayStr()
+    if (!pantryStockDraft.value[name]) {
+      pantryStockDraft.value[name] = { quantity: 0, unit: 'g', added: added[name], expires: suggestedExpiry(name) }
+    }
   }
   pantryDraft.value = next
   pantryAdded.value = added
@@ -675,13 +735,32 @@ function addBatchPantry(text) {
 function addCustomPantry() {
   const words = pantryCustom.value.split(/[、,，\s]+/).map((s) => s.trim()).filter(Boolean)
   const next = new Set(pantryDraft.value)
-  for (const w of words) next.add(w.slice(0, 12))
+  const added = { ...pantryAdded.value }
+  for (const w of words) {
+    const name = w.slice(0, 12)
+    if (!name) continue
+    next.add(name)
+    if (!added[name]) added[name] = todayStr()
+    if (!pantryStockDraft.value[name]) {
+      pantryStockDraft.value[name] = {
+        quantity: 0,
+        unit: 'g',
+        added: added[name],
+        expires: suggestedExpiry(name),
+      }
+    }
+  }
   pantryDraft.value = next
+  pantryAdded.value = added
   pantryCustom.value = ''
   scheduleSavePantry()
 }
 async function savePantry() {
-  const ok = await actions.saveSettings({ pantry: [...pantryDraft.value] })
+  const ok = await actions.saveSettings({
+    pantry: [...pantryDraft.value],
+    pantryAdded: pantryAdded.value,
+    pantryStock: pantryStockDraft.value,
+  })
   if (ok) pantryOpen.value = false
 }
 </script>
@@ -886,10 +965,37 @@ async function savePantry() {
                   class="pantry-age" :class="{ warn: daysInFridge(p.name) >= 7, old: daysInFridge(p.name) >= 14 }"
                   :title="daysInFridge(p.name) > 0 ? `放进冰箱第 ${daysInFridge(p.name)} 天` : '今天放进冰箱的'"
                 >{{ daysInFridge(p.name) > 0 ? `${daysInFridge(p.name)}天` : '今天' }}</span>
+                <span
+                  v-if="p.stock?.expires" class="pantry-expiry"
+                  :class="p.expiry?.status"
+                  :title="expiryLabel(p.name)"
+                >{{ p.expiry?.days < 0 ? '已过期' : p.expiry?.days === 0 ? '今天到期' : `${p.expiry?.days}天` }}</span>
                 <span class="pantry-check">✓</span>
               </button>
             </div>
           </div>
+          <details v-if="selectedPantryCards.length" class="pantry-stock-editor">
+            <summary>⚖️ 库存数量与保质期 <span class="tiny muted">可选，用于整周采购自动扣减和临期提醒</span></summary>
+            <div class="pantry-stock-list">
+              <div v-for="p in selectedPantryCards" :key="`stock-${p.name}`" class="pantry-stock-row">
+                <span class="pantry-stock-name">{{ p.name }}</span>
+                <input
+                  v-model.number="p.stock.quantity" class="input pantry-stock-qty"
+                  type="number" min="0" max="100000" step="1"
+                  :aria-label="`${p.name}库存数量`" @change="scheduleSavePantry"
+                />
+                <select v-model="p.stock.unit" class="select pantry-stock-unit" :aria-label="`${p.name}库存单位`" @change="scheduleSavePantry">
+                  <option v-for="unit in UNIT_OPTIONS" :key="unit" :value="unit">{{ unit }}</option>
+                </select>
+                <input
+                  v-model="p.stock.expires" class="input pantry-stock-expiry"
+                  type="date" :aria-label="`${p.name}保质期`" @change="scheduleSavePantry"
+                />
+                <button class="btn btn-ghost btn-sm" type="button" @click="fillSuggestedExpiry(p.name)">建议日期</button>
+                <span class="pantry-stock-state" :class="p.expiry?.status">{{ expiryLabel(p.name) }}</span>
+              </div>
+            </div>
+          </details>
           <div v-for="g in shownPantryGroups" :key="g.key" :id="'pantry-group-' + g.key" class="pantry-section">
             <div class="pantry-group-head" :style="{ borderColor: g.tint }">{{ g.label }}</div>
             <div class="pantry-grid">

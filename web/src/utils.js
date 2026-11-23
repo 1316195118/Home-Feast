@@ -223,6 +223,26 @@ export function avoidConflicts(dish, member) {
   return avoid.filter((a) => (a === '辣' ? (dish.spicy || 0) > 0 : hay.includes(a)))
 }
 
+// 过敏原是硬条件：返回具体家人和过敏原，供点菜确认、卡片警示和自动菜单排除共用。
+export function allergyConflicts(dish, members) {
+  if (!dish) return []
+  const list = Array.isArray(members) ? members : (members ? [members] : [])
+  const hay = [dish.name, dish.desc, ...(dish.tags || []), ...(dish.ingredients || [])]
+    .filter(Boolean).join(' ')
+  const out = []
+  const seen = new Set()
+  for (const member of list) {
+    for (const allergen of (member?.allergies || [])) {
+      const hit = allergen === '辣' ? (dish.spicy || 0) > 0 : hay.includes(allergen)
+      const key = `${member?.id || member?.name || ''}:${allergen}`
+      if (!hit || seen.has(key)) continue
+      seen.add(key)
+      out.push({ memberId: member?.id || '', memberName: member?.name || '家人', allergen })
+    }
+  }
+  return out
+}
+
 // 购物清单分类：佐料（调味料 / 炝锅辅料）与食材（主料）分开列。
 // 用具体词而不是单字「油」「粉」，避免把「油炸花生米」「中筋面粉」误判成佐料。
 const SEASONING_WORDS = [
@@ -291,6 +311,35 @@ export function normalizeIngredient(name) {
   const n = String(name || '').replace(/[0-9０-９]/g, '').trim()
   return INGREDIENT_ALIAS[n] || n
 }
+
+export function dishServings(dish) {
+  const n = Number(dish?.servings)
+  return Number.isFinite(n) && n >= 1 && n <= 20 ? n : 2
+}
+
+function scaleNumeric(raw, factor) {
+  const s = String(raw || '')
+  return s.replace(/(\d+(?:\.\d+)?)(?:\s*[~～—–]\s*(\d+(?:\.\d+)?))?/g, (_, a, b) => {
+    const scale = (v) => {
+      const n = Number(v) * factor
+      return String(Number.isInteger(n) ? n : Number(n.toFixed(2)))
+    }
+    return b ? `${scale(a)}~${scale(b)}` : scale(a)
+  })
+}
+
+// 菜谱配料按「当前份数 / 菜谱基准份数」缩放，保持 g、ml、个等单位不变。
+export function scaleIngredient(raw, factor = 1) {
+  const text = String(raw || '').trim()
+  if (!text || !Number.isFinite(factor) || Math.abs(factor - 1) < 0.001) return text
+  const bits = text.split(/\s+/)
+  if (bits.length < 2) return text
+  return `${bits[0]} ${scaleNumeric(bits.slice(1).join(' '), factor)}`
+}
+
+export function scaleIngredients(items, factor = 1) {
+  return (items || []).map((item) => scaleIngredient(item, factor))
+}
 // 解析用量：「300g」「2 个」「2~3个」都能识别；范围量取上限；
 // 不能识别为「数字 + 已知单位」（如「少许」「适量」）返回 null，由调用方当原文处理。
 function parseAmount(raw) {
@@ -325,6 +374,72 @@ function formatAmounts(list) {
     if (!parsed[i] && !parts.includes(uniq[i])) parts.push(uniq[i])  // 少许 / 适量
   }
   return parts.join(' + ')
+}
+
+const UNIT_FACTOR = {
+  g: { kind: 'mass', factor: 1 },
+  kg: { kind: 'mass', factor: 1000 },
+  ml: { kind: 'volume', factor: 1 },
+  l: { kind: 'volume', factor: 1000 },
+}
+
+function stockInUnit(quantity, fromUnit, toUnit) {
+  if (fromUnit === toUnit) return quantity
+  const from = UNIT_FACTOR[fromUnit]
+  const to = UNIT_FACTOR[toUnit]
+  if (!from || !to || from.kind !== to.kind) return null
+  return (quantity * from.factor) / to.factor
+}
+
+// 用量精确且单位一致时，从采购需求里扣除冰箱库存；无法可靠换算的量保持原样，绝不猜。
+export function applyPantryStock(list, stockMap = {}) {
+  return (list || []).map((item) => {
+    const stock = stockMap?.[item.text] || null
+    const qty = Number(stock?.quantity) || 0
+    if (!stock || qty <= 0 || !stock.unit || !Array.isArray(item.amounts)) {
+      return { ...item, pantryStock: stock || null, pantryCovered: false }
+    }
+    const totals = new Map()
+    const raw = []
+    for (const amount of item.amounts) {
+      const parsed = parseAmount(amount)
+      if (!parsed) { raw.push(amount); continue }
+      totals.set(parsed.unit, (totals.get(parsed.unit) || 0) + parsed.n)
+    }
+    let remainingStock = qty
+    let deducted = false
+    for (const [unit, amount] of totals) {
+      const stockAmount = stockInUnit(remainingStock, stock.unit, unit)
+      if (stockAmount == null || stockAmount <= 0) continue
+      const used = Math.min(amount, stockAmount)
+      const left = Number((amount - used).toFixed(2))
+      if (used > 0) deducted = true
+      if (left > 0) totals.set(unit, left)
+      else totals.delete(unit)
+      remainingStock = Math.max(0, remainingStock - stockInUnit(used, unit, stock.unit))
+    }
+    const parts = [...totals].map(([unit, amount]) => `${Number.isInteger(amount) ? amount : Number(amount.toFixed(2))}${unit}`)
+    const amount = [...parts, ...raw].join(' + ')
+    return {
+      ...item,
+      amount,
+      pantryStock: stock,
+      pantryCovered: deducted && !amount,
+      pantryDeducted: deducted,
+    }
+  })
+}
+
+export function pantryExpiry(stock, today = new Date()) {
+  const expires = String(stock?.expires || '')
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(expires)) return null
+  const day = String(today).slice(0, 10)
+  const base = /^\d{4}-\d{2}-\d{2}$/.test(day)
+    ? new Date(`${day}T12:00:00`)
+    : new Date(today)
+  const end = new Date(`${expires}T12:00:00`)
+  const days = Math.ceil((end - base) / 86400000)
+  return { days, status: days < 0 ? 'expired' : days <= 2 ? 'urgent' : days <= 5 ? 'soon' : 'fresh' }
 }
 
 export function shoppingList(orders, dishes) {
@@ -737,7 +852,8 @@ export function smartSuggest(dishes, opts = {}) {
   const {
     today = '', pantry = [], member = null, hiddenCuisines = [],
     orders = [], excludeIds = [], recentIds = [], limit = 3, salt = 0,
-    ingredientsOf = null, meal = '', balance = null,
+    ingredientsOf = null, meal = '', balance = null, members = null,
+    expiringPantry = [],
   } = opts
   const season = seasonOf(today)
   const picked = new Set([...(orders || []).map((o) => o.dishId), ...(excludeIds || [])])
@@ -748,7 +864,12 @@ export function smartSuggest(dishes, opts = {}) {
     if (!d || picked.has(d.id) || isCuisineHidden(d.cuisine, hiddenCuisines)) continue
     const ings = typeof ingredientsOf === 'function' ? ingredientsOf(d) : (d.ingredients || [])
     // 内置菜的配料由 recipes.js 动态生成，这里用展开后的配料做避雷判断才准
-    if (avoidConflicts({ ...d, ingredients: Array.isArray(ings) ? ings : [] }, member).length) continue
+    const enriched = { ...d, ingredients: Array.isArray(ings) ? ings : [] }
+    const hardMembers = Array.isArray(members) && members.length
+      ? members
+      : (member ? [member] : [])
+    if (allergyConflicts(enriched, hardMembers).length) continue
+    if (avoidConflicts(enriched, member).length) continue
 
     let score = 1.5 + tinyHash(`${d.id}:${salt}`) * 1.6
     const reasons = []
@@ -758,6 +879,11 @@ export function smartSuggest(dishes, opts = {}) {
     if (hits.length) {
       score += Math.min(hits.length, 4) * 1.2
       reasons.push(`用得上冰箱里的${hits.slice(0, 2).join('、')}`)
+      const urgent = hits.filter((name) => (expiringPantry || []).includes(name))
+      if (urgent.length) {
+        score += 1.8
+        reasons.unshift(`先吃掉快过期的${urgent.slice(0, 2).join('、')}`)
+      }
     } else if (season.likes.includes(d.cuisine)) {
       reasons.push(`${season.label}天吃${season.hint}`)
     }

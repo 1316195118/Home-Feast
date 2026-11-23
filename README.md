@@ -354,6 +354,7 @@ BASE=http://127.0.0.1:8090 node scripts/_ui/performance-verify.mjs  # 首屏请�
 BASE=http://127.0.0.1:8090 node scripts/_ui/image-concurrency-verify.mjs  # 225 张缩略图 32 路并发
 BASE=http://127.0.0.1:8090 node scripts/_ui/mobile-navigation-verify.mjs  # 手机慢网连续切页白屏回归
 BASE=http://127.0.0.1:8090 node scripts/_ui/load-perf-verify.mjs          # 手机 4Mbps 首屏与懒加载
+BASE=http://127.0.0.1:8090 node scripts/_ui/family-features-verify.mjs     # 过敏/采购/时间线/临期/口味周报
 CODE=测试口令 BASE=http://127.0.0.1:8090 node scripts/_ui/lock-verify.mjs  # 访问口令锁屏回归
 go mod verify
 go mod tidy -diff

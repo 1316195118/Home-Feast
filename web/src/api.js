@@ -80,6 +80,7 @@ export const api = {
   removeOrder: (date, id) => request(`/api/plans/${date}/orders/${id}`, { method: 'DELETE' }),
 
   saveSettings: (body) => request('/api/settings', { method: 'PUT', body }),
+  setShoppingMarks: (body) => request('/api/shopping/marks', { method: 'POST', body }),
   upload: (form) => request('/api/upload', { method: 'POST', body: form, isForm: true }),
   exportBackup: () => request('/api/backup', { raw: true }),
   exportExcel: () => request('/api/export/excel', { raw: true }),

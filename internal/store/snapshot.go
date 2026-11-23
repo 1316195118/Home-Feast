@@ -224,6 +224,7 @@ func cloneDishes(in []Dish) []Dish {
 
 func cloneMember(m Member) Member {
 	m.Avoid = cloneStrings(m.Avoid)
+	m.Allergies = cloneStrings(m.Allergies)
 	return m
 }
 
@@ -262,6 +263,18 @@ func cloneSettings(in Settings) Settings {
 		out.PantryAdded = make(map[string]string, len(in.PantryAdded))
 		for key, value := range in.PantryAdded {
 			out.PantryAdded[key] = value
+		}
+	}
+	if in.PantryStock != nil {
+		out.PantryStock = make(map[string]PantryStock, len(in.PantryStock))
+		for key, value := range in.PantryStock {
+			out.PantryStock[key] = value
+		}
+	}
+	if in.ShoppingMarks != nil {
+		out.ShoppingMarks = make(map[string]ShoppingMark, len(in.ShoppingMarks))
+		for key, value := range in.ShoppingMarks {
+			out.ShoppingMarks[key] = value
 		}
 	}
 	if in.Roster.Days != nil {

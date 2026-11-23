@@ -13,10 +13,11 @@ var colorPattern = regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)
 var palette = []string{"#d9a066", "#cf8b9b", "#7fa98d", "#8d9bc4", "#c59a6d", "#a98bb5"}
 
 type memberInput struct {
-	Name   string   `json:"name"`
-	Avatar string   `json:"avatar"`
-	Color  string   `json:"color"`
-	Avoid  []string `json:"avoid"`
+	Name      string   `json:"name"`
+	Avatar    string   `json:"avatar"`
+	Color     string   `json:"color"`
+	Avoid     []string `json:"avoid"`
+	Allergies []string `json:"allergies"`
 }
 
 func (s *Server) listMembers(w http.ResponseWriter, r *http.Request) {
@@ -44,10 +45,11 @@ func (s *Server) createMember(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) updateMember(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		Name   *string   `json:"name"`
-		Avatar *string   `json:"avatar"`
-		Color  *string   `json:"color"`
-		Avoid  *[]string `json:"avoid"`
+		Name      *string   `json:"name"`
+		Avatar    *string   `json:"avatar"`
+		Color     *string   `json:"color"`
+		Avoid     *[]string `json:"avoid"`
+		Allergies *[]string `json:"allergies"`
 	}
 	if err := decodeBody(w, r, &in); err != nil {
 		jsonErr(w, http.StatusBadRequest, err.Error())
@@ -73,6 +75,10 @@ func (s *Server) updateMember(w http.ResponseWriter, r *http.Request) {
 	if in.Avoid != nil {
 		v := cleanAvoid(*in.Avoid)
 		p.Avoid = &v
+	}
+	if in.Allergies != nil {
+		v := cleanAvoid(*in.Allergies)
+		p.Allergies = &v
 	}
 	updated, err := s.st.UpdateMember(r.PathValue("id"), p)
 	if err != nil {
@@ -140,10 +146,11 @@ func normalizeMember(in memberInput, index int) (store.Member, error) {
 		return store.Member{}, errors.New("名字不能为空")
 	}
 	return store.Member{
-		Name:   name,
-		Avatar: cleanAvatar(in.Avatar),
-		Color:  cleanColor(in.Color, index),
-		Avoid:  cleanAvoid(in.Avoid),
+		Name:      name,
+		Avatar:    cleanAvatar(in.Avatar),
+		Color:     cleanColor(in.Color, index),
+		Avoid:     cleanAvoid(in.Avoid),
+		Allergies: cleanAvoid(in.Allergies),
 	}, nil
 }
 

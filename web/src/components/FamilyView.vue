@@ -4,6 +4,7 @@ import { avatarChoices, avatarGroups, colorChoices, memberOf, friendlyDate, avoi
 import { useModalBehavior } from '../modal'
 import { api } from '../api'
 import { shake } from '../feedback'
+import TasteReport from './TasteReport.vue'
 
 const { state, actions, confirmDialog, pending } = inject('app')
 const pastPlans = computed(() => (state.plans || []).filter((p) => !p.date || p.date <= state.today))
@@ -57,8 +58,9 @@ const editorOpen = ref(false)
 const editorRoot = ref(null)
 useModalBehavior(() => { editorOpen.value = false }, editorRoot, editorOpen)
 const editingId = ref(null)
-const form = reactive({ name: '', avatar: '🙂', color: colorChoices[0], avoid: [] })
+const form = reactive({ name: '', avatar: '🙂', color: colorChoices[0], avoid: [], allergies: [] })
 const customAvoid = ref('')
+const customAllergy = ref('')
 const nameInvalid = ref(false)
 
 function toggleAvoid(a) {
@@ -71,6 +73,16 @@ function addCustomAvoid() {
   if (v && !form.avoid.includes(v) && form.avoid.length < 16) form.avoid.push(v)
   customAvoid.value = ''
 }
+function toggleAllergy(a) {
+  const i = form.allergies.indexOf(a)
+  if (i >= 0) form.allergies.splice(i, 1)
+  else if (form.allergies.length < 16) form.allergies.push(a)
+}
+function addCustomAllergy() {
+  const v = customAllergy.value.trim().slice(0, 16)
+  if (v && !form.allergies.includes(v) && form.allergies.length < 16) form.allergies.push(v)
+  customAllergy.value = ''
+}
 
 function openAdd() {
   editingId.value = null
@@ -78,7 +90,9 @@ function openAdd() {
   form.avatar = avatarChoices[Math.floor(Math.random() * avatarChoices.length)]
   form.color = colorChoices[state.members.length % colorChoices.length]
   form.avoid = []
+  form.allergies = []
   customAvoid.value = ''
+  customAllergy.value = ''
   nameInvalid.value = false
   editorOpen.value = true
 }
@@ -88,7 +102,9 @@ function openEdit(member) {
   form.avatar = member.avatar
   form.color = member.color
   form.avoid = [...(member.avoid || [])]
+  form.allergies = [...(member.allergies || [])]
   customAvoid.value = ''
+  customAllergy.value = ''
   nameInvalid.value = false
   editorOpen.value = true
 }
@@ -99,7 +115,10 @@ async function save() {
     shake('#member-name')
     return
   }
-  const payload = { name: form.name.trim(), avatar: form.avatar, color: form.color, avoid: [...form.avoid] }
+  const payload = {
+    name: form.name.trim(), avatar: form.avatar, color: form.color,
+    avoid: [...form.avoid], allergies: [...form.allergies],
+  }
   const ok = editingId.value
     ? await actions.updateMember(editingId.value, payload)
     : await actions.addMember(payload)
@@ -179,6 +198,7 @@ async function savePin() {
           </div>
         </div>
         <div class="member-tags">
+          <div v-if="(m.allergies || []).length" class="member-allergy tiny">🚫 过敏 {{ m.allergies.join('、') }}</div>
           <div v-if="(m.avoid || []).length" class="member-avoid tiny">⚠️ 不吃 {{ m.avoid.join('、') }}</div>
           <div v-if="m.hasPin" class="member-avoid tiny">🔒 切换身份需要密码</div>
         </div>
@@ -193,6 +213,8 @@ async function savePin() {
         </div>
       </div>
     </div>
+
+    <TasteReport />
 
     <div class="section-head">
       <div>
@@ -286,6 +308,26 @@ async function savePin() {
               v-for="c in colorChoices" :key="c" class="swatch" :class="{ active: form.color === c }"
               :style="{ background: c }" :aria-label="`颜色 ${c}`" @click="form.color = c"
             ></button>
+          </div>
+        </div>
+        <div class="field mt-14">
+          <label>过敏原（硬性排除）</label>
+          <p class="tiny muted field-help">过敏食材会自动从周菜单推荐中排除；手动点菜会再次确认。严重过敏请务必核对实际配料和交叉污染。</p>
+          <div class="avoid-picker allergy-picker">
+            <button
+              v-for="a in avoidChoices" :key="`allergy-${a}`" type="button" class="chip"
+              :class="{ active: form.allergies.includes(a) }" @click="toggleAllergy(a)"
+            >{{ a }}</button>
+          </div>
+          <div v-if="form.allergies.length" class="avoid-selected">
+            <span v-for="a in form.allergies" :key="`allergy-tag-${a}`" class="tag tag-allergy" @click="toggleAllergy(a)">{{ a }} ✕</span>
+          </div>
+          <div class="avoid-custom">
+            <input
+              v-model="customAllergy" class="input" maxlength="16" placeholder="例如：花生、虾、牛奶"
+              @keydown.enter.prevent="addCustomAllergy"
+            />
+            <button class="btn btn-soft btn-sm" @click="addCustomAllergy">添加过敏原</button>
           </div>
         </div>
         <div class="field mt-14">

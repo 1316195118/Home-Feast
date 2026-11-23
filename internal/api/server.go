@@ -120,6 +120,7 @@ func New(st *store.Store, web fs.FS, envCode string) http.Handler {
 	api.HandleFunc("DELETE /api/plans/{date}/orders/{orderId}", s.removeOrder)
 
 	api.HandleFunc("PUT /api/settings", s.updateSettings)
+	api.HandleFunc("POST /api/shopping/marks", s.updateShoppingMarks)
 	api.HandleFunc("POST /api/upload", s.upload)
 	api.HandleFunc("GET /api/backup", s.exportBackup)
 	api.HandleFunc("POST /api/backup", s.importBackup)

@@ -467,6 +467,7 @@ type DishPatch struct {
 	Image       *string   `json:"image"`
 	Spicy       *int      `json:"spicy"`
 	Minutes     *int      `json:"minutes"`
+	Servings    *int      `json:"servings"`
 	Ingredients *[]string `json:"ingredients"`
 	Steps       *[]string `json:"steps"`
 	Favorite    *bool     `json:"favorite"`
@@ -553,6 +554,16 @@ func applyPatch(d *Dish, p DishPatch) {
 	}
 	if p.Minutes != nil {
 		d.Minutes = *p.Minutes
+	}
+	if p.Servings != nil {
+		v := *p.Servings
+		if v < 1 {
+			v = 1
+		}
+		if v > 20 {
+			v = 20
+		}
+		d.Servings = v
 	}
 	if p.Ingredients != nil {
 		d.Ingredients = *p.Ingredients
@@ -659,10 +670,11 @@ func (s *Store) VerifyMemberPin(id, pin string) bool {
 
 // MemberPatch 是编辑成员时允许改动的字段。
 type MemberPatch struct {
-	Name   *string   `json:"name"`
-	Avatar *string   `json:"avatar"`
-	Color  *string   `json:"color"`
-	Avoid  *[]string `json:"avoid"`
+	Name      *string   `json:"name"`
+	Avatar    *string   `json:"avatar"`
+	Color     *string   `json:"color"`
+	Avoid     *[]string `json:"avoid"`
+	Allergies *[]string `json:"allergies"`
 }
 
 func (s *Store) AddMember(m Member) (Member, error) {
@@ -706,6 +718,9 @@ func (s *Store) UpdateMember(id string, p MemberPatch) (Member, error) {
 	}
 	if p.Avoid != nil {
 		m.Avoid = append([]string(nil), (*p.Avoid)...)
+	}
+	if p.Allergies != nil {
+		m.Allergies = append([]string(nil), (*p.Allergies)...)
 	}
 	next[idx] = m
 	if err := s.writeJSON(membersFile, next); err != nil {
