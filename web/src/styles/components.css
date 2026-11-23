@@ -42,6 +42,96 @@
    单类 .btn-lg 会被它覆盖，写成 .btn.btn-lg 才能保证大按钮在手机端仍是 50px。 */
 .btn.btn-lg { padding: 12px 24px; min-height: 50px; font-size: 1rem; border-radius: 999px; }
 
+/* 微信分享：原生分享可用时直接打开系统面板；不可用时展开暖色步骤卡。 */
+.wechat-share-actions { display: contents; }
+.wechat-share-btn {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.wechat-share-btn::after {
+  content: '';
+  position: absolute; inset: -40% auto -40% -32%;
+  z-index: -1; width: 24%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .34), transparent);
+  transform: skewX(-18deg);
+  transition: left var(--dur-slow) var(--ease);
+}
+.wechat-share-btn:hover::after { left: 112%; }
+.wechat-share-icon {
+  position: relative;
+  width: 22px; height: 18px; flex: none;
+}
+.wechat-share-icon i {
+  position: absolute;
+  display: block;
+  border-radius: 50%;
+  background: currentColor;
+}
+.wechat-share-icon i:first-child {
+  left: 1px; top: 1px; width: 14px; height: 11px;
+}
+.wechat-share-icon i:first-child::after,
+.wechat-share-icon i:last-child::after {
+  content: '';
+  position: absolute;
+  width: 0; height: 0;
+  border-style: solid;
+}
+.wechat-share-icon i:first-child::after {
+  left: 1px; bottom: -3px;
+  border-width: 4px 4px 0 0;
+  border-color: currentColor transparent transparent transparent;
+}
+.wechat-share-icon i:last-child {
+  right: 0; bottom: 0; width: 12px; height: 9px;
+  box-shadow: 0 0 0 2px var(--brand);
+}
+.wechat-share-icon i:last-child::after {
+  right: 0; bottom: -3px;
+  border-width: 4px 0 0 4px;
+  border-color: currentColor transparent transparent transparent;
+}
+.wechat-share-guide {
+  flex: 1 1 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(105deg, rgba(109, 145, 119, .11), transparent 58%),
+    var(--surface-soft);
+  text-align: left;
+  animation: fade-up var(--dur-pop) var(--ease);
+}
+.wechat-guide-badge {
+  flex: none;
+  display: grid; place-items: center;
+  min-width: 42px; height: 34px;
+  padding: 0 8px;
+  border-radius: 11px;
+  background: #3f6b4f;
+  color: #fffaf2;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+}
+.wechat-guide-copy {
+  min-width: 0;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  font-size: .76rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.wechat-guide-copy strong { font-size: .82rem; color: var(--ink); }
+.wechat-guide-copy span { color: var(--muted); }
+
 .icon-btn {
   width: 44px; height: 44px;
   display: inline-flex; align-items: center; justify-content: center;

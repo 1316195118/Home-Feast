@@ -6,12 +6,21 @@ import PantryFridge from './PantryFridge.vue'
 import OrderPanel from './OrderPanel.vue'
 import PantryImage from './PantryImage.vue'
 import DishDetail from './DishDetail.vue'
-import { normalizeMeals, isCuisineHidden, pantryGroups, pantryVisual, pantryMatches, normalizeIngredient, hasDishImage, dishImage } from '../utils'
+import { normalizeMeals, isCuisineHidden, pantryGroups, pantryVisual, pantryMatches, normalizeIngredient, hasDishImage, dishImage, friendlyDate } from '../utils'
 import { getRecipe } from '../recipes'
 import { useModalBehavior } from '../modal'
 import { cacheThumb, thumbCacheEpoch } from '../thumb-cache'
 
 const { state, actions, pending } = inject('app')
+const orderContext = computed(() => {
+  const date = state.selectedDate || state.today
+  const base = new Date(`${state.today}T12:00:00`)
+  const target = new Date(`${date}T12:00:00`)
+  const offset = Math.round((target - base) / 86400000)
+  const relative = offset === 0 ? '今天' : offset === 1 ? '明天' : offset === 2 ? '后天' : ''
+  const meal = normalizeMeals(state.meals).find((item) => item.key === state.mealPick)
+  return `${relative ? `${relative} · ` : ''}${friendlyDate(date)}${meal ? ` · ${meal.label}` : ''}`
+})
 const activeCuisine = ref('all')
 const keyword = ref('')
 const onlyFavorite = ref(false)
@@ -523,6 +532,7 @@ function openPantry() {
   pantryAdded.value = { ...(state.settings.pantryAdded || {}) }
   pantryCustom.value = ''
   pantryQuery.value = ''
+  orderPanelOpen.value = false
   pantryOpen.value = true
 }
 // 实时保存：勾选后 500ms 自动写盘，无需点「保存食材」。
@@ -682,6 +692,7 @@ async function savePantry() {
       <div>
         <h2 class="section-title">📖 家里的菜谱</h2>
         <div class="section-sub">{{ state.dishes.length }} 道菜 · {{ state.cuisines.length }} 个菜系，菜品、用量和配图都能自己改</div>
+        <div class="menu-order-context"><span aria-hidden="true">🍚</span> 正在为 <b>{{ orderContext }}</b> 点菜</div>
       </div>
       <div class="menu-head-actions">
         <button class="btn btn-soft btn-sm" @click="openPantry">
@@ -787,7 +798,7 @@ async function savePantry() {
          页面切换动画的 .page-enter-active 带 transform 会把 fixed 捕获成相对定位 -->
     <Teleport to="body">
     <button
-      class="order-fab" type="button"
+      v-if="!pantryOpen" class="order-fab" type="button"
       :aria-label="`查看已下单的 ${todayOrders.length} 道菜`"
       @click="openOrderPanel"
     >

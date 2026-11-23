@@ -132,6 +132,8 @@ const state = reactive({
   releaseNote: '',   // 本次构建的更新说明，随二进制一起编译进来
   buildTime: '',     // 构建时间，用来判断线上跑的是哪一版
   today: '',
+  selectedDate: '',   // 当前正在查看/点菜的日期；默认跟随真实今天
+  followToday: true,  // 跨过零点时仍自动跟到新的今天
   meal: currentMeal(),   // 当前所处的餐别 key，随时间自动跟随（见 syncNow）
   mealPick: '',          // 用户手动指定的餐别；空串表示跟随当前时段（全站点菜入口共用）
   now: Date.now(),       // 响应式时间刻度，驱动「已过饭点」标记自动刷新
@@ -150,6 +152,28 @@ const state = reactive({
 // 用动态组件 + key 让页签切换能走统一的进出场过渡。
 const viewMap = { today: TodayView, menu: MenuView, family: FamilyView, history: HistoryView, settings: SettingsView }
 const currentView = computed(() => viewMap[state.tab] || TodayView)
+
+function activeDate() {
+  return state.selectedDate || state.today
+}
+
+function emptyPlan(date) {
+  return {
+    date,
+    orders: [],
+    chefIds: [],
+    dishwasherIds: [],
+    mealDuties: {},
+    note: '',
+  }
+}
+
+function selectDate(date) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date || ''))) return
+  state.selectedDate = date
+  state.followToday = date === state.today
+  state.plan = state.plans.find((plan) => plan.date === date) || emptyPlan(date)
+}
 
 function navigatePublic(route, { replace = false } = {}) {
   publicRoute.value = route
@@ -337,6 +361,10 @@ function applyBootstrap(info) {
   state.accessEnvManaged = !!info.accessEnvManaged
   state.revision = Number(info.revision || 0)
   state.today = info.today
+  if (state.followToday || !state.selectedDate || !/^\d{4}-\d{2}-\d{2}$/.test(state.selectedDate)) {
+    state.selectedDate = info.today
+    state.followToday = true
+  }
   const nextMeals = normalizeMeals(info.meals)
   state.meals = sameValue(state.meals, nextMeals) ? state.meals : nextMeals
   // 用户可能在设置里删掉了当前手动选中的那一餐，避免之后点菜提交不存在的 key
@@ -352,10 +380,13 @@ function applyBootstrap(info) {
   state.members = mergeByKey(state.members, info.members || [], (m) => m.id)
   const nextPlans = mergeByKey(state.plans, info.plans || [], (p) => p.date)
   state.plans = nextPlans
-  const planFromList = nextPlans.find((p) => p.date === info.today)
-  const nextPlan = info.plan || { date: info.today, orders: [] }
+  const nextTodayPlan = info.plan || { date: info.today, orders: [] }
+  const planFromList = nextPlans.find((p) => p.date === state.selectedDate)
+  const selectedFallback = state.selectedDate === info.today ? nextTodayPlan : emptyPlan(state.selectedDate)
   state.plan = planFromList
-    || (state.plan?.date === info.today && sameValue(state.plan, nextPlan) ? state.plan : nextPlan)
+    || (state.plan?.date === state.selectedDate && sameValue(state.plan, selectedFallback)
+      ? state.plan
+      : selectedFallback)
   if (!state.members.some((m) => m.id === state.currentUserId)) {
     state.currentUserId = state.members[0]?.id || ''
   }
@@ -402,10 +433,10 @@ function replacePlanInState(plan) {
     const next = state.plans.slice()
     next[index] = plan
     state.plans = next
-  } else if (plan.date === state.today) {
-    state.plans = [plan, ...state.plans]
+  } else {
+    state.plans = [...state.plans, plan].sort((a, b) => String(b.date).localeCompare(String(a.date)))
   }
-  if (plan.date === state.today) state.plan = plan
+  if (plan.date === activeDate()) state.plan = plan
   return true
 }
 
@@ -601,7 +632,7 @@ async function addOrdersInBatches(items) {
   let skipped = 0
   let plan = null
   for (let i = 0; i < items.length; i += 80) {
-    const result = await api.addOrders(state.today, {
+    const result = await api.addOrders(activeDate(), {
       userId: state.currentUserId,
       items: items.slice(i, i + 80),
     })
@@ -614,6 +645,7 @@ async function addOrdersInBatches(items) {
 
 const actions = {
   toast,
+  selectDate,
   refresh: () => refresh(),
   applyPlan: (plan) => {
     dataGeneration++
@@ -689,18 +721,18 @@ const actions = {
 
   // 分工支持多人，且按餐次独立：默认只改「当前这一餐」
   setDutyList: (role, ids, meal = state.meal) =>
-    guard(() => api.setPlan(state.today, {
+    guard(() => api.setPlan(activeDate(), {
       dutyMeal: meal,
       ...(role === 'chef' ? { chefIds: ids } : { dishwasherIds: ids }),
     }), '', 'duty'),
   // 兼容旧调用（骰子 PK / 排班套用）：单人等价于单元素数组
-  setChef: (chefId) => guard(() => api.setPlan(state.today, { chefIds: chefId ? [chefId] : [] }), `已设为 ${dutyName(chefId)} 掌勺`, 'duty'),
-  clearChef: () => guard(() => api.setPlan(state.today, { chefIds: [] }), '', 'duty'),
-  setDishwasher: (id) => guard(() => api.setPlan(state.today, { dishwasherIds: id ? [id] : [] }), `已设为 ${dutyName(id)} 洗碗`, 'duty'),
-  clearDishwasher: () => guard(() => api.setPlan(state.today, { dishwasherIds: [] }), '', 'duty'),
+  setChef: (chefId) => guard(() => api.setPlan(activeDate(), { chefIds: chefId ? [chefId] : [] }), `已设为 ${dutyName(chefId)} 掌勺`, 'duty'),
+  clearChef: () => guard(() => api.setPlan(activeDate(), { chefIds: [] }), '', 'duty'),
+  setDishwasher: (id) => guard(() => api.setPlan(activeDate(), { dishwasherIds: id ? [id] : [] }), `已设为 ${dutyName(id)} 洗碗`, 'duty'),
+  clearDishwasher: () => guard(() => api.setPlan(activeDate(), { dishwasherIds: [] }), '', 'duty'),
   // 骰子 PK / 排班套用：只作用于当前这一餐，其他餐次不受影响
   setDuties: (chefIds, dishwasherIds, meal = state.meal) =>
-    guard(() => api.setPlan(state.today, {
+    guard(() => api.setPlan(activeDate(), {
       dutyMeal: meal,
       chefIds: Array.isArray(chefIds) ? chefIds : (chefIds ? [chefIds] : []),
       dishwasherIds: Array.isArray(dishwasherIds) ? dishwasherIds : (dishwasherIds ? [dishwasherIds] : []),
@@ -708,7 +740,7 @@ const actions = {
   // 骰子 PK 的点数 / 阶段 / 已看动画名单单独存：不走 guard，避免每次摇都整页 refresh 打断动画
   saveDice: async (patch) => {
     try {
-      const plan = await api.setPlan(state.today, patch)
+      const plan = await api.setPlan(activeDate(), patch)
       dataGeneration++
       replacePlanInState(plan)
       return plan
@@ -717,7 +749,7 @@ const actions = {
       return null
     }
   },
-  setNote: (note) => guard(() => api.setPlan(state.today, { note }), '', 'note'),
+  setNote: (note) => guard(() => api.setPlan(activeDate(), { note }), '', 'note'),
   // 手动选的餐别放在全局 state：今天页、菜谱卡片、菜品详情弹窗三个入口归到同一餐。
   setMealPick: (key) => { state.mealPick = key || '' },
   order: (dishId, note = '', meal = '') => {
@@ -727,7 +759,7 @@ const actions = {
       return Promise.resolve(true)
     }
     return withSound(guard(
-      () => api.addOrder(state.today, {
+      () => api.addOrder(activeDate(), {
         dishId, userId: state.currentUserId, note,
         meal: meal || state.mealPick || state.meal,
       }),
@@ -742,12 +774,12 @@ const actions = {
       'orders:batch',
     ), playAdd)
   },
-  toggleOrder: (orderId) => guard(() => api.toggleOrder(state.today, orderId), '', `toggle:${orderId}`),
+  toggleOrder: (orderId) => guard(() => api.toggleOrder(activeDate(), orderId), '', `toggle:${orderId}`),
   // 做完饭一道道点上桌太麻烦：一次事务把今天还没上桌的全标记掉。
   finishAllOrders: async () => {
     const todo = (state.plan.orders || []).filter((o) => !o.done)
     if (!todo.length) return
-    const result = await guard(() => api.setOrdersDone(state.today, {
+    const result = await guard(() => api.setOrdersDone(activeDate(), {
       orderIds: todo.map((o) => o.id),
       done: true,
     }), '', 'orders:batch')
@@ -755,11 +787,11 @@ const actions = {
   },
   removeOrder: (orderId) => {
     const order = (state.plan.orders || []).find((o) => o.id === orderId)
-    return withSound(guard(() => api.removeOrder(state.today, orderId), '', `remove:${orderId}`), playRemove).then((ok) => {
+    return withSound(guard(() => api.removeOrder(activeDate(), orderId), '', `remove:${orderId}`), playRemove).then((ok) => {
       if (!ok || !order) return ok
       toast('已撤掉这道菜', 'success', {
         label: '撤销',
-        run: () => guard(() => api.addOrder(state.today, {
+        run: () => guard(() => api.addOrder(activeDate(), {
           dishId: order.dishId, userId: order.userId, note: order.note, meal: order.meal,
         }), '已恢复这道菜'),
       })

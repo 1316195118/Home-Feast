@@ -492,11 +492,13 @@ async function resetCuisineOrder() {
     actions.toast(err.message, 'error')
   }
 }
-function showAllCuisines() {
-  actions.setHiddenCuisines([])
+async function showAllCuisines() {
+  const ok = await actions.setHiddenCuisines([])
+  if (ok) actions.toast(`已显示全部 ${allCuisines.value.length} 个菜系`, 'success')
 }
-function hideAllCuisines() {
-  actions.setHiddenCuisines((allCuisines.value || []).map((c) => c.key))
+async function hideAllCuisines() {
+  const ok = await actions.setHiddenCuisines((allCuisines.value || []).map((c) => c.key))
+  if (ok) actions.toast('已隐藏全部菜系，可随时点「全选显示」恢复', 'info')
 }
 
 async function doExport() {

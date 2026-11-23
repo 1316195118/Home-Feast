@@ -6,6 +6,7 @@ import { api } from '../api'
 import { shake } from '../feedback'
 
 const { state, actions, confirmDialog, pending } = inject('app')
+const pastPlans = computed(() => (state.plans || []).filter((p) => !p.date || p.date <= state.today))
 
 // 最近 14 天掌勺热力：一眼看出谁干得多（纯本机计算，不新增接口）
 // 本月点菜 TOP10：按订单聚合，取前十
@@ -13,7 +14,7 @@ const monthTop = computed(() => {
   const now = new Date()
   const prefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   const counter = {}
-  for (const p of state.plans || []) {
+  for (const p of pastPlans.value) {
     if (!String(p.date || '').startsWith(prefix)) continue
     for (const o of p.orders || []) counter[o.dishName] = (counter[o.dishName] || 0) + 1
   }
@@ -37,17 +38,17 @@ const heatDays = computed(() => {
 // 一天可能有多人、多餐掌勺/洗碗：按「天」去重后每人计一次
 const chefCount = computed(() => {
   const map = {}
-  for (const p of state.plans) for (const id of dayDutyIds(p, 'chefIds')) map[id] = (map[id] || 0) + 1
+  for (const p of pastPlans.value) for (const id of dayDutyIds(p, 'chefIds')) map[id] = (map[id] || 0) + 1
   return map
 })
 const washCount = computed(() => {
   const map = {}
-  for (const p of state.plans) for (const id of dayDutyIds(p, 'dishwasherIds')) map[id] = (map[id] || 0) + 1
+  for (const p of pastPlans.value) for (const id of dayDutyIds(p, 'dishwasherIds')) map[id] = (map[id] || 0) + 1
   return map
 })
 const orderCount = computed(() => {
   const map = {}
-  for (const p of state.plans) for (const o of (p.orders || [])) map[o.userId] = (map[o.userId] || 0) + 1
+  for (const p of pastPlans.value) for (const o of (p.orders || [])) map[o.userId] = (map[o.userId] || 0) + 1
   return map
 })
 const maxChef = computed(() => Math.max(1, ...Object.values(chefCount.value)))

@@ -13,7 +13,7 @@ const { state, actions } = inject('app')
 const selfId = computed(() => state.currentUserId)
 const selfName = computed(() => props.members.find((m) => m.id === selfId.value)?.name || '你')
 const selfMember = computed(() => props.members.find((m) => m.id === selfId.value) || null)
-const todayPlan = computed(() => (state.plan?.date === state.today ? state.plan : null))
+const todayPlan = computed(() => (state.plan?.date === (state.selectedDate || state.today) ? state.plan : null))
 
 // 音效开关只影响本机浏览器，存 localStorage；声音全部实时合成，无音频文件
 const soundMuted = ref(isMuted())

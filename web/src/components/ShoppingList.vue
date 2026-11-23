@@ -3,11 +3,13 @@ import { inject, computed, ref } from 'vue'
 import { shoppingList, shoppingGroups, normalizeIngredient, shoppingKind } from '../utils'
 import { getRecipe } from '../recipes'
 import { useModalBehavior } from '../modal'
+import WeChatShareActions from './WeChatShareActions.vue'
 
 const emit = defineEmits(['close'])
 const { state, actions } = inject('app')
 const root = ref(null)
 useModalBehavior(() => emit('close'), root)
+const activeDate = computed(() => state.selectedDate || state.today)
 
 // 内置菜的配料由 recipes.js 按「技法模板 + 主料表」动态生成，dish.ingredients 本身是空的；
 // 用户在编辑器里自己填的配料优先（getRecipe 已处理），这里把它展开后再聚合。
@@ -46,42 +48,68 @@ function readChecked() {
 }
 const checked = ref(readChecked())
 // 今天勾的才算「已买」；历史勾选只用于提示
-const checkedToday = (t) => checked.value.get(t) === state.today
-const checkedBefore = (t) => !!checked.value.has(t) && checked.value.get(t) !== state.today
+const checkedToday = (t) => checked.value.get(t) === activeDate.value
+const checkedBefore = (t) => !!checked.value.has(t) && checked.value.get(t) !== activeDate.value
 function persist() {
   try { localStorage.setItem(STORE_KEY, JSON.stringify(Object.fromEntries(checked.value))) } catch { /* 隐私模式忽略 */ }
 }
 function toggle(text) {
   const next = new Map(checked.value)
   if (checkedToday(text)) next.delete(text)
-  else next.set(text, state.today)
+  else next.set(text, activeDate.value)
   checked.value = next
   persist()
 }
 // 按超市区域整组勾选；已全选时再点即整组取消
-function toggleGroup(items) {
-  const next = new Set(checked.value)
+function toggleGroup(group) {
+  const items = group.items
+  const next = new Map(checked.value)
   const allChecked = items.every((x) => checkedToday(x.text))
   for (const x of items) {
     if (allChecked) next.delete(x.text)
-    else next.set(x.text, state.today)
+    else next.set(x.text, activeDate.value)
   }
   checked.value = next
   persist()
+  actions.toast(
+    `${group.key} ${items.length} 项${allChecked ? '已取消全选' : '已全部勾选'}`,
+    allChecked ? 'info' : 'success',
+  )
 }
 function groupAllChecked(items) {
   return items.length > 0 && items.every((x) => checkedToday(x.text))
 }
-function clearChecked() {
-  checked.value = new Set()
+const checkedCount = computed(() => groups.value.reduce(
+  (sum, group) => sum + group.items.filter((item) => checkedToday(item.text)).length,
+  0,
+))
+const allChecked = computed(() => list.value.length > 0 && checkedCount.value === list.value.length)
+const checkedPercent = computed(() => list.value.length ? Math.round((checkedCount.value / list.value.length) * 100) : 0)
+function toggleAll() {
+  const next = new Map(checked.value)
+  const select = !allChecked.value
+  for (const item of list.value) {
+    if (select) next.set(item.text, activeDate.value)
+    else if (checkedToday(item.text)) next.delete(item.text)
+  }
+  checked.value = next
   persist()
+  actions.toast(
+    select ? `已全选 ${list.value.length} 项` : '已取消所选日期的全部勾选',
+    select ? 'success' : 'info',
+  )
+}
+function clearChecked() {
+  checked.value = new Map()
+  persist()
+  actions.toast('勾选记录已清空', 'info')
 }
 const previewAlt = computed(() => {
   const count = groups.value.reduce(
     (sum, group) => sum + group.items.filter((item) => checked.value.has(item.text)).length,
     0,
   )
-  return `${state.today} 购物清单图，已选 ${count} 项`
+  return `${activeDate.value} 购物清单图，已选 ${count} 项`
 })
 async function copyList() {
   const lines = groups.value.flatMap((g) => g.items.length
@@ -89,7 +117,7 @@ async function copyList() {
         (x) => `${checkedToday(x.text) ? '☑' : checkedBefore(x.text) ? '◔' : '☐'} ${x.inPantry ? '🧊 ' : ''}${x.text}${x.amount ? ` · ${x.amount}` : ''}${x.count > 1 ? ` ×${x.count}` : ''}`,
       )]
     : [])
-  const text = `家里吃点啥 · ${state.today} 购物清单\n${lines.join('\n')}`
+  const text = `家里吃点啥 · ${activeDate.value} 购物清单\n${lines.join('\n')}`
   try {
     await navigator.clipboard.writeText(text)
   } catch {
@@ -102,11 +130,16 @@ async function copyList() {
   }
   actions.toast('清单已复制，可以直接发给买菜的人', 'success')
 }
+const shareText = computed(() => {
+  const lines = groups.value.flatMap((g) => g.items.filter((x) => checked.value.has(x.text)).map(
+    (x) => `${x.inPantry ? '🧊 ' : ''}${x.text}${x.amount ? ` · ${x.amount}` : ''}${x.count > 1 ? ` ×${x.count}` : ''}`,
+  ))
+  return `家里吃点啥 · ${activeDate.value} 购物清单\n${lines.join('\n') || '这份清单还没有勾选要买的食材'}\n今天也要好好吃饭～`
+})
 
 // 生成清单图：纯 Canvas 自绘，不引入任何图片素材 / 第三方库，可直接保存或发给家人
 const preview = ref('')
 const previewHeight = ref(0)
-let imageCanvas = null
 const FONT = '"PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif'
 
 function roundRect(ctx, x, y, w, h, r) {
@@ -164,7 +197,7 @@ function buildImage() {
   ctx.fillText('家里吃点啥 · 购物清单', PAD + 24, 76)
   ctx.fillStyle = '#948576'
   ctx.font = `16px ${FONT}`
-  ctx.fillText(`${state.today} · 共 ${list.value.length} 项 · ${(state.plan.orders || []).length} 道菜`, PAD + 24, 106)
+  ctx.fillText(`${activeDate.value} · 共 ${list.value.length} 项 · ${(state.plan.orders || []).length} 道菜`, PAD + 24, 106)
 
   let y = TOP
   for (const g of shown) {
@@ -218,34 +251,11 @@ function buildImage() {
   ctx.fillStyle = '#948576'
   ctx.font = `15px ${FONT}`
   ctx.fillText('今天也要好好吃饭  ·  家里吃点啥', W / 2, H - 26)
-  imageCanvas = canvas
   previewHeight.value = H * dpr
   preview.value = canvas.toDataURL('image/png')
   actions.toast('清单图已生成，可保存到相册或直接分享', 'success')
 }
 
-// 保存到相册：优先调系统分享面板（里面有「存储图像 / 保存到相册」），
-// 不支持时降级为下载，并提示长按预览图保存 —— 手机浏览器/微信里这是最可靠的方式。
-async function saveToAlbum() {
-  if (!imageCanvas || !preview.value) return
-  const blob = await new Promise((res) => imageCanvas.toBlob(res, 'image/png'))
-  if (blob) {
-    const file = new File([blob], `购物清单-${state.today}.png`, { type: 'image/png' })
-    if (navigator.canShare?.({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file], title: `购物清单 ${state.today}` })
-        return
-      } catch (err) {
-        if (err?.name === 'AbortError') return // 用户主动取消，不再降级
-      }
-    }
-  }
-  const link = document.createElement('a')
-  link.href = preview.value
-  link.download = `购物清单-${state.today}.png`
-  link.click()
-  actions.toast('已尝试保存；若没存上，长按上方图片选「保存图片」即可进相册', 'info')
-}
 </script>
 
 <template>
@@ -256,10 +266,22 @@ async function saveToAlbum() {
         <button class="icon-btn" aria-label="关闭" @click="emit('close')">✕</button>
       </div>
       <p class="setting-desc">
-        按今天已点菜品的配料自动归并，同名只列一条；勾选状态记在这台设备上（{{ state.today }}）。
+        按所选日期已点菜品的配料自动归并，同名只列一条；勾选状态记在这台设备上（{{ activeDate }}）。
       </p>
       <p v-if="preciseCount" class="shopping-precise">📏 {{ preciseCount }} 道菜用量已精确到克/毫升（公共菜谱数据），「少许」不再是猜的。</p>
       <div v-if="list.length" class="shopping-list">
+        <div class="shopping-list-summary">
+          <div class="shopping-progress-copy">
+            <span><b>{{ checkedCount }}</b> / {{ list.length }} 已勾选</span>
+            <span class="tiny muted">{{ checkedPercent }}%</span>
+          </div>
+          <div class="shopping-progress" aria-hidden="true">
+            <span :style="{ width: `${checkedPercent}%` }"></span>
+          </div>
+          <button class="btn btn-soft btn-sm" type="button" :aria-pressed="allChecked" @click="toggleAll">
+            {{ allChecked ? '取消全选' : '全选全部' }}
+          </button>
+        </div>
         <div v-for="g in groups" :key="g.key" class="shopping-group">
           <template v-if="g.items.length">
             <div class="shopping-group-title">
@@ -267,7 +289,8 @@ async function saveToAlbum() {
               <button
                 class="btn btn-ghost btn-sm shopping-select-all" type="button"
                 :aria-label="`${groupAllChecked(g.items) ? '取消全选' : '全选'}${g.key}`"
-                @click="toggleGroup(g.items)"
+                :aria-pressed="groupAllChecked(g.items)"
+                @click="toggleGroup(g)"
               >{{ groupAllChecked(g.items) ? '取消全选' : '全选' }}</button>
             </div>
             <label
@@ -291,14 +314,17 @@ async function saveToAlbum() {
       <div class="setting-actions">
         <button class="btn btn-soft btn-sm" :disabled="!list.length" @click="copyList">📋 复制清单</button>
         <button class="btn btn-soft btn-sm" :disabled="!list.length" @click="buildImage">🖼️ 生成清单图</button>
-        <button v-if="preview" class="btn btn-soft btn-sm" @click="saveToAlbum">📱 保存到相册</button>
+        <WeChatShareActions
+          v-if="preview" :image-data="preview" :filename="`购物清单-${activeDate}.png`"
+          :title="`购物清单 ${activeDate}`" :text="shareText"
+        />
         <button class="btn btn-ghost btn-sm" :disabled="!checked.size" @click="clearChecked">清空勾选</button>
         <span class="grow"></span>
         <button class="btn btn-primary btn-sm" @click="emit('close')">完成</button>
       </div>
       <div v-if="preview" class="shopping-preview">
         <img :src="preview" :alt="previewAlt" width="1440" :height="previewHeight" loading="lazy" decoding="async" />
-        <div class="shopping-preview-hint">📱 长按图片选「保存图片」即可存进相册；或点上面的「保存到相册」直接分享 / 存储</div>
+        <div class="shopping-preview-hint">📱 可直接「分享到微信」；微信内不能弹出分享面板时，长按图片发送给家人</div>
       </div>
     </div>
   </div>

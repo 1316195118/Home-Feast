@@ -3,7 +3,11 @@ import { inject, ref, computed } from 'vue'
 import { planWeekMenu, classifyDish } from '../utils'
 import { getRecipe } from '../recipes'
 import { useModalBehavior } from '../modal'
+import WeChatShareActions from './WeChatShareActions.vue'
 
+const props = defineProps({
+  startDate: { type: String, default: '' },
+})
 const emit = defineEmits(['close'])
 const { state, actions } = inject('app')
 const root = ref(null)
@@ -18,7 +22,7 @@ const KIND_LABEL = { meat: '荤', veg: '素', soup: '汤', staple: '主食', des
 function generate() {
   week.value = planWeekMenu(state.dishes, {
     people: people.value,
-    today: state.today,
+    today: props.startDate || state.today,
     salt: salt.value,
     pantry: state.settings.pantry || [],
     member: state.members.find((m) => m.id === state.currentUserId) || null,
@@ -37,8 +41,14 @@ const previewAlt = computed(() => `本周菜单图，${people.value} 人份，�
 // 导出图片：纯 Canvas 自绘，暖米纸底 + 每天一行菜名（自动换行），保存/分享同购物清单
 const preview = ref('')
 const previewHeight = ref(0)
-let imageCanvas = null
 const FONT = '"PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif'
+const shareText = computed(() => {
+  const lines = week.value.flatMap((day) => [
+    `${day.label} ${day.weekday}`,
+    ...day.dishes.map((dish) => `· ${dish.name}`),
+  ])
+  return `家里吃点啥 · 本周菜单（${people.value} 人份）\n${lines.join('\n')}\n今天也要好好吃饭～`
+})
 
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath()
@@ -123,31 +133,9 @@ function buildImage() {
   ctx.fillStyle = '#948576'
   ctx.font = `15px ${FONT}`
   ctx.fillText('今天也要好好吃饭  ·  家里吃点啥', W / 2, H - 24)
-  imageCanvas = canvas
   previewHeight.value = H * dpr
   preview.value = canvas.toDataURL('image/png')
   actions.toast('菜单图已生成，可保存或分享', 'success')
-}
-
-async function saveToAlbum() {
-  if (!imageCanvas || !preview.value) return
-  const blob = await new Promise((res) => imageCanvas.toBlob(res, 'image/png'))
-  if (blob) {
-    const file = new File([blob], `本周菜单-${state.today}.png`, { type: 'image/png' })
-    if (navigator.canShare?.({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file], title: `本周菜单 ${state.today}` })
-        return
-      } catch (err) {
-        if (err?.name === 'AbortError') return
-      }
-    }
-  }
-  const link = document.createElement('a')
-  link.href = preview.value
-  link.download = `本周菜单-${state.today}.png`
-  link.click()
-  actions.toast('已尝试保存；若没存上，长按上方图片选「保存图片」即可进相册', 'info')
 }
 </script>
 
@@ -195,7 +183,10 @@ async function saveToAlbum() {
 
       <div class="setting-actions">
         <button class="btn btn-soft btn-sm" :disabled="!week.length" @click="buildImage">🖼️ 导出图片</button>
-        <button v-if="preview" class="btn btn-soft btn-sm" @click="saveToAlbum">📱 保存到相册</button>
+        <WeChatShareActions
+          v-if="preview" :image-data="preview" :filename="`本周菜单-${startDate || state.today}.png`"
+          :title="`本周菜单 ${startDate || state.today}`" :text="shareText" save-label="保存到相册"
+        />
         <button class="btn btn-ghost btn-sm" :disabled="!week.length" @click="week = []">清空</button>
         <span class="grow"></span>
         <button class="btn btn-primary btn-sm" @click="emit('close')">完成</button>
@@ -203,7 +194,7 @@ async function saveToAlbum() {
 
       <div v-if="preview" class="shopping-preview">
         <img :src="preview" :alt="previewAlt" width="1440" :height="previewHeight" loading="lazy" decoding="async" />
-        <div class="shopping-preview-hint">📱 长按图片选「保存图片」即可存进相册；或点上面「保存到相册」直接分享 / 存储</div>
+        <div class="shopping-preview-hint">📱 点「分享到微信」直接发给家人；微信内受限时可长按图片发送</div>
       </div>
     </div>
   </div>

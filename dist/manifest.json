@@ -1,31 +1,31 @@
 {
-  "version": "1.0.4.3",
-  "publishedAt": "2026-11-23T18:31:53",
-  "note": "**修复**\n- 修复代理主机头同源绕过、备份并发覆盖与缩略图缓存失配\n**优化**\n- 慢网首屏 LCP 从约 5.1 秒降至 2.5–3.0 秒，并减少首屏缩略图预取\n**安全**\n- 升级 Go 1.27.4 与 x/image v0.48.0，并增加发布测试与漏洞门禁",
+  "version": "1.0.4.4",
+  "publishedAt": "2026-11-23T19:13:47",
+  "note": "新增日期餐次选择、午餐后自动顺延次日与微信分享；修复购物清单全选、冰箱门遮挡和冰箱内悬浮入口",
   "files": {
     "amd64": {
       "name": "menu-linux-amd64",
-      "sha256": "40838ddee01fa1be607478f9ba80fba6da4fdb63d4350d3dd6da689933f16840",
-      "size": 20238496,
+      "sha256": "02f191c6ff49521b6bf6c2accf08bdae3d49da5d16a31ba8b608d9781106dc1e",
+      "size": 20263072,
       "gz": "menu-linux-amd64.gz",
-      "gzSha256": "c411fb0f50403ef2ac7ad840b9000ba4eee0f741bddaa4c1579f584897f883fd",
-      "gzSize": 13918832
+      "gzSha256": "3767bf027d42102b0e9b96fb7df3a01a1b4f6c96bb38b45a477c8aef4f3f6153",
+      "gzSize": 13927331
     },
     "arm64": {
       "name": "menu-linux-arm64",
-      "sha256": "98613bee2562fd439deb0e966b4eed8ac7e5edf0766bc0e52612ba8039f03c8c",
+      "sha256": "95b2400715a4d7575f30e069af0fe31b02f15dd9ec5c529ce94853ff103bb302",
       "size": 19529888,
       "gz": "menu-linux-arm64.gz",
-      "gzSha256": "be31466af4ed2b38be27c5793f4a682510136c0aa18bffe675907697f8689d9a",
-      "gzSize": 13505927
+      "gzSha256": "de2edf3a9e54eacc487c359482e933fe61b51cc2ac513708f74c9df7b9b970cf",
+      "gzSize": 13517821
     },
     "armv7": {
       "name": "menu-linux-armv7",
-      "sha256": "3be90af92b8b9a5fe25e85bb5af1af05838f1b4a5c7c3556feb2dd82bda14111",
+      "sha256": "4b9ef705b1ee86b160f8731c5c2e8a8f91fa19de7fdf35a00e78106eaf824f3d",
       "size": 19923104,
       "gz": "menu-linux-armv7.gz",
-      "gzSha256": "9973b7a33ff564714201e93d1661e0a0010dd91ea50461eb058a67890ad77346",
-      "gzSize": 13729320
+      "gzSha256": "cd1329a257a607b672c84a02119c5dba327f8f3bf7ac1dafc299fee15af305a1",
+      "gzSize": 13743541
     }
   }
 }

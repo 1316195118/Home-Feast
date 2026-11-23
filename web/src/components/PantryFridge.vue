@@ -718,11 +718,11 @@ onUnmounted(() => {
 }
 .rf-door-left {
   left: 0; transform-origin: left center;
-  transform: perspective(1000px) rotateY(-82deg);
+  transform: perspective(1000px) rotateY(-98deg);
 }
 .rf-door-right {
   right: 0; transform-origin: right center;
-  transform: perspective(1000px) rotateY(82deg);
+  transform: perspective(1000px) rotateY(98deg);
 }
 .rf-door:not(.open).rf-door-left { transform: perspective(1000px) rotateY(0deg); }
 .rf-door:not(.open).rf-door-right { transform: perspective(1000px) rotateY(0deg); }
@@ -862,8 +862,8 @@ onUnmounted(() => {
   .rf-cavity { inset: 41px 5px 6px; grid-template-rows: 74px 85px 110px 105px; padding-inline: 4px; }
   .rf-cold-head { height: 41px; padding-inline: 8px; }
   .rf-door { top: 41px; height: 405px; }
-  .rf-door-left { transform: perspective(780px) rotateY(-79deg); }
-  .rf-door-right { transform: perspective(780px) rotateY(79deg); }
+  .rf-door-left { transform: perspective(780px) rotateY(-95deg); }
+  .rf-door-right { transform: perspective(780px) rotateY(95deg); }
   .rf-door:not(.open).rf-door-left { transform: perspective(780px) rotateY(0); }
   .rf-door:not(.open).rf-door-right { transform: perspective(780px) rotateY(0); }
   .rf-food { width: 37px; height: 44px; }
@@ -883,6 +883,8 @@ onUnmounted(() => {
   .rf-cold { height: 390px; }
   .rf-cavity { grid-template-rows: 70px 82px 104px 102px; }
   .rf-door { height: 390px; }
+  .rf-door-left { transform: perspective(720px) rotateY(-93deg); }
+  .rf-door-right { transform: perspective(720px) rotateY(93deg); }
   .rf-zone { padding-inline: 5px; }
   .rf-zone header small { display: none; }
   .rf-food { width: 34px; }

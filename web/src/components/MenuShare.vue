@@ -1,6 +1,7 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useModalBehavior } from '../modal'
+import WeChatShareActions from './WeChatShareActions.vue'
 
 // 今日菜单分享图：把今天点的菜、点菜人、当前餐的分工画成一张暖米纸风格的图。
 // 纯 canvas 绘制，不依赖任何库；生成后可直接分享或长按存相册。
@@ -9,6 +10,7 @@ const props = defineProps({
   grouped: { type: Object, default: () => ({}) },
   meals: { type: Array, default: () => [] },
   today: { type: String, default: '' },
+  dayLabel: { type: String, default: '菜单' },
   chefs: { type: Array, default: () => [] },
   washers: { type: Array, default: () => [] },
 })
@@ -19,7 +21,6 @@ useModalBehavior(() => emit('close'), root)
 const preview = ref('')
 const previewHeight = ref(0)
 const FONT = '"PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif'
-let canvasEl = null
 
 function build() {
   const W = 720
@@ -85,51 +86,44 @@ function build() {
   ctx.fillStyle = '#9b8b7b'
   ctx.fillText('家里吃点啥 · 大家一起来定', PAD, H - 18)
 
-  canvasEl = canvas
   previewHeight.value = H
   preview.value = canvas.toDataURL('image/png')
 }
 
 onMounted(build)
 
-async function save() {
-  if (!canvasEl || !preview.value) return
-  const blob = await new Promise((res) => canvasEl.toBlob(res, 'image/png'))
-  if (blob) {
-    const file = new File([blob], `今日菜单-${props.today}.png`, { type: 'image/png' })
-    if (navigator.canShare?.({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file], title: `今日菜单 ${props.today}` })
-        return
-      } catch (err) {
-        if (err?.name === 'AbortError') return
-      }
-    }
-  }
-  const link = document.createElement('a')
-  link.href = preview.value
-  link.download = `今日菜单-${props.today}.png`
-  link.click()
-}
+const shareText = computed(() => {
+  const lines = props.meals.flatMap((meal) => {
+    const orders = props.grouped?.[meal.key] || []
+    if (!orders.length) return []
+    return [`${meal.icon || '🍽️'} ${meal.label}`, ...orders.map((o) => `· ${o.dishName}（${o.userName || '家人'}点的）`)]
+  })
+  const chef = props.chefs.map((m) => m.name).join('、') || '还没定'
+  const washer = props.washers.map((m) => m.name).join('、') || '还没定'
+  return `家里吃点啥 · ${props.today}\n${lines.join('\n')}\n掌勺：${chef}  洗碗：${washer}\n大家一起来定～`
+})
 </script>
 
 <template>
   <div ref="root" class="modal-backdrop" @click.self="emit('close')">
     <div class="modal modal-wide" role="dialog" aria-modal="true" aria-label="分享今日菜单">
       <div class="modal-head">
-        <h2>📤 今日菜单</h2>
+        <h2>📤 {{ dayLabel }}菜单</h2>
         <button class="icon-btn" aria-label="关闭" @click="emit('close')">✕</button>
       </div>
       <div class="shopping-preview">
         <img
           v-if="preview" :src="preview"
-          :alt="`${today || '今天'}的今日菜单分享图，共 ${orders.length} 道菜`"
+          :alt="`${today || '今天'}的${dayLabel}菜单分享图，共 ${orders.length} 道菜`"
           width="720" :height="previewHeight" loading="lazy" decoding="async"
         />
-        <div class="shopping-preview-hint">📱 长按图片选「保存图片」存进相册，或直接分享给家里人</div>
+        <div class="shopping-preview-hint">📱 点「分享到微信」直接发给家人；微信内受限时可长按图片发送</div>
       </div>
       <div class="modal-foot">
-        <button class="btn btn-primary btn-sm" @click="save">📱 保存到相册</button>
+        <WeChatShareActions
+          :image-data="preview" :filename="`今日菜单-${today}.png`"
+          :title="`今日菜单 ${today}`" :text="shareText" save-label="保存到相册"
+        />
       </div>
     </div>
   </div>

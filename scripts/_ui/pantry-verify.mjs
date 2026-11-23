@@ -112,6 +112,7 @@ for (const [index, size] of SIZES.entries()) {
     const fridge=document.querySelector('.real-fridge');
     const images=[...document.querySelectorAll('.real-fridge img')];
     const left=document.querySelector('.rf-door-left');
+    const right=document.querySelector('.rf-door-right');
     return {
       modal: modal?{w:Math.round(modal.getBoundingClientRect().width),h:Math.round(modal.getBoundingClientRect().height)}:null,
       fridge: fridge?{w:Math.round(fridge.getBoundingClientRect().width),h:Math.round(fridge.getBoundingClientRect().height)}:null,
@@ -123,6 +124,10 @@ for (const [index, size] of SIZES.entries()) {
       fallbacks:document.querySelectorAll('.real-fridge .food3d').length,
       overflow:document.documentElement.scrollWidth>document.documentElement.clientWidth,
       doorTransform:left?getComputedStyle(left).transform:'',
+      doorWidths: left&&right ? [
+        Math.round(left.getBoundingClientRect().width),
+        Math.round(right.getBoundingClientRect().width),
+      ] : null,
     };
   })())`))
 
@@ -160,6 +165,7 @@ for (const [index, size] of SIZES.entries()) {
     fallbacks: before.fallbacks,
     broken: before.broken,
     overflow: before.overflow,
+    doorWidths: before.doorWidths,
     doorChanged: doorAfter !== before.doorTransform,
     freezerClosed: freezerOpen === false,
     jsErrors: browser.errors.length,

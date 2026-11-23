@@ -8,7 +8,8 @@ async function reorder(p) {
   await actions.reorderDay(p)
 }
 const plans = computed(() => (state.plans || []).filter(
-  (p) => (p.orders?.length || 0) > 0 || (p.chefIds || []).length || (p.dishwasherIds || []).length || p.note,
+  (p) => (!p.date || p.date <= state.today)
+    && ((p.orders?.length || 0) > 0 || (p.chefIds || []).length || (p.dishwasherIds || []).length || p.note),
 ))
 const totalDishes = computed(() => plans.value.reduce((n, p) => n + (p.orders?.length || 0), 0))
 const thisMonth = computed(() => {

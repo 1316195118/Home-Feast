@@ -2,7 +2,7 @@
 // 已下单抽屉：在菜谱页直接核对今天点了什么，不必回首页。
 import { ref, computed, inject } from 'vue'
 import { useModalBehavior } from '../modal'
-import { imageSize, normalizeMeals } from '../utils'
+import { friendlyDate, imageSize, normalizeMeals } from '../utils'
 import DishPhoto from './DishPhoto.vue'
 
 const emit = defineEmits(['close'])
@@ -12,6 +12,7 @@ const root = ref(null)
 useModalBehavior(() => emit('close'), root)
 
 const orders = computed(() => state.plan?.orders || [])
+const planDate = computed(() => friendlyDate(state.plan?.date || state.selectedDate || state.today))
 const meals = computed(() => normalizeMeals(state.meals))
 const groups = computed(() => {
   const g = { other: [] }
@@ -35,7 +36,7 @@ function togglePick(key) { pick.value = pick.value === key ? '' : key }
   <div class="modal-backdrop" @click.self="emit('close')">
     <div ref="root" class="modal order-panel" role="dialog" aria-modal="true" aria-label="已下单的菜">
       <div class="modal-head">
-        <h2>🧾 已下单 <span class="tiny muted">{{ orders.length }} 道 · {{ doneCount }} 道已上桌</span></h2>
+        <h2>🧾 已下单 <span class="tiny muted">{{ planDate }} · {{ orders.length }} 道 · {{ doneCount }} 道已上桌</span></h2>
         <button class="icon-btn" aria-label="关闭" @click="emit('close')">✕</button>
       </div>
       <div class="order-meal-tabs" role="group" aria-label="按餐次查看">
