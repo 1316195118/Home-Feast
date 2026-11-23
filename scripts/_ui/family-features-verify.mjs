@@ -206,7 +206,7 @@ try {
     width: 390, height: 844, deviceScaleFactor: 2, mobile: true, screenWidth: 390, screenHeight: 844,
   })
   await cdp('Page.navigate', { url: `${BASE}/?feature-verify=${stamp}#today` })
-  check('手机端首页加载', await waitFor(`!!document.querySelector('.schedule-switcher')`, 8000))
+  check('手机端首页加载', await waitFor(`!!document.querySelector('#today-menu-panel .panel-meal-picker')`, 8000))
   await evaluate(`document.querySelector('.user-pick-item')?.click()`)
   await sleep(500)
 

@@ -151,38 +151,47 @@ async function run(width, height, tag, {
 
     const initial = JSON.parse(await evaluate(`JSON.stringify({
       dates: document.querySelectorAll('.schedule-date').length,
-      selected: document.querySelector('.schedule-date.active')?.textContent || '',
+      picker: document.querySelector('.panel-meal-picker')?.textContent || '',
+      pickerInMenu: !!document.querySelector('#today-menu-panel .panel-meal-picker'),
+      panel: document.querySelector('#today-menu-panel .panel-title')?.textContent || '',
       overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth
     })`))
-    check(initial.dates === 7, `${tag} 日期栏 7 天`, String(initial.dates))
-    check(initial.selected.includes('今天'), `${tag} 默认显示今天`, initial.selected)
+    check(initial.dates === 0, `${tag} 顶部不再显示日期按钮`, String(initial.dates))
+    check(initial.pickerInMenu, `${tag} 餐次入口位于今日菜单内`)
+    check(!initial.picker.includes('看哪一餐') && !initial.picker.includes('只看'), `${tag} 餐次入口不再显示冗余标题`)
+    check(initial.panel.includes('今日菜单'), `${tag} 默认显示今日菜单`, initial.panel)
     check(!initial.overflow, `${tag} 首屏无横向溢出`)
 
     const lunchChip = await evaluate(`(() => {
-      const chip = [...document.querySelectorAll('.schedule-meal-chips .chip')].find((el) => el.textContent.includes(${JSON.stringify(lunch.label)}));
+      const chip = [...document.querySelectorAll('.panel-meal-picker .chip')].find((el) => el.textContent.includes(${JSON.stringify(lunch.label)}));
       return { text: chip?.textContent || '', title: chip?.title || '' };
     })()`)
-    check(lunchChip.text.includes('次日'), `${tag} 已过午餐标记为次日`, lunchChip.text)
-    check(lunchChip.title.includes('安排到明天'), `${tag} 次日午餐有明确说明`, lunchChip.title)
-    await evaluate(`[...document.querySelectorAll('.schedule-meal-chips .chip')].find((el) => el.textContent.includes(${JSON.stringify(lunch.label)}))?.click()`)
+    check(lunchChip.text.includes('明日'), `${tag} 已过午餐标记为明日`, lunchChip.text)
+    check(lunchChip.title.includes('查看明日'), `${tag} 明日午餐有明确说明`, lunchChip.title)
+    await evaluate(`[...document.querySelectorAll('.panel-meal-picker .chip')].find((el) => el.textContent.includes(${JSON.stringify(lunch.label)}))?.click()`)
     await sleep(650)
 
     const filtered = JSON.parse(await evaluate(`JSON.stringify({
-      selectedDate: document.querySelector('.schedule-date.active')?.textContent || '',
+      hero: document.querySelector('.hero-label')?.textContent || '',
       panel: document.querySelector('#today-menu-panel .panel-title')?.textContent || '',
-      hint: document.querySelector('.schedule-meal-hint')?.textContent || '',
+      subtitle: document.querySelector('#today-menu-panel .section-sub')?.textContent || '',
       toast: document.querySelector('.toast')?.textContent || '',
       meals: [...document.querySelectorAll('.shown-meal-marker, .meal-group-title')].map((el) => el.textContent.trim()),
       text: document.querySelector('#today-menu-panel')?.textContent || '',
       overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth
     })`))
-    check(filtered.selectedDate.includes('明天'), `${tag} 点午餐自动切到明天`, filtered.selectedDate)
-    check(filtered.hint.includes('今天午餐已过') && filtered.hint.includes('明天午餐'), `${tag} 次日午餐有持续标识`, filtered.hint)
-    check(filtered.toast.includes('已切到明天午餐'), `${tag} 自动顺延有即时反馈`, filtered.toast)
-    check(filtered.panel.includes('明天') && filtered.panel.includes(lunch.label), `${tag} 菜单标题显示明天午餐`, filtered.panel)
+    check(filtered.hero.includes('明日'), `${tag} 点午餐自动切到明日`, filtered.hero)
+    check(!filtered.subtitle.includes('只看'), `${tag} 菜单副标题不再显示只看`, filtered.subtitle)
+    check(filtered.toast.includes('已切到明日午餐'), `${tag} 自动顺延有即时反馈`, filtered.toast)
+    check(filtered.panel.includes('明日菜单') && filtered.panel.includes(lunch.label), `${tag} 菜单标题显示明日午餐`, filtered.panel)
     check(filtered.text.includes(tomorrowDish.name), `${tag} 显示明天午餐菜品`, tomorrowDish.name)
     check(!filtered.text.includes(todayDish.name), `${tag} 不串入今天午餐菜品`, todayDish.name)
     check(!filtered.overflow, `${tag} 切换后无横向溢出`)
+
+    await evaluate(`[...document.querySelectorAll('.panel-meal-picker .chip')].find((el) => el.textContent.includes(${JSON.stringify(lunch.label)}))?.click()`)
+    await sleep(220)
+    const reselected = await evaluate(`document.querySelector('#today-menu-panel .panel-title')?.textContent || ''`)
+    check(reselected.includes('明日菜单') && reselected.includes(lunch.label), `${tag} 重复点同一餐仍保持明日午餐`, reselected)
 
     // 从菜谱页真正点一道菜，必须写到「明天 · 午餐」而不是今天。
     await evaluate(`[...document.querySelectorAll('.tab')].find((el) => el.textContent.includes('菜谱'))?.click()`)
@@ -231,6 +240,7 @@ async function run(width, height, tag, {
     )
     await evaluate(`[...document.querySelectorAll('.tab')].find((el) => el.textContent.includes('今天'))?.click()`)
     await sleep(450)
+    check(!await evaluate(`!!document.querySelector('.order-fab')`), `${tag} 已下单悬浮仅在菜谱页显示`)
 
     await evaluate(`[...document.querySelectorAll('#today-menu-panel .btn')].find((el) => el.textContent.includes('购物清单'))?.click()`)
     await sleep(250)

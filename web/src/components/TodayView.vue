@@ -28,34 +28,35 @@ const pickedDishIds = computed(() => new Set(orders.value.map((order) => order.d
 const meals = computed(() => normalizeMeals(state.meals))
 // 默认自动跟随当前时段；用户手动选过之后全局生效（菜谱页/详情弹窗点菜也归这一餐）。
 const activeMeal = computed(() => state.mealPick || state.meal)
+function localDateValue(d) {
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+const tomorrowDate = computed(() => {
+  const date = new Date(`${state.today || localDateValue(new Date())}T12:00:00`)
+  date.setDate(date.getDate() + 1)
+  return localDateValue(date)
+})
+const needsNextDay = (key) => isMealExpired(key, state.now, state.meals)
+const targetDateForMeal = (key) => needsNextDay(key) ? tomorrowDate.value : state.today
+
 function selectMeal(key) {
-  // 再点一次已选中的餐别 = 取消手动指定，回到跟随时间
-  if (state.mealPick === key) {
-    actions.setMealPick('')
-    return
-  }
   const meal = meals.value.find((item) => item.key === key)
-  const shouldRollover = isViewingToday.value && isMealExpired(key, state.now, state.meals)
+  if (!meal) return
+  const targetDate = targetDateForMeal(key)
+  const dateChanged = targetDate !== selectedDate.value
+  // 餐次是唯一入口：过了饭点就自动把整站上下文切到明天，菜谱页点菜不会串日期。
   actions.setMealPick(key)
-  if (shouldRollover && dateOptions.value[1]) {
-    actions.selectDate(dateOptions.value[1].date)
-    actions.toast(`今天的${meal?.label || '这一餐'}已过，已切到明天${meal?.label || '这一餐'}`, 'info')
+  actions.selectDate(targetDate)
+  if (dateChanged && targetDate === tomorrowDate.value) {
+    actions.toast(`今天的${meal.label}已过，已切到明日${meal.label}`, 'info')
   }
 }
+function selectAllMeals() {
+  actions.setMealPick('')
+  actions.selectDate(state.today)
+}
 const selectedMealName = computed(() => meals.value.find((meal) => meal.key === state.mealPick)?.label || '')
-const needsNextDay = (key) => isViewingToday.value && isMealExpired(key, state.now, state.meals)
-const rolloverMeal = computed(() => {
-  const meal = meals.value.find((item) => item.key === state.mealPick)
-  if (!meal || selectedDate.value !== dateOptions.value[1]?.date) return null
-  return isMealExpired(meal.key, state.now, state.meals) ? meal : null
-})
-const mealHint = computed(() => {
-  if (rolloverMeal.value) {
-    return `今天${rolloverMeal.value.label}已过 · 当前显示明天${rolloverMeal.value.label}`
-  }
-  if (state.mealPick) return `正在查看${selectedDayLabel.value}的${selectedMealName.value}，新点的菜也归到这一餐`
-  return '选中某一餐后只显示这顿；已结束的餐次会顺延到明天'
-})
 const shownMealGroups = computed(() => state.mealPick
   ? mealGroups.value.filter((meal) => meal.key === state.mealPick)
   : mealGroups.value)
@@ -64,26 +65,11 @@ const visibleOrderCount = computed(() => shownMealGroups.value.reduce(
   0,
 ))
 
-function localDateValue(d) {
-  const pad = (n) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-}
-const dateOptions = computed(() => {
-  const start = state.today ? new Date(`${state.today}T12:00:00`) : new Date()
-  return Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(start)
-    date.setDate(start.getDate() + index)
-    return {
-      date: localDateValue(date),
-      day: date.getDate(),
-      month: `${date.getMonth() + 1}月`,
-      weekday: ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][date.getDay()],
-      short: index === 0 ? '今天' : index === 1 ? '明天' : index === 2 ? '后天' : `第${index + 1}天`,
-    }
-  })
+const selectedDayLabel = computed(() => {
+  if (selectedDate.value === state.today) return '今日'
+  if (selectedDate.value === tomorrowDate.value) return '明日'
+  return friendlyDate(selectedDate.value)
 })
-const selectedDayLabel = computed(() => dateOptions.value.find((d) => d.date === selectedDate.value)?.short
-  || friendlyDate(selectedDate.value))
 // 当前餐别排最前，其余按配置里的结束时刻顺序，「其他」永远垫底；
 // 已过饭点且没菜的组在模板里折叠成紧凑一行，避免把当前餐挤到屏幕外。
 const mealGroups = computed(() => {
@@ -519,44 +505,6 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
 
 <template>
   <section>
-    <div class="schedule-switcher card">
-      <div class="schedule-date-head">
-        <span class="schedule-kicker">看哪一天</span>
-        <span class="tiny muted">从今天起 7 天</span>
-      </div>
-      <div class="schedule-dates" role="group" aria-label="选择日期">
-        <button
-          v-for="d in dateOptions" :key="d.date" type="button"
-          class="schedule-date" :class="{ active: selectedDate === d.date }"
-          :aria-pressed="selectedDate === d.date"
-          @click="actions.selectDate(d.date)"
-        >
-          <span class="schedule-date-name">{{ d.short }}</span>
-          <b>{{ d.day }}</b>
-          <span>{{ d.month }} · {{ d.weekday }}</span>
-        </button>
-      </div>
-      <div class="schedule-meals">
-        <span class="schedule-kicker">只看这一餐</span>
-        <div class="schedule-meal-chips" role="group" aria-label="按餐次筛选">
-          <button
-            type="button" class="chip" :class="{ active: !state.mealPick }"
-            :aria-pressed="!state.mealPick" @click="actions.setMealPick('')"
-          >全部餐次</button>
-          <button
-            v-for="m in meals" :key="m.key" type="button" class="chip"
-            :class="{ active: state.mealPick === m.key }"
-            :aria-pressed="state.mealPick === m.key"
-            :title="needsNextDay(m.key) ? `今天${m.label}已过，选择后会安排到明天${m.label}` : `查看${m.label}`"
-            @click="selectMeal(m.key)"
-          >{{ m.icon }} {{ m.label }}<span v-if="needsNextDay(m.key)" class="meal-next-day-mark">次日</span></button>
-        </div>
-        <span class="schedule-meal-hint" :class="{ 'is-rollover': rolloverMeal }">
-          <b v-if="rolloverMeal" aria-hidden="true">↪</b> {{ mealHint }}
-        </span>
-      </div>
-    </div>
-
     <div class="today-hero">
       <span class="hero-deco">🍲</span>
       <div v-if="suggestions.length" class="hero-photo-stack" aria-hidden="true">
@@ -660,7 +608,7 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
         <div class="panel-head">
           <div>
             <div class="panel-title">🍽️ {{ selectedDayLabel }}菜单{{ selectedMealName ? ` · ${selectedMealName}` : '' }}</div>
-            <div class="section-sub">{{ state.mealPick ? `只看${selectedMealName}，共 ${visibleOrderCount} 道` : '谁点的、做没做好，一眼看清' }}</div>
+            <div class="section-sub">{{ state.mealPick ? `${selectedMealName}共 ${visibleOrderCount} 道` : '谁点的、做没做好，一眼看清' }}</div>
           </div>
           <div class="panel-head-actions">
             <button
@@ -679,6 +627,19 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
             <button class="btn btn-soft btn-sm" @click="shoppingOpen = true">🛒 购物清单</button>
             <button class="btn btn-soft btn-sm" @click="state.tab = 'menu'">{{ orders.length ? '再加一道菜' : '开始点菜 ＋' }}</button>
           </div>
+        </div>
+        <div class="panel-meal-picker" role="group" aria-label="按餐次筛选">
+          <button
+            type="button" class="chip" :class="{ active: !state.mealPick }"
+            :aria-pressed="!state.mealPick" @click="selectAllMeals"
+          >全部餐次</button>
+          <button
+            v-for="m in meals" :key="m.key" type="button" class="chip"
+            :class="{ active: state.mealPick === m.key }"
+            :aria-pressed="state.mealPick === m.key"
+            :title="needsNextDay(m.key) ? `今天${m.label}已过，选择后查看明日${m.label}` : `查看今日${m.label}`"
+            @click="selectMeal(m.key)"
+          >{{ m.icon }} {{ m.label }}<span v-if="needsNextDay(m.key)" class="meal-next-day-mark">明日</span></button>
         </div>
 
         <div v-if="visibleOrderCount" class="meal-groups">

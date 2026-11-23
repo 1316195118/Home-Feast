@@ -77,81 +77,17 @@
 .section-sub { font-size: 0.82rem; color: var(--muted); margin-top: 2px; }
 
 /* ---------- 今天 ---------- */
-.schedule-switcher {
-  display: grid;
-  gap: 10px;
-  padding: 13px 14px;
-  margin-bottom: 12px;
-  background:
-    radial-gradient(circle at 96% 4%, rgba(219, 153, 83, .12), transparent 38%),
-    var(--surface);
-}
-.schedule-date-head {
+.panel-meal-picker {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
+  margin: 1px 0 12px;
+  padding: 0 0 10px;
+  border-bottom: 1px solid var(--line);
 }
-.schedule-kicker {
-  font-size: .76rem;
-  font-weight: 800;
-  letter-spacing: .08em;
-  color: var(--brand-dark);
-}
-.schedule-dates {
-  display: flex;
-  gap: 7px;
-  overflow-x: auto;
-  padding: 1px 1px 4px;
-  scrollbar-width: none;
-  scroll-snap-type: x proximity;
-}
-.schedule-dates::-webkit-scrollbar { display: none; }
-.schedule-date {
-  flex: 1 0 92px;
-  min-width: 92px;
-  min-height: 66px;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-content: center;
-  gap: 1px 7px;
-  padding: 8px 11px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: var(--surface-soft);
-  color: var(--ink-soft);
-  text-align: left;
-  scroll-snap-align: start;
-  transition: transform var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), background var(--dur-mid) var(--ease), color var(--dur-mid) var(--ease);
-}
-.schedule-date:hover { transform: translateY(-2px); border-color: var(--line-strong); }
-.schedule-date:active { transform: scale(.96); }
-.schedule-date b {
-  grid-row: span 2;
-  align-self: center;
-  color: var(--ink);
-  font-size: 1.35rem;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-.schedule-date-name { font-size: .78rem; font-weight: 800; }
-.schedule-date > span:last-child { font-size: .64rem; color: var(--muted); white-space: nowrap; }
-.schedule-date.active {
-  border-color: var(--brand);
-  background: linear-gradient(135deg, var(--brand-soft), var(--surface));
-  box-shadow: inset 0 0 0 1px rgba(192, 90, 60, .08), var(--shadow-sm);
-}
-.schedule-date.active b,
-.schedule-date.active .schedule-date-name { color: var(--brand-dark); }
-.schedule-meals {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 7px 10px;
-  padding-top: 2px;
-}
-.schedule-meal-chips { display: flex; gap: 6px; flex-wrap: wrap; min-width: 0; }
-.schedule-meal-chips .chip { min-height: 36px; padding: 7px 12px; }
+.panel-meal-picker .chip { min-height: 36px; padding: 7px 12px; }
 .meal-next-day-mark {
   margin-left: 5px;
   padding: 1px 5px;
@@ -161,16 +97,6 @@
   font-size: .62rem;
   font-weight: 850;
   line-height: 1.45;
-}
-.schedule-meal-hint {
-  grid-column: 2;
-  font-size: .72rem;
-  color: var(--muted);
-  line-height: 1.5;
-}
-.schedule-meal-hint.is-rollover {
-  color: var(--brand-dark);
-  font-weight: 650;
 }
 .today-hero {
   position: relative;
@@ -257,7 +183,8 @@
 
 /* 右列要放得下三张推荐卡片，别让它们挤成 2+1 两排 */
 .today-cols { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 20px; margin-top: 24px; align-items: start; }
-.panel { padding: var(--space-section); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
+.today-cols > * { min-width: 0; }
+.panel { min-width: 0; max-width: 100%; padding: var(--space-section); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
 .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: var(--space-card); }
 .panel-title { font-size: 1.02rem; font-weight: 800; }
 
@@ -1341,7 +1268,7 @@
 
 /* ---------- 平板 / 窄桌面 ---------- */
 @media (max-width: 980px) {
-  .today-cols { grid-template-columns: 1fr; }
+  .today-cols { grid-template-columns: minmax(0, 1fr); }
   .main { padding-left: 18px; padding-right: 18px; }
   .topbar-inner, .tabs { padding-left: 18px; padding-right: 18px; }
   .section-head { flex-wrap: wrap; align-items: flex-start; }
@@ -1435,23 +1362,50 @@
   /* 手机端 toast 收紧成单行小胶囊，不遮住大片内容 */
   .toast { font-size: 0.82rem; padding: 9px 14px; }
 
-  /* 今天页：横向滚动条代替换行，减少纵向占用 */
-  .schedule-switcher { padding: 11px 10px; gap: 9px; }
-  .schedule-dates { margin-inline: -10px; padding-inline: 10px; gap: 6px; }
-  .schedule-date { flex-basis: 86px; min-width: 86px; min-height: 64px; padding: 7px 9px; }
-  .schedule-meals { grid-template-columns: 1fr; align-items: start; }
-  .schedule-meal-chips { gap: 5px; }
-  .schedule-meal-chips .chip { min-height: 44px; padding: 8px 11px; }
-  .schedule-meal-hint { grid-column: 1; }
-  .today-hero { padding: 18px 16px; }
-  .hero-title { font-size: 1.28rem; }
+  /* 餐次入口收进菜单卡片，手机端横向滑动，不额外挤压首屏高度。 */
+  .panel-meal-picker {
+    gap: 5px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    scrollbar-width: none;
+  }
+  .panel-meal-picker::-webkit-scrollbar { display: none; }
+  .panel-meal-picker .chip { flex: 0 0 auto; min-height: 44px; padding: 8px 11px; }
+  .today-hero { padding: 14px; }
+  .hero-title { font-size: 1.2rem; line-height: 1.3; }
   .hero-photo-stack { display: none; }
   .hero-label, .hero-title { max-width: 100%; }
   /* 首屏必须讲清价值，手机端保留一句定位说明，但压紧行高 */
-  .hero-sub { display: block; max-width: 34em; margin-top: 6px; font-size: 0.82rem; line-height: 1.55; }
-  .hero-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .hero-sub { display: block; max-width: 34em; margin-top: 4px; font-size: 0.8rem; line-height: 1.5; }
+  .hero-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
   .hero-actions .btn { width: 100%; min-width: 0; padding-inline: 10px; }
   .hero-deco { font-size: 4.6rem; }
+  .today-hero .duty-head { margin-bottom: 6px; }
+  .today-hero .duty-bar {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .today-hero .duty-card { min-width: 0; min-height: 46px; padding: 5px 8px; gap: 5px; }
+  .today-hero .duty-claim { gap: 5px; min-width: 0; }
+  .today-hero .duty-claim-emoji { font-size: 1.2rem; }
+  .today-hero .duty-claim-body { min-width: 0; flex: 1 1 auto; }
+  .today-hero .duty-claim-body b, .today-hero .duty-owner-info b { font-size: 0.78rem; }
+  .today-hero .duty-claim-body b,
+  .today-hero .duty-owner-info b {
+    max-width: none;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    line-height: 1.2;
+  }
+  .today-hero .duty-claim-body small, .today-hero .duty-owner-info small { display: none; }
+  .today-hero .duty-mini { padding: 3px 7px; font-size: 0.66rem; white-space: nowrap; }
+  .today-hero .duty-roll { grid-column: 1 / -1; width: 100%; min-height: 40px; margin-left: 0; }
+  .today-hero .duty-hint { display: none; }
+  .today-hero .note-line { margin-top: 8px; padding: 0 10px; }
   .stat-strip {
     flex-wrap: nowrap; overflow-x: auto;
     margin-right: -14px; padding-right: 14px; padding-bottom: 6px;
@@ -1460,6 +1414,7 @@
   .stat-strip::-webkit-scrollbar { display: none; }
   .stat-item { flex: none; }
   .panel { padding: 14px; }
+  .today-cols { gap: 12px; margin-top: 14px; }
   /* 面板头：标题与副标题占满整行，按钮组移到下一行（两个按钮仍同行），
      避免副标题被右侧按钮挤到只剩「清」「的」这种孤字 */
   .panel-head { flex-wrap: wrap; gap: 8px; }
@@ -1468,6 +1423,9 @@
   .section-sub { text-wrap: balance; }
   .suggest-grid { gap: 8px; }
   .order-thumb { width: 52px; height: 46px; }
+  .empty { padding: 22px 14px; }
+  .empty .empty-icon { font-size: 1.65rem; margin-bottom: 5px; }
+  .empty p { font-size: 0.8rem; line-height: 1.45; margin-bottom: 8px; }
   .meal-switch { gap: 6px; margin-top: 12px; }
   .meal-chip { padding: 6px 11px; font-size: 0.8rem; }
   .meal-groups { gap: 11px; }
@@ -2930,13 +2888,20 @@
   }
   .panel-head > div:first-child { flex: 1 1 100%; min-width: 0; }
   .panel-head > .panel-head-actions {
+    width: 100%;
     flex: 1 1 100%;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
     justify-content: flex-start;
     gap: 6px;
+    margin-right: -14px;
+    padding-right: 14px;
     min-width: 0;
+    scrollbar-width: none;
   }
-  .panel-head > .panel-head-actions .btn { flex: 0 1 auto; }
+  .panel-head > .panel-head-actions::-webkit-scrollbar { display: none; }
+  .panel-head > .panel-head-actions .btn { flex: 0 0 auto; }
 }
 
 /* 在线更新：代理配置 */
@@ -3548,7 +3513,7 @@
 }
 
 @media (max-width: 768px) {
-  .schedule-meal-chips .chip { min-height: 44px; }
+  .panel-meal-picker .chip { min-height: 44px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
