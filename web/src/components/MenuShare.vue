@@ -17,6 +17,7 @@ const root = ref(null)
 useModalBehavior(() => emit('close'), root)
 
 const preview = ref('')
+const previewHeight = ref(0)
 const FONT = '"PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif'
 let canvasEl = null
 
@@ -85,6 +86,7 @@ function build() {
   ctx.fillText('家里吃点啥 · 大家一起来定', PAD, H - 18)
 
   canvasEl = canvas
+  previewHeight.value = H
   preview.value = canvas.toDataURL('image/png')
 }
 
@@ -119,7 +121,11 @@ async function save() {
         <button class="icon-btn" aria-label="关闭" @click="emit('close')">✕</button>
       </div>
       <div class="shopping-preview">
-        <img v-if="preview" :src="preview" alt="今日菜单图" />
+        <img
+          v-if="preview" :src="preview"
+          :alt="`${today || '今天'}的今日菜单分享图，共 ${orders.length} 道菜`"
+          width="720" :height="previewHeight" loading="lazy" decoding="async"
+        />
         <div class="shopping-preview-hint">📱 长按图片选「保存图片」存进相册，或直接分享给家里人</div>
       </div>
       <div class="modal-foot">

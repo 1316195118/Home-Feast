@@ -90,6 +90,8 @@
 .hero-title { font-size: 1.55rem; font-weight: 800; margin-top: 3px; line-height: 1.35; }
 .hero-sep { color: var(--brand); margin: 0 8px; }
 .hero-sub { font-size: 0.86rem; color: var(--ink-soft); margin-top: 4px; }
+.hero-actions { position: relative; z-index: 2; display: flex; flex-wrap: wrap; gap: 9px; margin-top: 14px; }
+.hero-actions .btn { min-height: 44px; }
 .hero-deco { position: absolute; right: 12px; top: -18px; font-size: 7rem; opacity: 0.13; pointer-events: none; transform: rotate(-14deg); animation: float-soft 7s ease-in-out infinite; }
 .hero-label, .hero-title, .hero-sub { position: relative; z-index: 2; }
 .hero-label, .hero-title { max-width: calc(100% - 176px); }
@@ -1074,7 +1076,8 @@
 .user-pick-item:nth-child(n+4) { animation-delay: 0.21s; }
 .user-pick-item:hover { transform: translateY(-2px); border-color: var(--brand); box-shadow: var(--shadow-sm); }
 .user-pick-item:active { transform: scale(0.98); }
-.user-pick-name { flex: 1; }
+.user-pick-name { flex: 1; display: flex; flex-direction: column; line-height: 1.35; }
+.user-pick-name small { margin-top: 2px; color: var(--muted); font-size: 0.72rem; font-weight: 600; }
 .user-pick-arrow { color: var(--muted); font-size: 1.3rem; }
 
 /* ---------- 随手捞：已点标记 ---------- */
@@ -1197,6 +1200,22 @@
 
 /* 平板和触控笔记本也按手指尺寸给按钮留足高度。 */
 @media (max-width: 1024px) {
+  button,
+  select,
+  input:not([type="hidden"]),
+  textarea {
+    min-height: 44px;
+  }
+  button,
+  select {
+    min-width: 44px;
+  }
+  .chip,
+  .meal-chip,
+  .footer-links a,
+  .legal-toc a {
+    min-height: 44px;
+  }
   .settings-section .btn { min-height: 44px; }
   .hero-photo-stack { transform: scale(0.86); transform-origin: top right; }
   .hero-label, .hero-title { max-width: calc(100% - 145px); }
@@ -1262,7 +1281,7 @@
   .section-head.menu-head > div:first-child { flex: 1 1 100%; min-width: 0; }
   .section-head.menu-head .menu-head-actions { flex: 0 0 auto; }
   .section-head.menu-head .section-sub { font-size: 0.76rem; line-height: 1.45; }
-  .section-head.menu-head .btn { flex: none; padding: 8px 12px; min-height: 38px; font-size: 0.8rem; }
+  .section-head.menu-head .btn { flex: none; padding: 8px 12px; min-height: 44px; font-size: 0.8rem; }
   /* 手机端 toast 收紧成单行小胶囊，不遮住大片内容 */
   .toast { font-size: 0.82rem; padding: 9px 14px; }
 
@@ -1271,8 +1290,10 @@
   .hero-title { font-size: 1.28rem; }
   .hero-photo-stack { display: none; }
   .hero-label, .hero-title { max-width: 100%; }
-  /* 手机端这句和下方统计条 / 今日菜单速览重复，省掉一行给首屏 */
-  .hero-sub { display: none; }
+  /* 首屏必须讲清价值，手机端保留一句定位说明，但压紧行高 */
+  .hero-sub { display: block; max-width: 34em; margin-top: 6px; font-size: 0.82rem; line-height: 1.55; }
+  .hero-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .hero-actions .btn { width: 100%; min-width: 0; padding-inline: 10px; }
   .hero-deco { font-size: 4.6rem; }
   .stat-strip {
     flex-wrap: nowrap; overflow-x: auto;
@@ -1535,7 +1556,6 @@
   .tab-icon { font-size: 1.1rem; }
   .tab::before { display: none; }
   .main { padding: 10px 14px calc(68px + env(safe-area-inset-bottom)); }
-  .footer { display: none; }
   .section-head { margin: 10px 0 8px; }
   .settings-head {
     padding: 10px 12px;
@@ -2427,6 +2447,7 @@
 .image-choices { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; padding-top: 10px; }
 .image-choices .btn { padding: 5px 11px; }
 .sc-image .setting-meta { margin-top: 8px; }
+.menu-filter-status { flex: 0 1 auto; min-height: 18px; margin-left: auto; display: flex; align-items: center; }
 
 /* 在线更新卡片 */
 .sc-update .setting-actions { margin-top: auto; padding-top: 10px; }
@@ -2784,3 +2805,6 @@
 }
 .sc-update .update-actions .btn { flex: 0 1 auto; }
 .sc-update .cuisine-manage-btn { margin-top: 10px; }
+@media (max-width: 640px) {
+  .menu-filter-status { flex-basis: 100%; justify-content: flex-end; }
+}

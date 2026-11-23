@@ -1,31 +1,31 @@
 {
-  "version": "1.0.4.1",
-  "publishedAt": "2026-11-22T22:31:08",
-  "note": "**修复**\n\n- 在线更新切换进程时，新进程恢复已落盘的成功状态，避免前端读到空状态后误报「更新任务提前结束」。\n- 更新轮询异常时直接核对 /api/ping 的实际版本，版本已切换则继续完成并刷新页面。\n- 增加更新自检恢复状态回归测试。",
+  "version": "1.0.4.2",
+  "publishedAt": "2026-11-23T16:31:36",
+  "note": "**新增**\\n\\n- 新增隐私政策、服务条款与自定义 404，补齐社交预览、站点图标、sitemap 和 robots。\\n\\n**修复**\\n\\n- 修复图片预取与 Service Worker 缓存版本不一致；修复快速切页时的过渡异常。\\n- 动态接口补充前端与后端校验，配料必须写明精确用量，新菜必须选择菜系。\\n\\n**优化**\\n\\n- 优化移动端 44px 触控区、筛选切换稳定性和多分辨率布局。\\n- 压缩大图、完善懒加载与失败回退，并补齐安全响应头与公开页服务端元数据。",
   "files": {
     "amd64": {
       "name": "menu-linux-amd64",
-      "sha256": "56ac7c0cc5e73320e0b2e66d353fb70784b71d345044ec11e2f8a4c5c6883323",
-      "size": 21172384,
+      "sha256": "d235e8c75829a02f153a780a911a082d46119d4181bb6c3cc26dd99f469328ab",
+      "size": 20189344,
       "gz": "menu-linux-amd64.gz",
-      "gzSha256": "1b0a14e58e9c45ef989998316ac195f9dd25111feba4bfa876516d90f7dd0257",
-      "gzSize": 14924669
+      "gzSha256": "7b71a42bda40c3991981d1c3069ae68a28b27405f38a5e4f8b162dd10047edd8",
+      "gzSize": 13867088
     },
     "arm64": {
       "name": "menu-linux-arm64",
-      "sha256": "2d793038253e6d817d21e0267e557a647cdf2127c081518f00437c7fb467a54e",
-      "size": 20447392,
+      "sha256": "6ff316531029bead3c8f563224d6b1253e679dcd9ea7312704fb85f413829fae",
+      "size": 19464352,
       "gz": "menu-linux-arm64.gz",
-      "gzSha256": "60afa8b1efec3f8946096fa1c478eb1df426a9a66e6cb9d209de4a8848655e29",
-      "gzSize": 14515883
+      "gzSha256": "6adfe9ff66b52db3f9b4a7684321ab73f13e8f7747eecd45280ee7f566886e45",
+      "gzSize": 13454654
     },
     "armv7": {
       "name": "menu-linux-armv7",
-      "sha256": "3dfb9acaa511c315b7a352c4db3abee650a3e50fa038b463112a6c49747f168d",
-      "size": 20906144,
+      "sha256": "d59cde57af84c6e99338f7a4fdcc7ecc4ef02ace838eda4033544d49b650b7b6",
+      "size": 19857568,
       "gz": "menu-linux-armv7.gz",
-      "gzSha256": "b8e0eda47f16b6af086717389c5f34386753cc477c892d88559d7dfb3b8d7bc3",
-      "gzSize": 14737248
+      "gzSha256": "4e280df96b25b33133d93eeeabcdeaeb88aebd7aa8c7c814729a6277dad26294",
+      "gzSize": 13677412
     }
   }
 }

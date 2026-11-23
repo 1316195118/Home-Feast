@@ -58,6 +58,7 @@ useModalBehavior(() => { editorOpen.value = false }, editorRoot, editorOpen)
 const editingId = ref(null)
 const form = reactive({ name: '', avatar: '🙂', color: colorChoices[0], avoid: [] })
 const customAvoid = ref('')
+const nameInvalid = ref(false)
 
 function toggleAvoid(a) {
   const i = form.avoid.indexOf(a)
@@ -77,6 +78,7 @@ function openAdd() {
   form.color = colorChoices[state.members.length % colorChoices.length]
   form.avoid = []
   customAvoid.value = ''
+  nameInvalid.value = false
   editorOpen.value = true
 }
 function openEdit(member) {
@@ -86,10 +88,12 @@ function openEdit(member) {
   form.color = member.color
   form.avoid = [...(member.avoid || [])]
   customAvoid.value = ''
+  nameInvalid.value = false
   editorOpen.value = true
 }
 async function save() {
   if (!form.name.trim()) {
+    nameInvalid.value = true
     actions.toast('总得有个称呼吧', 'warn')
     shake('#member-name')
     return
@@ -252,7 +256,13 @@ async function savePin() {
         </div>
         <div class="field">
           <label for="member-name">怎么称呼</label>
-          <input id="member-name" v-model="form.name" class="input" maxlength="20" placeholder="例如：爸爸、奶奶、小宝" />
+          <input
+            id="member-name" v-model="form.name" class="input" maxlength="20" required
+            :class="{ 'is-invalid': nameInvalid }" :aria-invalid="nameInvalid"
+            aria-describedby="member-name-error" placeholder="例如：爸爸、奶奶、小宝"
+            @input="nameInvalid = false"
+          />
+          <p v-if="nameInvalid" id="member-name-error" class="field-error" role="alert">请填写家人称呼</p>
         </div>
         <div class="field mt-14">
           <label>挑个头像</label>

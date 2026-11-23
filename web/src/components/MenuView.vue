@@ -148,7 +148,7 @@ async function cacheThumbBundle(urls, run, signal) {
     let data = null
     let cache = null
     try {
-      cache = 'caches' in window ? await caches.open('fm-shell-v4') : null
+      cache = 'caches' in window ? await caches.open('fm-shell-v5') : null
       lastCache = cache
       const hit = await cache?.match(cacheKey)
       if (hit) data = await hit.arrayBuffer()
@@ -723,8 +723,14 @@ async function savePantry() {
         @click="togglePriority"
       >🥬 优先推荐</button>
       <button class="chip" type="button" title="在当前筛选结果里随机挑一道" @click="randomDish">🎲 随便来一道</button>
-      <span v-if="priorityPantry && !(state.settings.pantry || []).length" class="tiny muted">先点「🧊 冰箱食材」选几样</span>
-      <span v-if="hasFilter" class="tiny muted">找到 <span class="value-pop" :key="filtered.length">{{ filtered.length }}</span> 道</span>
+      <!-- 状态行常驻，避免筛选后才新增一行而把下方网格整体推下去。 -->
+      <span class="tiny muted menu-filter-status">
+        <template v-if="priorityPantry && !(state.settings.pantry || []).length">先点「🧊 冰箱食材」选几样</template>
+        <template v-else>
+          {{ hasFilter ? '找到' : '共' }}
+          <span class="value-pop" :key="filtered.length">{{ filtered.length }}</span> 道
+        </template>
+      </span>
     </div>
 
     <!-- 不用 TransitionGroup：切换菜系时整片卡片进出场 + move 会让画面明显晃一下。

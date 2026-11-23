@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"html"
 	"io/fs"
 	"mime"
 	"net/http"
@@ -26,6 +27,73 @@ type staticAsset struct {
 	etag        string
 	gzipETag    string
 	brotliETag  string
+}
+
+const defaultIndexTitle = "家里吃点啥｜今天吃什么，全家一起定"
+const defaultIndexDescription = "全家一起挑菜、点菜、分工和看记录。237 道家常菜，数据只留在自己的设备。"
+const defaultIndexHTMLDescription = "全家一起挑菜、点菜、分工和看记录的家庭点菜系统，237 道家常菜，数据保存在自己的 NAS 或本机。"
+
+type indexPageMeta struct {
+	title       string
+	description string
+	canonical   string
+	ogType      string
+	noindex     bool
+}
+
+func indexMetaFor(requested string, status int) indexPageMeta {
+	switch requested {
+	case "privacy":
+		return indexPageMeta{
+			title:       "隐私政策｜家里吃点啥",
+			description: "了解家里吃点啥会保存哪些家庭数据、数据存放在哪里、如何使用、如何导出删除，以及当前第三方服务情况。",
+			canonical:   "/privacy",
+			ogType:      "article",
+		}
+	case "terms":
+		return indexPageMeta{
+			title:       "服务条款｜家里吃点啥",
+			description: "查看家里吃点啥的使用规则、家庭内容责任、知识产权、免责声明、服务终止和争议处理方式。",
+			canonical:   "/terms",
+			ogType:      "article",
+		}
+	case "", "index.html":
+		return indexPageMeta{
+			title:       defaultIndexTitle,
+			description: defaultIndexDescription,
+			canonical:   "/",
+			ogType:      "website",
+		}
+	default:
+		return indexPageMeta{
+			title:       "页面未找到｜家里吃点啥",
+			description: "这个页面可能被撤掉或地址输错了。回到今天、去菜谱挑菜，或查看家人与用餐记录。",
+			canonical:   "/",
+			ogType:      "website",
+			noindex:     status == http.StatusNotFound,
+		}
+	}
+}
+
+func renderIndexHTML(data []byte, requested string, status int, baseURL string) []byte {
+	base := html.EscapeString(strings.TrimRight(baseURL, "/"))
+	meta := indexMetaFor(requested, status)
+	out := bytes.ReplaceAll(data, []byte("__SITE_URL__"), []byte(base))
+	out = bytes.ReplaceAll(out, []byte(defaultIndexTitle), []byte(html.EscapeString(meta.title)))
+	out = bytes.ReplaceAll(out, []byte(defaultIndexHTMLDescription), []byte(html.EscapeString(meta.description)))
+	out = bytes.ReplaceAll(out, []byte(defaultIndexDescription), []byte(html.EscapeString(meta.description)))
+	if meta.canonical != "/" {
+		canonical := base + html.EscapeString(meta.canonical)
+		out = bytes.Replace(out, []byte(`href="`+base+`/"`), []byte(`href="`+canonical+`"`), 1)
+		out = bytes.Replace(out, []byte(`content="`+base+`/"`), []byte(`content="`+canonical+`"`), 1)
+	}
+	if meta.ogType != "website" {
+		out = bytes.Replace(out, []byte(`property="og:type" content="website"`), []byte(`property="og:type" content="`+html.EscapeString(meta.ogType)+`"`), 1)
+	}
+	if meta.noindex {
+		out = bytes.Replace(out, []byte("</head>"), []byte(`<meta name="robots" content="noindex, nofollow" />`+"\n  </head>"), 1)
+	}
+	return out
 }
 
 func (s *Server) loadStatic(name string) (*staticAsset, bool) {
@@ -79,11 +147,21 @@ func (s *Server) serveFrontend(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	name := strings.TrimPrefix(path.Clean("/"+r.URL.Path), "/")
-	if name == "" || strings.HasSuffix(name, "/") {
+	requested := name
+	if name == "" {
 		name = "index.html"
 	}
 	asset, ok := s.loadStatic(name)
+	status := http.StatusOK
 	if !ok {
+		// 缺失的脚本、样式、图片必须老老实实返回 404，不能伪装成 HTML。
+		if path.Ext(name) != "" {
+			http.NotFound(w, r)
+			return
+		}
+		if requested != "privacy" && requested != "terms" {
+			status = http.StatusNotFound
+		}
 		// 前端用 history 路由时，刷新子路径也要拿到入口文件。
 		name = "index.html"
 		asset, ok = s.loadStatic(name)
@@ -91,6 +169,27 @@ func (s *Server) serveFrontend(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "前端资源尚未构建，请先执行 build.bat / build.sh", http.StatusInternalServerError)
 			return
 		}
+	}
+	// 社交平台读取的是原始 HTML，不执行 Vue。服务端按当前访问域名和公开页
+	// 直接写入 canonical / OG / Twitter，因此同一镜像换域名部署也无需重构建。
+	if name == "index.html" && bytes.Contains(asset.data, []byte("__SITE_URL__")) {
+		data := renderIndexHTML(asset.data, requested, status, publicBaseURL(r))
+		rendered := &staticAsset{data: data, contentType: asset.contentType}
+		sum := sha256.Sum256(data)
+		rendered.etag = `"` + hex.EncodeToString(sum[:12]) + `"`
+		if len(data) >= 1024 && compressible(rendered.contentType) {
+			if br, err := brotliBody(data); err == nil {
+				rendered.brotli = br
+				brotliSum := sha256.Sum256(br)
+				rendered.brotliETag = `"` + hex.EncodeToString(brotliSum[:12]) + `-br"`
+			}
+			if gz, err := gzipBody(data); err == nil {
+				rendered.gzip = gz
+				gzipSum := sha256.Sum256(gz)
+				rendered.gzipETag = `"` + hex.EncodeToString(gzipSum[:12]) + `-gzip"`
+			}
+		}
+		asset = rendered
 	}
 	w.Header().Set("Content-Type", asset.contentType)
 	w.Header().Set("X-Content-Type-Options", "nosniff")
@@ -121,10 +220,57 @@ func (s *Server) serveFrontend(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	w.Header().Set("Content-Length", strconv.Itoa(len(body)))
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(status)
 	if r.Method != http.MethodHead {
 		_, _ = w.Write(body)
 	}
+}
+
+func (s *Server) serveRobots(w http.ResponseWriter, r *http.Request) {
+	body := "User-agent: *\nAllow: /\n" +
+		"Disallow: /api/\n" +
+		"Disallow: /uploads/\n" +
+		"Disallow: /thumb-bundle\n" +
+		"Disallow: /config/\n\n" +
+		"Sitemap: " + publicBaseURL(r) + "/sitemap.xml\n"
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Header().Set("Cache-Control", "public, max-age=3600")
+	w.Header().Set("Content-Length", strconv.Itoa(len(body)))
+	if r.Method != http.MethodHead {
+		_, _ = w.Write([]byte(body))
+	}
+}
+
+func (s *Server) serveSitemap(w http.ResponseWriter, r *http.Request) {
+	base := html.EscapeString(publicBaseURL(r))
+	lastmod := time.Now().UTC().Format("2006-01-02")
+	body := `<?xml version="1.0" encoding="UTF-8"?>` +
+		`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">` +
+		`<url><loc>` + base + `</loc><lastmod>` + lastmod + `</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>` +
+		`<url><loc>` + base + `/privacy</loc><lastmod>` + lastmod + `</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>` +
+		`<url><loc>` + base + `/terms</loc><lastmod>` + lastmod + `</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>` +
+		`</urlset>` + "\n"
+	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
+	w.Header().Set("Cache-Control", "public, max-age=3600")
+	w.Header().Set("Content-Length", strconv.Itoa(len(body)))
+	if r.Method != http.MethodHead {
+		_, _ = w.Write([]byte(body))
+	}
+}
+
+func publicBaseURL(r *http.Request) string {
+	if configured := strings.TrimSpace(os.Getenv("MENU_SITE_URL")); configured != "" {
+		return strings.TrimRight(configured, "/")
+	}
+	scheme := "http"
+	if r.TLS != nil || strings.EqualFold(strings.TrimSpace(strings.Split(r.Header.Get("X-Forwarded-Proto"), ",")[0]), "https") {
+		scheme = "https"
+	}
+	host := strings.TrimSpace(r.Host)
+	if host == "" {
+		host = "127.0.0.1"
+	}
+	return scheme + "://" + host
 }
 
 func brotliBody(body []byte) ([]byte, error) {

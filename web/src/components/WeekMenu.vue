@@ -32,9 +32,11 @@ function generate() {
 function shuffleWeek() { salt.value += 1; generate() }
 
 const totalDishes = computed(() => week.value.reduce((n, d) => n + d.dishes.length, 0))
+const previewAlt = computed(() => `本周菜单图，${people.value} 人份，共 ${totalDishes.value} 道菜`)
 
 // 导出图片：纯 Canvas 自绘，暖米纸底 + 每天一行菜名（自动换行），保存/分享同购物清单
 const preview = ref('')
+const previewHeight = ref(0)
 let imageCanvas = null
 const FONT = '"PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif'
 
@@ -122,6 +124,7 @@ function buildImage() {
   ctx.font = `15px ${FONT}`
   ctx.fillText('今天也要好好吃饭  ·  家里吃点啥', W / 2, H - 24)
   imageCanvas = canvas
+  previewHeight.value = H * dpr
   preview.value = canvas.toDataURL('image/png')
   actions.toast('菜单图已生成，可保存或分享', 'success')
 }
@@ -199,7 +202,7 @@ async function saveToAlbum() {
       </div>
 
       <div v-if="preview" class="shopping-preview">
-        <img :src="preview" alt="本周菜单图" />
+        <img :src="preview" :alt="previewAlt" width="1440" :height="previewHeight" loading="lazy" decoding="async" />
         <div class="shopping-preview-hint">📱 长按图片选「保存图片」即可存进相册；或点上面「保存到相册」直接分享 / 存储</div>
       </div>
     </div>

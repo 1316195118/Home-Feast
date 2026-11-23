@@ -9,6 +9,7 @@ import './styles/tokens.css'
 import './styles/base.css'
 import './styles/components.css'
 import './styles/screens.css'
+import './styles/legal.css'
 
 installRipple()
 installAudioUnlock() // 首次用户手势里解锁 AudioContext，音效才能自动播

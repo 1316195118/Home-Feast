@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -76,6 +77,10 @@ func (s *Server) updateDish(w http.ResponseWriter, r *http.Request) {
 	}
 	if p.Ingredients != nil {
 		v := cleanList(*p.Ingredients, 60, 20)
+		if err := validateIngredientAmounts(v); err != nil {
+			jsonErr(w, http.StatusBadRequest, err.Error())
+			return
+		}
 		p.Ingredients = &v
 	}
 	if p.Steps != nil {
@@ -113,7 +118,11 @@ func normalizeDish(in dishInput) (store.Dish, error) {
 	}
 	cuisine := trimmed(in.Cuisine, 32)
 	if !knownCuisine(cuisine) {
-		cuisine = "homestyle"
+		return store.Dish{}, errors.New("请选择菜系或地区标签")
+	}
+	ingredients := cleanList(in.Ingredients, 60, 20)
+	if err := validateIngredientAmounts(ingredients); err != nil {
+		return store.Dish{}, err
 	}
 	return store.Dish{
 		Name:        name,
@@ -123,10 +132,28 @@ func normalizeDish(in dishInput) (store.Dish, error) {
 		Image:       safeImage(in.Image),
 		Spicy:       clamp(in.Spicy, 0, 3),
 		Minutes:     clamp(in.Minutes, 0, 600),
-		Ingredients: cleanList(in.Ingredients, 60, 20),
+		Ingredients: ingredients,
 		Steps:       cleanList(in.Steps, 200, 20),
 		Rating:      clamp(in.Rating, 0, 3),
 	}, nil
+}
+
+func validateIngredientAmounts(items []string) error {
+	for _, item := range items {
+		line := strings.TrimSpace(item)
+		if line == "" {
+			continue
+		}
+		for _, vague := range []string{"适量", "少许", "少量", "按口味", "随意"} {
+			if strings.Contains(line, vague) {
+				return fmt.Errorf("配料「%s」的用量要写具体，不能用「%s」", line, vague)
+			}
+		}
+		if !strings.ContainsAny(line, "0123456789一二三四五六七八九十半两") {
+			return fmt.Errorf("配料「%s」缺少具体用量，例如 200g、2 个或 30ml", line)
+		}
+	}
+	return nil
 }
 
 func knownCuisine(key string) bool {

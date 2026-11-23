@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Generate crisp PWA icons from the same bowl-and-steam brand mark."""
 
+import json
 from pathlib import Path
 
 from PIL import Image, ImageDraw
@@ -43,9 +44,61 @@ def draw_icon(size: int) -> Image.Image:
 
 
 def main() -> None:
-    for size in (192, 512):
-        path = PUBLIC / f"logo-{size}.png"
+    outputs = {}
+    for name, size in (
+        ("apple-touch-icon.png", 180),
+        ("logo-192.png", 192),
+        ("logo-512.png", 512),
+        ("icon-192.png", 192),
+        ("icon-512.png", 512),
+    ):
+        path = PUBLIC / name
         draw_icon(size).save(path, "PNG", optimize=True)
+        outputs[name] = path
+        print(path)
+
+    favicon = PUBLIC / "favicon.ico"
+    draw_icon(256).save(
+        favicon,
+        format="ICO",
+        sizes=[(16, 16), (32, 32), (48, 48)],
+    )
+    outputs[favicon.name] = favicon
+    print(favicon)
+
+    manifest = {
+        "name": "家里吃点啥 · 家庭点菜系统",
+        "short_name": "家里吃点啥",
+        "description": "一家人自己用的点菜系统，数据只存在自己的 NAS / 本机",
+        "start_url": "/",
+        "scope": "/",
+        "display": "standalone",
+        "orientation": "portrait-primary",
+        "background_color": "#fbf6ee",
+        "theme_color": "#fbf6ee",
+        "lang": "zh-CN",
+        "icons": [
+            {
+                "src": "/logo-192.png",
+                "sizes": "192x192",
+                "type": "image/png",
+                "purpose": "any maskable",
+            },
+            {
+                "src": "/logo-512.png",
+                "sizes": "512x512",
+                "type": "image/png",
+                "purpose": "any maskable",
+            },
+        ],
+    }
+    for name in ("site.webmanifest", "manifest.json"):
+        path = PUBLIC / name
+        path.write_text(
+            json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        outputs[name] = path
         print(path)
 
 

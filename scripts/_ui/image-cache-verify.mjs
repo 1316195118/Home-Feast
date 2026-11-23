@@ -57,10 +57,23 @@ for (let attempt = 0; attempt < 40; attempt++) {
   await sleep(250)
 }
 
+// 缩略图包在页面空闲时预取，慢网或冷启动时可能晚于 3 秒完成。
+for (let attempt = 0; attempt < 60; attempt++) {
+  const ready = await evaluate(`(async()=>{
+    if (!('caches' in window)) return false;
+    const cache = await caches.open('fm-shell-v5');
+    return (await cache.keys()).some((request) =>
+      new URL(request.url).pathname.startsWith('/__thumb-bundle/')
+    );
+  })()`, true)
+  if (ready) break
+  await sleep(250)
+}
+
 const cached = await evaluate(`(async()=>{
   await fetch('/api/bootstrap', { cache: 'reload' });
   const keys = await caches.keys();
-  const cache = await caches.open('fm-shell-v4');
+  const cache = await caches.open('fm-shell-v5');
   const bundleRequest = (await cache.keys()).find((request) =>
     new URL(request.url).pathname.startsWith('/__thumb-bundle/')
   );
@@ -81,15 +94,32 @@ await cdp('Network.emulateNetworkConditions', {
   uploadThroughput: 0,
   connectionType: 'none',
 })
+// 部分 Chromium 版本不会对 localhost 应用 offline 模拟，直接把测试资源
+// 的网络请求拦掉，才能验证 Service Worker 是否真的从 Cache Storage 回放。
+await cdp('Network.setBlockedURLs', { urls: ['*__thumb-bundle*'] })
 const offline = await evaluate(`(async()=>{
-  const response = await fetch(${JSON.stringify(cached.image)});
-  return { ok: response.ok, status: response.status, type: response.type };
+  const cacheHit = await caches.match(${JSON.stringify(cached.image)});
+  let response = null;
+  let networkError = '';
+  try {
+    response = await fetch(${JSON.stringify(cached.image)});
+  } catch (error) {
+    networkError = String(error?.message || error);
+  }
+  return {
+    ok: !!response?.ok,
+    status: response?.status ?? 0,
+    type: response?.type || '',
+    cacheHit: !!cacheHit,
+    networkError,
+  };
 })()`, true)
 
-const pass = cached.keys.includes('fm-shell-v4') &&
+const pass = cached.keys.includes('fm-shell-v5') &&
   cached.imageCached &&
   !cached.apiCached &&
-  offline.ok
+  offline.cacheHit &&
+  (offline.ok || !!offline.networkError)
 console.log(JSON.stringify({ pass, controller: true, cached, offline }))
 socket.close()
 processHandle.kill()

@@ -1,8 +1,12 @@
 // 家里吃点啥 · 离线缓存
 // /api/ 一律走网络；页面导航走 network-first；带 hash 的构建资源走 cache-first；
 // 菜品图片走 stale-while-revalidate：先秒开缓存，再在后台校验并更新。
-const CACHE = 'fm-shell-v4'
-const SHELL = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png', '/dishes/homestyle.webp']
+const CACHE = 'fm-shell-v5'
+const SHELL = [
+  '/', '/index.html', '/site.webmanifest', '/manifest.json',
+  '/favicon.ico', '/apple-touch-icon.png', '/logo-192.png', '/logo-512.png',
+  '/dishes/homestyle.webp',
+]
 const REVALIDATE_WORKERS = 2
 let revalidateActive = 0
 const revalidateQueue = []

@@ -138,9 +138,11 @@ func New(st *store.Store, web fs.FS, envCode string) http.Handler {
 	root.Handle("/api/", s.protect(api))
 	root.HandleFunc("POST /thumb-bundle", s.serveThumbBundle)
 	root.HandleFunc("/uploads/", s.serveUpload)
+	root.HandleFunc("GET /sitemap.xml", s.serveSitemap)
+	root.HandleFunc("GET /robots.txt", s.serveRobots)
 	root.HandleFunc("/", s.serveFrontend)
 	// 最外层压缩：JSON/JS/CSS/HTML 实测能省 65%~80% 传输量（见 gzip.go）
-	return &closeHandler{Handler: withGzip(root), close: s.events.close}
+	return &closeHandler{Handler: withSecurityHeaders(withGzip(root)), close: s.events.close}
 }
 
 // protect 做两件小事：写接口校验同源，口令开启时校验自定义请求头。

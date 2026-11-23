@@ -398,13 +398,19 @@ func TestDishValidation(t *testing.T) {
 	if w := do(h, "POST", "/api/dishes", `{"name":"  "}`); w.Code != 400 {
 		t.Fatalf("空名应 400，实际 %d", w.Code)
 	}
-	// 未知菜系应回退 homestyle 而不是 400
+	// 新菜必须明确菜系/地区，避免无标签菜品混入菜谱
 	w := do(h, "POST", "/api/dishes", `{"name":"回退测试","cuisine":"火星菜"}`)
-	if w.Code != 201 {
-		t.Fatalf("未知菜系应回退，实际 %d", w.Code)
+	if w.Code != 400 {
+		t.Fatalf("未知菜系应 400，实际 %d", w.Code)
 	}
-	if m := decode(t, w); m["cuisine"] != "homestyle" {
-		t.Fatalf("未知菜系应回退 homestyle，实际 %v", m["cuisine"])
+	// 配料必须带具体用量，不接受适量/少许
+	w = do(h, "POST", "/api/dishes", `{"name":"模糊用量","cuisine":"homestyle","ingredients":["盐 适量"]}`)
+	if w.Code != 400 {
+		t.Fatalf("模糊配料用量应 400，实际 %d", w.Code)
+	}
+	w = do(h, "POST", "/api/dishes", `{"name":"缺用量","cuisine":"homestyle","ingredients":["鸡腿肉"]}`)
+	if w.Code != 400 {
+		t.Fatalf("缺配料用量应 400，实际 %d", w.Code)
 	}
 }
 
@@ -487,7 +493,7 @@ func TestOrderFlow(t *testing.T) {
 func TestBackupRoundtrip(t *testing.T) {
 	h := newTestHandler(t)
 	// 先加一道菜
-	do(h, "POST", "/api/dishes", `{"name":"备份测试菜"}`)
+	do(h, "POST", "/api/dishes", `{"name":"备份测试菜","cuisine":"homestyle"}`)
 	// 导出
 	w := do(h, "GET", "/api/backup", "")
 	if w.Code != 200 || w.Body.Len() < 100 {

@@ -38,7 +38,14 @@ const runtimeErrors = []
 socket.addEventListener('message', (event) => {
   const message = JSON.parse(event.data)
   if (message.method === 'Runtime.exceptionThrown') {
-    runtimeErrors.push(message.params?.exceptionDetails?.text || '运行时异常')
+    const details = message.params?.exceptionDetails || {}
+    runtimeErrors.push({
+      text: details.text || '运行时异常',
+      description: details.exception?.description || '',
+      url: details.url || '',
+      line: details.lineNumber,
+      column: details.columnNumber,
+    })
   }
 })
 const cdp = (method, params = {}) => new Promise((resolve, reject) => {

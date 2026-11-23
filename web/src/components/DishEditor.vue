@@ -36,6 +36,8 @@ const form = reactive({
 })
 const uploading = ref(false)
 const saving = ref(false)
+const nameInvalid = ref(false)
+const ingredientsError = ref('')
 
 // 下拉里只列「可见」的菜系；但若正在编辑一道被隐藏菜系的菜，保留它以免选项消失。
 const cuisineOptions = computed(() => {
@@ -49,6 +51,10 @@ const cuisineOptions = computed(() => {
 })
 
 const preview = computed(() => form.image || dishImage({ name: form.name, cuisine: form.cuisine }, state.cuisines))
+const previewAlt = computed(() => {
+  const name = form.name.trim()
+  return name ? `${name}的菜品图片预览` : '新菜品的图片预览'
+})
 
 // 上传前先压一道：手机原图常有 3~5MB，长边压到 1600 后通常只剩 200~400KB。
 // 压缩失败（老浏览器/异常解码）一律退回原图，绝不能因为优化导致传不了。
@@ -111,10 +117,22 @@ async function onFile(event) {
 
 async function save() {
   if (!form.name.trim()) {
+    nameInvalid.value = true
     actions.toast('先给这道菜起个名字', 'warn')
     shake('#dish-name')
     return
   }
+  const ingredients = form.ingredients.split('\n').map((s) => s.trim()).filter(Boolean).slice(0, 20)
+  const invalidIngredient = ingredients.find((line) =>
+    /(适量|少许|少量|按口味|随意)/.test(line) || !/[0-9一二三四五六七八九十半两]/.test(line),
+  )
+  if (invalidIngredient) {
+    ingredientsError.value = `「${invalidIngredient}」需要写具体用量，例如 200g、2 个或 30ml`
+    actions.toast('配料用量必须精确，不能写适量或省略数量', 'warn')
+    shake('#dish-ingredients')
+    return
+  }
+  ingredientsError.value = ''
   const payload = {
     name: form.name.trim(),
     cuisine: form.cuisine,
@@ -123,7 +141,7 @@ async function save() {
     spicy: Number(form.spicy) || 0,
     minutes: Number(form.minutes) || 20,
     image: form.image,
-    ingredients: form.ingredients.split('\n').map((s) => s.trim()).filter(Boolean).slice(0, 20),
+    ingredients,
     steps: form.steps.split('\n').map((s) => s.trim()).filter(Boolean).slice(0, 20),
   }
   saving.value = true
@@ -157,7 +175,9 @@ async function remove() {
 
       <div class="form-grid">
         <div class="span-2">
-          <div class="preview-photo"><img :src="preview" alt="菜品效果预览" /></div>
+          <div class="preview-photo">
+            <img :src="preview" :alt="previewAlt" width="1200" height="900" loading="lazy" decoding="async" />
+          </div>
           <div class="row mt-8">
             <label class="btn btn-sm" :class="{ 'btn-soft': !uploading, 'is-busy': uploading }">
               <span v-if="uploading" class="btn-spinner" aria-hidden="true" />
@@ -171,7 +191,13 @@ async function remove() {
 
         <div class="field span-2">
           <label for="dish-name">菜名</label>
-          <input id="dish-name" v-model="form.name" class="input" maxlength="40" placeholder="比如：妈妈牌红烧肉" />
+          <input
+            id="dish-name" v-model="form.name" class="input" maxlength="40" required
+            :class="{ 'is-invalid': nameInvalid }" :aria-invalid="nameInvalid"
+            aria-describedby="dish-name-error" placeholder="比如：妈妈牌红烧肉"
+            @input="nameInvalid = false"
+          />
+          <p v-if="nameInvalid" id="dish-name-error" class="field-error" role="alert">请先填写菜名</p>
         </div>
 
         <div class="field">
@@ -205,11 +231,15 @@ async function remove() {
         </div>
 
         <div class="field span-2">
-          <label for="dish-ingredients">🧺 配料（每行一项，可写用量）</label>
+          <label for="dish-ingredients">🧺 配料（每行一项，必须写清用量）</label>
           <textarea
             id="dish-ingredients" v-model="form.ingredients" class="textarea" rows="5"
+            :class="{ 'is-invalid': !!ingredientsError }" :aria-invalid="!!ingredientsError"
+            aria-describedby="dish-ingredients-error"
             placeholder="嫩豆腐 1 盒&#10;牛肉末 100g&#10;郫县豆瓣酱 1 勺"
+            @input="ingredientsError = ''"
           ></textarea>
+          <p v-if="ingredientsError" id="dish-ingredients-error" class="field-error" role="alert">{{ ingredientsError }}</p>
         </div>
         <div class="field span-2">
           <label for="dish-steps">👩‍🍳 做法步骤（每行一步）</label>

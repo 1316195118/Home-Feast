@@ -13,7 +13,16 @@ const apiProxy = {
 }
 
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [
+    vue(),
+    {
+      name: 'dev-site-url',
+      apply: 'serve',
+      transformIndexHtml(html) {
+        return html.replaceAll('__SITE_URL__', API_TARGET)
+      },
+    },
+  ],
   build: {
     outDir: 'dist',
     emptyOutDir: true,

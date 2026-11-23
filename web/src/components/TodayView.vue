@@ -446,6 +446,12 @@ async function quickOrder(dish, event) {
   if (ok) flyToMenu(event?.currentTarget || null)
 }
 
+function showSuggestions() {
+  document.getElementById('today-suggest-panel')?.scrollIntoView({
+    behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+    block: 'start',
+  })
+}
 
 const doneCount = computed(() => orders.value.filter((o) => o.done).length)
 const peopleCount = computed(() => new Set(orders.value.map((o) => o.userId)).size)
@@ -466,18 +472,26 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
         >
           <DishPhoto
             :item="s.dish" :cuisines="state.cuisines" size="thumb"
-            :alt="s.dish.name" loading="eager" decoding="async"
+            alt="" width="480" height="360" loading="eager" decoding="async"
           />
         </span>
       </div>
-      <div class="hero-label">今日份 · {{ friendlyDate(state.today) }}</div>
-      <h1 class="hero-title"><span>今天已点 {{ orders.length }} 道</span></h1>
+      <div class="hero-label">今天 · {{ friendlyDate(state.today) }}</div>
+      <h1 class="hero-title">
+        <span>{{ orders.length ? '全家想吃的，都放到这一桌' : '今天吃什么，全家一起定' }}</span>
+      </h1>
       <p class="hero-sub">
         <template v-if="chefs.length || washers.length">
           {{ chefs.length ? `${chefs[0].avatar} ${namesOf(chefs)} 掌勺` : '掌勺待定' }}<span class="hero-sep">·</span>{{ washers.length ? `${washers[0].avatar} ${namesOf(washers)} 洗碗` : '洗碗待定' }}<span class="hero-sep">·</span>
         </template>
-        {{ doneCount ? `已上桌 ${doneCount} 道，` : '' }}{{ orders.length ? '就等开饭啦' : '先点几个，别让掌勺的人猜' }}
+        {{ doneCount ? `已上桌 ${doneCount} 道，` : '' }}{{ orders.length ? `已点 ${orders.length} 道，就等开饭啦` : '从 237 道家常菜里挑一桌，实时看到谁点了什么' }}
       </p>
+      <div class="hero-actions">
+        <button class="btn btn-primary" type="button" @click="state.tab = 'menu'">
+          {{ orders.length ? '再加一道菜' : '开始点今天这顿饭' }}
+        </button>
+        <button class="btn btn-soft" type="button" @click="showSuggestions">看看推荐</button>
+      </div>
 
       <div class="duty-head">
         <span class="duty-meal-tag">{{ nowMeal?.icon }} {{ nowMeal?.label }}</span>
@@ -565,7 +579,7 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
               @click="shareOpen = true"
             >📤 分享</button>
             <button class="btn btn-soft btn-sm" @click="shoppingOpen = true">🛒 购物清单</button>
-            <button class="btn btn-soft btn-sm" @click="state.tab = 'menu'">去点菜 ＋</button>
+            <button class="btn btn-soft btn-sm" @click="state.tab = 'menu'">{{ orders.length ? '再加一道菜' : '开始点菜 ＋' }}</button>
           </div>
         </div>
 
@@ -588,7 +602,7 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
                     <DishPhoto
                       :item="o" :cuisines="state.cuisines" :dishes="state.dishes"
                       :size="imageSize(state.settings.imageMode)" :alt="o.dishName"
-                      :style="artStyle(o, state.dishes)" loading="lazy" decoding="async"
+                      :style="artStyle(o, state.dishes)" width="480" height="360" loading="lazy" decoding="async"
                     />
                   </div>
                   <div class="order-main">
@@ -628,11 +642,11 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
         <div v-else class="empty">
           <span class="empty-icon">🥢</span>
           <p>今天还没人点菜，去菜谱挑几道吧</p>
-          <button class="btn btn-primary btn-sm" @click="state.tab = 'menu'">去点菜 ＋</button>
+          <button class="btn btn-primary btn-sm" @click="state.tab = 'menu'">开始点今天这顿饭</button>
         </div>
       </div>
 
-      <div class="panel">
+      <div id="today-suggest-panel" class="panel">
         <div class="panel-head">
           <div>
             <div class="panel-title">💡 今天吃啥</div>
@@ -681,7 +695,7 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
               <DishPhoto
                 :item="s.dish" :cuisines="state.cuisines" :dishes="state.dishes"
                 :size="imageSize(state.settings.imageMode)" :alt="s.dish.name"
-                :style="artStyle(s.dish, state.dishes)" loading="lazy" decoding="async"
+                :style="artStyle(s.dish, state.dishes)" width="480" height="360" loading="lazy" decoding="async"
               />
               <button class="suggest-recipe" title="看做法" aria-label="看做法" @click.stop="detailId = s.dish.id"><span class="badge-ico">📖</span></button>
               <span v-if="isPicked(s.dish)" class="suggest-picked">✓ 已点</span>

@@ -76,6 +76,7 @@ function order() {
           <DishPhoto
             :item="dish" :cuisines="state.cuisines" :dishes="state.dishes"
             :alt="dish.name" :style="artStyle(dish, state.dishes)"
+            width="1200" height="900" loading="eager" decoding="async"
           />
         </div>
         <div class="detail-info">

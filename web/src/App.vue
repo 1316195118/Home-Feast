@@ -6,10 +6,14 @@ import ConfirmDialog from './components/ConfirmDialog.vue'
 import BrandLogo from './components/BrandLogo.vue'
 import ViewLoading from './components/ViewLoading.vue'
 import ViewLoadError from './components/ViewLoadError.vue'
+import PrivacyView from './components/PrivacyView.vue'
+import TermsView from './components/TermsView.vue'
+import NotFoundView from './components/NotFoundView.vue'
 import { useModalBehavior } from './modal'
 import { currentMeal, normalizeMeals } from './utils'
 import { playAdd, playFav, playSave, playRemove, playError } from './audio'
 import { invalidateThumbCache } from './thumb-cache'
+import { applyPageMeta } from './meta'
 
 // 首屏只需要「今天」。其余页签按需下载，避免第一次打开时把设置、
 // 历史和编辑器等暂时用不到的代码一起解析。200ms 内加载完成就不闪加载态。
@@ -76,6 +80,30 @@ const tabs = [
   { key: 'settings', label: '设置', icon: '⚙️' },
 ]
 
+const tabKeys = new Set(tabs.map((tab) => tab.key))
+
+function routeFromLocation() {
+  const pathname = window.location.pathname.replace(/\/+$/, '') || '/'
+  if (pathname === '/privacy') return { publicRoute: 'privacy', tab: 'today' }
+  if (pathname === '/terms') return { publicRoute: 'terms', tab: 'today' }
+  if (pathname !== '/' && pathname !== '/index.html') {
+    return { publicRoute: '404', tab: 'today' }
+  }
+
+  const hash = window.location.hash.replace(/^#/, '')
+  if (hash === 'privacy' || hash === 'terms') return { publicRoute: hash, tab: 'today' }
+  if (hash === '404' || hash === 'not-found') return { publicRoute: '404', tab: 'today' }
+  if (tabKeys.has(hash)) return { publicRoute: null, tab: hash }
+  if (hash) return { publicRoute: '404', tab: 'today' }
+  return { publicRoute: null, tab: 'today' }
+}
+
+const initialRoute = routeFromLocation()
+const publicRoute = ref(initialRoute.publicRoute)
+const isPublicPage = computed(() => publicRoute.value !== null)
+const publicViewMap = { privacy: PrivacyView, terms: TermsView, '404': NotFoundView }
+const currentPublicView = computed(() => publicViewMap[publicRoute.value] || NotFoundView)
+
 // 本机还没记住身份时，首次打开主动让用户选一次
 const needsUserPick = ref(false)
 
@@ -98,7 +126,7 @@ const state = reactive({
   bootError: '',
   toast: null,       // { id, text, type }
   busy: 0,           // 进行中的写操作数量，用于顶部进度条与防连点
-  tab: 'today',
+  tab: initialRoute.tab,
   version: '',
   revision: 0,
   releaseNote: '',   // 本次构建的更新说明，随二进制一起编译进来
@@ -123,6 +151,24 @@ const state = reactive({
 const viewMap = { today: TodayView, menu: MenuView, family: FamilyView, history: HistoryView, settings: SettingsView }
 const currentView = computed(() => viewMap[state.tab] || TodayView)
 
+function navigatePublic(route, { replace = false } = {}) {
+  publicRoute.value = route
+  const path = route === 'privacy' ? '/privacy' : route === 'terms' ? '/terms' : '/404'
+  window.history[replace ? 'replaceState' : 'pushState'](null, '', path)
+  window.scrollTo(0, 0)
+}
+
+function goTab(tab) {
+  const next = tabKeys.has(tab) ? tab : 'today'
+  if (publicRoute.value) {
+    window.history.pushState(null, '', `/#${next}`)
+    publicRoute.value = null
+  }
+  if (state.tab !== next) state.tab = next
+  else applyPageMeta(null, next)
+  startApp()
+}
+
 // 页签按左右方向切换：往右滑入、往左滑出，方向感让层级更好理解。
 const pageDirection = ref('page')
 watch(() => state.tab, (next, prev) => {
@@ -130,10 +176,6 @@ watch(() => state.tab, (next, prev) => {
   const b = tabs.findIndex((t) => t.key === next)
   pageDirection.value = b >= a ? 'page' : 'page-back'
 })
-
-// 支持 #today / #menu 之类的直达链接，刷新后也停在原来那一页。
-const hashTab = window.location.hash.replace('#', '')
-if (tabs.some((t) => t.key === hashTab)) state.tab = hashTab
 
 const codeInput = ref('')
 const lockRoot = ref(null)
@@ -776,19 +818,36 @@ provide('app', { state, actions, tabs, selectUser, confirmDialog, choiceDialog, 
 
 watch(() => state.tab, (tab, previous) => {
   if (previous && previous !== tab) pageScrollPositions.set(previous, window.scrollY)
-  window.history.replaceState(null, '', `#${tab}`)
+  if (!publicRoute.value) window.history.replaceState(null, '', `#${tab}`)
   if (previous) restorePageScroll(tab)
 }, { immediate: true, flush: 'sync' })
+
+watch([publicRoute, () => state.tab], ([route, tab]) => {
+  applyPageMeta(route, tab)
+}, { immediate: true })
 
 function onLocked() {
   state.locked = true
   state.ready = false
 }
 
-// 浏览器前进/后退或直接改地址栏 hash 时也要切页（replaceState 不会触发本事件，不会成环）
+function syncRouteFromLocation() {
+  const next = routeFromLocation()
+  if (next.publicRoute) {
+    publicRoute.value = next.publicRoute
+    return
+  }
+  publicRoute.value = null
+  if (state.tab !== next.tab) state.tab = next.tab
+  else applyPageMeta(null, next.tab)
+  startApp()
+}
+
+// 公开页里的 #锚点属于正文目录，不能被误判成站内路由。
 function onHashChange() {
-  const key = window.location.hash.replace('#', '')
-  if (tabs.some((t) => t.key === key) && state.tab !== key) state.tab = key
+  const id = window.location.hash.replace(/^#/, '')
+  if (publicRoute.value && id && document.getElementById(id)) return
+  syncRouteFromLocation()
 }
 
 async function boot() {
@@ -798,6 +857,20 @@ async function boot() {
   } catch (err) {
     // 401 会由 request() 广播 fm:locked，直接显示口令框，不把「需要口令」误报成断网。
     if (!state.locked) state.bootError = err.message || '连不上服务端'
+  }
+}
+
+let appStarted = false
+let realtimeStarted = false
+function startApp() {
+  if (!appStarted) {
+    appStarted = true
+    void boot()
+  }
+  if (!realtimeStarted) {
+    realtimeStarted = true
+    installRealtime()
+    syncTimer = setInterval(() => syncNow('poll'), 5 * 60 * 1000)
   }
 }
 
@@ -911,18 +984,19 @@ function installRealtime() {
 onMounted(() => {
   window.addEventListener('fm:locked', onLocked)
   window.addEventListener('hashchange', onHashChange)
+  window.addEventListener('popstate', syncRouteFromLocation)
   document.addEventListener('visibilitychange', onVisible)
   window.addEventListener('sw-update', onSwUpdate)
   window.addEventListener('offline', onOffline)
   window.addEventListener('online', onOnline)
-  boot()
-  installRealtime()
-  // SSE 在线时完全靠事件同步；这里只是断线时的低频兜底，不再每分钟和页面操作抢刷新。
-  syncTimer = setInterval(() => syncNow('poll'), 5 * 60 * 1000)
+  applyPageMeta(publicRoute.value, state.tab)
+  // 公开页不拉 237 道菜数据；用户真正进入点菜应用时再启动 bootstrap 与 SSE。
+  if (!publicRoute.value) startApp()
 })
 onUnmounted(() => {
   window.removeEventListener('fm:locked', onLocked)
   window.removeEventListener('hashchange', onHashChange)
+  window.removeEventListener('popstate', syncRouteFromLocation)
   window.removeEventListener('offline', onOffline)
   window.removeEventListener('online', onOnline)
   document.removeEventListener('visibilitychange', onVisible)
@@ -977,13 +1051,13 @@ onUnmounted(() => {
           </div>
         </div>
       </div>
-      <nav class="tabs" v-if="state.ready">
+      <nav class="tabs" v-if="state.ready && !isPublicPage">
         <button
           v-for="t in tabs" :key="t.key"
           class="tab" :class="{ active: state.tab === t.key }"
           @mouseenter="prefetchView(t.key)" @focus="prefetchView(t.key)"
           @touchstart.passive="prefetchView(t.key)"
-          @click="state.tab = t.key"
+          @click="goTab(t.key)"
         >
           <span class="tab-icon">{{ t.icon }}</span><span>{{ t.label }}</span>
         </button>
@@ -992,21 +1066,28 @@ onUnmounted(() => {
 
     <!-- 网络 / 实时同步异常时才出现：平时不占版面，出问题必须让用户看见 -->
     <Transition name="fade">
-      <div v-if="offline || state.realtime === 'reconnecting'" class="net-banner" role="status">
+      <div v-if="!isPublicPage && (offline || state.realtime === 'reconnecting')" class="net-banner" role="status">
         <template v-if="offline">📵 已离线，改动不会同步到其他设备</template>
         <template v-else>🔄 与服务器断开，正在重连…</template>
       </div>
     </Transition>
 
-    <main class="main" v-if="state.ready">
-      <Transition :name="pageDirection">
+    <main class="main" :class="{ 'legal-main': isPublicPage }">
+      <Transition v-if="isPublicPage" name="fade" mode="out-in">
+        <component
+          :is="currentPublicView" :key="publicRoute"
+          @home="goTab('today')" @menu="goTab('menu')" @family="goTab('family')"
+          @privacy="navigatePublic('privacy')" @terms="navigatePublic('terms')"
+        />
+      </Transition>
+      <Transition v-else :name="pageDirection">
         <KeepAlive>
-          <component :is="currentView" :key="state.tab" />
+          <component v-if="state.ready" :is="currentView" :key="state.tab" />
         </KeepAlive>
       </Transition>
     </main>
 
-    <div v-else-if="!state.locked" class="loading">
+    <div v-if="!state.ready && !state.locked && !isPublicPage" class="loading">
       <div v-if="state.bootError">
         <p>😵 {{ state.bootError }}</p>
         <button class="btn btn-primary mt-12" @click="boot">再试一次</button>
@@ -1017,8 +1098,13 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <footer class="footer" v-if="state.ready">
-      家里吃点啥 · 数据只保存在你自己的设备 / NAS
+    <footer class="footer" :class="{ 'is-public': isPublicPage }" v-if="state.ready || isPublicPage">
+      <div>家里吃点啥 · 数据只保存在你自己的设备 / NAS</div>
+      <nav class="footer-links" aria-label="站点信息">
+        <a href="/privacy" @click.prevent="navigatePublic('privacy')">隐私政策</a>
+        <a href="/terms" @click.prevent="navigatePublic('terms')">服务条款</a>
+        <a href="/#today" @click.prevent="goTab('today')">返回点菜</a>
+      </nav>
     </footer>
 
     <Transition name="toast">
@@ -1058,21 +1144,24 @@ onUnmounted(() => {
 
     <!-- 首次打开：主动选一次「我是谁」，之后点菜/掌勺/洗碗都记在这个名字下 -->
     <Transition name="modal">
-      <div v-if="needsUserPick && state.ready && !state.locked" class="modal-backdrop user-pick-backdrop">
+      <div v-if="needsUserPick && state.ready && !state.locked && !isPublicPage" class="modal-backdrop user-pick-backdrop">
       <div ref="userPickRoot" class="modal user-pick-modal" role="dialog" aria-modal="true" aria-label="先选一下你是谁">
         <div class="user-pick-head">
           <span class="user-pick-emoji">👋</span>
-          <h2>先选一下你是谁</h2>
-          <p class="muted">之后点菜、掌勺、洗碗都会记在这个名字下，右上角随时能换。</p>
+          <h2>一家人，一顿饭</h2>
+          <p class="muted">今天吃什么，全家一起决定。先选你是谁，接着挑菜、看做法，顺手定好谁掌勺、谁洗碗。</p>
         </div>
         <div v-if="!state.members.length" class="user-pick-empty">
-          <p class="muted">家里还没有成员，先关掉去添加一位。</p>
-          <button class="btn btn-soft btn-sm" @click="needsUserPick = false">先看看</button>
+          <p class="muted">家里还没有成员，先添加一位，就能一起点菜了。</p>
+          <button class="btn btn-primary btn-sm" @click="needsUserPick = false; state.tab = 'family'">去添加家人</button>
         </div>
         <div v-else class="user-pick-list">
-          <button v-for="m in state.members" :key="m.id" class="user-pick-item" @click="pickUser(m.id)">
+          <button
+            v-for="m in state.members" :key="m.id" class="user-pick-item"
+            :aria-label="`我是 ${m.name}，开始点菜`" @click="pickUser(m.id)"
+          >
             <span class="avatar avatar-lg" :style="{ background: m.color }">{{ m.avatar }}</span>
-            <span class="user-pick-name">{{ m.name }}</span>
+            <span class="user-pick-name"><b>我是 {{ m.name }}</b><small>开始点菜</small></span>
             <span class="user-pick-arrow">›</span>
           </button>
         </div>

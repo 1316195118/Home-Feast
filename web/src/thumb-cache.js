@@ -22,7 +22,7 @@ export async function invalidateThumbCache() {
   clearThumbCache()
   try {
     if (!('caches' in window)) return
-    const cache = await caches.open('fm-shell-v4')
+    const cache = await caches.open('fm-shell-v5')
     const keys = await cache.keys()
     await Promise.all(keys
       .filter((request) => new URL(request.url).pathname.startsWith('/__thumb-bundle/'))

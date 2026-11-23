@@ -1,4 +1,4 @@
-// 双视口布局审计：横向溢出 / 触控目标尺寸 / 文字截断 / 菜系切换位移。
+// 多视口布局审计：横向溢出 / 44px 触控目标 / 文字截断 / 公开页 / 菜系切换位移。
 // 用法：先启动服务端，再 node scripts/_ui/layout-audit.mjs
 // 可设 BASE=http://10.10.10.251:8090 直接审计线上。
 import { spawn } from 'node:child_process'
@@ -14,12 +14,23 @@ const AUDIT = `(()=>{
   const clippedByAncestor=(el)=>{let p=el.parentElement;while(p&&p!==document.body){const s=getComputedStyle(p);if(s.overflow==='hidden'||s.overflowX==='hidden'||s.overflow==='clip'||s.overflowX==='clip')return true;p=p.parentElement}return false};
   const all=[...document.querySelectorAll('body *')].filter(e=>{const s=getComputedStyle(e);return s.display!=='none'&&s.visibility!=='hidden'&&s.position!=='fixed'});
   const overflow=all.filter(e=>!inScroller(e)&&!clippedByAncestor(e)&&e.getBoundingClientRect().right>vw+1).slice(0,6).map(e=>e.className||e.tagName);
-  const clipped=all.filter(e=>{const s=getComputedStyle(e);return (s.overflow==='hidden'||s.textOverflow==='ellipsis')&&e.scrollWidth>e.clientWidth+2&&e.clientWidth>0}).slice(0,6).map(e=>e.className||e.tagName);
-  const small=[...document.querySelectorAll('.btn,.chip,.tab,.icon-btn')].filter(e=>{const r=e.getBoundingClientRect();return r.width>0&&(r.width<40||r.height<36)}).slice(0,8).map(e=>(e.className||'').trim()+':'+Math.round(e.getBoundingClientRect().width)+'x'+Math.round(e.getBoundingClientRect().height));
+  // 只报告「元素自身直接包含文字」的裁剪。卡片/图片容器为了圆角和阴影常会
+  // overflow:hidden，scrollWidth 略大并不代表文字被截断。
+  const clipped=all.filter(e=>{
+    const s=getComputedStyle(e);
+    const hasDirectText=[...e.childNodes].some(n=>n.nodeType===Node.TEXT_NODE&&n.textContent.trim());
+    return hasDirectText&&!e.querySelector('img,svg,canvas')&&
+      (s.overflow==='hidden'||s.textOverflow==='ellipsis')&&
+      e.scrollWidth>e.clientWidth+2&&e.clientWidth>0;
+  }).slice(0,6).map(e=>(e.className||e.tagName)+'['+e.clientWidth+'/'+e.scrollWidth+']');
+  const small=vw<=768?[...document.querySelectorAll('.btn,.chip,.tab,.icon-btn,button,select,.footer-links a,.legal-toc a')].filter(e=>{const r=e.getBoundingClientRect();const s=getComputedStyle(e);return r.width>0&&s.display!=='none'&&s.visibility!=='hidden'&&!e.disabled&&(r.width<43.5||r.height<43.5)}).slice(0,10).map(e=>{const r=e.getBoundingClientRect(),s=getComputedStyle(e);return (e.className||e.tagName||'').trim()+':'+Math.round(r.width)+'x'+Math.round(r.height)+' minH='+s.minHeight+' h='+s.height}):[];
   const toast=document.querySelector('.toast');
   return JSON.stringify({
     vw, scrollW:de.scrollWidth, gutter:getComputedStyle(de).scrollbarGutter,
     overflow, clipped, small,
+    title:document.title,
+    h1:document.querySelector('h1')?.textContent?.trim()||'',
+    description:document.querySelector('meta[name="description"]')?.content||'',
     toast: toast?{w:Math.round(toast.getBoundingClientRect().width),h:Math.round(toast.getBoundingClientRect().height),lines:Math.round(toast.getBoundingClientRect().height/22)}:null,
   })
 })()`
@@ -86,12 +97,26 @@ async function run(width, height, tag, mobile) {
   console.log(`菜系切换 前=${JSON.stringify(before)} 切换后60ms=${JSON.stringify(mid)} 稳定后=${JSON.stringify(after)}`)
   console.log(`  => 视口宽度变化 ${after.w - before.w}px | 网格起点变化 ${after.top - before.top}px | 卡片位移 ${(mid.cardTop != null && after.cardTop != null) ? after.cardTop - mid.cardTop : 'n/a'}px | 残留动画类 ${after.anim}`)
 
+  // 公开页不依赖成员选择与业务数据，单独直达检查 200/404、SEO 标题和触控尺寸。
+  for (const route of ['/privacy', '/terms', '/#not-a-real-page']) {
+    await cdp('Page.navigate', { url: `${BASE}${route}?v=${Date.now()}` })
+    await sleep(900)
+    const a = JSON.parse(await ev(AUDIT))
+    console.log(`${route.padEnd(19)} 溢出=${a.overflow.length} 截断=${a.clipped.length} 小按钮=${a.small.length} scrollW=${a.scrollW}/${a.vw} h1=${a.h1}`)
+    console.log(`   title=${a.title}`)
+    if (a.overflow.length) console.log('   横向溢出:', a.overflow.join(' | '))
+    if (a.clipped.length) console.log('   文字截断:', a.clipped.join(' | '))
+    if (a.small.length) console.log('   过小控件:', a.small.join(' | '))
+  }
+
   ws.close(); proc.kill()
 }
 
 const DEFAULT_SIZES = [
-  [1280, 900, 'desktop', false],
+  [375, 812, 'phone-375', true],
   [390, 844, 'phone', true],
+  [768, 1024, 'tablet', true],
+  [1280, 900, 'desktop', false],
 ]
 const sizes = process.env.SIZES
   ? process.env.SIZES.split(',').map((item) => {

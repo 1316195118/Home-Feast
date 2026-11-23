@@ -46,7 +46,7 @@ const avoidHits = computed(() => {
       <DishPhoto
         :item="dish" :cuisines="state.cuisines" :dishes="state.dishes"
         :size="imageSize(state.settings.imageMode)" :alt="dish.name"
-        :style="artStyle(dish, state.dishes)" loading="lazy" decoding="async"
+        :style="artStyle(dish, state.dishes)" width="480" height="360" loading="lazy" decoding="async"
       />
       <button class="dish-recipe" title="看做法" aria-label="看做法" @click.stop="$emit('open', dish)"><span class="badge-ico">📖</span></button>
       <button

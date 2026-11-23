@@ -246,6 +246,30 @@ cp -a /opt/family-menu/config /opt/family-menu-config-backup-$(date +%F)
 
 ---
 
+## 上线检查与公开页面
+
+站点已经包含可直接访问的 `/privacy`、`/terms` 和自定义 404 页面；页脚在电脑与手机上都保留入口。公开页不加载 237 道菜的业务数据，即使实例开启访问口令，也能先查看规则说明。
+
+- `/#today`、`/#menu` 等旧直达地址继续可用，未知 hash / 路径会显示暖色 404，而不是静默跳回首页。
+- `/sitemap.xml` 与 `/robots.txt` 由服务端根据当前访问域名动态生成，屏蔽 `/api/`、`/uploads/` 等内部路径；反向代理部署时可通过 `MENU_SITE_URL=https://你的域名` 固定公开绝对地址。
+- HTML 会按当前域名输出 canonical、OG 和 Twitter 预览地址，`web/public/og-cover.png` 为 1200×630 社交图。
+- 安全响应头默认包含 CSP、`nosniff`、同源 frame 限制、Referrer Policy 和最小权限策略。HSTS 只在服务端直接启用 HTTPS 时发送，不会把原本的局域网 HTTP 访问强行跳转。
+- 新菜必须选择菜系，配料行必须写具体用量（例如 `鸡腿肉 800g`）；`适量 / 少许` 会同时被前端和后端拒绝。
+
+可选环境变量见 `.env.example`，真实 `.env` 已被 `.gitignore` 排除。Docker Compose 的 `environment` 仍只放 `TZ`，端口通过 ports 映射，其他配置继续由应用或反向代理负责。
+
+图片与链接维护可重复执行：
+
+```bash
+python scripts/optimize_public_images.py          # 只检查
+python scripts/optimize_public_images.py --write  # 只替换确实变小的 WebP
+python scripts/check_links.py --external          # 检查站内与外部链接
+python scripts/generate_brand_icons.py            # favicon / PWA / Apple 图标
+python scripts/generate_social_preview.py         # 1200×630 OG 图
+```
+
+---
+
 ## 三、不用 Docker，直接跑单文件
 
 ```bash

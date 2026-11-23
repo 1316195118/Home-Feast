@@ -76,6 +76,13 @@ function clearChecked() {
   checked.value = new Set()
   persist()
 }
+const previewAlt = computed(() => {
+  const count = groups.value.reduce(
+    (sum, group) => sum + group.items.filter((item) => checked.value.has(item.text)).length,
+    0,
+  )
+  return `${state.today} 购物清单图，已选 ${count} 项`
+})
 async function copyList() {
   const lines = groups.value.flatMap((g) => g.items.length
     ? [`【${g.key}】`, ...g.items.map(
@@ -98,6 +105,7 @@ async function copyList() {
 
 // 生成清单图：纯 Canvas 自绘，不引入任何图片素材 / 第三方库，可直接保存或发给家人
 const preview = ref('')
+const previewHeight = ref(0)
 let imageCanvas = null
 const FONT = '"PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif'
 
@@ -211,6 +219,7 @@ function buildImage() {
   ctx.font = `15px ${FONT}`
   ctx.fillText('今天也要好好吃饭  ·  家里吃点啥', W / 2, H - 26)
   imageCanvas = canvas
+  previewHeight.value = H * dpr
   preview.value = canvas.toDataURL('image/png')
   actions.toast('清单图已生成，可保存到相册或直接分享', 'success')
 }
@@ -288,7 +297,7 @@ async function saveToAlbum() {
         <button class="btn btn-primary btn-sm" @click="emit('close')">完成</button>
       </div>
       <div v-if="preview" class="shopping-preview">
-        <img :src="preview" alt="购物清单图" />
+        <img :src="preview" :alt="previewAlt" width="1440" :height="previewHeight" loading="lazy" decoding="async" />
         <div class="shopping-preview-hint">📱 长按图片选「保存图片」即可存进相册；或点上面的「保存到相册」直接分享 / 存储</div>
       </div>
     </div>

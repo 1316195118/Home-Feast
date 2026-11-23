@@ -8,6 +8,9 @@ const props = defineProps({
   name: { type: String, required: true },
   size: { type: String, default: 'thumb' }, // thumb | full
   eager: { type: Boolean, default: false },
+  // 食材名通常由相邻文字或按钮标签提供，因此默认空 alt，避免读屏重复。
+  // 若图片是某处唯一的信息来源，调用方可以传入简短描述。
+  alt: { type: String, default: '' },
 })
 
 const broken = ref(false)
@@ -27,7 +30,9 @@ const fallbackShape = computed(() => foodShape(props.name))
     <img
       v-if="source"
       :src="source"
-      alt=""
+      :alt="alt"
+      :width="size === 'full' ? 800 : 320"
+      :height="size === 'full' ? 800 : 320"
       :loading="eager ? 'eager' : 'lazy'"
       decoding="async"
       draggable="false"

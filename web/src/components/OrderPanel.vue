@@ -52,7 +52,8 @@ function togglePick(key) { pick.value = pick.value === key ? '' : key }
           <div v-for="o in g.items" :key="o.id" class="order-panel-row" :class="{ done: o.done }">
             <DishPhoto
               :item="o" :cuisines="state.cuisines" :dishes="state.dishes"
-              :size="imageSize(state.settings.imageMode)" :alt="o.dishName" loading="lazy"
+              :size="imageSize(state.settings.imageMode)" :alt="o.dishName"
+              width="480" height="360" loading="lazy" decoding="async"
             />
             <div class="opr-main">
               <div class="opr-name">{{ o.dishName }}</div>

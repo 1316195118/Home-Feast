@@ -6,12 +6,13 @@
   --surface-soft: #fdf7ee;
   --ink: #3c3229;
   --ink-soft: #62564a;
-  /* 辅助文字：从 #948576 调深到 4.75:1，小字不再糊在米色纸面上（WCAG AA 4.5） */
-  --muted: #7c6b5a;
+  /* 辅助文字在 paper-deep 上也保持 4.5:1 以上，小字不糊在米色纸面上 */
+  --muted: #756454;
   --line: #e9ddca;
   --line-strong: #dccbb2;
 
-  --brand: #c05a3c;
+  /* 白字在番茄砖红上约 5.06:1；基础链接在米白底上也达到 WCAG AA */
+  --brand: #b64f32;
   --brand-dark: #a4462c;
   --brand-soft: #f8e5d9;
   --green: #6d9177;
