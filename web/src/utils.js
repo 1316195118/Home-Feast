@@ -1,5 +1,6 @@
 // 界面共用的小工具，纯函数，方便单独测试。
 import DISH_PHOTOS from './dish-photo-map.json'
+import { ingredientBaseName, isNonPurchasableIngredient, splitIngredientItems } from './ingredient-utils'
 
 // item 可能是菜品 Dish（字段 image/cuisine），也可能是点菜记录 Order（字段 dishImage/dishCuisine）。
 // 传 dishes 时，订单行优先取菜谱里这道菜「当前」的图片，这样改图后今日菜单会同步；
@@ -294,22 +295,13 @@ const UNIT_NORM = {
   个: '个', 只: '个', 枚: '个', 颗: '个', 粒: '个',
   根: '根', 条: '根',
   片: '片', 块: '块', 瓣: '瓣', 段: '段', 把: '把',
+  朵: '朵', 株: '株', 张: '张', 盒: '盒', 袋: '袋',
+  碗: '碗', 碟: '碟', 瓶: '瓶', 包: '包',
   勺: '勺', 汤匙: '勺', 茶匙: '勺', 小勺: '勺', 大勺: '勺',
   罐: '罐', 支: '支', 杯: '杯', 斤: '斤', 两: '两',
 }
-// 食材别名归一：同名不同叫法归并成一条（番茄/西红柿、各类葱蒜姜…），提升聚合准确度
-const INGREDIENT_ALIAS = {
-  西红柿: '番茄', 洋柿子: '番茄',
-  小葱: '葱', 大葱: '葱', 香葱: '葱', 青葱: '葱', 胡葱: '葱',
-  大蒜: '蒜', 蒜头: '蒜',
-  老姜: '姜', 子姜: '姜', 生姜: '姜',
-  柿子椒: '青椒', 菜椒: '青椒',
-  葱头: '洋葱', 玉葱: '洋葱',
-  地瓜: '红薯', 蕃薯: '红薯',
-}
 export function normalizeIngredient(name) {
-  const n = String(name || '').replace(/[0-9０-９]/g, '').trim()
-  return INGREDIENT_ALIAS[n] || n
+  return ingredientBaseName(name)
 }
 
 export function dishServings(dish) {
@@ -343,7 +335,10 @@ export function scaleIngredients(items, factor = 1) {
 // 解析用量：「300g」「2 个」「2~3个」都能识别；范围量取上限；
 // 不能识别为「数字 + 已知单位」（如「少许」「适量」）返回 null，由调用方当原文处理。
 function parseAmount(raw) {
-  const s = String(raw || '').replace(/\s+/g, '').replace(/[~～—–]/g, '~')
+  const s = String(raw || '')
+    .replace(/\s+/g, '')
+    .replace(/(\d)[—–-](\d)/g, '$1~$2')
+    .replace(/[～]/g, '~')
   if (!s) return null
   let numStr, rest
   const range = s.match(/^([0-9.]+)~([0-9.]+)(.+)$/)
@@ -448,11 +443,13 @@ export function shoppingList(orders, dishes) {
   for (const o of orders || []) {
     const d = byId.get(o.dishId)
     if (!d) continue
-    for (const raw of d.ingredients || []) {
+    for (const raw of splitIngredientItems(d.ingredients || [])) {
       const text = String(raw).trim()
       if (!text) continue
       const bits = text.split(/\s+/)
       const key = normalizeIngredient(bits[0]) || text
+      // 清水、冰水、葱姜水等是烹饪介质，不是要去超市购买的东西。
+      if (isNonPurchasableIngredient(key)) continue
       if (!map.has(key)) map.set(key, { text: key, kind: shoppingKind(key), zone: shoppingZone(key), count: 0, from: [], amounts: [] })
       const item = map.get(key)
       item.count++

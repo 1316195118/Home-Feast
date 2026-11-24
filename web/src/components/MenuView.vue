@@ -877,7 +877,7 @@ async function savePantry() {
          页面切换动画的 .page-enter-active 带 transform 会把 fixed 捕获成相对定位 -->
     <Teleport to="body">
     <button
-      v-if="state.tab === 'menu' && !pantryOpen" class="order-fab" type="button"
+      v-if="state.tab === 'menu' && !pantryOpen && !orderPanelOpen" class="order-fab" type="button"
       :aria-label="`查看已下单的 ${todayOrders.length} 道菜`"
       @click="openOrderPanel"
     >

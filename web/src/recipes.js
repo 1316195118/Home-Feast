@@ -1,19 +1,20 @@
 // 家常做法参考：本文件全部文案为本项目自写，不含任何第三方菜谱内容。
 // 数据用「技法模板 + 主料表」紧凑存放，运行时展开成配料与步骤，避免打包上百份重复文本。
 // 用户在编辑器里自己填的 ingredients / steps 优先级最高（见 getRecipe）。
+import { ingredientBaseName, splitIngredientItems } from './ingredient-utils'
 
 const splitMain = (main) => String(main || '').split('、').map((s) => s.trim()).filter(Boolean)
 const first = (main) => splitMain(main)[0] || '主料'
 
-// 主料表里可能已经写了「蒜末」，模板又会补「蒜末 2 瓣」；按关键词归一去重，保留带用量的那条。
+// 主料表里可能已经写了「葱花」，模板又会补「小葱 1 根」；按可食用部位归一去重，
+// 保留带精确用量的那条。洋葱、蒜苗、蒜苔等不会被误归为葱或蒜。
 function dedupe(list) {
-  const norm = (s) => String(s).replace(/[\s\d].*$/, '').trim()
   const out = []
   const pos = new Map()
   for (const raw of list) {
     const s = String(raw).trim()
     if (!s) continue
-    const key = norm(s)
+    const key = ingredientBaseName(s.split(/\s+/)[0])
     if (pos.has(key)) {
       const i = pos.get(key)
       if (s.length > out[i].length) out[i] = s
@@ -23,6 +24,85 @@ function dedupe(list) {
     }
   }
   return out
+}
+
+function hasCompleteSteps(steps) {
+  return Array.isArray(steps)
+    && steps.length >= 4
+    && steps.join('').trim().length >= 80
+    && steps.some((step) => /分钟|小时|秒|℃|成热/.test(step))
+}
+
+const DETAIL_HINTS = [
+  {
+    test: /焯|汆/,
+    text: '水沸后再下锅，快速焯到变色或断生就捞出沥干，避免久煮失去口感。',
+  },
+  {
+    test: /腌/,
+    text: '抓匀后静置 10～15 分钟，让底味先进入食材，下锅前再把多余汁水沥掉。',
+  },
+  {
+    test: /烤/,
+    text: '烤制中途翻面一次，让受热更均匀；表面上色后加盖锡纸，避免外焦里生。',
+  },
+  {
+    test: /蒸/,
+    text: '蒸锅上汽后再计时，按食材厚薄蒸至中心熟透，关火焖 1 分钟再开盖。',
+  },
+  {
+    test: /炸|油锅/,
+    text: '油温烧到六成热再分批下锅，先定型后翻动，出锅前沥净余油。',
+  },
+  {
+    test: /炖|焖|煨|烧|收汁/,
+    text: '烧开后转小火，盖盖保持微沸，中途翻动一两次以免糊底。',
+  },
+  {
+    test: /爆香|炒|煸|煎/,
+    text: '锅烧热后再下油，保持中大火快速翻动，让食材受热均匀且不出太多水。',
+  },
+  {
+    test: /煮/,
+    text: '保持微沸，按包装或食材大小控制时间，煮好后及时捞出以防过软。',
+  },
+  {
+    test: /调汁|调味|淋|拌/,
+    text: '调味料先在小碗里搅匀，再少量多次加入，边尝边调整到咸淡合适。',
+  },
+  {
+    test: /切|改刀|去膜|去虾线|刷净|解冻/,
+    text: '切配时尽量保持大小一致，处理完按用途分开放，后续下锅更容易同步成熟。',
+  },
+]
+
+// 旧数据里很多做法是准确的摘要，但缺少火候和操作细节。
+// 不替换它原本提到的食材，而是在原句后补上同一种烹饪动作的关键判断。
+function expandCompactSteps(name, steps) {
+  const out = steps.map((raw) => {
+    const step = String(raw || '').trim()
+    if (!step) return step
+    const hints = DETAIL_HINTS
+      .filter((rule) => rule.test.test(step))
+      .slice(0, 2)
+      .map((rule) => rule.text)
+    const sentence = /[。！？]$/.test(step) ? step : `${step}。`
+    return `${sentence}${hints.join('')}`
+  })
+  const isCold = /凉拌|拍黄瓜|口水鸡|皮蛋|藕片|鸡爪|酸奶|燕麦|沙拉|凉糕|凉虾|冰粉|汤圆|粽子/.test(name)
+  const finish = isCold
+    ? '装盘前再拌匀一次，冷藏 10 分钟会更入味；现做现吃口感最好。'
+    : '出锅前尝一次咸淡，按配料表中已有的调味料微调；装盘后把汤汁淋匀，趁热上桌。'
+  if (out.length < 5 && out.join('').length < 180) out.push(finish)
+  return out
+}
+
+function buildTemplateSteps(name, entry) {
+  if (!entry) return []
+  const [key, main, extra] = entry
+  const build = T[key] || T.kc
+  const auto = key === 'lb' || key === 'qc' ? { spicy: SPICY.has(name) } : {}
+  return build(main, { ...auto, ...(extra || {}) }).steps
 }
 
 // 每个模板返回 { ingredients, steps }。main 是用「、」分隔的主料字符串。
@@ -490,7 +570,9 @@ export function getRecipe(dish) {
     return cached.recipe
   }
 
-  const customIngredients = Array.isArray(dish?.ingredients) ? dish.ingredients.filter(Boolean) : []
+  const customIngredients = Array.isArray(dish?.ingredients)
+    ? splitIngredientItems(dish.ingredients)
+    : []
   const customSteps = Array.isArray(dish?.steps) ? dish.steps.filter(Boolean) : []
   if (customIngredients.length || customSteps.length) {
     return rememberRecipe(dish, {
@@ -512,16 +594,16 @@ export function getRecipe(dish) {
     // 仅当某道菜尚未补手写步骤时，才回退到 INDEX 技法模板生成的步骤。
     const handSteps = HOWTO_STEPS[name]
     let steps = []
-    if (handSteps && handSteps.length) {
+    if (hasCompleteSteps(handSteps)) {
       steps = handSteps
+    } else if (handSteps?.length) {
+      // 保留这道菜原本准确的步骤，只补火候、时间和操作判断。
+      steps = expandCompactSteps(name, handSteps)
     } else if (entry) {
-      const [key, main, extra] = entry
-      const build = T[key] || T.kc
-      const auto = key === 'lb' || key === 'qc' ? { spicy: SPICY.has(name) } : {}
-      steps = build(main, { ...auto, ...(extra || {}) }).steps
+      steps = buildTemplateSteps(name, entry)
     }
     return rememberRecipe(dish, {
-      ingredients: preciseList.slice(),
+      ingredients: dedupe(splitIngredientItems(preciseList)),
       steps,
       custom: false,
       precise: true,

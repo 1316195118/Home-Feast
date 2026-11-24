@@ -1,31 +1,31 @@
 {
-  "version": "1.0.4.6",
-  "publishedAt": "2026-11-23T22:11:50",
-  "note": "**新增**\n- 首页用餐次自动决定日期：取消顶部日期，餐次入口移入今日菜单；午餐已过再选午餐时显示明日菜单，并同步菜谱点菜日期。\n\n**优化**\n- 手机端菜单动作改为单行横滑，分工区改双列，压缩首屏高度并提升小屏可读性。\n- 已下单悬浮入口仅在菜谱页显示。\n\n**修复**\n- 修复手机端菜单面板被按钮组撑宽、右侧内容被隐藏裁切的问题；320/375/390/768px 布局审计通过。",
+  "version": "1.0.4.7",
+  "publishedAt": "2026-11-24T11:39:36",
+  "note": "修复购物清单水项和葱类重复，兼容旧卷多配料合并行；全量完善237道菜做法，并让已下单抽屉打开时隐藏悬浮入口。",
   "files": {
     "amd64": {
       "name": "menu-linux-amd64",
-      "sha256": "9f7cdd84dc78cb57eec14a422cad00ddab424e6bb871a993c2f94772d18ded7d",
-      "size": 20332704,
+      "sha256": "e9389837bd8da6c30e962fd5e16cda7fd35d684e5b65dabb255ad70fe28bbed2",
+      "size": 20336800,
       "gz": "menu-linux-amd64.gz",
-      "gzSha256": "f1aca5ada568566a4631c600769a0ed8b71da295112a4507ebc7a6a36e667a72",
-      "gzSize": 13962920
+      "gzSha256": "a5f45448f29b6ad04c77d7bd957b49c8c64d3176a06a7c2900a57596401999e0",
+      "gzSize": 13965689
     },
     "arm64": {
       "name": "menu-linux-arm64",
-      "sha256": "dcede11b98608e2476b8f72281a530a971dc42328914b2e6a4490e7802ae3ec6",
+      "sha256": "1f3cbaf13671626c468055c65baaaabd94b779a43ab61027f07d694746bc3d30",
       "size": 19595424,
       "gz": "menu-linux-arm64.gz",
-      "gzSha256": "8bbd3c4a2e6b76f515585c0e65df5fd6765ba1091f4394979833fbdc0d037927",
-      "gzSize": 13548836
+      "gzSha256": "0fd1ddc14c4335edaecc62d7c2cb2ff62ae68adc3aaefe92d1aa7c1fbe5d631d",
+      "gzSize": 13551528
     },
     "armv7": {
       "name": "menu-linux-armv7",
-      "sha256": "38b1378d745af538f162ebada889828135ba3741b8f40490f831ddb11f6c6834",
+      "sha256": "4d9e0969ff68b08f3dc20dc8a3986256f394b7fbb5519d2359433997e1fc6479",
       "size": 19988640,
       "gz": "menu-linux-armv7.gz",
-      "gzSha256": "90f8b0fee0b54444aa950b210417bc583c5cb033b6cda2dc4f950472183e09dc",
-      "gzSize": 13771918
+      "gzSha256": "2b146cccac0314da21c4f060a0fc38b6a0d5664a02c87865f30fa08d7924199e",
+      "gzSize": 13772878
     }
   }
 }
