@@ -3,8 +3,8 @@
 import json, os, urllib.request, ssl
 
 BASE = "http://10.10.10.253:3080/api/uploads/"
-OUTDIR = r"C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_src_images"
-SRC = r"C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_src_dishes.json"
+OUTDIR = r"D:/WorkBuddy AI/家庭点菜系统/scripts/_src_images"
+SRC = r"D:/WorkBuddy AI/家庭点菜系统/scripts/_src_dishes.json"
 COOKIE = "gancook_session=eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiIxMmIxMTZjOS1hZGZhLTQyOTctOGVmOC03YTMwZTdlMjI5ZTgiLCJuYW1lIjoi5b6Q6ICB5aSnIiwiaXNBZG1pbiI6dHJ1ZSwiaWF0IjoxNzkzOTgzNTk5LCJleHAiOjE3OTY1NzU1OTl9.ohFc3RK4b8BtweeHXelSQxHVSiCdITwX-5TJGouQMfg"
 
 os.makedirs(OUTDIR, exist_ok=True)

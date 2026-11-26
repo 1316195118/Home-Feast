@@ -131,9 +131,24 @@ for (const [index, size] of SIZES.entries()) {
     };
   })())`))
 
-  await browser.evaluate(`document.querySelector('.rf-door-left')?.click()`)
+  await browser.evaluate(`document.querySelector('.rf-door-left .rf-door-toggle')?.click()`)
   await sleep(760)
   const doorAfter = await browser.evaluate(`getComputedStyle(document.querySelector('.rf-door-left')).transform`)
+  const doorKeyboard = await browser.evaluate(`(()=>{
+    const button=document.querySelector('.rf-door-left .rf-door-toggle');
+    button?.focus();
+    return { focusable:document.activeElement===button, label:button?.getAttribute('aria-label')||'' };
+  })()`)
+  await browser.evaluate(`document.querySelector('.rf-door-left .rf-door-toggle')?.click()`)
+  await sleep(760)
+
+  const rightBefore = await browser.evaluate(`getComputedStyle(document.querySelector('.rf-door-right')).transform`)
+  await browser.evaluate(`document.querySelector('.rf-door-right .rf-door-toggle')?.click()`)
+  await sleep(760)
+  const rightAfter = await browser.evaluate(`getComputedStyle(document.querySelector('.rf-door-right')).transform`)
+  await browser.evaluate(`document.querySelector('.rf-door-right .rf-door-toggle')?.click()`)
+  await sleep(760)
+
   await browser.evaluate(`document.querySelector('.rf-freezer-face')?.click()`)
   await sleep(560)
   const freezerOpen = await browser.evaluate(`document.querySelector('.rf-freezer')?.classList.contains('open')`)
@@ -144,6 +159,24 @@ for (const [index, size] of SIZES.entries()) {
   const shotPath = path.join(OUT, `fridge-${tag}.png`)
   fs.writeFileSync(shotPath, Buffer.from(screenshot.data, 'base64'))
 
+  const magnetResults = []
+  for (const [selector, expectedHash] of [
+    ['.rf-door-left .rf-magnets button[title="去菜谱点菜"]', '#menu'],
+    ['.rf-door-left .rf-magnets button[title="看购物清单"]', '#today'],
+    ['.rf-door-right button[title="生成一周菜单"]', '#today'],
+  ]) {
+    await browser.evaluate(`location.hash='#menu'`)
+    await sleep(650)
+    await browser.evaluate(`[...document.querySelectorAll('.btn')].find((button)=>button.textContent.includes('冰箱食材'))?.click()`)
+    await sleep(650)
+    await browser.evaluate(`document.querySelector(${JSON.stringify(selector)})?.click()`)
+    await sleep(500)
+    magnetResults.push(await browser.evaluate(`({
+      closed:!document.querySelector('.pantry-modal'),
+      hash:location.hash,
+    })`))
+  }
+
   const threshold = size.width <= 360 ? 280 : size.width <= 600 ? 340 : 420
   const pass = !!before.fridge
     && before.foods > 0
@@ -151,7 +184,13 @@ for (const [index, size] of SIZES.entries()) {
     && !before.overflow
     && before.fridge.w >= threshold
     && doorAfter !== before.doorTransform
+    && doorKeyboard.focusable
+    && /开左门|关左门/.test(doorKeyboard.label)
+    && rightAfter !== rightBefore
     && freezerOpen === false
+    && magnetResults[0]?.closed && magnetResults[0]?.hash === '#menu'
+    && magnetResults[1]?.closed && magnetResults[1]?.hash === '#today'
+    && magnetResults[2]?.closed && magnetResults[2]?.hash === '#today'
     && browser.errors.length === 0
 
   console.log(JSON.stringify({
@@ -167,7 +206,10 @@ for (const [index, size] of SIZES.entries()) {
     overflow: before.overflow,
     doorWidths: before.doorWidths,
     doorChanged: doorAfter !== before.doorTransform,
+    rightDoorChanged: rightAfter !== rightBefore,
+    doorKeyboard,
     freezerClosed: freezerOpen === false,
+    magnets: magnetResults,
     jsErrors: browser.errors.length,
     screenshot: shotPath.replaceAll('\\', '/'),
   }))

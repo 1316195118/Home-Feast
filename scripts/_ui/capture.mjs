@@ -6,7 +6,7 @@ import { killProcessTree } from './browser-cleanup.mjs'
 
 const EDGE = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'
 const BASE = 'http://127.0.0.1:8090'
-const OUT = 'C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_ui/shots'
+const OUT = 'D:/WorkBuddy AI/家庭点菜系统/scripts/_ui/shots'
 fs.mkdirSync(OUT, { recursive: true })
 
 const TABS = ['today', 'menu', 'family', 'history', 'settings']

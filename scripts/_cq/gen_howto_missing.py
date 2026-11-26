@@ -4,7 +4,7 @@
 """
 import json, os
 
-OUT = 'C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/web/src/howto-amounts.json'
+OUT = 'D:/WorkBuddy AI/家庭点菜系统/web/src/howto-amounts.json'
 
 MISSING = {
  "麻婆豆腐": ["嫩豆腐 400g","牛肉末 100g","郫县豆瓣酱 30g","豆豉 10g","蒜末 10g","姜末 5g","葱花 20g","花椒粉 2g","辣椒面 5g","生抽 10ml","料酒 10ml","水淀粉 15g","食用油 30ml","高汤 100ml"],

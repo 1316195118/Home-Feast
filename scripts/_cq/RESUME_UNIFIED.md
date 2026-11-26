@@ -37,9 +37,9 @@
      prompt: <该项 prompt 原文>,
      size: "2048x1536",
      quality: "high",
-     image1: "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+     image1: "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
      input_fidelity: "high",
-     output_dir: "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified_raw/"
+     output_dir: "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified_raw/"
    }})
    ```
    - 不要传 `style` / `background` / `footnote`。

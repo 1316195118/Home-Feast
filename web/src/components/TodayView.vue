@@ -740,13 +740,16 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
         </div>
 
         <div class="suggest-grid" :class="{ 'is-swapping': suggesting }">
-          <div
+          <article
             v-for="(s, si) in suggestions" :key="si" class="suggest-card"
             :class="{ picked: isPicked(s.dish) }"
-            role="button" tabindex="0" :aria-label="`点这道：${s.dish.name}`"
-            :aria-disabled="pending(`order:${s.dish.id}`)"
-            @click="quickOrder(s.dish, $event)" @keydown.enter="quickOrder(s.dish, $event)" @keydown.space.prevent="quickOrder(s.dish, $event)"
           >
+            <button
+              class="suggest-card-open" type="button"
+              :aria-label="`点这道：${s.dish.name}`"
+              :disabled="pending(`order:${s.dish.id}`)"
+              @click="quickOrder(s.dish, $event)"
+            />
             <div class="suggest-photo">
               <DishPhoto
                 :item="s.dish" :cuisines="state.cuisines" :dishes="state.dishes"
@@ -760,7 +763,7 @@ const totalMinutes = computed(() => orders.value.reduce((sum, o) => {
             </div>
             <span class="suggest-name">{{ s.dish.name }}</span>
             <span class="suggest-reasons">{{ s.reasons.join(' · ') }}</span>
-          </div>
+          </article>
         </div>
 
         <div class="snack-strip" v-if="snackPicks.length">

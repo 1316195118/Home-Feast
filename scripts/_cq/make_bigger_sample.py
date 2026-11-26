@@ -13,7 +13,7 @@ import urllib.request
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
-HERE = 'C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/sample_bigger/'
+HERE = 'D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/sample_bigger/'
 BASE = 'http://10.10.10.251:8090'
 SHIFT_Y = -0.027  # 底图固有俯拍偏移补偿，与 ZOOM 无关，沿用定稿值
 

@@ -686,8 +686,7 @@ async function saveRoster() {
   <section class="settings-screen">
     <div class="section-head settings-head">
       <div class="settings-head-copy">
-        <span class="settings-eyebrow"><span aria-hidden="true">✦</span> 家庭控制台</span>
-        <h2 class="section-title">⚙️ 设置</h2>
+        <h1 class="section-title">⚙️ 设置</h1>
         <div class="section-sub">数据都在你自己的设备里：家庭信息、菜系、时段、排班、口令与备份</div>
       </div>
       <span class="settings-local-pill">
@@ -729,15 +728,14 @@ async function saveRoster() {
         <header class="settings-section-head">
           <span class="settings-section-icon" aria-hidden="true">🏠</span>
           <div class="settings-section-copy">
-            <span class="settings-section-kicker">01 · 家庭</span>
-            <h3 id="settings-family-title">先把这个家调成你们习惯的样子</h3>
+            <h3 id="settings-family-title">家庭与日常</h3>
             <p>家里的称呼、吃饭时间和每周分工。</p>
           </div>
           <span class="settings-section-total">3 项设置</span>
         </header>
 
         <div class="settings-section-grid settings-family-grid">
-          <div class="card setting-card setting-card-wide sc-name">
+          <div class="setting-card setting-card-wide sc-name">
         <div class="setting-title">🏠 家的名字</div>
         <p class="setting-desc">显示在左上角，改成你们家习惯的叫法。</p>
         <div class="setting-row setting-row-inline">
@@ -749,7 +747,7 @@ async function saveRoster() {
         </div>
       </div>
 
-          <div class="card setting-card sc-roster">
+          <div class="setting-card sc-roster">
         <div class="setting-title">
           📅 每周掌勺排班
           <span class="tag setting-title-tag" :class="rosterEnabled ? 'tag-green' : ''">
@@ -767,7 +765,7 @@ async function saveRoster() {
         </button>
       </div>
 
-          <div class="card setting-card sc-meals">
+          <div class="setting-card sc-meals">
         <div class="setting-title">🕐 用餐时段</div>
         <p class="setting-desc">
           给每一餐起名字、定收起时间；过了时间，今天这一餐的菜会自动从今日菜单收起，历史记录仍保留。
@@ -792,15 +790,14 @@ async function saveRoster() {
         <header class="settings-section-head">
           <span class="settings-section-icon" aria-hidden="true">🍽️</span>
           <div class="settings-section-copy">
-            <span class="settings-section-kicker">02 · 内容</span>
-            <h3 id="settings-display-title">只留下你们爱看、顺手的内容</h3>
+            <h3 id="settings-display-title">菜谱与显示</h3>
             <p>控制菜谱范围，以及这台设备上的图片和外观。</p>
           </div>
           <span class="settings-section-total">3 项设置</span>
         </header>
 
         <div class="settings-section-grid settings-display-grid">
-          <div class="card setting-card sc-cuisine">
+          <div class="setting-card sc-cuisine">
         <div class="setting-title">🍽️ 菜系显示</div>
         <p class="setting-desc">
           选择菜谱里显示哪些菜系 <HelpTip text="关掉的菜系在分类栏和「全部」里都不再出现，想看回来随时打开；用 ↑↓ 调整它们在顶部的顺序。" />
@@ -812,7 +809,7 @@ async function saveRoster() {
         </button>
       </div>
 
-          <div class="card setting-card sc-image">
+          <div class="setting-card sc-image">
         <div class="setting-title">
           🖼️ 配图清晰度
           <span class="tag setting-title-tag" :class="lanNow ? 'tag-green' : ''">
@@ -832,7 +829,7 @@ async function saveRoster() {
         <div class="setting-meta tiny muted">{{ imageChoices.find((c) => c.key === imageMode)?.hint }}</div>
       </div>
 
-          <div class="card setting-card setting-card-wide sc-theme">
+          <div class="setting-card setting-card-wide sc-theme">
         <div class="setting-title">🌙 外观</div>
         <p class="setting-desc">
           主题与字号只影响这台设备 <HelpTip text="选「自动」会随手机或系统的深浅模式切换；字号三档改的是全站文字大小，两项设置都记在本机，不进备份。" />
@@ -868,15 +865,14 @@ async function saveRoster() {
         <header class="settings-section-head">
           <span class="settings-section-icon" aria-hidden="true">🛡️</span>
           <div class="settings-section-copy">
-            <span class="settings-section-kicker">03 · 安全</span>
-            <h3 id="settings-data-title">守住访问，也守住每一份家常数据</h3>
+            <h3 id="settings-data-title">安全与数据</h3>
             <p>口令与备份放一起，数据位置和同步状态也能随时确认。</p>
           </div>
           <span class="settings-section-total">3 项设置</span>
         </header>
 
         <div class="settings-section-grid settings-data-grid">
-          <div class="card setting-card sc-access">
+          <div class="setting-card sc-access">
         <div class="setting-title">
           🔒 访问口令
           <span class="tag setting-title-tag" :class="state.accessRequired ? 'tag-green' : ''">
@@ -898,7 +894,7 @@ async function saveRoster() {
         </template>
       </div>
 
-          <div class="card setting-card sc-backup">
+          <div class="setting-card sc-backup">
         <div class="setting-title">
           💾 备份与恢复
           <span class="tag setting-title-tag" :class="autoBackup ? 'tag-green' : ''">
@@ -918,7 +914,7 @@ async function saveRoster() {
         </button>
       </div>
 
-          <div class="card setting-card setting-card-wide sc-storage">
+          <div class="setting-card setting-card-wide sc-storage">
         <div class="setting-title">📂 数据与配置在哪</div>
         <p class="setting-desc">
           两个平级目录，换机器挂回去即可 <HelpTip text="data/ 存菜品、成员、计划、口令哈希与图片；config/ 存设置。都是纯文本，不依赖数据库，无需迁移。" />
@@ -947,15 +943,14 @@ async function saveRoster() {
         <header class="settings-section-head">
           <span class="settings-section-icon" aria-hidden="true">⬆️</span>
           <div class="settings-section-copy">
-            <span class="settings-section-kicker">04 · 系统</span>
-            <h3 id="settings-system-title">更新、版本和来源，都集中在这里</h3>
+            <h3 id="settings-system-title">系统与更新</h3>
             <p>检查与安装更新，查看每次改了什么，以及素材授权说明。</p>
           </div>
           <span class="settings-section-total">3 项设置</span>
         </header>
 
         <div class="settings-section-grid settings-system-grid">
-          <div ref="updateCard" class="card setting-card setting-card-wide setting-card-feature sc-update" :class="`is-${updateVisualState}`">
+          <div ref="updateCard" class="setting-card setting-card-wide setting-card-feature sc-update" :class="`is-${updateVisualState}`">
         <span class="update-card-aura" aria-hidden="true"></span>
         <div class="setting-title">
           ⬆️ 在线更新
@@ -1033,7 +1028,7 @@ async function saveRoster() {
         </button>
       </div>
 
-          <div class="card setting-card sc-version">
+          <div class="setting-card sc-version">
         <div class="setting-title">
           📋 版本更新
           <span class="tag setting-title-tag">v{{ state.version }}</span>
@@ -1046,7 +1041,7 @@ async function saveRoster() {
         </button>
       </div>
 
-          <div class="card setting-card sc-about">
+          <div class="setting-card sc-about">
         <div class="setting-title">🎨 关于与版权</div>
         <p class="setting-desc">插画由 AI 生成，文案自写，源码 MIT；未用第三方图库或模板。</p>
         <div class="setting-meta tiny muted">Go + Vue 3 · 单文件服务端 · 数据全在本地</div>

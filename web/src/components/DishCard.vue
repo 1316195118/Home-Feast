@@ -48,18 +48,18 @@ const allergyHits = computed(() => {
       :aria-label="multiPicked ? `取消选择 ${dish.name}` : `选择 ${dish.name}`"
       @click.stop="$emit('multi-toggle', dish)"
     >{{ multiPicked ? '✓' : '' }}</button>
-    <div
-      class="dish-photo" role="button" tabindex="0" :aria-label="`查看 ${dish.name} 的做法`"
-      @click="multi ? $emit('multi-toggle', dish) : $emit('open', dish)"
-      @keydown.enter="multi ? $emit('multi-toggle', dish) : $emit('open', dish)"
-      @keydown.space.prevent="multi ? $emit('multi-toggle', dish) : $emit('open', dish)"
-    >
+    <div class="dish-photo">
       <DishPhoto
         :item="dish" :cuisines="state.cuisines" :dishes="state.dishes"
         :size="imageSize(state.settings.imageMode)" :alt="dish.name" :priority="priority"
         :style="artStyle(dish, state.dishes)" width="480" height="360"
         :loading="priority ? 'eager' : 'lazy'" :fetchpriority="priority ? 'high' : 'auto'"
         decoding="async"
+      />
+      <button
+        class="dish-photo-open" type="button"
+        :aria-label="multi ? (multiPicked ? `取消选择 ${dish.name}` : `选择 ${dish.name}`) : `查看 ${dish.name} 的做法`"
+        @click="multi ? $emit('multi-toggle', dish) : $emit('open', dish)"
       />
       <button class="dish-recipe" title="看做法" aria-label="看做法" @click.stop="$emit('open', dish)"><span class="badge-ico">📖</span></button>
       <button
@@ -72,12 +72,12 @@ const allergyHits = computed(() => {
     </div>
     <div class="dish-body">
       <div class="dish-title">
-        <span class="dish-name-link" @click="$emit('open', dish)" title="点开看做法">
+        <button class="dish-name-link" type="button" @click="$emit('open', dish)" title="点开看做法">
           <template v-for="(part, i) in splitHighlight(dish.name, highlight)" :key="i">
             <mark v-if="part.hit">{{ part.text }}</mark>
             <template v-else>{{ part.text }}</template>
           </template>
-        </span>
+        </button>
         <span class="tiny muted nowrap">{{ cuisineIcon(dish.cuisine, state.cuisines) }} {{ cuisine }}</span>
       </div>
       <p class="dish-desc">{{ dish.desc || '家里人都懂的一道菜' }}</p>

@@ -1,31 +1,31 @@
 {
-  "version": "1.0.4.7",
-  "publishedAt": "2026-11-24T11:39:36",
-  "note": "修复购物清单水项和葱类重复，兼容旧卷多配料合并行；全量完善237道菜做法，并让已下单抽屉打开时隐藏悬浮入口。",
+  "version": "1.0.4.8",
+  "publishedAt": "2026-11-27T01:01:04",
+  "note": "**新增**\n- 设置页按家庭、菜谱、安全、系统四类重新整理，降低卡片层级并强化在线更新重点。\n\n**优化**\n- 菜品卡片、推荐卡和冰箱门改为语义化按钮，补齐键盘焦点、44px 触控区和图片角标操作。\n- 修复深浅主题下顶栏、导航、占位文字和已下单数量角标的可读性问题。\n- 新增无障碍、冰箱交互和多分辨率回归脚本。\n\n**修复**\n- 修复菜品图片覆盖层与角标点击冲突，以及冰箱门、冷冻抽屉和门外磁贴的交互语义。",
   "files": {
     "amd64": {
       "name": "menu-linux-amd64",
-      "sha256": "e9389837bd8da6c30e962fd5e16cda7fd35d684e5b65dabb255ad70fe28bbed2",
+      "sha256": "80e50061974d43a1b2dd9faecf8bf7073c097105a322873612357e3cad443182",
       "size": 20336800,
       "gz": "menu-linux-amd64.gz",
-      "gzSha256": "a5f45448f29b6ad04c77d7bd957b49c8c64d3176a06a7c2900a57596401999e0",
-      "gzSize": 13965689
+      "gzSha256": "ba38c87d576303fda3083ca312ac354e4b02ec7069aff40e83c891d3467bb5a5",
+      "gzSize": 13965087
     },
     "arm64": {
       "name": "menu-linux-arm64",
-      "sha256": "1f3cbaf13671626c468055c65baaaabd94b779a43ab61027f07d694746bc3d30",
+      "sha256": "a4c7deaafb7b5a41a4a58a545a6c6dd4349dc17150c8923f8f7b157b311c06fd",
       "size": 19595424,
       "gz": "menu-linux-arm64.gz",
-      "gzSha256": "0fd1ddc14c4335edaecc62d7c2cb2ff62ae68adc3aaefe92d1aa7c1fbe5d631d",
-      "gzSize": 13551528
+      "gzSha256": "b4272e2c2416677e2ef9e75743a22fa20d9c074c7be9867f8c846b1f0059c054",
+      "gzSize": 13550918
     },
     "armv7": {
       "name": "menu-linux-armv7",
-      "sha256": "4d9e0969ff68b08f3dc20dc8a3986256f394b7fbb5519d2359433997e1fc6479",
+      "sha256": "3bb2839f60d766e9c9984c8f6ac08b82d306fa0d2e89571f9e629d166bb19d0d",
       "size": 19988640,
       "gz": "menu-linux-armv7.gz",
-      "gzSha256": "2b146cccac0314da21c4f060a0fc38b6a0d5664a02c87865f30fa08d7924199e",
-      "gzSize": 13772878
+      "gzSha256": "3b82df53b4353e5676b8623a88f085da69af99b39379a3bffc9c66d39f58ba5a",
+      "gzSize": 13772448
     }
   }
 }

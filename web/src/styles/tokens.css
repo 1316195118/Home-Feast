@@ -6,6 +6,7 @@
   --surface-soft: #fdf7ee;
   --ink: #3c3229;
   --ink-soft: #62564a;
+  --placeholder: #6c5d4e;
   /* 辅助文字在 paper-deep 上也保持 4.5:1 以上，小字不糊在米色纸面上 */
   --muted: #756454;
   --line: #e9ddca;
@@ -71,6 +72,7 @@
   --badge-bg-strong: rgba(255, 253, 249, 0.94);
   --badge-line: rgba(255, 255, 255, 0.62);
   --glass-bg: rgba(255, 253, 249, 0.82);
+  --topbar-bg: rgba(251, 246, 238, 0.97);
   --input-bg: rgba(255, 253, 249, 0.85);
   --on-brand: #fff;
 
@@ -96,6 +98,7 @@ html[data-theme="dark"] {
   --surface-soft: #2e271e;
   --ink: #f3eadc;
   --ink-soft: #d9cbb8;
+  --placeholder: #c8b8a3;
   /* 比浅色版更亮一档：深色卡片上小字（备注/来源/时间）读起来不吃力 */
   --muted: #b5a692;
   --line: #3c342a;
@@ -118,6 +121,7 @@ html[data-theme="dark"] {
   --badge-bg-strong: rgba(52, 44, 34, 0.94);
   --badge-line: rgba(255, 255, 255, 0.2);
   --glass-bg: rgba(38, 32, 25, 0.86);
+  --topbar-bg: rgba(24, 20, 16, 0.97);
   --input-bg: rgba(38, 32, 25, 0.86);
   --on-brand: #20180f;
   color-scheme: dark;

@@ -398,9 +398,12 @@ onUnmounted(() => {
 
           <div
             class="rf-door rf-door-left" :class="{ open: leftOpen }"
-            role="button" tabindex="0" :aria-label="leftOpen ? '关左门' : '开左门'"
-            @click="toggleDoor('left')" @keydown.enter="toggleDoor('left')"
           >
+            <button
+              class="rf-door-toggle" type="button"
+              :aria-label="leftOpen ? '关左门' : '开左门'"
+              @click="toggleDoor('left')"
+            ></button>
             <div class="rf-door-face">
               <span class="rf-handle left"></span>
               <div class="rf-door-bin">
@@ -421,9 +424,12 @@ onUnmounted(() => {
           </div>
           <div
             class="rf-door rf-door-right" :class="{ open: rightOpen }"
-            role="button" tabindex="0" :aria-label="rightOpen ? '关右门' : '开右门'"
-            @click="toggleDoor('right')" @keydown.enter="toggleDoor('right')"
           >
+            <button
+              class="rf-door-toggle" type="button"
+              :aria-label="rightOpen ? '关右门' : '开右门'"
+              @click="toggleDoor('right')"
+            ></button>
             <div class="rf-door-face">
               <span class="rf-handle right"></span>
               <div class="rf-door-badge"><b>今日</b><span>好好吃饭</span></div>
@@ -713,8 +719,16 @@ onUnmounted(() => {
 }
 .rf-door {
   position: absolute; z-index: 20; top: 43px; width: calc(50% + 1px); height: 430px;
-  cursor: pointer; transform-style: preserve-3d;
+  transform-style: preserve-3d;
   transition: transform .7s cubic-bezier(.3,.76,.3,1); outline: none;
+}
+.rf-door-toggle {
+  position: absolute; inset: 0; z-index: 1;
+  width: 100%; height: 100%; padding: 0;
+  border: 0; background: transparent; cursor: pointer;
+}
+.rf-door-toggle:focus-visible {
+  outline: 2px solid var(--brand); outline-offset: 3px; border-radius: 18px;
 }
 .rf-door-left {
   left: 0; transform-origin: left center;
@@ -726,9 +740,9 @@ onUnmounted(() => {
 }
 .rf-door:not(.open).rf-door-left { transform: perspective(1000px) rotateY(0deg); }
 .rf-door:not(.open).rf-door-right { transform: perspective(1000px) rotateY(0deg); }
-.rf-door:focus-visible .rf-door-face { outline: 2px solid var(--brand); outline-offset: 3px; }
 .rf-door-face {
   position: absolute; inset: 0; overflow: hidden;
+  z-index: 2; pointer-events: none;
   border: 2px solid rgba(157,175,168,.68);
   background:
     linear-gradient(118deg, rgba(255,255,255,.86), transparent 26%),
@@ -776,6 +790,7 @@ onUnmounted(() => {
   display: flex; flex-direction: column; gap: 5px;
 }
 .rf-magnet {
+  position: relative; z-index: 3; pointer-events: auto;
   width: 23px; height: 23px; display: grid; place-items: center; padding: 0;
   border: 1px solid rgba(181,149,100,.48); border-radius: 6px;
   background: linear-gradient(150deg, #fff8e6, #efd8b4);

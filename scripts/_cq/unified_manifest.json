@@ -7,8 +7,8 @@
   "cuisineName": "川菜",
   "vessel": "米黄釉陶盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「宫保鸡丁」（川渝菜，麻辣鲜香、红亮油润）：鸡丁滑嫩，糊辣酸甜，花生米香脆。菜品形态与份量真实自然、色泽鲜亮。建议器皿：米黄釉陶盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/001/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/001/"
  },
  {
   "idx": 2,
@@ -18,8 +18,8 @@
   "cuisineName": "川菜",
   "vessel": "黑釉粗陶盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「水煮鱼」（川渝菜，麻辣鲜香、红亮油润）：滚油泼出椒香，鱼片滑爽。菜品形态与份量真实自然、色泽鲜亮。建议器皿：黑釉粗陶盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/002/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/002/"
  },
  {
   "idx": 3,
@@ -29,8 +29,8 @@
   "cuisineName": "川菜",
   "vessel": "粗陶大碗",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「回锅肉」（川渝菜，麻辣鲜香、红亮油润）：灯盏窝卷起，蒜苗与豆瓣酱最合拍。菜品形态与份量真实自然、色泽鲜亮。建议器皿：粗陶大碗（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/003/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/003/"
  },
  {
   "idx": 4,
@@ -40,8 +40,8 @@
   "cuisineName": "川菜",
   "vessel": "白瓷长盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「鱼香肉丝」（川渝菜，麻辣鲜香、红亮油润）：没有鱼却有鱼香，酸甜咸辣平衡。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷长盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/004/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/004/"
  },
  {
   "idx": 5,
@@ -51,8 +51,8 @@
   "cuisineName": "川菜",
   "vessel": "青瓷圆盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「夫妻肺片」（川渝菜，麻辣鲜香、红亮油润）：红油透亮，牛杂薄片越嚼越香。菜品形态与份量真实自然、色泽鲜亮。建议器皿：青瓷圆盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/005/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/005/"
  },
  {
   "idx": 6,
@@ -62,8 +62,8 @@
   "cuisineName": "川菜",
   "vessel": "黑釉粗陶盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「辣子鸡」（川渝菜，麻辣鲜香、红亮油润）：干辣椒堆里找鸡丁，外酥里嫩。菜品形态与份量真实自然、色泽鲜亮。建议器皿：黑釉粗陶盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/006/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/006/"
  },
  {
   "idx": 7,
@@ -73,8 +73,8 @@
   "cuisineName": "川菜",
   "vessel": "米黄釉陶盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「蒜泥白肉」（川渝菜，麻辣鲜香、红亮油润）：薄切五花裹蒜泥红油，肥而不腻。菜品形态与份量真实自然、色泽鲜亮。建议器皿：米黄釉陶盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/007/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/007/"
  },
  {
   "idx": 8,
@@ -84,8 +84,8 @@
   "cuisineName": "川菜",
   "vessel": "青瓷圆盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「开水白菜」（川渝菜，麻辣鲜香、红亮油润）：清汤见功夫，看着素净喝着醇厚。菜品形态与份量真实自然、色泽鲜亮。建议器皿：青瓷圆盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/008/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/008/"
  },
  {
   "idx": 9,
@@ -95,8 +95,8 @@
   "cuisineName": "粤菜",
   "vessel": "白瓷圆盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「白切鸡」（粤菜，清鲜精致）：皮爽肉滑骨带血，蘸姜葱蓉最正。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷圆盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/009/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/009/"
  },
  {
   "idx": 10,
@@ -106,8 +106,8 @@
   "cuisineName": "粤菜",
   "vessel": "竹蒸笼",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「虾饺」（粤菜，清鲜精致）：薄皮透出整只虾，一口一个。菜品形态与份量真实自然、色泽鲜亮。建议器皿：竹蒸笼（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/010/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/010/"
  },
  {
   "idx": 11,
@@ -117,8 +117,8 @@
   "cuisineName": "粤菜",
   "vessel": "青瓷圆盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「深井烧鹅」（粤菜，清鲜精致）：皮脆肉嫩带果木香，斩件上桌。菜品形态与份量真实自然、色泽鲜亮。建议器皿：青瓷圆盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/011/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/011/"
  },
  {
   "idx": 12,
@@ -128,8 +128,8 @@
   "cuisineName": "粤菜",
   "vessel": "竹蒸笼",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「清蒸鲈鱼」（粤菜，清鲜精致）：只靠豉油与葱丝，鲜味自己说话。菜品形态与份量真实自然、色泽鲜亮。建议器皿：竹蒸笼（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/012/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/012/"
  },
  {
   "idx": 13,
@@ -139,8 +139,8 @@
   "cuisineName": "粤菜",
   "vessel": "米黄釉陶盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「蚝油生菜」（粤菜，清鲜精致）：汆烫十秒淋蚝油，脆生生。菜品形态与份量真实自然、色泽鲜亮。建议器皿：米黄釉陶盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/013/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/013/"
  },
  {
   "idx": 14,
@@ -150,8 +150,8 @@
   "cuisineName": "粤菜",
   "vessel": "青瓷圆盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「干炒牛河」（粤菜，清鲜精致）：镬气足，河粉不断不粘。菜品形态与份量真实自然、色泽鲜亮。建议器皿：青瓷圆盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/014/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/014/"
  },
  {
   "idx": 15,
@@ -161,8 +161,8 @@
   "cuisineName": "粤菜",
   "vessel": "白瓷汤碗",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「腊味煲仔饭」（粤菜，清鲜精致）：锅巴焦香，腊味油渗进米饭。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷汤碗（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/015/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/015/"
  },
  {
   "idx": 16,
@@ -172,8 +172,8 @@
   "cuisineName": "粤菜",
   "vessel": "竹蒸笼",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「豉汁蒸排骨」（粤菜，清鲜精致）：豆豉提香，排骨蒸得脱骨。菜品形态与份量真实自然、色泽鲜亮。建议器皿：竹蒸笼（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/016/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/016/"
  },
  {
   "idx": 17,
@@ -183,8 +183,8 @@
   "cuisineName": "鲁菜",
   "vessel": "青瓷圆盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「糖醋鲤鱼」（鲁菜，咸鲜醇厚）：整鱼炸成跃起状，浇琥珀色糖醋汁。菜品形态与份量真实自然、色泽鲜亮。建议器皿：青瓷圆盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/017/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/017/"
  },
  {
   "idx": 18,
@@ -194,8 +194,8 @@
   "cuisineName": "鲁菜",
   "vessel": "白瓷圆盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「九转大肠」（鲁菜，咸鲜醇厚）：酸辣甜咸香层层叠，软韧有嚼劲。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷圆盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/018/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/018/"
  },
  {
   "idx": 19,
@@ -205,8 +205,8 @@
   "cuisineName": "鲁菜",
   "vessel": "米黄釉陶盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「葱烧海参」（鲁菜，咸鲜醇厚）：大葱熬出甜香，海参软糯挂汁。菜品形态与份量真实自然、色泽鲜亮。建议器皿：米黄釉陶盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/019/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/019/"
  },
  {
   "idx": 20,
@@ -216,8 +216,8 @@
   "cuisineName": "鲁菜",
   "vessel": "青瓷圆盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「油焖大虾」（鲁菜，咸鲜醇厚）：虾油焖进壳里，汤汁拌饭一绝。菜品形态与份量真实自然、色泽鲜亮。建议器皿：青瓷圆盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/020/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/020/"
  },
  {
   "idx": 21,
@@ -227,8 +227,8 @@
   "cuisineName": "鲁菜",
   "vessel": "白瓷圆盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「爆炒腰花」（鲁菜，咸鲜醇厚）：大火几秒定生死，脆嫩无腥。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷圆盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/021/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/021/"
  },
  {
   "idx": 22,
@@ -238,8 +238,8 @@
   "cuisineName": "鲁菜",
   "vessel": "米黄釉陶盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「德州扒鸡」（鲁菜，咸鲜醇厚）：酥烂脱骨，凉吃热吃都香。菜品形态与份量真实自然、色泽鲜亮。建议器皿：米黄釉陶盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/022/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/022/"
  },
  {
   "idx": 23,
@@ -249,8 +249,8 @@
   "cuisineName": "鲁菜",
   "vessel": "黑釉砂锅",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「奶汤蒲菜」（鲁菜，咸鲜醇厚）：高汤熬成乳白，蒲菜清甜。菜品形态与份量真实自然、色泽鲜亮。建议器皿：黑釉砂锅（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/023/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/023/"
  },
  {
   "idx": 24,
@@ -260,8 +260,8 @@
   "cuisineName": "苏菜",
   "vessel": "白瓷长盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「松鼠桂鱼」（苏菜，清雅细腻）：花刀炸成松鼠形，茄汁酸甜挂得匀。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷长盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/024/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/024/"
  },
  {
   "idx": 25,
@@ -271,8 +271,8 @@
   "cuisineName": "苏菜",
   "vessel": "陶质汤盅",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「清炖狮子头」（苏菜，清雅细腻）：蟹粉肉圆入口即化，汤清味厚。菜品形态与份量真实自然、色泽鲜亮。建议器皿：陶质汤盅（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/025/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/025/"
  },
  {
   "idx": 26,
@@ -282,8 +282,8 @@
   "cuisineName": "苏菜",
   "vessel": "青瓷圆盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「大煮干丝」（苏菜，清雅细腻）：豆腐干切细丝，吸饱鸡汤的鲜。菜品形态与份量真实自然、色泽鲜亮。建议器皿：青瓷圆盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/026/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/026/"
  },
  {
   "idx": 27,
@@ -293,8 +293,8 @@
   "cuisineName": "苏菜",
   "vessel": "白瓷圆盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「盐水鸭」（苏菜，清雅细腻）：皮白肉嫩，咸香里带一点清甜。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷圆盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/027/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/027/"
  },
  {
   "idx": 28,
@@ -304,8 +304,8 @@
   "cuisineName": "苏菜",
   "vessel": "白瓷长盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「无锡酱排骨」（苏菜，清雅细腻）：酱红油亮，甜口收汁亮如漆。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷长盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/028/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/028/"
  },
  {
   "idx": 29,
@@ -315,8 +315,8 @@
   "cuisineName": "苏菜",
   "vessel": "青瓷圆盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「文思豆腐」（苏菜，清雅细腻）：豆腐切得能穿针，羹汤柔滑。菜品形态与份量真实自然、色泽鲜亮。建议器皿：青瓷圆盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/029/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/029/"
  },
  {
   "idx": 30,
@@ -326,8 +326,8 @@
   "cuisineName": "苏菜",
   "vessel": "白瓷圆盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「三套鸭」（苏菜，清雅细腻）：三禽套炖，汤头一层比一层深。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷圆盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/030/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/030/"
  },
  {
   "idx": 31,
@@ -337,8 +337,8 @@
   "cuisineName": "浙菜",
   "vessel": "米黄釉陶盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「东坡肉」（浙菜，清爽原味）：方肉慢煨到颤巍巍，酒香盖过油腻。菜品形态与份量真实自然、色泽鲜亮。建议器皿：米黄釉陶盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/031/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/031/"
  },
  {
   "idx": 32,
@@ -348,8 +348,8 @@
   "cuisineName": "浙菜",
   "vessel": "白瓷长盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「西湖醋鱼」（浙菜，清爽原味）：醋汁亮而不冲，鱼肉带蟹味。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷长盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/032/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/032/"
  },
  {
   "idx": 33,
@@ -359,8 +359,8 @@
   "cuisineName": "浙菜",
   "vessel": "白瓷圆盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「龙井虾仁」（浙菜，清爽原味）：茶香清雅，虾仁白玉般弹牙。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷圆盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/033/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/033/"
  },
  {
   "idx": 34,
@@ -370,8 +370,8 @@
   "cuisineName": "浙菜",
   "vessel": "陶质汤盅",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「宋嫂鱼羹」（浙菜，清爽原味）：羹里醋香开胃，鲜得温吞。菜品形态与份量真实自然、色泽鲜亮。建议器皿：陶质汤盅（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/034/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/034/"
  },
  {
   "idx": 35,
@@ -381,8 +381,8 @@
   "cuisineName": "浙菜",
   "vessel": "青瓷圆盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「干炸响铃」（浙菜，清爽原味）：豆腐皮卷炸到酥，蘸甜辣酱。菜品形态与份量真实自然、色泽鲜亮。建议器皿：青瓷圆盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/035/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/035/"
  },
  {
   "idx": 36,
@@ -392,8 +392,8 @@
   "cuisineName": "浙菜",
   "vessel": "白瓷汤碗",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「雪菜大汤黄鱼」（浙菜，清爽原味）：雪菜吊出黄鱼的鲜，汤能喝两碗。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷汤碗（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/036/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/036/"
  },
  {
   "idx": 37,
@@ -403,8 +403,8 @@
   "cuisineName": "浙菜",
   "vessel": "米黄釉陶盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「叫花童鸡」（浙菜，清爽原味）：荷叶泥封烤透，撕开满是香气。菜品形态与份量真实自然、色泽鲜亮。建议器皿：米黄釉陶盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/037/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/037/"
  },
  {
   "idx": 38,
@@ -414,8 +414,8 @@
   "cuisineName": "闽菜",
   "vessel": "黑釉砂锅",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「佛跳墙」（闽菜，汤鲜味醇）：十几样山珍海味煨一坛，汤最贵。菜品形态与份量真实自然、色泽鲜亮。建议器皿：黑釉砂锅（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/038/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/038/"
  },
  {
   "idx": 39,
@@ -425,8 +425,8 @@
   "cuisineName": "闽菜",
   "vessel": "白瓷圆盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「荔枝肉」（闽菜，汤鲜味醇）：剞刀卷成荔枝状，酸甜酥嫩。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷圆盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/039/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/039/"
  },
  {
   "idx": 40,
@@ -436,8 +436,8 @@
   "cuisineName": "闽菜",
   "vessel": "白瓷长盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「醉排骨」（闽菜，汤鲜味醇）：炸后趁热浸醉汁，外酥内润。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷长盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/040/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/040/"
  },
  {
   "idx": 41,
@@ -447,8 +447,8 @@
   "cuisineName": "闽菜",
   "vessel": "青瓷圆盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「海蛎煎」（闽菜，汤鲜味醇）：地瓜粉裹海蛎，边缘焦脆心软。菜品形态与份量真实自然、色泽鲜亮。建议器皿：青瓷圆盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/041/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/041/"
  },
  {
   "idx": 42,
@@ -458,8 +458,8 @@
   "cuisineName": "闽菜",
   "vessel": "白瓷深盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「沙茶面」（闽菜，汤鲜味醇）：沙茶汤底浓香，配料随心加。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷深盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/042/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/042/"
  },
  {
   "idx": 43,
@@ -469,8 +469,8 @@
   "cuisineName": "闽菜",
   "vessel": "米黄釉陶盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「扳指干贝」（闽菜，汤鲜味醇）：萝卜挖成扳指状，煨进干贝鲜。菜品形态与份量真实自然、色泽鲜亮。建议器皿：米黄釉陶盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/043/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/043/"
  },
  {
   "idx": 44,
@@ -480,8 +480,8 @@
   "cuisineName": "湘菜",
   "vessel": "黑釉粗陶盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「剁椒鱼头」（湘菜，香辣浓烈）：剁椒铺满鱼头，鲜辣直冲脑门。菜品形态与份量真实自然、色泽鲜亮。建议器皿：黑釉粗陶盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/044/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/044/"
  },
  {
   "idx": 45,
@@ -491,8 +491,8 @@
   "cuisineName": "湘菜",
   "vessel": "白瓷圆盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「辣椒炒肉」（湘菜，香辣浓烈）：螺丝椒与五花肉，锅气就是灵魂。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷圆盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/045/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/045/"
  },
  {
   "idx": 46,
@@ -502,8 +502,8 @@
   "cuisineName": "湘菜",
   "vessel": "米黄釉陶盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「小炒黄牛肉」（湘菜，香辣浓烈）：猛火快炒，牛肉嫩、芹菜脆、小米辣香。菜品形态与份量真实自然、色泽鲜亮。建议器皿：米黄釉陶盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/046/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/046/"
  },
  {
   "idx": 47,
@@ -513,8 +513,8 @@
   "cuisineName": "湘菜",
   "vessel": "青瓷圆盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「湘西外婆菜」（湘菜，香辣浓烈）：腌菜炒肉末，配白饭能吃两碗。菜品形态与份量真实自然、色泽鲜亮。建议器皿：青瓷圆盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/047/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/047/"
  },
  {
   "idx": 48,
@@ -524,8 +524,8 @@
   "cuisineName": "湘菜",
   "vessel": "黑釉粗陶盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「口味虾」（湘菜，香辣浓烈）：紫苏与辣汤煮小龙虾，上手才过瘾。菜品形态与份量真实自然、色泽鲜亮。建议器皿：黑釉粗陶盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/048/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/048/"
  },
  {
   "idx": 49,
@@ -535,8 +535,8 @@
   "cuisineName": "湘菜",
   "vessel": "竹编小屉",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「腊味合蒸」（湘菜，香辣浓烈）：腊鱼腊肉腊鸡一屉蒸，油润咸香。菜品形态与份量真实自然、色泽鲜亮。建议器皿：竹编小屉（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/049/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/049/"
  },
  {
   "idx": 50,
@@ -546,8 +546,8 @@
   "cuisineName": "湘菜",
   "vessel": "白瓷小碟",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「擂辣椒皮蛋」（湘菜，香辣浓烈）：擂钵捣出辣香，凉菜里的下饭王。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷小碟（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/050/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/050/"
  },
  {
   "idx": 51,
@@ -557,8 +557,8 @@
   "cuisineName": "徽菜",
   "vessel": "白瓷圆盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「臭鳜鱼」（徽菜，重油重色）：闻着冲吃着香，蒜瓣肉紧实。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷圆盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/051/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/051/"
  },
  {
   "idx": 52,
@@ -568,8 +568,8 @@
   "cuisineName": "徽菜",
   "vessel": "米黄釉陶盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「油煎毛豆腐」（徽菜，重油重色）：绒毛煎出金壳，蘸辣酱最地道。菜品形态与份量真实自然、色泽鲜亮。建议器皿：米黄釉陶盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/052/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/052/"
  },
  {
   "idx": 53,
@@ -579,8 +579,8 @@
   "cuisineName": "徽菜",
   "vessel": "黑釉砂锅",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「黄山炖鸽」（徽菜，重油重色）：山药与鸽子同炖，清补不燥。菜品形态与份量真实自然、色泽鲜亮。建议器皿：黑釉砂锅（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/053/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/053/"
  },
  {
   "idx": 54,
@@ -590,8 +590,8 @@
   "cuisineName": "徽菜",
   "vessel": "白瓷汤碗",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「火腿炖鞭笋」（徽菜，重油重色）：咸火腿吊出春笋的甜，汤很干净。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷汤碗（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/054/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/054/"
  },
  {
   "idx": 55,
@@ -601,8 +601,8 @@
   "cuisineName": "徽菜",
   "vessel": "陶质汤盅",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「徽州一品锅」（徽菜，重油重色）：一层层码满食材，边煮边吃。菜品形态与份量真实自然、色泽鲜亮。建议器皿：陶质汤盅（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/055/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/055/"
  },
  {
   "idx": 56,
@@ -612,8 +612,8 @@
   "cuisineName": "徽菜",
   "vessel": "青瓷圆盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「刀板香」（徽菜，重油重色）：腌肉蒸后切薄片，咸香透亮。菜品形态与份量真实自然、色泽鲜亮。建议器皿：青瓷圆盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/056/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/056/"
  },
  {
   "idx": 57,
@@ -623,8 +623,8 @@
   "cuisineName": "家常菜",
   "vessel": "白瓷圆盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「番茄炒蛋」（家常菜，朴实家常）：酸甜汤汁拌饭，永远的第一名。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷圆盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/057/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/057/"
  },
  {
   "idx": 58,
@@ -634,8 +634,8 @@
   "cuisineName": "家常菜",
   "vessel": "米黄釉陶盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「青椒土豆丝」（家常菜，朴实家常）：脆爽酸辣，十分钟搞定。菜品形态与份量真实自然、色泽鲜亮。建议器皿：米黄釉陶盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/058/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/058/"
  },
  {
   "idx": 59,
@@ -645,8 +645,8 @@
   "cuisineName": "家常菜",
   "vessel": "青瓷圆盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「可乐鸡翅」（家常菜，朴实家常）：甜咸亮泽，小孩最买账。菜品形态与份量真实自然、色泽鲜亮。建议器皿：青瓷圆盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/059/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/059/"
  },
  {
   "idx": 60,
@@ -656,8 +656,8 @@
   "cuisineName": "家常菜",
   "vessel": "白瓷长盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「红烧排骨」（家常菜，朴实家常）：炒糖色收汁，啃起来才过瘾。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷长盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/060/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/060/"
  },
  {
   "idx": 61,
@@ -667,8 +667,8 @@
   "cuisineName": "家常菜",
   "vessel": "米黄釉陶盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「蒜蓉西兰花」（家常菜，朴实家常）：清脆翠绿，解腻担当。菜品形态与份量真实自然、色泽鲜亮。建议器皿：米黄釉陶盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/061/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/061/"
  },
  {
   "idx": 62,
@@ -678,8 +678,8 @@
   "cuisineName": "家常菜",
   "vessel": "青瓷圆盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「地三鲜」（家常菜，朴实家常）：茄子土豆青椒，油香软糯。菜品形态与份量真实自然、色泽鲜亮。建议器皿：青瓷圆盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/062/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/062/"
  },
  {
   "idx": 63,
@@ -689,8 +689,8 @@
   "cuisineName": "家常菜",
   "vessel": "白瓷圆盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「肉末茄子」（家常菜，朴实家常）：茄子吸饱肉汁，别提多下饭。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷圆盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/063/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/063/"
  },
  {
   "idx": 64,
@@ -700,8 +700,8 @@
   "cuisineName": "家常菜",
   "vessel": "米黄釉陶盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「醋溜白菜」（家常菜，朴实家常）：酸香开胃，冬天最常做。菜品形态与份量真实自然、色泽鲜亮。建议器皿：米黄釉陶盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/064/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/064/"
  },
  {
   "idx": 65,
@@ -711,8 +711,8 @@
   "cuisineName": "家常菜",
   "vessel": "青瓷圆盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「木须肉」（家常菜，朴实家常）：肉片鸡蛋木耳黄瓜，一盘全都有。菜品形态与份量真实自然、色泽鲜亮。建议器皿：青瓷圆盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/065/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/065/"
  },
  {
   "idx": 66,
@@ -722,8 +722,8 @@
   "cuisineName": "家常菜",
   "vessel": "白瓷圆盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「香菇滑鸡」（家常菜，朴实家常）：蒸出来嫩滑，拌汁能淋饭。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷圆盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/066/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/066/"
  },
  {
   "idx": 67,
@@ -733,8 +733,8 @@
   "cuisineName": "家常菜",
   "vessel": "米黄釉陶盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「蚂蚁上树」（家常菜，朴实家常）：粉丝吸满肉末酱，越吃越香。菜品形态与份量真实自然、色泽鲜亮。建议器皿：米黄釉陶盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/067/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/067/"
  },
  {
   "idx": 68,
@@ -744,8 +744,8 @@
   "cuisineName": "汤羹",
   "vessel": "黑釉砂锅",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「冬瓜排骨汤」（汤羹，汤色清亮）：清甜解腻，夏天冬天都合适。菜品形态与份量真实自然、色泽鲜亮。建议器皿：黑釉砂锅（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/068/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/068/"
  },
  {
   "idx": 69,
@@ -755,8 +755,8 @@
   "cuisineName": "汤羹",
   "vessel": "白瓷汤碗",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「番茄蛋汤」（汤羹，汤色清亮）：五分钟一碗，酸香开胃。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷汤碗（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/069/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/069/"
  },
  {
   "idx": 70,
@@ -766,8 +766,8 @@
   "cuisineName": "汤羹",
   "vessel": "陶质汤盅",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「紫菜蛋花汤」（汤羹，汤色清亮）：撒点虾皮，鲜得很轻巧。菜品形态与份量真实自然、色泽鲜亮。建议器皿：陶质汤盅（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/070/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/070/"
  },
  {
   "idx": 71,
@@ -777,8 +777,8 @@
   "cuisineName": "汤羹",
   "vessel": "黑釉砂锅",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「玉米排骨汤」（汤羹，汤色清亮）：玉米的甜熬进汤里，孩子爱喝。菜品形态与份量真实自然、色泽鲜亮。建议器皿：黑釉砂锅（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/071/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/071/"
  },
  {
   "idx": 72,
@@ -788,8 +788,8 @@
   "cuisineName": "汤羹",
   "vessel": "白瓷汤碗",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「酸辣汤」（汤羹，汤色清亮）：胡椒醋香打头，料丝满满。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷汤碗（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/072/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/072/"
  },
  {
   "idx": 73,
@@ -799,8 +799,8 @@
   "cuisineName": "汤羹",
   "vessel": "陶质汤盅",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「菌菇鸡汤」（汤羹，汤色清亮）：干菌泡发同炖，不用多余调料。菜品形态与份量真实自然、色泽鲜亮。建议器皿：陶质汤盅（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/073/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/073/"
  },
  {
   "idx": 74,
@@ -810,8 +810,8 @@
   "cuisineName": "汤羹",
   "vessel": "黑釉砂锅",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「海带豆腐汤」（汤羹，汤色清亮）：清爽低负担，配重口菜刚好。菜品形态与份量真实自然、色泽鲜亮。建议器皿：黑釉砂锅（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/074/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/074/"
  },
  {
   "idx": 75,
@@ -821,8 +821,8 @@
   "cuisineName": "主食",
   "vessel": "白瓷深盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「扬州炒饭」（主食，米面朴实）：粒粒分明，虾仁火腿蛋缺一不可。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷深盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/075/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/075/"
  },
  {
   "idx": 76,
@@ -832,8 +832,8 @@
   "cuisineName": "主食",
   "vessel": "粗陶大碗",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「蛋炒饭」（主食，米面朴实）：隔夜饭最好，葱花最后撒。菜品形态与份量真实自然、色泽鲜亮。建议器皿：粗陶大碗（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/076/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/076/"
  },
  {
   "idx": 77,
@@ -843,8 +843,8 @@
   "cuisineName": "主食",
   "vessel": "青瓷圆碗",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「葱油拌面」（主食，米面朴实）：小火熬葱油，拌开就香。菜品形态与份量真实自然、色泽鲜亮。建议器皿：青瓷圆碗（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/077/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/077/"
  },
  {
   "idx": 78,
@@ -854,8 +854,8 @@
   "cuisineName": "主食",
   "vessel": "白瓷深盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「番茄鸡蛋面」（主食，米面朴实）：汤浓面滑，一个人的完整一餐。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷深盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/078/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/078/"
  },
  {
   "idx": 79,
@@ -865,8 +865,8 @@
   "cuisineName": "主食",
   "vessel": "竹编小屉",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「猪肉白菜饺子」（主食，米面朴实）：全家一起包，热闹比味道重要。菜品形态与份量真实自然、色泽鲜亮。建议器皿：竹编小屉（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/079/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/079/"
  },
  {
   "idx": 80,
@@ -876,8 +876,8 @@
   "cuisineName": "主食",
   "vessel": "竹蒸笼",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「小笼包」（主食，米面朴实）：皮薄汤多，小心第一口。菜品形态与份量真实自然、色泽鲜亮。建议器皿：竹蒸笼（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/080/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/080/"
  },
  {
   "idx": 81,
@@ -887,8 +887,8 @@
   "cuisineName": "主食",
   "vessel": "白瓷圆盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「葱油饼」（主食，米面朴实）：层次分明，外脆内软。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷圆盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/081/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/081/"
  },
  {
   "idx": 82,
@@ -898,8 +898,8 @@
   "cuisineName": "主食",
   "vessel": "粗陶大碗",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「阳春面」（主食，米面朴实）：清汤、猪油、细面，简单到极致。菜品形态与份量真实自然、色泽鲜亮。建议器皿：粗陶大碗（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/082/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/082/"
  },
  {
   "idx": 83,
@@ -909,8 +909,8 @@
   "cuisineName": "凉菜",
   "vessel": "白瓷小碟",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「拍黄瓜」（凉菜，清爽开胃）：拍碎才入味，蒜香醋爽。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷小碟（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/083/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/083/"
  },
  {
   "idx": 84,
@@ -920,8 +920,8 @@
   "cuisineName": "凉菜",
   "vessel": "青花小碟",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「凉拌木耳」（凉菜，清爽开胃）：脆生生，加一点小米辣更妙。菜品形态与份量真实自然、色泽鲜亮。建议器皿：青花小碟（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/084/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/084/"
  },
  {
   "idx": 85,
@@ -931,8 +931,8 @@
   "cuisineName": "凉菜",
   "vessel": "青瓷浅盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「凉拌三丝」（凉菜，清爽开胃）：胡萝卜、黄瓜、粉丝，颜色先赢。菜品形态与份量真实自然、色泽鲜亮。建议器皿：青瓷浅盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/085/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/085/"
  },
  {
   "idx": 86,
@@ -942,8 +942,8 @@
   "cuisineName": "凉菜",
   "vessel": "白瓷小碟",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「皮蛋豆腐」（凉菜，清爽开胃）：一勺酱油一撮葱，五分钟上桌。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷小碟（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/086/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/086/"
  },
  {
   "idx": 87,
@@ -953,8 +953,8 @@
   "cuisineName": "凉菜",
   "vessel": "青花小碟",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「卤牛肉」（凉菜，清爽开胃）：卤透再冷藏，切薄片纹路漂亮。菜品形态与份量真实自然、色泽鲜亮。建议器皿：青花小碟（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/087/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/087/"
  },
  {
   "idx": 88,
@@ -964,8 +964,8 @@
   "cuisineName": "早餐",
   "vessel": "米黄釉陶盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「豆浆油条」（早餐，家常温暖）：现炸油条蘸热豆浆，周末限定。菜品形态与份量真实自然、色泽鲜亮。建议器皿：米黄釉陶盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/088/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/088/"
  },
  {
   "idx": 89,
@@ -975,8 +975,8 @@
   "cuisineName": "早餐",
   "vessel": "青瓷圆盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「鸡蛋灌饼」（早餐，家常温暖）：饼皮鼓起灌蛋，卷生菜刷酱。菜品形态与份量真实自然、色泽鲜亮。建议器皿：青瓷圆盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/089/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/089/"
  },
  {
   "idx": 90,
@@ -986,8 +986,8 @@
   "cuisineName": "早餐",
   "vessel": "白瓷汤碗",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「小米粥」（早餐，家常温暖）：熬出米油，配点小菜刚好。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷汤碗（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/090/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/090/"
  },
  {
   "idx": 91,
@@ -997,8 +997,8 @@
   "cuisineName": "早餐",
   "vessel": "陶质汤盅",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「南瓜粥」（早餐，家常温暖）：自带甜味，不用放糖。菜品形态与份量真实自然、色泽鲜亮。建议器皿：陶质汤盅（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/091/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/091/"
  },
  {
   "idx": 92,
@@ -1008,8 +1008,8 @@
   "cuisineName": "早餐",
   "vessel": "白瓷长盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「葱花鸡蛋饼」（早餐，家常温暖）：面糊一摊，十分钟全家开饭。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷长盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/092/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/092/"
  },
  {
   "idx": 93,
@@ -1019,8 +1019,8 @@
   "cuisineName": "早餐",
   "vessel": "青瓷小碗",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「牛奶燕麦杯」（早餐，家常温暖）：隔夜泡好，早上加水果就能吃。菜品形态与份量真实自然、色泽鲜亮。建议器皿：青瓷小碗（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/093/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/093/"
  },
  {
   "idx": 94,
@@ -1030,8 +1030,8 @@
   "cuisineName": "甜品饮品",
   "vessel": "陶质汤盅",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「银耳莲子羹」（甜品饮品，清甜精致）：熬到出胶，温热或冰镇都好。菜品形态与份量真实自然、色泽鲜亮。建议器皿：陶质汤盅（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/094/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/094/"
  },
  {
   "idx": 95,
@@ -1041,8 +1041,8 @@
   "cuisineName": "甜品饮品",
   "vessel": "白瓷小盅",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「红豆沙」（甜品饮品，清甜精致）：豆沙绵密，加陈皮更香。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷小盅（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/095/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/095/"
  },
  {
   "idx": 96,
@@ -1052,8 +1052,8 @@
   "cuisineName": "甜品饮品",
   "vessel": "青瓷小碗",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「双皮奶」（甜品饮品，清甜精致）：奶皮厚实，入口嫩得像布丁。菜品形态与份量真实自然、色泽鲜亮。建议器皿：青瓷小碗（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/096/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/096/"
  },
  {
   "idx": 97,
@@ -1063,8 +1063,8 @@
   "cuisineName": "甜品饮品",
   "vessel": "陶质汤盅",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「绿豆汤」（甜品饮品，清甜精致）：夏天冰镇一碗，解暑又清爽。菜品形态与份量真实自然、色泽鲜亮。建议器皿：陶质汤盅（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/097/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/097/"
  },
  {
   "idx": 98,
@@ -1074,8 +1074,8 @@
   "cuisineName": "甜品饮品",
   "vessel": "白瓷小盅",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「桂花酒酿圆子」（甜品饮品，清甜精致）：桂花香配小圆子，甜得克制。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷小盅（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/098/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/098/"
  },
  {
   "idx": 99,
@@ -1085,8 +1085,8 @@
   "cuisineName": "甜品饮品",
   "vessel": "青瓷小碗",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「水果酸奶杯」（甜品饮品，清甜精致）：切点当季水果，随手一层层叠。菜品形态与份量真实自然、色泽鲜亮。建议器皿：青瓷小碗（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/099/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/099/"
  },
  {
   "idx": 100,
@@ -1096,8 +1096,8 @@
   "cuisineName": "西餐烘焙",
   "vessel": "粗陶大碗",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「番茄肉酱意面」（西餐烘焙，暖色调）：肉酱熬久一点，拌面才挂得住。菜品形态与份量真实自然、色泽鲜亮。建议器皿：粗陶大碗（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/100/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/100/"
  },
  {
   "idx": 101,
@@ -1107,8 +1107,8 @@
   "cuisineName": "西餐烘焙",
   "vessel": "木质圆板",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「黑椒牛排」（西餐烘焙，暖色调）：锅要够热，静置五分钟再切。菜品形态与份量真实自然、色泽鲜亮。建议器皿：木质圆板（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/101/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/101/"
  },
  {
   "idx": 102,
@@ -1118,8 +1118,8 @@
   "cuisineName": "西餐烘焙",
   "vessel": "白瓷深盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「芝士焗饭」（西餐烘焙，暖色调）：剩饭加芝士烤到拉丝。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷深盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/102/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/102/"
  },
  {
   "idx": 103,
@@ -1129,8 +1129,8 @@
   "cuisineName": "西餐烘焙",
   "vessel": "木质圆板",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「凯撒沙拉」（西餐烘焙，暖色调）：生菜要脆，面包丁要香。菜品形态与份量真实自然、色泽鲜亮。建议器皿：木质圆板（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/103/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/103/"
  },
  {
   "idx": 104,
@@ -1140,8 +1140,8 @@
   "cuisineName": "西餐烘焙",
   "vessel": "白瓷长盘",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「香烤鸡翅」（西餐烘焙，暖色调）：腌一夜再烤，外皮焦香。菜品形态与份量真实自然、色泽鲜亮。建议器皿：白瓷长盘（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/104/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/104/"
  },
  {
   "idx": 105,
@@ -1151,7 +1151,7 @@
   "cuisineName": "西餐烘焙",
   "vessel": "木质圆板",
   "prompt": "以参考图为底做菜品摄影：严格保留参考图的浅色原木木纹桌面、同一俯拍45度角度、同一柔和自然侧光与明亮不过曝的色调，以及主体位于画面正中央、四周上下左右等距留白的构图。画面中央的器皿里盛着一道「玛格丽特披萨」（西餐烘焙，暖色调）：番茄、罗勒、马苏里拉，三样就够。菜品形态与份量真实自然、色泽鲜亮。建议器皿：木质圆板（完整可见、居中，可以与参考图的白瓷盘不同）。菜品必须完全盛在器皿内，不溢出、不散到桌面上、不要出现半截器皿。真实食物摄影，高细节，柔和景深，画面清爽不过曝，除右下角平台标识外无任何文字、logo。",
-  "base": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
-  "outdir": "C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/105/"
+  "base": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/base_unified/plate.png",
+  "outdir": "D:/WorkBuddy AI/家庭点菜系统/scripts/_cq/unified/105/"
  }
 ]

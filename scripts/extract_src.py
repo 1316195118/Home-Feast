@@ -4,8 +4,8 @@
 # 必须先把所有分片的内层字符串按序拼接成完整 payload，再提取菜品对象。
 import json, re, os
 
-HTML = r"C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_src_dishes.html"
-OUT = r"C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_src_dishes.json"
+HTML = r"D:/WorkBuddy AI/家庭点菜系统/scripts/_src_dishes.html"
+OUT = r"D:/WorkBuddy AI/家庭点菜系统/scripts/_src_dishes.json"
 
 # 取每个 push 分片的内层字符串（裸引号开头/结尾，内层引号都是 \" 转义）
 CHUNK = re.compile(r'self\.__next_f\.push\(\[\d+,\s*"(.*?)(?<!\\)"\]\)', re.DOTALL)

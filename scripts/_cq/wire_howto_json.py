@@ -3,7 +3,7 @@
 使 howto-amounts.json（已含全部 109 道）成为菜谱克数的唯一来源。"""
 import io, os, re
 
-SRC = 'C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/web/src/recipes.js'
+SRC = 'D:/WorkBuddy AI/家庭点菜系统/web/src/recipes.js'
 txt = open(SRC, encoding='utf-8').read()
 
 # 起点：HowToCook 注释行；终点：内联 HOWTO 对象的闭合 }

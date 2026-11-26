@@ -6,7 +6,7 @@
 import os, re, json, glob
 
 SRC = 'C:/Users/Administrator/AppData/Local/Temp/howto-md/'
-OUT = 'C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/web/src/howto-amounts.json'
+OUT = 'D:/WorkBuddy AI/家庭点菜系统/web/src/howto-amounts.json'
 
 # 用量单位：优先长的，避免 g 抢先匹配 kg
 UNIT = r'(?:kg|克|毫升|ml|升|L|斤|两|勺|小勺|大勺|汤匙|茶匙|杯|碗|个|只|条|根|片|瓣|块|棵|颗|粒|把|支|袋|盒|头|朵|尾|张|串|份|滴|撮| handful)'

@@ -7,7 +7,7 @@ import { createRequire } from 'node:module'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { killProcessTree } from './browser-cleanup.mjs'
 
-const ROOT = 'C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/'
+const ROOT = 'D:/WorkBuddy AI/家庭点菜系统/'
 const BASE = process.env.BASE || 'http://127.0.0.1:8090'
 const EDGE = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'
 const stamp = Date.now()

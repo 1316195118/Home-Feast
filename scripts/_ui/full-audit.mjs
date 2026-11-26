@@ -6,7 +6,7 @@ import fs from 'node:fs'
 import { killProcessTree } from './browser-cleanup.mjs'
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8090'
-const OUT = 'C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/scripts/_ui/audit-report.json'
+const OUT = 'D:/WorkBuddy AI/家庭点菜系统/scripts/_ui/audit-report.json'
 const TABS = ['today', 'menu', 'family', 'history', 'settings']
 
 const COLLECT = `JSON.stringify((()=>{

@@ -117,8 +117,8 @@ try {
   check('菜谱多选入口可用', await clickText('button', '多选'))
   await sleep(200)
   const picked = await evaluate(`(()=>{
-    const photos=[...document.querySelectorAll('.dish-card.is-multi .dish-photo')].slice(0,2);
-    photos.forEach((photo)=>photo.click()); return photos.length;
+    const pickers=[...document.querySelectorAll('.dish-card.is-multi .dish-photo-open')].slice(0,2);
+    pickers.forEach((picker)=>picker.click()); return pickers.length;
   })()`)
   check('手机可选中多道菜', picked === 2, `${picked} 道`)
   await sleep(250)

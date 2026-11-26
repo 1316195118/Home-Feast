@@ -14,7 +14,7 @@ import urllib.request
 from PIL import Image
 from normalize import normalize_dish
 
-ROOT = 'C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/'
+ROOT = 'D:/WorkBuddy AI/家庭点菜系统/'
 BASE = 'http://10.10.10.251:8090'
 GEN = ROOT + 'scripts/_cq/gen2/'
 OUT = ROOT + 'scripts/_cq/out2/'

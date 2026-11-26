@@ -12,7 +12,7 @@ import glob
 import os
 import sys
 
-ROOT = 'C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/'
+ROOT = 'D:/WorkBuddy AI/家庭点菜系统/'
 RAW = ROOT + 'scripts/_cq/unified_raw/'
 DST = ROOT + 'scripts/_cq/unified/'
 DRY = '--dry' in sys.argv

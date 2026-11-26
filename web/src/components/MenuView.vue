@@ -769,7 +769,7 @@ async function savePantry() {
   <section>
     <div class="section-head menu-head">
       <div>
-        <h2 class="section-title">📖 家里的菜谱</h2>
+        <h1 class="section-title">📖 家里的菜谱</h1>
         <div class="section-sub">{{ state.dishes.length }} 道菜 · {{ state.cuisines.length }} 个菜系，菜品、用量和配图都能自己改</div>
         <div class="menu-order-context"><span aria-hidden="true">🍚</span> 正在为 <b>{{ orderContext }}</b> 点菜</div>
       </div>

@@ -7,7 +7,7 @@
 import json
 import os
 
-ROOT = 'C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/'
+ROOT = 'D:/WorkBuddy AI/家庭点菜系统/'
 ROWS = ROOT + 'scripts/_cq/dishes_remaining.json'
 DATA = ROOT + 'scripts/_cq/unified_dishes.json'  # 线上 /api/dishes 缓存，按菜名匹配 desc
 BASE_IMG = ROOT + 'scripts/_cq/base_unified/plate.png'

@@ -182,7 +182,7 @@ async function savePin() {
   <section>
     <div class="section-head">
       <div>
-        <h2 class="section-title">👨‍👩‍👧 家里的人</h2>
+        <h1 class="section-title">👨‍👩‍👧 家里的人</h1>
         <div class="section-sub">每人一个身份，点菜、掌勺都算得清；不用注册、不填手机号</div>
       </div>
       <button class="btn btn-primary" @click="openAdd">＋ 添加成员</button>

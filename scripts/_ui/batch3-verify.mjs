@@ -4,7 +4,7 @@ import { setTimeout as sleep } from 'node:timers/promises'
 import { pathToFileURL } from 'node:url'
 import { killProcessTree } from './browser-cleanup.mjs'
 
-const ROOT = 'C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/'
+const ROOT = 'D:/WorkBuddy AI/家庭点菜系统/'
 const BASE = process.env.BASE || 'http://127.0.0.1:8090'
 
 async function api(method, path, body) {

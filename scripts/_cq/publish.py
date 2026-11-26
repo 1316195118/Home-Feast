@@ -8,7 +8,7 @@ from PIL import Image
 from normalize import normalize_dish
 
 BASE = 'http://10.10.10.251:8090'
-ROOT = 'C:/Users/Administrator/WorkBuddy AI/家庭点菜系统/'
+ROOT = 'D:/WorkBuddy AI/家庭点菜系统/'
 GEN = ROOT + 'scripts/_cq/gen/'
 OUT = ROOT + 'scripts/_cq/out/'
 STATE = ROOT + 'scripts/_cq/published.json'
