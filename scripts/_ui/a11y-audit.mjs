@@ -159,15 +159,19 @@ async function auditViewport(width, height, label, mobile) {
     await sleep(3000)
     if (THEME) {
       await evaluate(`document.documentElement.dataset.theme=${JSON.stringify(THEME)}`)
-      await sleep(150)
+      // 等待主题色过渡完成，避免在过渡中间取样造成伪低对比。
+      await sleep(520)
     }
     await evaluate(`document.querySelector('.user-pick-item')?.click()`)
-    await sleep(450)
+    for (let i = 0; i < 35; i++) {
+      if (await evaluate(`!!document.querySelector('main h1')`)) break
+      await sleep(100)
+    }
 
     console.log(`\n=== ${label} ${width}x${height}${THEME ? ` ${THEME}` : ''} ===`)
     for (const tab of TABS) {
       await evaluate(`window.location.hash='#${tab}'`)
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < 35; i++) {
         if (await evaluate(`!document.querySelector('.page-enter-active,.page-leave-active') && !!document.querySelector('main h1')`)) break
         await sleep(100)
       }

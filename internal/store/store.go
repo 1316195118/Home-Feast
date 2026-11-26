@@ -288,8 +288,8 @@ func (s *Store) repair() {
 				p.MealDuties = make(map[string]MealDuty, len(slots))
 				for _, m := range slots {
 					p.MealDuties[m.Key] = MealDuty{
-						ChefIDs:       append([]string(nil), p.ChefIDs...),
-						DishwasherIDs: append([]string(nil), p.DishwasherIDs...),
+						ChefIDs:       cloneStrings(p.ChefIDs),
+						DishwasherIDs: cloneStrings(p.DishwasherIDs),
 					}
 				}
 				changedPlans = true
@@ -717,10 +717,10 @@ func (s *Store) UpdateMember(id string, p MemberPatch) (Member, error) {
 		m.Color = *p.Color
 	}
 	if p.Avoid != nil {
-		m.Avoid = append([]string(nil), (*p.Avoid)...)
+		m.Avoid = cloneStrings(*p.Avoid)
 	}
 	if p.Allergies != nil {
-		m.Allergies = append([]string(nil), (*p.Allergies)...)
+		m.Allergies = cloneStrings(*p.Allergies)
 	}
 	next[idx] = m
 	if err := s.writeJSON(membersFile, next); err != nil {
@@ -923,10 +923,10 @@ func (s *Store) SavePlan(date string, patch PlanPatch) (Plan, error) {
 		}
 		md := p.MealDuties[patch.DutyMeal]
 		if patch.ChefIDs != nil {
-			md.ChefIDs = append([]string(nil), (*patch.ChefIDs)...)
+			md.ChefIDs = cloneStrings(*patch.ChefIDs)
 		}
 		if patch.DishwasherIDs != nil {
-			md.DishwasherIDs = append([]string(nil), (*patch.DishwasherIDs)...)
+			md.DishwasherIDs = cloneStrings(*patch.DishwasherIDs)
 		}
 		if len(md.ChefIDs) == 0 && len(md.DishwasherIDs) == 0 {
 			delete(p.MealDuties, patch.DutyMeal) // 空名单直接删掉，别留空对象
@@ -943,7 +943,7 @@ func (s *Store) SavePlan(date string, patch PlanPatch) (Plan, error) {
 	}
 
 	if patch.ChefIDs != nil {
-		p.ChefIDs = append([]string(nil), (*patch.ChefIDs)...)
+		p.ChefIDs = cloneStrings(*patch.ChefIDs)
 		// 先清空单值字段：否则 NormalizeDuty 看到「数组空 + 单值有值」会把旧人补回来，
 		// 表现为「取消认领」无效。
 		p.ChefID = ""
@@ -956,7 +956,7 @@ func (s *Store) SavePlan(date string, patch PlanPatch) (Plan, error) {
 		}
 	}
 	if patch.DishwasherIDs != nil {
-		p.DishwasherIDs = append([]string(nil), (*patch.DishwasherIDs)...)
+		p.DishwasherIDs = cloneStrings(*patch.DishwasherIDs)
 		p.DishwasherID = ""
 	} else if patch.DishwasherID != nil {
 		if *patch.DishwasherID == "" {
@@ -981,7 +981,7 @@ func (s *Store) SavePlan(date string, patch PlanPatch) (Plan, error) {
 		p.DicePhase = *patch.DicePhase
 	}
 	if patch.PKShown != nil {
-		p.PKShown = append([]string(nil), (*patch.PKShown)...)
+		p.PKShown = cloneStrings(*patch.PKShown)
 	}
 	p.UpdatedAt = now()
 	if err := s.persistPlans(p); err != nil {

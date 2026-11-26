@@ -1,31 +1,31 @@
 {
-  "version": "1.0.4.8",
-  "publishedAt": "2026-11-27T01:01:04",
-  "note": "**新增**\n- 设置页按家庭、菜谱、安全、系统四类重新整理，降低卡片层级并强化在线更新重点。\n\n**优化**\n- 菜品卡片、推荐卡和冰箱门改为语义化按钮，补齐键盘焦点、44px 触控区和图片角标操作。\n- 修复深浅主题下顶栏、导航、占位文字和已下单数量角标的可读性问题。\n- 新增无障碍、冰箱交互和多分辨率回归脚本。\n\n**修复**\n- 修复菜品图片覆盖层与角标点击冲突，以及冰箱门、冷冻抽屉和门外磁贴的交互语义。",
+  "version": "1.0.4.9",
+  "publishedAt": "2026-11-27T01:43:58",
+  "note": "**修复**\n- 修复撤掉最后一道菜后菜单、统计和首页封面不实时更新；空数组统一返回 []，保存失败时自动回滚。\n- 恢复本地缺失的 225 张菜品原图和缩略图，并验证 32 并发图片请求 0 失败。\n\n**优化**\n- 压缩手机菜谱首屏，搜索、结果数和筛选改为紧凑单行横滑。\n- 家庭周报无记录时改为轻量空状态，提升已完成、已购买和隐藏菜系的可读性。",
   "files": {
     "amd64": {
       "name": "menu-linux-amd64",
-      "sha256": "80e50061974d43a1b2dd9faecf8bf7073c097105a322873612357e3cad443182",
-      "size": 20336800,
+      "sha256": "96530265221c8869bfd89fa52bc759b7166c4bba33d89fece5c79e50e847d175",
+      "size": 20328608,
       "gz": "menu-linux-amd64.gz",
-      "gzSha256": "ba38c87d576303fda3083ca312ac354e4b02ec7069aff40e83c891d3467bb5a5",
-      "gzSize": 13965087
+      "gzSha256": "736d1f11b39f4135181fee0a7627e6eab11dc6677ac82f99ca9527808fa5791f",
+      "gzSize": 13962350
     },
     "arm64": {
       "name": "menu-linux-arm64",
-      "sha256": "a4c7deaafb7b5a41a4a58a545a6c6dd4349dc17150c8923f8f7b157b311c06fd",
+      "sha256": "4dd361c8fa0dc3a2be43e6dec051515e3d033d1fc77701b88e96d6a0a41b2cb7",
       "size": 19595424,
       "gz": "menu-linux-arm64.gz",
-      "gzSha256": "b4272e2c2416677e2ef9e75743a22fa20d9c074c7be9867f8c846b1f0059c054",
-      "gzSize": 13550918
+      "gzSha256": "2c9ea5a6fbca8fcfc854a613a9052ff333d7d9aafa0c520c97a946979e1d77cc",
+      "gzSize": 13550514
     },
     "armv7": {
       "name": "menu-linux-armv7",
-      "sha256": "3bb2839f60d766e9c9984c8f6ac08b82d306fa0d2e89571f9e629d166bb19d0d",
+      "sha256": "4ab155d746f986d5a5ba67d0144da7fce0c9298e4b574e9199564a225d1a9593",
       "size": 19988640,
       "gz": "menu-linux-armv7.gz",
-      "gzSha256": "3b82df53b4353e5676b8623a88f085da69af99b39379a3bffc9c66d39f58ba5a",
-      "gzSize": 13772448
+      "gzSha256": "356b1b15207e560603bdc75ecaab69ef025d8aa4c3a11603c4b23edd74a6ac9e",
+      "gzSize": 13771352
     }
   }
 }

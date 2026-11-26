@@ -75,59 +75,72 @@ const insights = computed(() => {
 </script>
 
 <template>
-  <section class="panel taste-report">
+  <section class="panel taste-report" :class="{ 'is-empty': !orders.length }">
     <div class="taste-head">
       <div>
         <div class="panel-title">📊 家庭口味周报</div>
-        <div class="section-sub">最近 7 天 · {{ orders.length }} 次点菜 · {{ uniqueDishCount }} 道不同的菜</div>
-      </div>
-      <span class="taste-repeat">重复率 {{ repeatRate }}%</span>
-    </div>
-
-    <div class="taste-kpis">
-      <div><b>{{ orders.length }}</b><span>点菜次数</span></div>
-      <div><b>{{ uniqueDishCount }}</b><span>菜品花样</span></div>
-      <div><b>{{ memberRows.filter((row) => row.count > 0).length }}</b><span>参与人数</span></div>
-      <div><b>{{ topRated.length }}</b><span>好评菜</span></div>
-    </div>
-
-    <div class="taste-body">
-      <div class="taste-cats">
-        <div v-for="row in categoryRows" :key="row.key" class="taste-cat">
-          <span class="taste-cat-name">{{ row.label }}</span>
-          <span class="taste-cat-track"><i :style="{ width: `${row.percent}%`, background: row.color }"></i></span>
-          <span class="taste-cat-count">{{ row.count }} · {{ row.percent }}%</span>
+        <div class="section-sub">
+          {{ orders.length ? `最近 7 天 · ${orders.length} 次点菜 · ${uniqueDishCount} 道不同的菜` : '最近 7 天还没有点菜记录，点过几顿后这里会自动汇总。' }}
         </div>
       </div>
-      <div class="taste-rank">
-        <div class="taste-subhead">谁最常点</div>
-        <div v-for="row in memberRows" :key="row.member.id" class="taste-member">
-          <span>{{ row.member.avatar }} {{ row.member.name }}</span>
-          <b>{{ row.count }} 道</b>
-        </div>
-      </div>
+      <span v-if="orders.length" class="taste-repeat">重复率 {{ repeatRate }}%</span>
     </div>
 
-    <div class="taste-columns">
-      <div>
-        <div class="taste-subhead">最近重复最多</div>
-        <div v-if="repeated.length" class="taste-tags">
-          <span v-for="[name, count] in repeated" :key="name" class="tag">{{ name }} ×{{ count }}</span>
-        </div>
-        <p v-else class="tiny muted">最近没有重复点同一道菜。</p>
+    <div v-if="!orders.length" class="taste-empty">
+      <span class="taste-empty-icon" aria-hidden="true">🥢</span>
+      <div class="taste-empty-copy">
+        <b>周报还在等第一顿饭</b>
+        <span>点几道菜、标一次上桌，下周就能看到全家口味、荤素搭配和重复度。</span>
       </div>
-      <div>
-        <div class="taste-subhead">全家好评菜</div>
-        <div v-if="topRated.length" class="taste-tags">
-          <span v-for="dish in topRated" :key="dish.id" class="tag">{{ dish.rating === 3 ? '⭐' : '👍' }} {{ dish.name }}</span>
-        </div>
-        <p v-else class="tiny muted">还没有「好吃 / 超赞」评价。</p>
-      </div>
+      <button class="btn btn-soft btn-sm" type="button" @click="state.tab = 'menu'">去点菜</button>
     </div>
 
-    <div class="taste-insights">
-      <div class="taste-subhead">下周建议</div>
-      <p v-for="(text, index) in insights" :key="index">💡 {{ text }}</p>
-    </div>
+    <template v-else>
+      <div class="taste-kpis">
+        <div><b>{{ orders.length }}</b><span>点菜次数</span></div>
+        <div><b>{{ uniqueDishCount }}</b><span>菜品花样</span></div>
+        <div><b>{{ memberRows.filter((row) => row.count > 0).length }}</b><span>参与人数</span></div>
+        <div><b>{{ topRated.length }}</b><span>好评菜</span></div>
+      </div>
+
+      <div class="taste-body">
+        <div class="taste-cats">
+          <div v-for="row in categoryRows" :key="row.key" class="taste-cat">
+            <span class="taste-cat-name">{{ row.label }}</span>
+            <span class="taste-cat-track"><i :style="{ width: `${row.percent}%`, background: row.color }"></i></span>
+            <span class="taste-cat-count">{{ row.count }} · {{ row.percent }}%</span>
+          </div>
+        </div>
+        <div class="taste-rank">
+          <div class="taste-subhead">谁最常点</div>
+          <div v-for="row in memberRows" :key="row.member.id" class="taste-member">
+            <span>{{ row.member.avatar }} {{ row.member.name }}</span>
+            <b>{{ row.count }} 道</b>
+          </div>
+        </div>
+      </div>
+
+      <div class="taste-columns">
+        <div>
+          <div class="taste-subhead">最近重复最多</div>
+          <div v-if="repeated.length" class="taste-tags">
+            <span v-for="[name, count] in repeated" :key="name" class="tag">{{ name }} ×{{ count }}</span>
+          </div>
+          <p v-else class="tiny muted">最近没有重复点同一道菜。</p>
+        </div>
+        <div>
+          <div class="taste-subhead">全家好评菜</div>
+          <div v-if="topRated.length" class="taste-tags">
+            <span v-for="dish in topRated" :key="dish.id" class="tag">{{ dish.rating === 3 ? '⭐' : '👍' }} {{ dish.name }}</span>
+          </div>
+          <p v-else class="tiny muted">还没有「好吃 / 超赞」评价。</p>
+        </div>
+      </div>
+
+      <div class="taste-insights">
+        <div class="taste-subhead">下周建议</div>
+        <p v-for="(text, index) in insights" :key="index">💡 {{ text }}</p>
+      </div>
+    </template>
   </section>
 </template>

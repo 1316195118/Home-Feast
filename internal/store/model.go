@@ -289,7 +289,7 @@ func OrderedCuisines(order []string) []Cuisine {
 	for i, k := range order {
 		rank[k] = i
 	}
-	out := append([]Cuisine(nil), Cuisines...)
+	out := cloneSlice(Cuisines)
 	sort.SliceStable(out, func(i, j int) bool {
 		ri, oi := rank[out[i].Key]
 		rj, oj := rank[out[j].Key]

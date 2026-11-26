@@ -16,6 +16,7 @@ body {
   background: var(--paper);
   overscroll-behavior-y: none;
   color: var(--ink);
+  caret-color: var(--brand);
   font-family: var(--font);
   font-size: 15px;
   line-height: 1.62;
@@ -51,7 +52,7 @@ a { color: var(--brand); }
   outline-offset: 2px;
 }
 
-::selection { background: var(--brand-soft); }
+::selection { background: var(--brand-soft); color: var(--ink); }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 10px; border: 3px solid var(--paper); }

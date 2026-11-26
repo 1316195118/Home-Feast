@@ -194,7 +194,7 @@ async function savePin() {
           <span class="avatar avatar-lg" :style="{ background: m.color }">{{ m.avatar }}</span>
           <div>
             <div class="member-name">{{ m.name }}</div>
-            <div class="tiny muted">{{ chefCount[m.id] || 0 }} 次掌勺 · {{ washCount[m.id] || 0 }} 次洗碗 · {{ orderCount[m.id] || 0 }} 次点菜</div>
+            <div class="tiny muted">{{ orderCount[m.id] || 0 }} 次点菜</div>
           </div>
         </div>
         <div class="member-tags">

@@ -428,16 +428,22 @@ async function refresh() {
 }
 
 function replacePlanInState(plan) {
-  if (!plan?.date || !Array.isArray(plan.orders)) return false
-  const index = state.plans.findIndex((p) => p.date === plan.date)
+  if (!plan?.date) return false
+  // 兼容旧版本/旧备份里可能出现的 orders: null。空数组就是“撤完了”，
+  // 必须继续应用，不能因为响应形状不完美而把整条实时更新丢掉。
+  const normalized = {
+    ...plan,
+    orders: Array.isArray(plan.orders) ? plan.orders : [],
+  }
+  const index = state.plans.findIndex((p) => p.date === normalized.date)
   if (index >= 0) {
     const next = state.plans.slice()
-    next[index] = plan
+    next[index] = normalized
     state.plans = next
   } else {
-    state.plans = [...state.plans, plan].sort((a, b) => String(b.date).localeCompare(String(a.date)))
+    state.plans = [...state.plans, normalized].sort((a, b) => String(b.date).localeCompare(String(a.date)))
   }
-  if (plan.date === activeDate()) state.plan = plan
+  if (normalized.date === activeDate()) state.plan = normalized
   return true
 }
 
@@ -811,18 +817,36 @@ const actions = {
     }), '', 'orders:batch')
     if (result) toast(`${Number(result.updated) || todo.length} 道菜全部上桌 🍽️`, 'success')
   },
-  removeOrder: (orderId) => {
+  removeOrder: async (orderId) => {
+    if (pending(`remove:${orderId}`)) return null
     const order = (state.plan.orders || []).find((o) => o.id === orderId)
-    return withSound(guard(() => api.removeOrder(activeDate(), orderId), '', `remove:${orderId}`), playRemove).then((ok) => {
-      if (!ok || !order) return ok
-      toast('已撤掉这道菜', 'success', {
-        label: '撤销',
-        run: () => guard(() => api.addOrder(activeDate(), {
-          dishId: order.dishId, userId: order.userId, note: order.note, meal: order.meal,
-        }), '已恢复这道菜'),
-      })
-      return ok
+    if (!order) return null
+
+    // 菜单行、统计和首页推荐封面读的是同一份 plan。先同步移除，
+    // 一次操作就能让三处一起消失；保存失败再整份回滚并提示重试。
+    const previousPlan = state.plan
+    replacePlanInState({
+      ...previousPlan,
+      orders: (previousPlan.orders || []).filter((item) => item.id !== orderId),
     })
+
+    const result = await withSound(
+      guard(() => api.removeOrder(activeDate(), orderId), '', `remove:${orderId}`),
+      playRemove,
+    )
+    if (!result) {
+      replacePlanInState(previousPlan)
+      requestRefresh(0)
+      return result
+    }
+
+    toast('已撤掉这道菜', 'success', {
+      label: '撤销',
+      run: () => guard(() => api.addOrder(activeDate(), {
+        dishId: order.dishId, userId: order.userId, note: order.note, meal: order.meal,
+      }), '已恢复这道菜'),
+    })
+    return result
   },
 
   saveSettings: (patch) => withSound(guard(() => api.saveSettings(patch), '设置已保存', 'settings'), playSave),
@@ -1117,6 +1141,7 @@ onUnmounted(() => {
         <button
           v-for="t in tabs" :key="t.key"
           class="tab" :class="{ active: state.tab === t.key }"
+          :aria-current="state.tab === t.key ? 'page' : undefined"
           @mouseenter="prefetchView(t.key)" @focus="prefetchView(t.key)"
           @touchstart.passive="prefetchView(t.key)"
           @click="goTab(t.key)"

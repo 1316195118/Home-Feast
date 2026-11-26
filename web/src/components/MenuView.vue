@@ -806,38 +806,42 @@ async function savePantry() {
     </div>
 
     <div class="toolbar">
-      <div class="quick-filters">
-      <button
-        v-for="f in [
-          { key: 'quick', label: '⏱ 30分钟内' },
-          { key: 'mild', label: '🌶️ 不辣' },
-          { key: 'image', label: '🖼️ 有图' },
-        ]" :key="f.key" class="chip quick-chip" :class="{ active: quickFilter === f.key }"
-        :aria-pressed="quickFilter === f.key" @click="toggleQuick(f.key)"
-      >{{ f.label }}</button>
-    </div>
-
-    <div class="search-box">
-        <input v-model="keyword" class="input" placeholder="搜菜名、口味、配料…" aria-label="搜索菜品" />
-        <button v-if="keyword" class="search-clear" type="button" aria-label="清空搜索" @click="keyword = ''">✕</button>
+      <div class="menu-search-row">
+        <div class="search-box">
+          <input v-model="keyword" class="input" placeholder="搜菜名、口味、配料…" aria-label="搜索菜品" />
+          <button v-if="keyword" class="search-clear" type="button" aria-label="清空搜索" @click="keyword = ''">✕</button>
+        </div>
+        <!-- 筛选结果常驻，避免状态变化时把下方网格整体推走。 -->
+        <span class="tiny muted menu-filter-status" role="status" aria-live="polite">
+          <template v-if="priorityPantry && !(state.settings.pantry || []).length">先点「🧊 冰箱食材」选几样</template>
+          <template v-else>
+            {{ hasFilter ? '找到' : '共' }}
+            <span class="value-pop" :key="filtered.length">{{ filtered.length }}</span> 道
+          </template>
+        </span>
       </div>
-      <button class="chip" :class="{ active: onlyFavorite }" :aria-pressed="onlyFavorite" @click="onlyFavorite = !onlyFavorite">
-        ⭐ 只看收藏
-      </button>
-      <button
-        class="chip" :class="{ active: priorityPantry }" :aria-pressed="priorityPantry"
-        title="按冰箱已选的食材把能做的菜排到前面；盐、油、葱蒜等佐料不参与"
-        @click="togglePriority"
-      >🥬 优先推荐</button>
-      <button class="chip" type="button" title="在当前筛选结果里随机挑一道" @click="randomDish">🎲 随便来一道</button>
-      <!-- 状态行常驻，避免筛选后才新增一行而把下方网格整体推下去。 -->
-      <span class="tiny muted menu-filter-status">
-        <template v-if="priorityPantry && !(state.settings.pantry || []).length">先点「🧊 冰箱食材」选几样</template>
-        <template v-else>
-          {{ hasFilter ? '找到' : '共' }}
-          <span class="value-pop" :key="filtered.length">{{ filtered.length }}</span> 道
-        </template>
-      </span>
+
+      <div class="menu-filter-rail" aria-label="菜谱筛选">
+        <div class="quick-filters">
+          <button
+            v-for="f in [
+              { key: 'quick', label: '⏱ 30分钟内' },
+              { key: 'mild', label: '🌶️ 不辣' },
+              { key: 'image', label: '🖼️ 有图' },
+            ]" :key="f.key" class="chip quick-chip" :class="{ active: quickFilter === f.key }"
+            :aria-pressed="quickFilter === f.key" @click="toggleQuick(f.key)"
+          >{{ f.label }}</button>
+        </div>
+        <button class="chip" :class="{ active: onlyFavorite }" :aria-pressed="onlyFavorite" @click="onlyFavorite = !onlyFavorite">
+          ⭐ 只看收藏
+        </button>
+        <button
+          class="chip" :class="{ active: priorityPantry }" :aria-pressed="priorityPantry"
+          title="按冰箱已选的食材把能做的菜排到前面；盐、油、葱蒜等佐料不参与"
+          @click="togglePriority"
+        >🥬 优先推荐</button>
+        <button class="chip" type="button" title="在当前筛选结果里随机挑一道" @click="randomDish">🎲 随便来一道</button>
+      </div>
     </div>
 
     <!-- 不用 TransitionGroup：切换菜系时整片卡片进出场 + move 会让画面明显晃一下。

@@ -200,11 +200,20 @@ func (s *Store) cloneMembersLocked() []Member {
 	return out
 }
 
-func cloneStrings(in []string) []string {
+// cloneSlice 保留 nil / 空切片的区别。append([]T(nil), empty...) 会把
+// 合法的空数组变成 nil，最终 JSON 成 null；前端遇到 orders: null 时会
+// 拒绝应用服务端结果，表现成撤菜后列表和首页封面都不刷新。
+func cloneSlice[T any](in []T) []T {
 	if in == nil {
 		return nil
 	}
-	return append([]string(nil), in...)
+	out := make([]T, len(in))
+	copy(out, in)
+	return out
+}
+
+func cloneStrings(in []string) []string {
+	return cloneSlice(in)
 }
 
 func cloneDish(d Dish) Dish {
@@ -231,7 +240,7 @@ func cloneMember(m Member) Member {
 func clonePlan(p Plan) Plan {
 	p.ChefIDs = cloneStrings(p.ChefIDs)
 	p.DishwasherIDs = cloneStrings(p.DishwasherIDs)
-	p.Orders = append([]Order(nil), p.Orders...)
+	p.Orders = cloneSlice(p.Orders)
 	p.PKShown = cloneStrings(p.PKShown)
 	if p.MealDuties != nil {
 		meals := make(map[string]MealDuty, len(p.MealDuties))
@@ -257,7 +266,7 @@ func cloneSettings(in Settings) Settings {
 	out := in
 	out.HiddenCuisines = cloneStrings(in.HiddenCuisines)
 	out.CuisineOrder = cloneStrings(in.CuisineOrder)
-	out.Meals = append([]MealSlot(nil), in.Meals...)
+	out.Meals = cloneSlice(in.Meals)
 	out.Pantry = cloneStrings(in.Pantry)
 	if in.PantryAdded != nil {
 		out.PantryAdded = make(map[string]string, len(in.PantryAdded))

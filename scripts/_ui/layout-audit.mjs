@@ -97,6 +97,22 @@ async function run(width, height, tag, mobile) {
   const after = JSON.parse(await ev(`(()=>{const g=document.querySelector('.dish-grid');const c=document.querySelector('.dish-card');return JSON.stringify({w:document.documentElement.clientWidth,top:g?Math.round(g.getBoundingClientRect().top):null,cardTop:c?Math.round(c.getBoundingClientRect().top):null,anim:document.querySelectorAll('[class*="grid-enter"],[class*="grid-leave"],[class*="grid-move"]').length})})()`))
   console.log(`菜系切换 前=${JSON.stringify(before)} 切换后60ms=${JSON.stringify(mid)} 稳定后=${JSON.stringify(after)}`)
   console.log(`  => 视口宽度变化 ${after.w - before.w}px | 网格起点变化 ${after.top - before.top}px | 卡片位移 ${(mid.cardTop != null && after.cardTop != null) ? after.cardTop - mid.cardTop : 'n/a'}px | 残留动画类 ${after.anim}`)
+  const rail = JSON.parse(await ev(`(()=>{
+    const el=document.querySelector('.menu-filter-rail');
+    if(!el)return JSON.stringify({missing:true});
+    const before=el.scrollLeft;
+    el.scrollLeft=el.scrollWidth;
+    return JSON.stringify({
+      clientWidth:el.clientWidth,
+      scrollWidth:el.scrollWidth,
+      maxScroll:el.scrollWidth-el.clientWidth,
+      before:Math.round(before),
+      after:Math.round(el.scrollLeft),
+    });
+  })()`))
+  if (!rail.missing) {
+    console.log(`筛选横滑 ${rail.clientWidth}/${rail.scrollWidth} scrollLeft ${rail.before}→${rail.after}${rail.maxScroll > 0 && rail.after <= 1 ? ' ✗ 无法滚动' : ' ✓'}`)
+  }
 
   // 公开页不依赖成员选择与业务数据，单独直达检查 200/404、SEO 标题和触控尺寸。
   for (const route of ['/privacy', '/terms', '/#not-a-real-page']) {

@@ -48,6 +48,18 @@ func TestBootstrapSnapshotIsIndependent(t *testing.T) {
 	}
 }
 
+func TestClonePreservesEmptyArrays(t *testing.T) {
+	plan := clonePlan(Plan{Orders: []Order{}, ChefIDs: []string{}, DishwasherIDs: []string{}})
+	if plan.Orders == nil || plan.ChefIDs == nil || plan.DishwasherIDs == nil {
+		t.Fatalf("空数组被 clone 成了 nil: %+v", plan)
+	}
+
+	dish := cloneDish(Dish{Tags: []string{}, Ingredients: []string{}, Steps: []string{}})
+	if dish.Tags == nil || dish.Ingredients == nil || dish.Steps == nil {
+		t.Fatalf("菜品空数组被 clone 成了 nil: %+v", dish)
+	}
+}
+
 func TestOrderLookupAndRevision(t *testing.T) {
 	st, err := Open(t.TempDir(), t.TempDir())
 	if err != nil {

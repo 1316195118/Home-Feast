@@ -483,6 +483,9 @@ func TestOrderFlow(t *testing.T) {
 	if w.Code != 200 {
 		t.Fatalf("撤掉应 200，实际 %d", w.Code)
 	}
+	if !strings.Contains(w.Body.String(), `"orders":[]`) {
+		t.Fatalf("撤掉最后一道菜后必须返回空数组，不能返回 null：%s", w.Body.String())
+	}
 	// 不存在的菜
 	w = do(h, "POST", "/api/plans/"+today+"/orders", `{"dishId":"no-such","userId":"`+userID+`"}`)
 	if w.Code != 404 {

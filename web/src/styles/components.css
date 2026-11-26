@@ -162,7 +162,11 @@
   font-size: 0.86rem;
   font-weight: 600;
   white-space: nowrap;
-  transition: all var(--dur-fast) var(--ease);
+  transition:
+    color var(--dur-fast) var(--ease),
+    background-color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
 }
 .chip:hover { border-color: var(--line-strong); background: var(--surface-soft); }
 .chip:active { transform: scale(0.95); }
