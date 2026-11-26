@@ -1,31 +1,31 @@
 {
-  "version": "1.0.4.9",
-  "publishedAt": "2026-11-27T01:43:58",
-  "note": "**修复**\n- 修复撤掉最后一道菜后菜单、统计和首页封面不实时更新；空数组统一返回 []，保存失败时自动回滚。\n- 恢复本地缺失的 225 张菜品原图和缩略图，并验证 32 并发图片请求 0 失败。\n\n**优化**\n- 压缩手机菜谱首屏，搜索、结果数和筛选改为紧凑单行横滑。\n- 家庭周报无记录时改为轻量空状态，提升已完成、已购买和隐藏菜系的可读性。",
+  "version": "1.0.5.0",
+  "publishedAt": "2026-11-27T01:56:05",
+  "note": "**修复**\\n- 修复菜谱页快捷筛选在窄屏下被压缩、文字相互重叠的问题；筛选按钮改为独立横滑组并保持可点击尺寸。\\n\\n**验证**\\n- 通过 320、375、390、768、1280 五种宽度回归，无文字重叠、横向溢出或过小触控目标。",
   "files": {
     "amd64": {
       "name": "menu-linux-amd64",
-      "sha256": "96530265221c8869bfd89fa52bc759b7166c4bba33d89fece5c79e50e847d175",
+      "sha256": "50d86dfdd6663c3c015bfe9ba6c60a50552d0f48b3def5485016de809a3931a4",
       "size": 20328608,
       "gz": "menu-linux-amd64.gz",
-      "gzSha256": "736d1f11b39f4135181fee0a7627e6eab11dc6677ac82f99ca9527808fa5791f",
-      "gzSize": 13962350
+      "gzSha256": "db82846acba3ac1e9f3e9a2c040cb5afeb4bcc566d105383900dfcb7cbe94997",
+      "gzSize": 13962281
     },
     "arm64": {
       "name": "menu-linux-arm64",
-      "sha256": "4dd361c8fa0dc3a2be43e6dec051515e3d033d1fc77701b88e96d6a0a41b2cb7",
+      "sha256": "538d4b82eb834591e66d9b7d2af9994e4acd1e56d7ccd8f9e0870f9da1bdf4fb",
       "size": 19595424,
       "gz": "menu-linux-arm64.gz",
-      "gzSha256": "2c9ea5a6fbca8fcfc854a613a9052ff333d7d9aafa0c520c97a946979e1d77cc",
-      "gzSize": 13550514
+      "gzSha256": "c16dd007f61d8b4be2a2be0c725865d15754fd10dfe0a26be14f7db12ec95d5c",
+      "gzSize": 13550442
     },
     "armv7": {
       "name": "menu-linux-armv7",
-      "sha256": "4ab155d746f986d5a5ba67d0144da7fce0c9298e4b574e9199564a225d1a9593",
+      "sha256": "43ec46e2c3757114b5f2b7b1d83800ed2a6b24d0e176b2ceccb57a0a19841b6a",
       "size": 19988640,
       "gz": "menu-linux-armv7.gz",
-      "gzSha256": "356b1b15207e560603bdc75ecaab69ef025d8aa4c3a11603c4b23edd74a6ac9e",
-      "gzSize": 13771352
+      "gzSha256": "51f1e0c00c20644cadd210b8e57162075e82063561c5fe0a2345062eeb2f2e2e",
+      "gzSize": 13771346
     }
   }
 }
