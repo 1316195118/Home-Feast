@@ -1,31 +1,31 @@
 {
-  "version": "1.0.5.0",
-  "publishedAt": "2026-11-27T01:56:05",
-  "note": "**修复**\\n- 修复菜谱页快捷筛选在窄屏下被压缩、文字相互重叠的问题；筛选按钮改为独立横滑组并保持可点击尺寸。\\n\\n**验证**\\n- 通过 320、375、390、768、1280 五种宽度回归，无文字重叠、横向溢出或过小触控目标。",
+  "version": "1.0.5.1",
+  "publishedAt": "2026-11-27T01:57:27",
+  "note": "**修复**\n- 修复菜谱页快捷筛选在窄屏下被压缩、文字相互重叠的问题；筛选按钮改为独立横滑组并保持可点击尺寸。\n- 修复在线更新说明中的换行格式，设置页现在按标题和列表正常显示。\n\n**验证**\n- 通过 320、375、390、768、1280 五种宽度回归，无文字重叠、横向溢出或过小触控目标。",
   "files": {
     "amd64": {
       "name": "menu-linux-amd64",
-      "sha256": "50d86dfdd6663c3c015bfe9ba6c60a50552d0f48b3def5485016de809a3931a4",
+      "sha256": "dee49ee023e3745e8a3a0abf21f43496fe6f2f5bd6f47c5c994c45bb39777eaf",
       "size": 20328608,
       "gz": "menu-linux-amd64.gz",
-      "gzSha256": "db82846acba3ac1e9f3e9a2c040cb5afeb4bcc566d105383900dfcb7cbe94997",
-      "gzSize": 13962281
+      "gzSha256": "f3e6072aed0d25cc7bb4894a73bccf8d747c429fb1bc17c0ace3d6c9eac6cc3e",
+      "gzSize": 13962537
     },
     "arm64": {
       "name": "menu-linux-arm64",
-      "sha256": "538d4b82eb834591e66d9b7d2af9994e4acd1e56d7ccd8f9e0870f9da1bdf4fb",
+      "sha256": "c42bc94cee2535cf19ecb30997a03a7a82e0f3a94395a4f1cbe135d382dc1feb",
       "size": 19595424,
       "gz": "menu-linux-arm64.gz",
-      "gzSha256": "c16dd007f61d8b4be2a2be0c725865d15754fd10dfe0a26be14f7db12ec95d5c",
-      "gzSize": 13550442
+      "gzSha256": "8bfd0bb1050f0138fff28a8d95006ab1f47b9f783747521ba83aa2b11d515055",
+      "gzSize": 13550586
     },
     "armv7": {
       "name": "menu-linux-armv7",
-      "sha256": "43ec46e2c3757114b5f2b7b1d83800ed2a6b24d0e176b2ceccb57a0a19841b6a",
+      "sha256": "751d881854e244774c60891b3daa19b31f4ecc8e6585fbc205d601eee9167d92",
       "size": 19988640,
       "gz": "menu-linux-armv7.gz",
-      "gzSha256": "51f1e0c00c20644cadd210b8e57162075e82063561c5fe0a2345062eeb2f2e2e",
-      "gzSize": 13771346
+      "gzSha256": "fe44d58fe69b9ab2fe198161813218aabdf7313a905d9f8faa79842c4e23bb66",
+      "gzSize": 13771358
     }
   }
 }
