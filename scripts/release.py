@@ -366,6 +366,11 @@ def main():
         if a.note:
             # 支持交接里约定的单命令：--note "说明" --publish。
             # 此前 publish 分支忽略 --note，要求先单独记一次，和文档不一致。
+            # 注意：若 PENDING 里已有内容（例如之前单独 --note 记过、或演练残留），
+            # 直接 append 会导致同一条说明出现两次（CHANGELOG 与 manifest 都重复）。
+            # 单命令发版以本次 --note 为准，先把旧的清掉。
+            if read_pending():
+                clear_pending()
             append_pending(a.note, datetime.datetime.now())
         publish(do_deploy=a.deploy, arch=a.arch, no_build=a.no_build)
         return
