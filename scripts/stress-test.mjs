@@ -11,6 +11,11 @@ import { setTimeout as sleep } from 'node:timers/promises'
 
 const BASE = (process.env.BASE || 'http://127.0.0.1:8090').replace(/\/+$/, '')
 const WRITE = process.env.WRITE === '1'
+const targetURL = new URL(BASE)
+if (WRITE && process.env.I_KNOW_THIS_IS_PRODUCTION !== '1' &&
+    (targetURL.port === '8090' || targetURL.hostname === '10.10.10.251')) {
+  throw new Error('WRITE=1 检测到生产地址：确需写入生产请先设 I_KNOW_THIS_IS_PRODUCTION=1')
+}
 const DATA_DIR = process.env.DATA_DIR || ''
 const CONFIG_DIR = process.env.CONFIG_DIR || ''
 const CODE = process.env.CODE || ''
@@ -409,7 +414,10 @@ try {
       const dishIDs = parsed['dishes.json'].map((d) => d.id)
       const memberIDs = parsed['members.json'].map((m) => m.id)
       const orderIDs = parsed['plans.json'].flatMap((p) => (p.orders || []).map((o) => o.id))
-      check('写后数据文件均为合法 JSON', true,
+      check('写后数据文件均为合法 JSON 且非空',
+        Array.isArray(parsed['dishes.json']) && parsed['dishes.json'].length > 0
+        && Array.isArray(parsed['members.json']) && parsed['members.json'].length > 0
+        && Array.isArray(parsed['plans.json']),
         `${dishIDs.length} 道菜 / ${memberIDs.length} 位成员 / ${parsed['plans.json'].length} 天计划`)
       check('菜品、成员、订单 ID 无重复', new Set(dishIDs).size === dishIDs.length
         && new Set(memberIDs).size === memberIDs.length

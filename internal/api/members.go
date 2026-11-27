@@ -98,9 +98,24 @@ func (s *Server) setMemberPin(w http.ResponseWriter, r *http.Request) {
 		jsonErr(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	if err := s.st.SetMemberPin(r.PathValue("id"), in.Pin, in.OldPin); err != nil {
+	id := r.PathValue("id")
+	// 修改已有密码时要校验 oldPin，和 /verify 一样是可猜的凭据，必须走同一道退避；
+	// 否则攻击者可以绕过 /verify 的限流，在这里全速穷举旧密码。
+	key := "pin:" + clientIP(r)
+	guarded := s.st.HasPin(id)
+	if guarded {
+		s.limit.wait(key)
+	}
+	err := s.st.SetMemberPin(id, in.Pin, in.OldPin)
+	if err != nil {
+		if guarded && errors.Is(err, store.ErrWrongPin) {
+			s.limit.Fail(key)
+		}
 		jsonErr(w, http.StatusBadRequest, err.Error())
 		return
+	}
+	if guarded {
+		s.limit.Reset(key)
 	}
 	jsonOK(w, map[string]any{"ok": true, "hasPin": in.Pin != ""})
 }

@@ -27,6 +27,36 @@ func newStaticTestHandler(t *testing.T) http.Handler {
 	return New(st, web, "")
 }
 
+func TestIndexHTMLRenderIsCachedAndStable(t *testing.T) {
+	h := newStaticTestHandler(t)
+	request := func(host, path string) *httptest.ResponseRecorder {
+		req := httptest.NewRequest(http.MethodGet, "http://"+host+path, nil)
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, req)
+		return w
+	}
+	// 同一 host+路由：两次请求必须得到完全一致的 ETag 与正文（渲染结果被缓存复用）。
+	a := request("menu.local", "/privacy")
+	b := request("menu.local", "/privacy")
+	if a.Code != http.StatusOK || b.Code != http.StatusOK {
+		t.Fatalf("公开页应 200，实际 %d / %d", a.Code, b.Code)
+	}
+	if a.Header().Get("ETag") != b.Header().Get("ETag") {
+		t.Fatalf("重复请求 ETag 不稳定: %q vs %q", a.Header().Get("ETag"), b.Header().Get("ETag"))
+	}
+	if a.Body.String() != b.Body.String() {
+		t.Fatal("重复请求正文不一致")
+	}
+	// 换域名：key 不同，必须重新渲染出该域名的绝对地址。
+	c := request("other.example", "/privacy")
+	if !strings.Contains(c.Body.String(), "http://other.example/og-cover.png") {
+		t.Fatalf("换域名后应重新渲染 OG 地址: %s", c.Body.String())
+	}
+	if c.Header().Get("ETag") == a.Header().Get("ETag") {
+		t.Fatal("不同域名的渲染结果不应共用同一 ETag")
+	}
+}
+
 func TestPublicRoutesSecurityAndSitemap(t *testing.T) {
 	h := newStaticTestHandler(t)
 

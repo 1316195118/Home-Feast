@@ -9,3 +9,19 @@ menu
 menu.exe
 *.log
 .shots/
+# 发布产物与临时图片不进构建上下文（dist 三个 gz ~41MB、根目录二进制 ~60MB）
+dist/
+menu-linux*
+.e2e_tmp/
+.impeccable/
+.p1/
+.p2/
+.v2/
+.tmp/
+.agents/
+scripts/_cq/_img/
+scripts/_cq/_thumb/
+scripts/_cq/_gen_ready/
+scripts/_src_images/
+*_upd.png
+shot*.png

@@ -35,6 +35,9 @@ const (
 // ErrLastMember 由 DeleteMember 在同一个写事务内返回，防止两个并发删除把成员清空。
 var ErrLastMember = errors.New("至少保留一位家庭成员")
 
+// ErrWrongPin 表示修改成员密码时旧密码不正确，API 层据此记一次失败退避。
+var ErrWrongPin = errors.New("当前密码不正确")
+
 // configFile 判断某文件是否属于配置目录（目前只有 settings.json）。
 func configFile(name string) bool { return name == settingsFile }
 
@@ -160,13 +163,27 @@ func Open(dir, cfgDir string) (*Store, error) {
 	}
 	var access accessFileData
 	if err := readJSON(filepath.Join(dir, accessFile), &access); err != nil {
-		return nil, fmt.Errorf("读取 %s 失败: %w", accessFile, err)
+		// 访问口令 fail-closed：读不出来就不能假装没设口令。给出可操作提示。
+		return nil, fmt.Errorf("读取 %s 失败（请检查文件权限与内容）: %w", accessFile, err)
 	}
 	s.accessCode = access.Code
-	// pins.json 不存在时保持空 map；它不在备份白名单里，恢复备份不会清掉现有密码。
+	// pins.json 不在备份白名单里，恢复备份不会清掉现有密码。
+	// 损坏时与四份业务 JSON 一致：留档后用空 map 启动（成员密码视为未设置），
+	// 而不是让整个服务拒绝启动、全家都打不开页面。
 	var pins map[string]pinRecord
 	if err := readJSON(filepath.Join(dir, pinsFile), &pins); err != nil {
-		return nil, fmt.Errorf("读取 %s 失败: %w", pinsFile, err)
+		var ce *corruptError
+		if errors.As(err, &ce) {
+			stamp := time.Now().Format("20060102-150405")
+			keep := fmt.Sprintf("%s.corrupt-%s", ce.path, stamp)
+			if renameErr := os.Rename(ce.path, keep); renameErr == nil {
+				fmt.Fprintf(os.Stderr, "⚠ %s 已损坏，留档为 %s，本次视为无成员密码\n", pinsFile, keep)
+			} else {
+				fmt.Fprintf(os.Stderr, "⚠ %s 已损坏且无法留档: %v\n", pinsFile, renameErr)
+			}
+		} else {
+			return nil, fmt.Errorf("读取 %s 失败: %w", pinsFile, err)
+		}
 	}
 	if pins == nil {
 		pins = make(map[string]pinRecord)
@@ -397,6 +414,25 @@ func (s *Store) Path(name string) string { return s.pathOf(name) }
 func (s *Store) Reload() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	return s.reloadLocked()
+}
+
+// RestoreFiles 在一次写锁内原子替换若干 JSON 文件并重载内存。
+// 备份恢复必须走这里：否则常规写接口可能在「写盘」与「Reload」之间抢先提交，
+// 随后的 Reload 会把这次已返回成功的写从内存和磁盘一起抹掉。
+func (s *Store) RestoreFiles(files map[string][]byte) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for name, data := range files {
+		if err := writeBytesAtomic(s.pathOf(name), data, 0o644); err != nil {
+			return err
+		}
+	}
+	return s.reloadLocked()
+}
+
+// reloadLocked 是 Reload / RestoreFiles 的共用实现，调用者必须持有 s.mu 写锁。
+func (s *Store) reloadLocked() error {
 	var (
 		dishes   []Dish
 		members  []Member
@@ -635,7 +671,7 @@ func (s *Store) SetMemberPin(id, pin, oldPin string) error {
 	if has && subtle.ConstantTimeCompare(
 		[]byte(hashPin(current.Salt, oldPin)), []byte(current.Hash),
 	) != 1 {
-		return errors.New("当前密码不正确")
+		return ErrWrongPin
 	}
 	next := make(map[string]pinRecord, len(s.pins)+1)
 	for k, v := range s.pins {
@@ -653,6 +689,15 @@ func (s *Store) SetMemberPin(id, pin, oldPin string) error {
 	s.pins = next
 	s.markChangedLocked()
 	return nil
+}
+
+// HasPin 返回成员是否已设置密码。用于给「修改密码时校验旧密码」加爆破退避：
+// 没设过密码的成员不需要这一步，不应被限流误伤。
+func (s *Store) HasPin(id string) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	_, has := s.pins[id]
+	return has
 }
 
 // VerifyMemberPin 校验成员密码；没设密码的成员直接通过。
@@ -845,10 +890,20 @@ func (s *Store) expireToday(date string) {
 	if date != now.Format("2006-01-02") {
 		return
 	}
+	// 先用读锁预检：绝大多数请求当天没有订单、或没有已过饭点的餐次，
+	// 没必要抢独占写锁（写锁内还要 clonePlan + 可能 fsync 落盘）。
+	s.mu.RLock()
+	p0, ok := s.plans[date]
+	needsExpire := ok && len(p0.Orders) > 0 && hasEndedMeal(p0, now, effectiveMeals(s.settings.Meals))
+	s.mu.RUnlock()
+	if !needsExpire {
+		return
+	}
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	p, ok := s.plans[date]
-	if !ok {
+	if !ok || len(p.Orders) == 0 {
 		return
 	}
 	p = clonePlan(p)
@@ -1226,11 +1281,19 @@ func writeBytesAtomic(target string, raw []byte, mode os.FileMode) error {
 	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
 		return err
 	}
-	tmp := target + ".tmp"
-	f, err := os.OpenFile(tmp, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, mode)
+	// 唯一临时名：固定 target+".tmp" 会被第二个写者（宿主机二进制 + 容器、
+	// 两个副本误指同一数据目录）O_TRUNC 覆盖，A  rename 的可能是 B 的半截内容。
+	// 与 api.atomicFile 保持一致：同目录唯一临时文件，rename 仍是原子替换。
+	f, err := os.CreateTemp(filepath.Dir(target), ".fm-write-*")
 	if err != nil {
 		return err
 	}
+	if err = f.Chmod(mode); err != nil {
+		f.Close()
+		_ = os.Remove(f.Name())
+		return err
+	}
+	tmp := f.Name()
 	if _, err = f.Write(raw); err != nil {
 		f.Close()
 		_ = os.Remove(tmp)

@@ -5,6 +5,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { killProcessTree } from './browser-cleanup.mjs'
+import { check, finishAssertions } from './_assert.mjs'
 
 const EDGE = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'
 const BASE = process.env.BASE || 'http://127.0.0.1:18090'
@@ -193,6 +194,8 @@ for (const [index, size] of SIZES.entries()) {
     && magnetResults[2]?.closed && magnetResults[2]?.hash === '#today'
     && browser.errors.length === 0
 
+  // 已有完整 pass 判定，但只打印不退出；用 check 让它真正影响退出码。
+  check(`${tag} 冰箱专项全部检查`, pass === true)
   console.log(JSON.stringify({
     tag,
     pass,

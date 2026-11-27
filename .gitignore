@@ -100,8 +100,15 @@
 /scripts/_cq/_test/*.json
 /scripts/_cq/_test/_*.jpg
 
-# 缩略图源图（从服务器可重新下载，不占仓库）
+# 缩略图源图与生成结果（都可由脚本重新生成，不占仓库）
 /scripts/_cq/_thumb/src/
+/scripts/_cq/_thumb/out/
+# 菜谱批量生成的中间结果
+/scripts/_cq/_gen_ready/
+/scripts/_cq/base_unified/
+/scripts/_cq/_img/sheets/
+# 根目录调试截图
+/shot_upd.png
 
 # E2E 本地测试临时目录
 .e2e_tmp/

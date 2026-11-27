@@ -68,11 +68,18 @@ function onTouchEnd(e) {
 
 // 屏幕常亮：做饭时不会做到一半黑屏。不支持就静默跳过。
 let lock = null
+let lockDisposed = false // request 是异步的：卸载可能发生在 Promise resolve 之前
 const lockOk = ref(false)
 async function acquireLock() {
   try {
     if ('wakeLock' in navigator) {
-      lock = await navigator.wakeLock.request('screen')
+      const acquired = await navigator.wakeLock.request('screen')
+      if (lockDisposed) {
+        // 组件已卸载，立刻释放刚拿到的锁，否则屏幕会一直亮到整页关闭
+        try { acquired.release?.() } catch { /* 忽略 */ }
+        return
+      }
+      lock = acquired
       lockOk.value = true
       lock.addEventListener?.('release', () => { lockOk.value = false })
     }
@@ -84,7 +91,10 @@ function releaseLock() {
   lockOk.value = false
 }
 onMounted(acquireLock)
-onUnmounted(releaseLock)
+onUnmounted(() => {
+  lockDisposed = true
+  releaseLock()
+})
 
 function finish() {
   releaseLock()

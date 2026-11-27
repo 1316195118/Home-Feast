@@ -16,6 +16,8 @@ import (
 //   - 带 Range 的请求（视频/断点续传语义）不压缩 → 跳过
 //   - Content-Length 在压缩后必须删掉，否则浏览器按原长度读会截断
 //   - 204/304 这类无实体响应不压缩，避免出现「有 Content-Encoding 但无内容」
+//   - 不按请求头 Content-Length 判断响应体积：那是请求体长度，与响应无关，
+//     读它只会让带小请求体的写接口错误地跳过压缩。响应体积交给 WriteHeader 判断。
 type gzipResponseWriter struct {
 	http.ResponseWriter
 	gz      *gzip.Writer
@@ -107,12 +109,6 @@ func withGzip(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
-		// 小文件（< 1KB）别压：gzip 头就有 20 字节，还多一次 CPU
-		if n, err := strconv.Atoi(r.Header.Get("Content-Length")); err == nil && n > 0 && n < 1024 {
-			next.ServeHTTP(w, r)
-			return
-		}
-
 		gz := gzipPool.Get().(*gzip.Writer)
 		gw := &gzipResponseWriter{ResponseWriter: w, gz: gz}
 		defer func() {

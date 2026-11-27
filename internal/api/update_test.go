@@ -14,19 +14,51 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"familymenu/internal/store"
 )
 
-func resetUpdateStateForTest(t *testing.T) {
+func TestUpdateStateIsIsolatedPerServer(t *testing.T) {
+	// 两个实例（模拟嵌入式复用 / 并行测试）各自持有更新状态，互不覆盖。
+	t.Setenv("MENU_UPDATE_BASE", "http://127.0.0.1:1/dist/")
+	initial := updateStatus{Latest: "1.0.0.9", Available: true, Progress: 42}
+	h2 := New(newTestStore(t), nil, "", initial)
+	h1 := newTestHandler(t)
+
+	sw := httptest.NewRecorder()
+	h2.ServeHTTP(sw, httptest.NewRequest(http.MethodGet, "/api/update/status", nil))
+	var got2 struct {
+		Latest    string `json:"latest"`
+		Available bool   `json:"available"`
+		Progress  int    `json:"progress"`
+	}
+	if err := json.Unmarshal(sw.Body.Bytes(), &got2); err != nil {
+		t.Fatal(err)
+	}
+	if got2.Latest != initial.Latest || !got2.Available || got2.Progress != 42 {
+		t.Fatalf("注入的初值未生效: %+v", got2)
+	}
+
+	sw = httptest.NewRecorder()
+	h1.ServeHTTP(sw, httptest.NewRequest(http.MethodGet, "/api/update/status", nil))
+	var got1 struct {
+		Latest string `json:"latest"`
+	}
+	if err := json.Unmarshal(sw.Body.Bytes(), &got1); err != nil {
+		t.Fatal(err)
+	}
+	if got1.Latest == initial.Latest {
+		t.Fatalf("另一实例的状态被串改: %+v", got1)
+	}
+}
+
+func newTestStore(t *testing.T) *store.Store {
 	t.Helper()
-	updateMu.Lock()
-	previous := updateState
-	updateState = updateStatus{}
-	updateMu.Unlock()
-	t.Cleanup(func() {
-		updateMu.Lock()
-		updateState = previous
-		updateMu.Unlock()
-	})
+	st, err := store.Open(t.TempDir(), t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return st
 }
 
 func TestCompareVersion(t *testing.T) {
@@ -110,7 +142,6 @@ func TestUpdaterStateRoundtrip(t *testing.T) {
 }
 
 func TestCheckRecoveryRestoresAppliedUpdateStatus(t *testing.T) {
-	resetUpdateStateForTest(t)
 	dir := t.TempDir()
 	applied := updaterState{
 		Phase: "applied", From: "1.0.4.0", To: "1.0.4.1", At: "2026-11-22T22:30:00Z",
@@ -119,11 +150,7 @@ func TestCheckRecoveryRestoresAppliedUpdateStatus(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	CheckRecovery(dir, "")
-
-	updateMu.Lock()
-	got := updateState
-	updateMu.Unlock()
+	got := CheckRecovery(dir, "")
 	if got.Downloading || got.Progress != 100 || got.Latest != applied.To ||
 		got.Message != "更新完成，正在重启服务" || got.LastError != "" {
 		t.Fatalf("启动后没有恢复成功状态: %+v", got)
@@ -131,7 +158,6 @@ func TestCheckRecoveryRestoresAppliedUpdateStatus(t *testing.T) {
 }
 
 func TestCheckRecoveryMarksCurrentVersionApplied(t *testing.T) {
-	resetUpdateStateForTest(t)
 	dir := t.TempDir()
 	if err := writeUpdaterState(dir, updaterState{
 		Phase: "applying", From: "1.0.4.0", To: Version, At: "2026-11-22T22:30:00Z",
@@ -150,9 +176,7 @@ func TestCheckRecoveryMarksCurrentVersionApplied(t *testing.T) {
 	if err := json.Unmarshal(b, &saved); err != nil || saved.Phase != "applied" {
 		t.Fatalf("启动自检后应落盘 applied，实际 %q / %v", saved.Phase, err)
 	}
-	updateMu.Lock()
-	got := updateState
-	updateMu.Unlock()
+	got := CheckRecovery(dir, "")
 	if got.Progress != 100 || got.Latest != Version || got.Downloading {
 		t.Fatalf("当前版本已启动时状态不正确: %+v", got)
 	}
@@ -168,7 +192,6 @@ func TestGoArchKey(t *testing.T) {
 
 func TestApplyUpdateIsAcceptedBeforeDownload(t *testing.T) {
 	// 更新可能持续数分钟，接口必须先受理并立即返回，不能把下载挂在 HTTP 响应里。
-	resetUpdateStateForTest(t)
 	t.Setenv("MENU_UPDATE_BASE", "http://127.0.0.1:1/dist/")
 	h := newTestHandler(t)
 	req := httptest.NewRequest(http.MethodPost, "/api/update/apply", strings.NewReader(`{"force":true}`))
@@ -188,14 +211,20 @@ func TestApplyUpdateIsAcceptedBeforeDownload(t *testing.T) {
 	}
 
 	// 后台任务应自行失败收尾，不能把 Downloading 永久卡住。
+	// 状态现在属于 Server 实例，通过 status 接口读取，与前端口径一致。
 	deadline := time.Now().Add(3 * time.Second)
 	for {
-		updateMu.Lock()
-		downloading := updateState.Downloading
-		lastErr := updateState.LastError
-		updateMu.Unlock()
-		if !downloading {
-			if lastErr == "" {
+		sw := httptest.NewRecorder()
+		h.ServeHTTP(sw, httptest.NewRequest(http.MethodGet, "/api/update/status", nil))
+		var status struct {
+			Downloading bool   `json:"downloading"`
+			LastError   string `json:"lastError"`
+		}
+		if err := json.Unmarshal(sw.Body.Bytes(), &status); err != nil {
+			t.Fatalf("解析更新状态失败: %v / %s", err, sw.Body.String())
+		}
+		if !status.Downloading {
+			if status.LastError == "" {
 				t.Fatal("不可达更新源应留下错误信息")
 			}
 			break
@@ -208,7 +237,6 @@ func TestApplyUpdateIsAcceptedBeforeDownload(t *testing.T) {
 }
 
 func TestDownloadReleaseReportsRealProgress(t *testing.T) {
-	resetUpdateStateForTest(t)
 	payload := bytes.Repeat([]byte("family-menu-update-"), 32*1024)
 	var packed bytes.Buffer
 	gz := gzip.NewWriter(&packed)

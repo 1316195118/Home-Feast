@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"io/fs"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -39,11 +40,21 @@ type Server struct {
 	bootstrapMu     sync.RWMutex
 	bootstrapCache  *bootstrapCacheEntry
 	staticCache     sync.Map
+	// index.html 的渲染结果按 baseURL+路由+状态码缓存：模板含 __SITE_URL__，
+	// 每次请求都要做 6 次串替换 + 2 次压缩 + 3 次哈希，结果却从不复用。
+	indexCache sync.Map
 	thumbMu         sync.Mutex
 	thumbCache      map[string]*generatedThumb
 	thumbLoads      map[string]*generatedThumbLoad
 	thumbGeneration uint64
 	backupMu        sync.Mutex
+
+	// 在线更新进度，属于本实例；初值由启动时 CheckRecovery 的返回值注入。
+	updateMu    sync.Mutex
+	updateState updateStatus
+
+	stopOnce sync.Once
+	stopCh   chan struct{} // 关闭时停掉自动备份协程，测试反复建实例不再堆积
 }
 
 type bootstrapCacheEntry struct {
@@ -84,11 +95,18 @@ func (h *closeHandler) Close() {
 }
 
 // New 组装全部路由。网页里也能设置访问口令，见 updateSettings。
-func New(st *store.Store, web fs.FS, envCode string) http.Handler {
+// initialUpdate 是进程启动时 CheckRecovery 自检出的更新状态（可为 updateStatus{}）。
+func New(st *store.Store, web fs.FS, envCode string, initialUpdate ...updateStatus) http.Handler {
+	var initial updateStatus
+	if len(initialUpdate) > 0 {
+		initial = initialUpdate[0]
+	}
 	s := &Server{
 		st: st, web: web, envCode: envCode, events: newEventBroker(), limit: newFailLimiter(),
 		thumbCache: make(map[string]*generatedThumb),
 		thumbLoads: make(map[string]*generatedThumbLoad),
+		updateState: initial,
+		stopCh:      make(chan struct{}),
 	}
 
 	api := http.NewServeMux()
@@ -145,7 +163,11 @@ func New(st *store.Store, web fs.FS, envCode string) http.Handler {
 	root.HandleFunc("GET /robots.txt", s.serveRobots)
 	root.HandleFunc("/", s.serveFrontend)
 	// 最外层压缩：JSON/JS/CSS/HTML 实测能省 65%~80% 传输量（见 gzip.go）
-	return &closeHandler{Handler: withSecurityHeaders(withGzip(root)), close: s.events.close}
+	return &closeHandler{Handler: withSecurityHeaders(withGzip(root)), close: func() {
+		s.events.close()
+		// 与 SSE 一起停掉自动备份协程：进程退出 / 测试收尾都不留常驻 goroutine。
+		s.stopOnce.Do(func() { close(s.stopCh) })
+	}}
 }
 
 // protect 做两件小事：写接口校验同源，口令开启时校验自定义请求头。
@@ -154,10 +176,9 @@ func (s *Server) protect(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-store")
 		isWrite := r.Method != http.MethodGet && r.Method != http.MethodHead
-		revisionBefore := uint64(0)
-		if isWrite {
-			revisionBefore = s.st.Revision()
-		}
+		// 读接口（如 bootstrap）会顺带清理过期订单并落盘，修订号也会变；
+		// 所以所有请求都记录修订号，结尾按「是否真的变了」决定是否广播。
+		revisionBefore := s.st.Revision()
 		if isWrite && !sameOrigin(r) {
 			jsonErr(w, http.StatusForbidden, "跨站请求已拒绝")
 			return
@@ -179,8 +200,8 @@ func (s *Server) protect(next http.Handler) http.Handler {
 		sw := &statusWriter{ResponseWriter: w}
 		next.ServeHTTP(sw, r)
 		// 只有数据真的变了才广播。幂等点菜、重复保存、上传暂存图等 2xx
-		// 不应让其它设备白刷新一次；真实写入成功后修订号必然递增。
-		if isWrite && sw.status >= 200 && sw.status < 300 && s.st.Revision() != revisionBefore {
+		// 不应让其它设备白刷新一次；真实写入或读触发的过期清理都会递增修订号。
+		if sw.status >= 200 && sw.status < 300 && s.st.Revision() != revisionBefore {
 			s.events.publish(r.Header.Get("X-Client-ID"))
 		}
 	})
@@ -216,7 +237,32 @@ func sameOrigin(r *http.Request) bool {
 			expectedHost = site.Host
 		}
 	}
-	return expectedHost != "" && strings.EqualFold(u.Host, expectedHost)
+	if expectedHost == "" {
+		return false
+	}
+	// 浏览器会把 Origin 里的默认端口规范化掉（https:443 / http:80），
+	// 而 Host 头可能仍带端口。两边都按「去掉默认端口」归一化再比。
+	return strings.EqualFold(stripDefaultPort(u.Host, u.Scheme),
+		stripDefaultPort(expectedHost, schemeOf(r)))
+}
+
+// stripDefaultPort 去掉 scheme 对应的默认端口，保留其余端口用于精确比较。
+func stripDefaultPort(host, scheme string) string {
+	h, port, err := net.SplitHostPort(host)
+	if err != nil {
+		return host
+	}
+	if (scheme == "https" && port == "443") || (scheme == "http" && port == "80") {
+		return h
+	}
+	return host
+}
+
+func schemeOf(r *http.Request) string {
+	if r.TLS != nil {
+		return "https"
+	}
+	return "http"
 }
 
 func (s *Server) ping(w http.ResponseWriter, r *http.Request) {

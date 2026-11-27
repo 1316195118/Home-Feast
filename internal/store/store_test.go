@@ -1,9 +1,62 @@
 package store
 
 import (
+	"encoding/json"
+	"sync"
 	"testing"
 	"time"
 )
+
+// 备份恢复必须在单个写锁内替换 JSON 并重载：并发写要么在恢复前完成（被恢复覆盖），
+// 要么在恢复后完成（保留）；绝不能出现「写已返回成功却被引擎接下来的 Reload 抹掉」。
+func TestRestoreFilesDoesNotLoseConcurrentCommittedWrite(t *testing.T) {
+	dir := t.TempDir()
+	st, err := Open(dir, t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.AddDish(Dish{Name: "原始菜", Cuisine: "homestyle"}); err != nil {
+		t.Fatal(err)
+	}
+	before := st.Revision()
+
+	// 构造一份只含一道菜的备份 dishes.json
+	backup := []Dish{{ID: "backup-1", Name: "备份菜", Cuisine: "homestyle"}}
+	data, _ := json.MarshalIndent(backup, "", "  ")
+	data = append(data, '\n')
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+	var addErr error
+	go func() {
+		defer wg.Done()
+		// 恢复完成后追加一道新菜，它不应被吞掉
+		time.Sleep(2 * time.Millisecond)
+		if _, e := st.AddDish(Dish{Name: "恢复后新增", Cuisine: "homestyle"}); e != nil {
+			addErr = e
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		if e := st.RestoreFiles(map[string][]byte{dishesFile: data}); e != nil {
+			t.Errorf("RestoreFiles: %v", e)
+		}
+	}()
+	wg.Wait()
+	if addErr != nil {
+		t.Fatal(addErr)
+	}
+	if st.Revision() <= before {
+		t.Fatal("恢复与写入后修订号应递增")
+	}
+	names := map[string]bool{}
+	for _, d := range st.ListDishes() {
+		names[d.Name] = true
+	}
+	if !names["恢复后新增"] {
+		t.Fatalf("恢复完成后已提交的新菜被弄丢了：%v", names)
+	}
+}
 
 // 餐别时段与过期清理的回归测试。用固定时区构造时间，避免依赖运行机器的时区。
 var cst = time.FixedZone("CST", 8*3600)

@@ -8,12 +8,33 @@ import (
 	_ "image/gif" // 注册 GIF 解码
 	"image/jpeg"
 	_ "image/png" // 注册 PNG 解码
+	"errors"
 	"os"
 	"path/filepath"
 )
 
 // 列表用的缩略图宽度。卡片实际显示 200~400px，2 倍屏也够用。
 const thumbWidth = 400
+
+// 解码前的尺寸护栏。压缩后体积（上传限制 6MB）完全约束不住像素数：
+// 一张 20000×20000 的纯白 PNG 只有几十 KB，但 image.Decode 会先分配
+// 1.6GB 全尺寸图，紧接着 NewRGBA 再分配 1.6GB —— 容器内存限制下直接
+// fatal OOM（不可 recover），全家设备一起断服。所以务必先 DecodeConfig
+// 读宽高再决定是否真正解码。
+const (
+	maxThumbPixels = 40_000_000 // 4000 万像素，约 160MB RGBA，留足余量
+	maxThumbEdge   = 8000       // 单边上限，避免极端长条图绕过像素数检查
+)
+
+// imageTooLarge 在解码配置阶段就拒绝超大图，避免任何全尺寸分配。
+func imageTooLarge(data []byte) (bool, error) {
+	cfg, _, err := image.DecodeConfig(bytes.NewReader(data))
+	if err != nil {
+		return false, err // 交给后续 image.Decode 报同样的错
+	}
+	return cfg.Width > maxThumbEdge || cfg.Height > maxThumbEdge ||
+		int64(cfg.Width)*int64(cfg.Height) > maxThumbPixels, nil
+}
 
 // thumbJPEGQuality 取 78：400px 下肉眼几乎看不出差别，单张约 20~30KB。
 const thumbJPEGQuality = 78
@@ -39,6 +60,12 @@ func writeThumb(data []byte, uploadDir, base string) error {
 // renderThumbJPEG 生成列表用的 400px JPEG。上传时写入磁盘；
 // 老数据缺缩略图时也复用它，在请求阶段即时生成并放入内存缓存。
 func renderThumbJPEG(data []byte) ([]byte, error) {
+	// 先看尺寸再解码：DecodeConfig 只解析头部，不分配像素缓冲。
+	if tooLarge, err := imageTooLarge(data); err != nil {
+		return nil, err
+	} else if tooLarge {
+		return nil, errors.New("图片尺寸过大，请压缩后再上传")
+	}
 	img, _, err := image.Decode(bytes.NewReader(data))
 	if err != nil {
 		return nil, err

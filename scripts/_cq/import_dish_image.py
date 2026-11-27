@@ -8,6 +8,9 @@
 pct push 到 LXC100 → docker cp 进容器 /data/uploads/ → 更新 dishes.json 的 image 字段（原子替换）。
 
 依赖：paramiko、Pillow
+
+SSH 凭据从环境变量读取（不要写进源码）：
+    PVE_HOST=10.10.10.252 PVE_USER=root PVE_PASS='...' python scripts/_cq/import_dish_image.py ...
 """
 import argparse
 import hashlib
@@ -21,9 +24,9 @@ import time
 import paramiko
 from PIL import Image
 
-PVE_HOST = '10.10.10.252'
-PVE_USER = 'root'
-PVE_PASS = '***REDACTED***'
+PVE_HOST = os.environ.get('PVE_HOST', '10.10.10.252')
+PVE_USER = os.environ.get('PVE_USER', 'root')
+PVE_PASS = os.environ.get('PVE_PASS', '')
 CT = '100'
 CONTAINER = 'family-menu'
 TARGET_SIZE = (2400, 1800)
@@ -35,6 +38,8 @@ def log(msg):
 
 
 def ssh_connect():
+    if not PVE_PASS:
+        raise SystemExit('缺少 PVE_PASS 环境变量：请用 PVE_PASS=... 传入 SSH 口令，不要写进源码')
     c = paramiko.SSHClient()
     c.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     c.connect(PVE_HOST, 22, PVE_USER, PVE_PASS, look_for_keys=False, allow_agent=False, timeout=20)

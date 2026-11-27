@@ -147,6 +147,26 @@ func orderedAfterMealEnd(o Order, date string, endMinutes int, loc *time.Locatio
 	return t.Hour()*60+t.Minute() >= endMinutes
 }
 
+// hasEndedMeal 供 expireToday 在读锁内做保守预检：判断是否存在「该餐已过结束时刻」
+// 的订单。刻意不检查 orderedAfterMealEnd —— 那会让预检更宽松（多拿一次写锁），
+// 但绝不会漏判，dropExpired 仍会做精确判定。
+func hasEndedMeal(p Plan, now time.Time, meals []MealSlot) bool {
+	if p.Date != now.Format("2006-01-02") || len(p.Orders) == 0 {
+		return false
+	}
+	endByKey := map[string]int{}
+	for _, m := range effectiveMeals(meals) {
+		endByKey[m.Key] = MealEndMinutes(m.End)
+	}
+	cur := now.Hour()*60 + now.Minute()
+	for _, o := range p.Orders {
+		if end, ok := endByKey[o.Meal]; ok && cur >= end {
+			return true
+		}
+	}
+	return false
+}
+
 // dropExpired 移除今天已过饭点餐别的订单，返回是否有变化（调用者需持写锁）。
 func dropExpired(p *Plan, now time.Time, meals []MealSlot) bool {
 	if p.Date != now.Format("2006-01-02") || len(p.Orders) == 0 {

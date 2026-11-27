@@ -74,6 +74,25 @@ def write_version(v):
         f.write(v + '\n')
 
 
+# 发版过程中会被改写的源文件；任一环节失败时用它回滚，避免留下
+# 「VERSION 已递增但二进制/manifest 还是旧版」这种无法自愈的半成品状态。
+RELEASE_FILES = [VERSION_FILE, CHANGELOG, GEN_FILE, CHANGELOG_GO, PENDING]
+
+
+def snapshot_release_files():
+    return {p: open(p, 'rb').read() if os.path.exists(p) else None for p in RELEASE_FILES}
+
+
+def restore_release_files(snap):
+    for path, data in snap.items():
+        if data is None:
+            if os.path.exists(path):
+                os.remove(path)
+        else:
+            with open(path, 'wb') as f:
+                f.write(data)
+
+
 def read_pending():
     """返回 [(时间, 说明), ...]，文件名不存在时为空。"""
     if not os.path.exists(PENDING):
@@ -194,53 +213,62 @@ def build_all():
 
 
 def publish_dist(version, note, now):
-    """把最新三架构二进制写入 dist/（覆盖式），并生成 manifest.json 供容器内更新拉取。"""
+    """把三架构二进制写进 dist/，并生成 manifest.json 供容器内更新拉取。
+
+    全程先写临时目录、全部成功后才原子替换，避免中途失败留下
+    「旧 gz 已删、新 manifest 未生成」的残缺 dist 让在线更新拉到坏版本。
+    """
     os.makedirs(DIST, exist_ok=True)
-    files = {}
-    # 先清理旧的二进制，确保仓库只留最新一份
-    for f in os.listdir(DIST):
-        if f.startswith('menu-linux'):
-            os.remove(os.path.join(DIST, f))
-    for arch, cfg in ARCHES.items():
-        src = bin_for(arch)
-        if not os.path.exists(src):
-            raise SystemExit(f'缺少 {arch} 产物 {src}，无法发布更新')
-        name = 'menu-linux-amd64' if arch == 'amd64' else f'menu-linux-{arch}'
-        dst = os.path.join(DIST, name)
-        with open(src, 'rb') as fsrc, open(dst, 'wb') as fdst:
-            shutil.copyfileobj(fsrc, fdst)
-        digest = hashlib.sha256()
-        with open(dst, 'rb') as f:
-            for chunk in iter(lambda: f.read(1 << 20), b''):
-                digest.update(chunk)
-        raw_size = os.path.getsize(dst)
-        entry = {'name': name, 'sha256': digest.hexdigest(), 'size': raw_size}
-        # 同时产出 gzip 版：容器到 GitHub 的链路不稳，4.8MB 比 9.9MB 成功率高得多
-        gz_name = name + '.gz'
-        gz_path = os.path.join(DIST, gz_name)
-        with open(dst, 'rb') as src_f, gzip.open(gz_path, 'wb', compresslevel=9) as gz_f:
-            shutil.copyfileobj(src_f, gz_f, 1 << 20)
-        gz_digest = hashlib.sha256()
-        with open(gz_path, 'rb') as f:
-            for chunk in iter(lambda: f.read(1 << 20), b''):
-                gz_digest.update(chunk)
-        entry.update({'gz': gz_name, 'gzSha256': gz_digest.hexdigest(), 'gzSize': os.path.getsize(gz_path)})
-        # 仓库只留 gz（体积减半），未压缩件不进版本库；sha256/size 仍用于解压后校验
-        os.remove(dst)
-        files[arch] = entry
-        print(f'  dist/{name}  {raw_size / 1024 / 1024:.1f} MB  sha256={digest.hexdigest()[:12]}…')
-        print(f'  dist/{gz_name}  {os.path.getsize(gz_path) / 1024 / 1024:.1f} MB (gzip)')
-    manifest = {
-        'version': version,
-        'publishedAt': now.isoformat(timespec='seconds'),
-        'note': note,
-        'files': files,
-    }
-    path = os.path.join(DIST, 'manifest.json')
-    with open(path, 'w', encoding='utf-8', newline='') as f:
-        json.dump(manifest, f, ensure_ascii=False, indent=2)
-        f.write('\n')
-    print('  已生成 dist/manifest.json（', version, '）')
+    staging = os.path.join(DIST, '.staging')
+    if os.path.exists(staging):
+        shutil.rmtree(staging)
+    os.makedirs(staging)
+    try:
+        files = {}
+        for arch, cfg in ARCHES.items():
+            src = bin_for(arch)
+            if not os.path.exists(src):
+                raise SystemExit(f'缺少 {arch} 产物 {src}，无法发布更新')
+            name = 'menu-linux-amd64' if arch == 'amd64' else f'menu-linux-{arch}'
+            gz_name = name + '.gz'
+            gz_path = os.path.join(staging, gz_name)
+            digest = hashlib.sha256()
+            with open(src, 'rb') as fsrc:
+                for chunk in iter(lambda: fsrc.read(1 << 20), b''):
+                    digest.update(chunk)
+            raw_size = os.path.getsize(src)
+            entry = {'name': name, 'sha256': digest.hexdigest(), 'size': raw_size}
+            # 容器到 GitHub 的链路不稳，4.8MB 的 gz 比 9.9MB 原始件成功率高得多
+            with open(src, 'rb') as src_f, gzip.open(gz_path, 'wb', compresslevel=9) as gz_f:
+                shutil.copyfileobj(src_f, gz_f, 1 << 20)
+            gz_digest = hashlib.sha256()
+            with open(gz_path, 'rb') as f:
+                for chunk in iter(lambda: f.read(1 << 20), b''):
+                    gz_digest.update(chunk)
+            entry.update({'gz': gz_name, 'gzSha256': gz_digest.hexdigest(), 'gzSize': os.path.getsize(gz_path)})
+            files[arch] = entry
+            print(f'  dist/{name}  {raw_size / 1024 / 1024:.1f} MB  sha256={digest.hexdigest()[:12]}…')
+            print(f'  dist/{gz_name}  {os.path.getsize(gz_path) / 1024 / 1024:.1f} MB (gzip)')
+        manifest = {
+            'version': version,
+            'publishedAt': now.isoformat(timespec='seconds'),
+            'note': note,
+            'files': files,
+        }
+        with open(os.path.join(staging, 'manifest.json'), 'w', encoding='utf-8', newline='') as f:
+            json.dump(manifest, f, ensure_ascii=False, indent=2)
+            f.write('\n')
+        # 全部就绪后一次性替换：先删旧 gz，再把新 gz 与 manifest 原子搬入。
+        # manifest 最后就位，容器要么读到完整旧版、要么读到完整新版。
+        for f in os.listdir(DIST):
+            if f.startswith('menu-linux'):
+                os.remove(os.path.join(DIST, f))
+        for f in os.listdir(staging):
+            os.replace(os.path.join(staging, f), os.path.join(DIST, f))
+        print('  已生成 dist/manifest.json（', version, '）')
+    finally:
+        if os.path.exists(staging):
+            shutil.rmtree(staging)
 
 
 def deploy():
@@ -267,20 +295,28 @@ def publish(do_deploy=False, arch='amd64', no_build=False):
     else:
         note = '\n\n'.join(f'**{t}**\n\n{body}' for t, body in entries)
 
-    write_version(v)
-    append_changelog(v, note, now)
-    gen_go(v, note, now)
-    clear_pending()
-    n = gen_changelog_go()
-    print(f'版本记录已嵌入：{n} 条')
-    print(f'版本 {cur} → {v}（合并 {len(entries)} 条说明）')
+    snap = snapshot_release_files()
+    try:
+        write_version(v)
+        append_changelog(v, note, now)
+        gen_go(v, note, now)
+        clear_pending()
+        n = gen_changelog_go()
+        print(f'版本记录已嵌入：{n} 条')
+        print(f'版本 {cur} → {v}（合并 {len(entries)} 条说明）')
 
-    # 在线更新需要三架构产物，publish 时始终全编（本地开发可用 --no-build 跳过）
-    if no_build:
-        print('跳过编译（--no-build），dist/ 保持原样')
-    else:
-        build_all()
-        publish_dist(v, note, now)
+        # 在线更新需要三架构产物，publish 时始终全编（本地开发可用 --no-build 跳过）
+        if no_build:
+            print('跳过编译（--no-build），dist/ 保持原样')
+        else:
+            build_all()
+            publish_dist(v, note, now)
+    except BaseException:
+        # 编译/打包失败时把 VERSION、CHANGELOG、PENDING、生成的 Go 文件全部还原，
+        # 否则下次 publish 会因 PENDING 已清空而直接退出，且 manifest 与版本错配。
+        restore_release_files(snap)
+        print('发布失败：已回滚版本文件与待发布说明，可修复后重试', file=sys.stderr)
+        raise
     if do_deploy:
         deploy()
 

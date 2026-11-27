@@ -3,6 +3,7 @@
 import { spawn } from 'node:child_process'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { killProcessTree } from './browser-cleanup.mjs'
+import { check, finishAssertions } from './_assert.mjs'
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8090'
 async function api(method, path, body) {
@@ -73,7 +74,8 @@ try {
       btn: document.querySelector('.pk-cta-btn')?.textContent.trim() || '',
       inWashLabel: [...document.querySelectorAll('.duty-label')].some(x=>x.textContent.includes('摇骰子')),
     }))())`))
-    console.log('骰子 CTA 独立存在:', s.cta, '| 按钮:', s.btn, '| 已不在「谁洗碗」标题里:', !s.inWashLabel)
+    check(`${tag} 骰子 CTA 独立存在`, s.cta === true)
+    check(`${tag} 骰子不在洗碗标题里`, s.inWashLabel === false)
 
     // 购物清单用量
     await ev(`[...document.querySelectorAll('.btn')].find(b=>b.textContent.includes('购物清单'))?.click()`)
@@ -85,8 +87,9 @@ try {
       preciseTip: !!document.querySelector('.shopping-precise'),
       preciseAmounts: [...document.querySelectorAll('.shopping-amount')].map(x=>x.textContent.trim()).filter(x=>/\d+\s*(g|克|ml|毫升|支|根|瓣|棵)/.test(x)).length,
     }))())`))
-    console.log('购物清单 行数', s.rows, '| 用量', JSON.stringify(s.amounts))
-    console.log('HowToCook 精确用量提示', s.preciseTip, '| 带数值单位用量条数', s.preciseAmounts)
+    check(`${tag} 购物清单有条目`, s.rows > 0, `rows=${s.rows}`)
+    check(`${tag} 精确用量提示可见`, s.preciseTip === true)
+    check(`${tag} 用量带数值单位`, s.preciseAmounts > 0, `count=${s.preciseAmounts}`)
     await ev(`[...document.querySelectorAll('.setting-actions .btn')].find(b=>b.textContent.includes('完成'))?.click()`)
     await sleep(300)
 
@@ -96,7 +99,7 @@ try {
     s = JSON.parse(await ev(`JSON.stringify((()=>({
       entry: [...document.querySelectorAll('.menu-head-actions .btn')].some(b=>b.textContent.includes('冰箱食材')),
     }))())`))
-    console.log('菜谱标题后冰箱食材入口:', s.entry)
+    check(`${tag} 冰箱食材入口存在`, s.entry === true)
     await ev(`[...document.querySelectorAll('.menu-head-actions .btn')].find(b=>b.textContent.includes('冰箱食材'))?.click()`)
     await sleep(500)
     s = JSON.parse(await ev(`JSON.stringify((()=>({
@@ -104,7 +107,8 @@ try {
       withArt: document.querySelectorAll('.pantry-card .pantry-art').length,
       icons: [...document.querySelectorAll('.pantry-art-icon')].slice(0,4).map(x=>x.textContent.trim()),
     }))())`))
-    console.log('食材卡', s.cards, '| 带效果图', s.withArt, '| 图标样例', JSON.stringify(s.icons))
+    check(`${tag} 食材卡有内容`, s.cards > 0, `cards=${s.cards}`)
+    check(`${tag} 食材卡带效果图`, s.withArt > 0, `withArt=${s.withArt}`)
     // 点选一张并保存
     await ev(`document.querySelector('.pantry-card')?.click()`)
     await sleep(150)
@@ -126,7 +130,9 @@ try {
         wideCard: cs.some(c=>Math.round(c.getBoundingClientRect().width)>Math.min(...ws)+4),
       };
     })())`))
-    console.log('设置页 卡片数', s.count, '| 宽度种类', s.widthKinds, JSON.stringify(s.widths), '| min-height', JSON.stringify(s.minHeights), '| 有跨列大卡:', s.wideCard)
+    check(`${tag} 设置页有多张卡`, s.count > 0, `count=${s.count}`)
+    check(`${tag} 卡片宽度统一`, s.widthKinds === 1, JSON.stringify(s.widths))
+    check(`${tag} 无跨列大卡`, s.wideCard === false)
     await ev(`[...document.querySelectorAll('.setting-card .btn')].find(b=>b.textContent.includes('管理每周排班'))?.click()`)
     await sleep(500)
     s = JSON.parse(await ev(`JSON.stringify((()=>({
@@ -135,7 +141,11 @@ try {
       overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
       smallBtns: [...document.querySelectorAll('.btn,.chip,.tab')].filter(e=>{const r=e.getBoundingClientRect();return r.width>0&&(r.width<40||r.height<36)}).length,
     }))())`))
-    console.log('排班弹窗 行数', s.rows, '| 下拉', s.selects, '| 横向溢出', s.overflow, '| 过小控件', s.smallBtns, '| JS 异常', errors.length)
+    check(`${tag} 排班弹窗有行`, s.rows > 0, `rows=${s.rows}`)
+    check(`${tag} 排班有下拉`, s.selects > 0, `selects=${s.selects}`)
+    check(`${tag} 无横向溢出`, s.overflow === false)
+    check(`${tag} 无过小控件`, s.smallBtns === 0, `count=${s.smallBtns}`)
+    check(`${tag} 无 JS 异常`, errors.length === 0, `count=${errors.length}`)
     ws.close(); killProcessTree(proc)
   }
   await run(1280, 900, 'desktop', false)

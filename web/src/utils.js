@@ -1,5 +1,18 @@
 // 界面共用的小工具，纯函数，方便单独测试。
 import DISH_PHOTOS from './dish-photo-map.json'
+
+// 浏览器存储可能被禁用（Safari 隐私模式、企业策略、配额满），裸调用会抛
+// SecurityError / QuotaExceededError，在模块顶层或初始化阶段足以让整页白屏。
+// 统一走这三个包装：读失败返回空、写失败静默忽略，内存态仍是唯一真相。
+export function storageGet(store, key) {
+  try { return store.getItem(key) } catch { return null }
+}
+export function storageSet(store, key, value) {
+  try { store.setItem(key, value) } catch { /* 隐私模式 / 配额满时忽略 */ }
+}
+export function storageRemove(store, key) {
+  try { store.removeItem(key) } catch { /* 同上 */ }
+}
 import { ingredientBaseName, isNonPurchasableIngredient, splitIngredientItems } from './ingredient-utils'
 
 // item 可能是菜品 Dish（字段 image/cuisine），也可能是点菜记录 Order（字段 dishImage/dishCuisine）。

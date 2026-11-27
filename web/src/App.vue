@@ -10,7 +10,7 @@ import PrivacyView from './components/PrivacyView.vue'
 import TermsView from './components/TermsView.vue'
 import NotFoundView from './components/NotFoundView.vue'
 import { useModalBehavior } from './modal'
-import { allergyConflicts, currentMeal, normalizeMeals } from './utils'
+import { allergyConflicts, currentMeal, normalizeMeals, storageGet, storageSet, storageRemove } from './utils'
 import { getRecipe } from './recipes'
 import { playAdd, playFav, playSave, playRemove, playError } from './audio'
 import { invalidateThumbCache } from './thumb-cache'
@@ -147,7 +147,7 @@ const state = reactive({
   plan: { orders: [] },
   plans: [],
   realtime: 'off',     // SSE 连接状态：off / connecting / online / reconnecting / unsupported
-  currentUserId: localStorage.getItem('fm.user') || '',
+  currentUserId: storageGet(localStorage, 'fm.user') || '',
 })
 
 // 用动态组件 + key 让页签切换能走统一的进出场过渡。
@@ -396,7 +396,7 @@ function applyBootstrap(info) {
   state.bootError = ''
   scheduleIdlePrefetch()
   // 只有「用户主动选过」才会写进 localStorage；这里的兜底不写，避免首次被静默记住
-  if (!localStorage.getItem('fm.user') && state.members.length) needsUserPick.value = true
+  if (!storageGet(localStorage, 'fm.user') && state.members.length) needsUserPick.value = true
   scheduleMealBoundary()
 }
 
@@ -511,8 +511,8 @@ function applyServerResult(result) {
 // 显式选择身份：只有用户主动切换/首次选择才持久化
 function selectUser(id) {
   state.currentUserId = id
-  if (id) localStorage.setItem('fm.user', id)
-  else localStorage.removeItem('fm.user')
+  if (id) storageSet(localStorage, 'fm.user', id)
+  else storageRemove(localStorage, 'fm.user')
 }
 
 function doPick(id) {
@@ -1044,7 +1044,11 @@ function flushRemoteRefresh() {
   clearTimeout(sseTimer)
   sseTimer = setTimeout(doRemoteRefresh, 120)
 }
-function onFocusOut() { setTimeout(flushRemoteRefresh, 120) }
+let focusOutTimer = null
+function onFocusOut() {
+  clearTimeout(focusOutTimer)
+  focusOutTimer = setTimeout(flushRemoteRefresh, 120)
+}
 function installRealtime() {
   if (typeof EventSource === 'undefined') { state.realtime = 'unsupported'; return }
   try {
@@ -1094,6 +1098,7 @@ onUnmounted(() => {
   clearTimeout(scrollRestoreTimer)
   if (source) source.close()
   clearTimeout(sseTimer)
+  clearTimeout(focusOutTimer)
   document.removeEventListener('focusout', onFocusOut)
   window.removeEventListener('focus', flushRemoteRefresh)
 })
@@ -1212,7 +1217,7 @@ onUnmounted(() => {
     </Transition>
 
     <Transition name="modal">
-      <div v-if="state.locked" ref="lockRoot" class="modal-backdrop">
+      <div v-if="state.locked" ref="lockRoot" class="modal-backdrop access-lock-backdrop">
         <div class="modal">
           <div class="modal-head"><h2>🔒 需要访问口令</h2></div>
           <p class="muted fs-88">

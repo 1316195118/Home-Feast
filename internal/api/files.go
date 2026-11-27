@@ -42,6 +42,15 @@ func (s *Server) upload(w http.ResponseWriter, r *http.Request) {
 		jsonErr(w, http.StatusBadRequest, "只支持 PNG / JPEG / WebP / GIF 图片")
 		return
 	}
+	// 压缩后体积不约束像素数：先读头部尺寸，拒绝会让缩略图解码 OOM 的图。
+	if tooLarge, err := imageTooLarge(data); err != nil {
+		jsonErr(w, http.StatusBadRequest, "无法识别的图片格式")
+		return
+	} else if tooLarge {
+		jsonErr(w, http.StatusRequestEntityTooLarge,
+			fmt.Sprintf("图片尺寸过大，单边请不超过 %d 像素且总像素不超过 %d 万", maxThumbEdge, maxThumbPixels/10000))
+		return
+	}
 	base := randomName()
 	name := base + ext
 	uploadDir := filepath.Join(s.st.Dir(), "uploads")
@@ -116,6 +125,12 @@ func (s *Server) exportBackup(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/zip")
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, name))
+	// 备份可达数百 MB，慢速链路上 60s 全局 WriteTimeout 会掐断连接，
+	// 用户拿到不完整 zip 却以为备份成功。与 SSE 一样单独豁免写超时。
+	if err := http.NewResponseController(w).SetWriteDeadline(time.Time{}); err != nil {
+		// 不支持该接口时按原行为继续，不影响功能。
+		_ = err
+	}
 	http.ServeContent(w, r, name, time.Now(), f)
 }
 
@@ -244,9 +259,10 @@ func (s *Server) importBackup(w http.ResponseWriter, r *http.Request) {
 	s.backupMu.Lock()
 	defer s.backupMu.Unlock()
 
-	// 恢复前的回滚点（只针对 JSON；图片不可逆但也不影响数据自洽）
+	// 恢复前的回滚点（只针对 JSON；图片不可逆但也不影响数据自洽）。
+	// 快照本身也走原子写：崩溃在写快照中途时不会留下半个回滚点。
 	stamp := time.Now().Format("20060102-150405")
-	type snapshot struct{ dest, keep string }
+	type snapshot struct{ dest, keep string; data []byte }
 	var snaps []snapshot
 	for _, it := range jsons {
 		dest := s.st.Path(it.name)
@@ -255,37 +271,30 @@ func (s *Server) importBackup(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		keep := dest + ".pre-restore-" + stamp
-		if werr := os.WriteFile(keep, cur, 0o644); werr != nil {
+		if werr := atomicFile(keep, cur); werr != nil {
 			jsonErr(w, http.StatusInternalServerError, "无法创建恢复前的快照，已中止")
 			return
 		}
-		snaps = append(snaps, snapshot{dest: dest, keep: keep})
+		snaps = append(snaps, snapshot{dest: dest, keep: keep, data: cur})
 	}
+	// 回滚同样在单个写锁内完成替换 + 重载，避免回滚又和别的写请求交错。
 	rollback := func() {
+		prev := make(map[string][]byte, len(snaps))
 		for _, sv := range snaps {
-			if b, e := os.ReadFile(sv.keep); e == nil {
-				_ = atomicFile(sv.dest, b)
-			}
+			prev[filepath.Base(sv.dest)] = sv.data
 		}
-		_ = s.st.Reload()
+		_ = s.st.RestoreFiles(prev)
 	}
 
+	// 一次写锁内替换全部 JSON 并重载：常规写接口无法插入，
+	// 已返回成功的写不会被随后的 Reload 抹掉。
+	payload := make(map[string][]byte, len(jsons))
 	for _, it := range jsons {
-		dest := s.st.Path(it.name)
-		if err := os.MkdirAll(filepath.Dir(dest), 0o755); err != nil {
-			rollback()
-			jsonErr(w, http.StatusInternalServerError, "创建目录失败，已回滚")
-			return
-		}
-		if err := atomicFile(dest, it.data); err != nil {
-			rollback()
-			jsonErr(w, http.StatusInternalServerError, "写入数据失败，已回滚到恢复前的数据")
-			return
-		}
+		payload[it.name] = it.data
 	}
-	if err := s.st.Reload(); err != nil {
+	if err := s.st.RestoreFiles(payload); err != nil {
 		rollback()
-		jsonErr(w, http.StatusInternalServerError, "恢复后读取数据失败，已回滚到恢复前的数据")
+		jsonErr(w, http.StatusInternalServerError, "写入数据失败，已回滚到恢复前的数据")
 		return
 	}
 
@@ -413,13 +422,24 @@ func isJSONEntry(name string) bool {
 }
 
 func atomicFile(dest string, b []byte) error {
-	tmp := dest + ".tmp"
-	if err := os.WriteFile(tmp, b, 0o644); err != nil {
+	// 唯一临时名：常规写路径也用 dest+".tmp"，固定名字会互相覆盖；
+	// 这里用 CreateTemp 并与目标同目录，rename 才是同一文件系统内的原子替换。
+	f, err := os.CreateTemp(filepath.Dir(dest), ".fm-restore-*")
+	if err != nil {
 		return err
 	}
-	if err := os.Rename(tmp, dest); err != nil {
-		_ = os.Remove(tmp)
+	tmp := f.Name()
+	defer os.Remove(tmp)
+	if _, err = f.Write(b); err != nil {
+		f.Close()
 		return err
 	}
-	return nil
+	if err = f.Sync(); err != nil {
+		f.Close()
+		return err
+	}
+	if err = f.Close(); err != nil {
+		return err
+	}
+	return os.Rename(tmp, dest)
 }

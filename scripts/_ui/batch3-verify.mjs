@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { pathToFileURL } from 'node:url'
 import { killProcessTree } from './browser-cleanup.mjs'
+import { check, finishAssertions } from './_assert.mjs'
 
 const ROOT = 'D:/WorkBuddy AI/家庭点菜系统/'
 const BASE = process.env.BASE || 'http://127.0.0.1:8090'
@@ -55,7 +56,7 @@ async function openPage(port, width, height, hash) {
 // ---------- 1. 纯函数：佐料不参与 ----------
 const { pantryMatches } = await import(pathToFileURL(ROOT + 'web/src/utils.js').href)
 const unit = pantryMatches({ ingredients: ['鸡蛋 2 个', '番茄 2 个', '盐 少许', '葱 1 根'] }, ['鸡蛋', '盐', '葱'])
-console.log('佐料过滤单测:', JSON.stringify(unit), '| 只命中主料:', unit.hits.length === 1 && unit.hits[0] === '鸡蛋')
+check('佐料过滤只命中主料', unit.hits.length === 1 && unit.hits[0] === '鸡蛋', JSON.stringify(unit.hits))
 
 const boot = (await api('GET', '/api/bootstrap')).data
 const today = boot.today
@@ -77,7 +78,8 @@ try {
     first: [...document.querySelectorAll('.dish-name-link')].slice(0,5).map(x=>x.textContent.trim()).join(','),
   }))())`)
   console.log('\n优先推荐 默认前5:', before)
-  console.log('开启后:', on)
+  check('优先推荐开启后出现命中标签', on.tagged > 0, `tagged=${on.tagged}`)
+  console.log('  开启后:', on)
 
   // 通过 API 改冰箱食材（模拟另一台设备），页面应经 SSE 自动重排，无需手动刷新
   await api('PUT', '/api/settings', { pantry: ['鸡蛋', '番茄', '土豆', '盐'] })
@@ -87,7 +89,8 @@ try {
     firstTags: [...document.querySelectorAll('.dish-card')].slice(0,4).map(c=>c.querySelector('.tag-pantry')?.textContent.trim()||'-'),
     stored: document.querySelector('.menu-head-actions .btn')?.textContent.replace(/\\s+/g,' ').trim(),
   }))())`)
-  console.log('改食材后实时变化:', live)
+  check('改食材后经 SSE 实时重排', live.tagged > 0, `tagged=${live.tagged}`)
+  console.log('  改食材后:', live)
 
   // ---------- 2. SSE 多端同步 ----------
   const B = await openPage(9962, 390, 844, 'today')
@@ -97,7 +100,7 @@ try {
   for (const o of afterPost.orders || []) if (!beforeIds.has(o.id)) added.push(o.id)
   await sleep(2000)
   const ordersAfter = await B.ev(`document.querySelectorAll('.order-row').length`)
-  console.log('\nSSE 另一设备点菜 -> B 页订单数', ordersBefore, '=>', ordersAfter, '| 自动同步:', ordersAfter > ordersBefore)
+  check('SSE 多端点菜自动同步', ordersAfter > ordersBefore, `${ordersBefore} => ${ordersAfter}`)
 
   // 输入保护：正在输入留言时，远端写操作不能覆盖草稿
   await B.ev(`(()=>{const i=document.querySelector('.note-row input'); if(i){i.focus(); i.value='测试草稿未保存'; i.dispatchEvent(new Event('input',{bubbles:true}));}})()`)
@@ -107,15 +110,16 @@ try {
   for (const o of afterPost2.orders || []) if (!beforeIds.has(o.id) && !added.includes(o.id)) added.push(o.id)
   await sleep(2000)
   const draft = await B.ev(`document.querySelector('.note-row input')?.value || ''`)
-  console.log('远端写入时保留未保存草稿:', draft === '测试草稿未保存', '| 实际:', JSON.stringify(draft))
-  console.log('B 页 JS 异常:', B.errors.length)
+  check('远端写入保留未保存草稿', draft === '测试草稿未保存', JSON.stringify(draft))
+  check('B 页无 JS 异常', B.errors.length === 0, `count=${B.errors.length}`)
   A.close(); B.close()
 
   // ---------- 3. 自动备份 ----------
   const run = await api('POST', '/api/backups/run')
   const list = await api('GET', '/api/backups')
-  console.log('\n自动备份 立即执行:', run.status, run.data.name, Math.round((run.data.size || 0) / 1024), 'KB')
-  console.log('  备份列表:', (list.data || []).length, '份 | familyId:', boot.familyId || '(旧缓存)')
+  check('立即备份成功', run.status === 200 && !!run.data.name, `status=${run.status}`)
+  console.log('  备份:', run.data.name, Math.round((run.data.size || 0) / 1024), 'KB')
+  check('备份列表非空', (list.data || []).length > 0, `count=${(list.data || []).length}`)
   const boot2 = (await api('GET', '/api/bootstrap')).data
   console.log('  bootstrap familyId:', boot2.familyId, '| autoBackup:', boot2.settings.autoBackup, '| keep:', boot2.settings.backupKeep)
 
@@ -130,7 +134,11 @@ try {
       inputFont: getComputedStyle(document.querySelector('.setting-row-inline input')||document.body).fontSize,
       overflow: document.documentElement.scrollWidth>document.documentElement.clientWidth,
     }))())`))
-    console.log(`${tag} 设置页 自动备份卡 ${s.backupCard} 立即备份按钮 ${s.runBtn} 实时同步状态 ${s.realtime} 输入字号 ${s.inputFont} 溢出 ${s.overflow} JS异常 ${P.errors.length}`)
+    check(`${tag} 自动备份卡存在`, s.backupCard === true)
+    check(`${tag} 立即备份按钮存在`, s.runBtn === true)
+    check(`${tag} 实时同步状态显示`, s.realtime === true)
+    check(`${tag} 无横向溢出`, s.overflow === false)
+    check(`${tag} 无 JS 异常`, P.errors.length === 0, `count=${P.errors.length}`)
     P.close()
   }
 } finally {

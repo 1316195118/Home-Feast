@@ -4,6 +4,7 @@
 import { spawn } from 'node:child_process'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { killProcessTree } from './browser-cleanup.mjs'
+import { check, finishAssertions } from './_assert.mjs'
 
 const EDGE = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'
 const BASE = process.env.BASE || 'http://127.0.0.1:8090'
@@ -78,9 +79,9 @@ async function run(width, height, tag, mobile) {
     await sleep(120)
     const a = JSON.parse(await ev(AUDIT))
     console.log(`${tab.padEnd(9)} 溢出=${a.overflow.length} 截断=${a.clipped.length} 小按钮=${a.small.length} scrollW=${a.scrollW}/${a.vw} gutter=${a.gutter} toast=${a.toast ? a.toast.w + 'x' + a.toast.h : '无'}`)
-    if (a.overflow.length) console.log('   横向溢出:', a.overflow.join(' | '))
-    if (a.clipped.length) console.log('   文字截断:', a.clipped.join(' | '))
-    if (a.small.length) console.log('   过小控件:', a.small.join(' | '))
+    check(`${tag}/${tab} 无横向溢出`, a.overflow.length === 0, a.overflow.join(' | '))
+    check(`${tag}/${tab} 无文字截断`, a.clipped.length === 0, a.clipped.join(' | '))
+    check(`${tag}/${tab} 无过小控件`, a.small.length === 0, a.small.join(' | '))
   }
 
   // 菜系切换抖动量化：记录切换前后视口宽度、网格起点、动画类数量与卡片位移
@@ -121,9 +122,9 @@ async function run(width, height, tag, mobile) {
     const a = JSON.parse(await ev(AUDIT))
     console.log(`${route.padEnd(19)} 溢出=${a.overflow.length} 截断=${a.clipped.length} 小按钮=${a.small.length} scrollW=${a.scrollW}/${a.vw} h1=${a.h1}`)
     console.log(`   title=${a.title}`)
-    if (a.overflow.length) console.log('   横向溢出:', a.overflow.join(' | '))
-    if (a.clipped.length) console.log('   文字截断:', a.clipped.join(' | '))
-    if (a.small.length) console.log('   过小控件:', a.small.join(' | '))
+    check(`${route} 无横向溢出`, a.overflow.length === 0, a.overflow.join(' | '))
+    check(`${route} 无文字截断`, a.clipped.length === 0, a.clipped.join(' | '))
+    check(`${route} 无过小控件`, a.small.length === 0, a.small.join(' | '))
   }
 
   ws.close(); killProcessTree(proc)

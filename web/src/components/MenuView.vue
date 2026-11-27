@@ -6,7 +6,7 @@ import PantryFridge from './PantryFridge.vue'
 import OrderPanel from './OrderPanel.vue'
 import PantryImage from './PantryImage.vue'
 import DishDetail from './DishDetail.vue'
-import { normalizeMeals, isCuisineHidden, pantryGroups, pantryVisual, pantryMatches, normalizeIngredient, hasDishImage, dishImage, friendlyDate, pantryExpiry } from '../utils'
+import { normalizeMeals, isCuisineHidden, pantryGroups, pantryVisual, pantryMatches, normalizeIngredient, hasDishImage, dishImage, friendlyDate, pantryExpiry, storageGet } from '../utils'
 import { getRecipe } from '../recipes'
 import { useModalBehavior } from '../modal'
 import { cacheThumb, thumbCacheEpoch } from '../thumb-cache'
@@ -23,6 +23,14 @@ const orderContext = computed(() => {
 })
 const activeCuisine = ref('all')
 const keyword = ref('')
+// 输入框保持即时响应（清空按钮/高亮），但过滤 237 道菜 + 48 卡片 diff 做 180ms 防抖：
+// 连续输入时只算最后一次，避免每击键都触发全量过滤与 prefetch 重排。
+const debouncedKeyword = ref('')
+let keywordTimer = 0
+watch(keyword, (value) => {
+  clearTimeout(keywordTimer)
+  keywordTimer = setTimeout(() => { debouncedKeyword.value = value }, 180)
+})
 const onlyFavorite = ref(false)
 const quickFilter = ref('') // '' | quick | mild | image
 function toggleQuick(k) { quickFilter.value = quickFilter.value === k ? '' : k }
@@ -81,9 +89,21 @@ function dishSearchText(d) {
   return text
 }
 
+// 「优先推荐」会给菜对象挂 _pantryHits；若每次筛选都展开成新对象，
+// 以对象为 key 的 searchTextCache / getRecipe 会全部失效，连续输入时反复重算。
+// 这里按 id 复用展开对象，只要源对象和命中数没变就返回同一个引用。
+const pantryEnriched = new Map()
+function enrichedDish(d, hits) {
+  const prev = pantryEnriched.get(d.id)
+  if (prev && prev.src === d && prev.hits === hits) return prev.obj
+  const obj = { ...d, _pantryHits: hits }
+  pantryEnriched.set(d.id, { src: d, hits, obj })
+  return obj
+}
+
 // 「优先推荐」：按冰箱已选主料的命中数实时重排，佐料不参与；
 // 命中数相同保持菜谱原顺序，勾选食材后 computed 自动重算，无需刷新。
-const priorityPantry = ref(localStorage.getItem('fm.priorityPantry') === '1')
+const priorityPantry = ref(storageGet(localStorage, 'fm.priorityPantry') === '1')
 function togglePriority() {
   priorityPantry.value = !priorityPantry.value
   try { localStorage.setItem('fm.priorityPantry', priorityPantry.value ? '1' : '0') } catch { /* 隐私模式忽略 */ }
@@ -92,10 +112,10 @@ const recipeIngredients = (d) => getRecipe(d).ingredients || []
 
 // 有筛选时才显示结果数，避免和菜系条「全部 N」重复
 const hasFilter = computed(() =>
-  !!keyword.value.trim() || activeCuisine.value !== 'all' || onlyFavorite.value || !!quickFilter.value || priorityPantry.value,
+  !!debouncedKeyword.value.trim() || activeCuisine.value !== 'all' || onlyFavorite.value || !!quickFilter.value || priorityPantry.value,
 )
 const filtered = computed(() => {
-  const q = keyword.value.trim().toLowerCase()
+  const q = debouncedKeyword.value.trim().toLowerCase()
   const base = state.dishes.filter((d) => {
     if (isCuisineHidden(d.cuisine, state.hiddenCuisines)) return false
     if (activeCuisine.value === 'snack') {
@@ -117,7 +137,7 @@ const filtered = computed(() => {
   return base
     .map((d, i) => ({ d, i, hits: pantryMatches(d, pantry, recipeIngredients).count }))
     .sort((a, b) => b.hits - a.hits || a.i - b.i)
-    .map(({ d, hits }) => ({ ...d, _pantryHits: hits }))
+    .map(({ d, hits }) => enrichedDish(d, hits))
 })
 
 // 分批渲染：首批 48 张，滚到接近底部再补 48 张；筛选条件一变就回到首批。
@@ -316,7 +336,7 @@ function maybeLoadMore() {
 }
 
 watch(
-  () => [activeCuisine.value, keyword.value, onlyFavorite.value, quickFilter.value, priorityPantry.value, state.hiddenCuisines],
+  () => [activeCuisine.value, debouncedKeyword.value, onlyFavorite.value, quickFilter.value, priorityPantry.value, state.hiddenCuisines],
   () => { visibleCount.value = PAGE }
 )
 watch([filtered, visibleCount], () => nextTick(maybeLoadMore))
@@ -353,10 +373,15 @@ function detachScrollListener() { window.removeEventListener('scroll', onScroll)
 onActivated(attachScrollListener)
 onDeactivated(() => {
   detachScrollListener()
+  clearTimeout(keywordTimer)
+  keywordTimer = 0
   prefetchRun++
   cancelThumbPrefetch()
 })
-onUnmounted(detachScrollListener)
+onUnmounted(() => {
+  detachScrollListener()
+  clearTimeout(keywordTimer)
+})
 
 // 当前选中的分类若是被隐藏了，自动退回「全部」
 watch(
@@ -424,7 +449,13 @@ const pantryDraft = ref(new Set(state.settings.pantry || []))
 // 食材 → 加入日期（YYYY-MM-DD），用于「放了几天」提醒
 const pantryAdded = ref({ ...(state.settings.pantryAdded || {}) })
 const pantryStockDraft = ref(JSON.parse(JSON.stringify(state.settings.pantryStock || {})))
-const todayStr = () => state.today || new Date().toISOString().slice(0, 10)
+// 回退值必须按本地日期算：toISOString() 是 UTC，跨时区会差一天，
+// 与 App.vue 的 localDate() 口径不一致。
+const todayStr = () => state.today || (() => {
+  const d = new Date()
+  const p = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+})()
 function daysInFridge(name) {
   const d = pantryAdded.value[name]
   if (!d) return 0
@@ -848,7 +879,7 @@ async function savePantry() {
          增删菜品是低频操作，稳定的静态网格比 0.3s 动画更重要。 -->
     <div v-if="filtered.length" :key="gridKey" class="dish-grid grid-in">
       <DishCard
-        v-for="(d, i) in visibleDishes" :key="d.id" :dish="d" :highlight="keyword"
+        v-for="(d, i) in visibleDishes" :key="d.id" :dish="d" :highlight="debouncedKeyword"
         :multi="multiMode" :multi-picked="multiSet.has(d.id)"
         :priority="i < 4"
         @multi-toggle="togglePick(d.id)" @edit="openEdit" @open="openDetail"

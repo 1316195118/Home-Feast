@@ -3,6 +3,7 @@
 import { spawn } from 'node:child_process'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { killProcessTree } from './browser-cleanup.mjs'
+import { check, finishAssertions } from './_assert.mjs'
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8090'
 
@@ -36,11 +37,15 @@ const put = await api('PUT', '/api/settings', {
 })
 const saved = put.data
 const days = saved.roster?.days || {}
-console.log('PUT status', put.status, '| roster.enabled', saved.roster?.enabled, '| days keys', Object.keys(days).sort().join(','))
-console.log('  非法星期被丢弃:', !('9' in days), '| 不存在的 chefId 被清空:', days['2']?.chefId === '', '| 合法 washId 保留:', days['2']?.washId === b.id)
+check('PUT 设置成功', put.status === 200, `status=${put.status}`)
+check('roster 已启用', saved.roster?.enabled === true)
+check('非法星期被丢弃', !('9' in days))
+check('不存在的 chefId 被清空', days['2']?.chefId === '')
+check('合法 washId 保留', days['2']?.washId === b.id)
 console.log('  pantry 去重/去空/限长:', JSON.stringify(saved.pantry))
-const check = await api('GET', '/api/bootstrap')
-console.log('  持久化:', check.data.settings?.roster?.enabled === true, check.data.settings?.pantry?.length === saved.pantry.length)
+const checkData = await api('GET', '/api/bootstrap')
+check('roster 持久化', checkData.data.settings?.roster?.enabled === true)
+check('pantry 持久化', checkData.data.settings?.pantry?.length === saved.pantry.length)
 
 async function run(width, height, tag, mobile) {
   const PORT = 9700 + (mobile ? 50 : 0) + Math.floor(Math.random() * 40)
@@ -90,12 +95,14 @@ async function run(width, height, tag, mobile) {
     names: [...document.querySelectorAll('.suggest-name')].map(x=>x.textContent.trim()),
   }))())`))
   console.log('今日页 排班提醒:', todayInfo.hint || '(无)')
-  console.log('  一键套用按钮:', todayInfo.applyBtn, '| 推荐卡', todayInfo.suggestCards, '| 理由', JSON.stringify(todayInfo.reasons))
+  check(`${tag} 一键套用按钮存在`, todayInfo.applyBtn === true)
+  check(`${tag} 推荐理由存在`, Array.isArray(todayInfo.reasons) && todayInfo.reasons.length > 0)
+  console.log('  推荐卡:', todayInfo.suggestCards, '| 理由', JSON.stringify(todayInfo.reasons))
   const before = todayInfo.names.join(',')
   await ev(`[...document.querySelectorAll('.panel-head .btn')].find(b=>b.textContent.includes('换一批'))?.click()`)
   await sleep(500)
   const after = await ev(`[...document.querySelectorAll('.suggest-name')].map(x=>x.textContent.trim()).join(',')`)
-  console.log('  换一批生效:', before !== after, '|', before, '=>', after)
+  check(`${tag} 换一批生效`, before !== after, `${before} => ${after}`)
 
   await ev(`window.location.hash='#settings'`)
   await sleep(700)
@@ -110,8 +117,11 @@ async function run(width, height, tag, mobile) {
     smallBtns: [...document.querySelectorAll('.btn,.chip,.tab')].filter(e=>{const r=e.getBoundingClientRect();return r.width>0&&(r.width<40||r.height<36)}).length,
   }))())`))
   console.log('设置页 hash', setInfo.hash, '| 卡片数', setInfo.cards, '| 标题', JSON.stringify(setInfo.titles))
-  console.log('设置页 排班弹窗入口', setInfo.rosterBtn, '| 食材卡已移出设置页', !setInfo.pantryInSettings, '| 保存按钮', JSON.stringify(setInfo.saveBtns))
-  console.log('  横向溢出', setInfo.overflow, '| 过小控件', setInfo.smallBtns, '| JS 异常', errors.length)
+  check(`${tag} 排班弹窗入口存在`, setInfo.rosterBtn === true)
+  check(`${tag} 食材卡已移出设置页`, setInfo.pantryInSettings === false)
+  check(`${tag} 无横向溢出`, setInfo.overflow === false)
+  check(`${tag} 无过小控件`, setInfo.smallBtns === 0, `count=${setInfo.smallBtns}`)
+  check(`${tag} 无 JS 异常`, errors.length === 0, `count=${errors.length}`)
   ws.close(); killProcessTree(proc)
 }
 

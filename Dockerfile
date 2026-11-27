@@ -14,13 +14,17 @@ RUN node scripts/build.mjs --frontend-only
 FROM --platform=$BUILDPLATFORM golang:1.27.4-alpine AS backend
 # buildx 多架构构建时自动注入目标架构；普通 docker build 回退 amd64
 ARG TARGETARCH=amd64
+# linux/arm/v7 时 buildx 注入 TARGETVARIANT=v7，Go 需要 GOARM=7；
+# amd64/arm64 下该变量为空，GOARM 设为空串对它们无影响。
+ARG TARGETVARIANT=""
 WORKDIR /build
 COPY go.mod go.sum embed.go ./
 COPY cmd/ ./cmd/
 COPY internal/ ./internal/
 RUN mkdir -p webapp/dist
 COPY --from=frontend /build/web/dist/ ./webapp/dist/
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go build -trimpath -ldflags "-s -w" -o /out/menu ./cmd/menu
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} GOARM=${TARGETVARIANT#v} \
+    go build -trimpath -ldflags "-s -w" -o /out/menu ./cmd/menu
 
 FROM alpine:3.23
 RUN apk add --no-cache tzdata ca-certificates wget

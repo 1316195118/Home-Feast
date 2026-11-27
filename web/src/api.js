@@ -1,13 +1,15 @@
 // 轻量接口封装：同源 fetch、统一错误处理、可选访问口令。
+import { storageGet, storageSet, storageRemove } from './utils'
+
 const STORAGE_KEY = 'fm.accessCode'
 const CLIENT_KEY = 'fm.clientId'
 
-let accessCode = localStorage.getItem(STORAGE_KEY) || ''
-let clientId = sessionStorage.getItem(CLIENT_KEY) || ''
+let accessCode = storageGet(localStorage, STORAGE_KEY) || ''
+let clientId = storageGet(sessionStorage, CLIENT_KEY) || ''
 if (!clientId) {
   clientId = globalThis.crypto?.randomUUID?.()
     || `tab-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
-  sessionStorage.setItem(CLIENT_KEY, clientId)
+  storageSet(sessionStorage, CLIENT_KEY, clientId)
 }
 
 export function getClientId() {
@@ -16,8 +18,8 @@ export function getClientId() {
 
 export function setAccessCode(value) {
   accessCode = (value || '').trim()
-  if (accessCode) localStorage.setItem(STORAGE_KEY, accessCode)
-  else localStorage.removeItem(STORAGE_KEY)
+  if (accessCode) storageSet(localStorage, STORAGE_KEY, accessCode)
+  else storageRemove(localStorage, STORAGE_KEY)
 }
 
 export function getAccessCode() {

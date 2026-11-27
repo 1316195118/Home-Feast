@@ -4,6 +4,7 @@ import { spawn } from 'node:child_process'
 import { setTimeout as sleep } from 'node:timers/promises'
 import fs from 'node:fs'
 import { killProcessTree } from './browser-cleanup.mjs'
+import { check, finishAssertions } from './_assert.mjs'
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8090'
 const OUT = 'D:/WorkBuddy AI/家庭点菜系统/scripts/_ui/audit-report.json'
@@ -98,4 +99,12 @@ console.log('动画时长种类:', JSON.stringify(allDurations))
 console.log('菜谱工具条顺序:', JSON.stringify(all.desktop.menu.toolOrder))
 console.log('菜系顺序:', JSON.stringify(all.desktop.menu.chipOrder))
 fs.writeFileSync(OUT, JSON.stringify(all, null, 1))
+check('审计报告写出成功', fs.existsSync(OUT) && fs.statSync(OUT).size > 100, OUT)
+// full-audit 是「问题清单」型审计：把发现的问题转成断言，便于发版门禁拦截。
+for (const [vp, tabs] of Object.entries(all)) {
+  for (const [tab, d] of Object.entries(tabs)) {
+    check(`${vp}/${tab} 无横向溢出`, d.overflow === false)
+    check(`${vp}/${tab} 无过小触控目标`, (d.smallTargets || []).length === 0, (d.smallTargets || []).join(' | '))
+  }
+}
 console.log('完整报告:', OUT)

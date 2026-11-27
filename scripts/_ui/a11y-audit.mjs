@@ -3,6 +3,7 @@
 import { spawn } from 'node:child_process'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { killProcessTree } from './browser-cleanup.mjs'
+import { check, finishAssertions } from './_assert.mjs'
 
 const EDGE = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'
 const BASE = (process.env.BASE || 'http://127.0.0.1:8090').replace(/\/+$/, '')
@@ -184,9 +185,10 @@ async function auditViewport(width, height, label, mobile) {
       )
       for (const [kind, list] of Object.entries(report)) {
         if (['h1', 'overflow'].includes(kind) || !Array.isArray(list) || !list.length) continue
-        console.log(`  ${kind}:`, JSON.stringify(list))
+        check(`${label}/${tab} 无 ${kind} 问题`, false, JSON.stringify(list))
       }
-      if (report.h1.length !== 1) console.log('  h1:', JSON.stringify(report.h1))
+      check(`${label}/${tab} 恰有一个 h1`, report.h1.length === 1, JSON.stringify(report.h1))
+      check(`${label}/${tab} 无横向溢出`, report.overflow === false)
     }
   } finally {
     ws.close()

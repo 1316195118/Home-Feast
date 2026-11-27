@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -202,24 +203,43 @@ func (s *Server) startAutoBackup() {
 		tick := time.NewTicker(time.Minute)
 		defer tick.Stop()
 		lastDay := ""
-		for range tick.C {
-			if !s.st.GetSettings().AutoBackup {
-				continue
+		for {
+			select {
+			case <-s.stopCh:
+				return
+			case <-tick.C:
 			}
-			now := time.Now()
-			if now.Hour() != backupHour || now.Minute() != backupMinute {
-				continue
-			}
-			day := now.Format("20060102")
-			if day == lastDay || s.hasBackupToday(day) {
-				lastDay = day
-				continue
-			}
-			if _, _, err := s.runBackup(); err == nil {
-				lastDay = day
-			}
+			// 后台 goroutine 无 net/http 的 recover 保护：单次备份 panic 会
+			// 终结整个进程。这里兜住，下一分钟照常继续。
+			func() {
+				defer func() {
+					if v := recover(); v != nil {
+						log.Printf("自动备份 panic（已恢复）: %v", v)
+					}
+				}()
+				s.autoBackupTick(&lastDay)
+			}()
 		}
 	}()
+}
+
+// autoBackupTick 执行一次定时备份检查；lastDay 记录当天是否已处理。
+func (s *Server) autoBackupTick(lastDay *string) {
+	if !s.st.GetSettings().AutoBackup {
+		return
+	}
+	now := time.Now()
+	if now.Hour() != backupHour || now.Minute() != backupMinute {
+		return
+	}
+	day := now.Format("20060102")
+	if day == *lastDay || s.hasBackupToday(day) {
+		*lastDay = day
+		return
+	}
+	if _, _, err := s.runBackup(); err == nil {
+		*lastDay = day
+	}
 }
 
 func (s *Server) listBackups(w http.ResponseWriter, r *http.Request) {

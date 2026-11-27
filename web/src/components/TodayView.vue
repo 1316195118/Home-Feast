@@ -100,6 +100,7 @@ const noteDirty = computed(() => noteText.value !== (state.plan.note || ''))
 let noteTimer = null
 onUnmounted(() => {
   clearTimeout(noteTimer)
+  cancelPress() // 长按 480ms 定时器也要清掉，否则卸载后仍会震动并弹菜单
 })
 const suggestions = ref([])
 const suggestSalt = ref(0)

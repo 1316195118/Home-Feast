@@ -5,6 +5,7 @@
 import { spawn } from 'node:child_process'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { killProcessTree } from './browser-cleanup.mjs'
+import { check, finishAssertions } from './_assert.mjs'
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8090'
 const PORT = 9956
@@ -166,8 +167,9 @@ console.log('网格起点', left1, '=>', left2)
 // 9) 系统「减少动效」偏好下浮层整体关闭（含彩带与飘字）
 await cdp('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] })
 await sleep(250)
-console.log('减少动效降级', await ev(`getComputedStyle(document.getElementById('fx-layer')).display === 'none'`))
-console.log('真实 JS 异常', errors.length, '| 已知 Transition 竞态', knownTransitionRace.length, '(上一版同样存在，不影响功能)')
+check('减少动效时特效层隐藏', await ev(`getComputedStyle(document.getElementById('fx-layer')).display === 'none'`))
+check('无真实 JS 异常', errors.length === 0, `count=${errors.length}`)
+console.log('已知 Transition 竞态', knownTransitionRace.length, '(不影响功能)')
 ws.close()
 killProcessTree(proc)
-process.exit(0)
+finishAssertions()

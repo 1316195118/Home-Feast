@@ -2,6 +2,8 @@ package api
 
 import (
 	"bytes"
+	"encoding/binary"
+	"hash/crc32"
 	"image"
 	"image/color"
 	"image/jpeg"
@@ -34,6 +36,49 @@ func testJPEG(t *testing.T, tint color.RGBA) []byte {
 		t.Fatal(err)
 	}
 	return buf.Bytes()
+}
+
+// 构造一个只有 IHDR/IEND 的极小 PNG，但头部声明超大尺寸。
+// image.DecodeConfig 能读出尺寸，image.Decode 才会分配像素——这正是
+// 「压缩后几 MB、解码后几个 GB」的攻击面，必须在 Decode 之前拦住。
+func hugeDimPNG(t *testing.T, w, h int) []byte {
+	t.Helper()
+	var buf bytes.Buffer
+	buf.Write([]byte{0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n'})
+	chunk := func(kind string, payload []byte) {
+		body := append([]byte(kind), payload...)
+		crc := crc32.ChecksumIEEE(body)
+		var b [4]byte
+		binary.BigEndian.PutUint32(b[:], uint32(len(payload)))
+		buf.Write(b[:])
+		buf.Write(body)
+		binary.BigEndian.PutUint32(b[:], crc)
+		buf.Write(b[:])
+	}
+	ihdr := make([]byte, 13)
+	binary.BigEndian.PutUint32(ihdr[0:4], uint32(w))
+	binary.BigEndian.PutUint32(ihdr[4:8], uint32(h))
+	ihdr[8] = 8  // bit depth
+	ihdr[9] = 2  // truecolor
+	chunk("IHDR", ihdr)
+	chunk("IEND", nil)
+	return buf.Bytes()
+}
+
+func TestRenderThumbRejectsHugeDimensionsBeforeDecode(t *testing.T) {
+	// 20000×20000 全白图压缩后仅几十字节，但解码会分配数 GB 并 OOM 整个进程。
+	huge := hugeDimPNG(t, 20000, 20000)
+	if len(huge) > 4096 {
+		t.Fatalf("测试图应极小，实际 %d 字节", len(huge))
+	}
+	if _, err := renderThumbJPEG(huge); err == nil {
+		t.Fatal("超大尺寸图片必须在解码前被拒绝")
+	}
+	// 正常尺寸仍可用
+	normal := testJPEG(t, color.RGBA{R: 200, G: 100, B: 50, A: 255})
+	if _, err := renderThumbJPEG(normal); err != nil {
+		t.Fatalf("正常图片应能生成缩略图: %v", err)
+	}
 }
 
 func TestServeUploadGeneratesMissingThumbInMemory(t *testing.T) {

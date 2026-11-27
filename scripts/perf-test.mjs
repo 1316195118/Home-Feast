@@ -7,6 +7,11 @@ import { performance } from 'node:perf_hooks'
 
 const BASE = (process.env.BASE || 'http://127.0.0.1:8090').replace(/\/+$/, '')
 const WRITE = process.env.WRITE === '1'
+const targetURL = new URL(BASE)
+if (WRITE && process.env.I_KNOW_THIS_IS_PRODUCTION !== '1' &&
+    (targetURL.port === '8090' || targetURL.hostname === '10.10.10.251')) {
+  throw new Error('WRITE=1 检测到生产地址：确需写入生产请先设 I_KNOW_THIS_IS_PRODUCTION=1')
+}
 const HEADERS = {
   Accept: 'application/json, text/plain, */*',
   'Accept-Encoding': 'br, gzip',

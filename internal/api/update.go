@@ -16,7 +16,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -62,8 +61,8 @@ type updateStatus struct {
 	Message     string `json:"message,omitempty"`
 }
 
-var updateMu sync.Mutex
-var updateState updateStatus
+// 更新进度属于单个 Server 实例，不再用包级全局：同一进程若创建多个 Server
+// （嵌入式使用、并行测试），一个实例的更新任务不会改写另一个实例的状态。
 
 // updateClient 构造走代理的 HTTP 客户端。代理地址来自设置页，只用于更新下载。
 // 直连时 transport 为 nil，等同于默认行为。
@@ -161,39 +160,41 @@ func compareVersion(a, b string) int {
 
 // checkUpdate 只拉 manifest 比版本，不改任何文件。
 func (s *Server) checkUpdate(w http.ResponseWriter, r *http.Request) {
-	updateMu.Lock()
-	if updateState.Checking {
-		updateMu.Unlock()
-		jsonOK(w, updateState)
+	s.updateMu.Lock()
+	if s.updateState.Checking {
+		st := s.updateState // 锁内值拷贝，解锁后不可再读共享结构
+		s.updateMu.Unlock()
+		jsonOK(w, st)
 		return
 	}
-	updateState.Checking = true
-	updateState.LastError = ""
-	updateMu.Unlock()
+	s.updateState.Checking = true
+	s.updateState.LastError = ""
+	s.updateMu.Unlock()
 
 	var m releaseManifest
 	err := fetchUpdateJSON(r.Context(), "manifest.json", s.st.GetSettings().ProxyURL, &m)
 	now := time.Now().Format(time.RFC3339)
 
-	updateMu.Lock()
-	updateState.Checking = false
-	updateState.LastCheck = now
+	s.updateMu.Lock()
+	s.updateState.Checking = false
+	s.updateState.LastCheck = now
 	if err != nil {
-		updateState.LastError = err.Error()
-		updateState.Available = false
-		updateState.Latest = ""
-		updateMu.Unlock()
+		s.updateState.LastError = err.Error()
+		s.updateState.Available = false
+		s.updateState.Latest = ""
+		s.updateMu.Unlock()
 		jsonErr(w, http.StatusBadGateway, "检查更新失败: "+err.Error())
 		return
 	}
-	updateState.Latest = m.Version
-	updateState.Available = compareVersion(m.Version, Version) > 0
-	updateMu.Unlock()
+	s.updateState.Latest = m.Version
+	available := compareVersion(m.Version, Version) > 0
+	s.updateState.Available = available
+	s.updateMu.Unlock()
 
 	jsonOK(w, map[string]any{
 		"current":   Version,
 		"latest":    m.Version,
-		"available": updateState.Available,
+		"available": available,
 		"published": m.PublishedAt,
 		"note":      m.Note,
 		"checkedAt": now,
@@ -202,9 +203,9 @@ func (s *Server) checkUpdate(w http.ResponseWriter, r *http.Request) {
 
 // updateStatus 返回当前更新进度（前端轮询用）。
 func (s *Server) updateStatus(w http.ResponseWriter, r *http.Request) {
-	updateMu.Lock()
-	st := updateState // 值拷贝，避免竞争
-	updateMu.Unlock()
+	s.updateMu.Lock()
+	st := s.updateState // 值拷贝，避免竞争
+	s.updateMu.Unlock()
 	jsonOK(w, st)
 }
 
@@ -234,8 +235,23 @@ func writeUpdaterState(dataDir string, st updaterState) error {
 	if err != nil {
 		return err
 	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, b, 0o644); err != nil {
+	// 与 store 的原子写保持一致：唯一临时名 + fsync 后再 rename。
+	// state.json 是崩溃后判断回滚的依据，半写入会让自更新失去回滚点。
+	f, err := os.CreateTemp(dir, ".state-*")
+	if err != nil {
+		return err
+	}
+	tmp := f.Name()
+	defer os.Remove(tmp)
+	if _, err = f.Write(b); err != nil {
+		f.Close()
+		return err
+	}
+	if err = f.Sync(); err != nil {
+		f.Close()
+		return err
+	}
+	if err = f.Close(); err != nil {
 		return err
 	}
 	return os.Rename(tmp, path)
@@ -243,48 +259,45 @@ func writeUpdaterState(dataDir string, st updaterState) error {
 
 // CheckRecovery 在 main 启动早期调用：若上次更新后新二进制起不来（容器被 restart），
 // 检测到 state.json 仍是 applying，就把备份还原回可执行路径。
-func CheckRecovery(dataDir, binPath string) {
+// 返回的 updateStatus 应传给 New() 作为更新状态的初值；调用方也可以忽略它。
+func CheckRecovery(dataDir, binPath string) updateStatus {
 	_, _, backup, stateFile := updatePaths(dataDir)
 	b, err := os.ReadFile(stateFile)
 	if err != nil {
-		return
+		return updateStatus{}
 	}
 	var st updaterState
 	if json.Unmarshal(b, &st) != nil {
-		return
+		return updateStatus{}
 	}
 	// 进程已经成功切换，但前端可能在上一个进程退出后才读到新进程状态。
 	// 把落盘的成功阶段恢复为内存状态，避免把空状态误判成“任务提前结束”。
 	if st.Phase == "applied" {
-		markUpdateApplied(st)
-		return
+		return markUpdateApplied(st)
 	}
 	if st.Phase != "applying" {
-		return
+		return updateStatus{}
 	}
 	// 记录过 applying 但能走到这里，说明新二进制成功启动了（本进程就是新的）
 	if st.To == Version {
 		applied := updaterState{Phase: "applied", From: st.From, To: st.To, At: time.Now().Format(time.RFC3339)}
 		_ = writeUpdaterState(dataDir, applied)
-		markUpdateApplied(applied)
-		return
+		return markUpdateApplied(applied)
 	}
 	// 版本对不上：上一版二进制被重新拉起，说明更新失败，清理 staging
 	_ = os.Remove(backup)
 	_ = os.Remove(stateFile)
 	log.Printf("更新回退完成，当前版本 %s", Version)
+	return updateStatus{}
 }
 
-func markUpdateApplied(st updaterState) {
-	updateMu.Lock()
-	updateState.Checking = false
-	updateState.Downloading = false
-	updateState.LastError = ""
-	updateState.Available = false
-	updateState.Latest = st.To
-	updateState.Progress = 100
-	updateState.Message = "更新完成，正在重启服务"
-	updateMu.Unlock()
+// markUpdateApplied 把落盘的成功阶段转成内存状态，纯函数，不碰全局。
+func markUpdateApplied(st updaterState) updateStatus {
+	return updateStatus{
+		Checking: false, Downloading: false, LastError: "",
+		Available: false, Latest: st.To, Progress: 100,
+		Message: "更新完成，正在重启服务",
+	}
 }
 
 func goArchKey() string {
@@ -358,17 +371,17 @@ func (s *Server) applyUpdate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	updateMu.Lock()
-	if updateState.Downloading {
-		updateMu.Unlock()
+	s.updateMu.Lock()
+	if s.updateState.Downloading {
+		s.updateMu.Unlock()
 		jsonErr(w, http.StatusConflict, "已有更新在进行中")
 		return
 	}
-	updateState.Downloading = true
-	updateState.Progress = 0
-	updateState.Message = "正在获取版本信息"
-	updateState.LastError = ""
-	updateMu.Unlock()
+	s.updateState.Downloading = true
+	s.updateState.Progress = 0
+	s.updateState.Message = "正在获取版本信息"
+	s.updateState.LastError = ""
+	s.updateMu.Unlock()
 
 	// 下载、校验和重试可能在网络差时持续几分钟。接口只负责受理任务，
 	// 长任务在后台继续跑，避免 http.Server 的写超时把进度和结果一起掐掉。
@@ -381,18 +394,30 @@ func (s *Server) applyUpdate(w http.ResponseWriter, r *http.Request) {
 // runUpdateTask 执行一次在线更新。状态通过 /api/update/status 轮询，
 // 直到 syscall.Exec 成功替换当前进程为止。
 func (s *Server) runUpdateTask(ctx context.Context, force bool) {
+	// 后台 goroutine 不在 net/http 的 recover 范围内：任何 panic 都会终结整个进程。
+	// 这里兜住并记录，同时释放 Downloading，避免更新状态永久卡住。
+	defer func() {
+		if v := recover(); v != nil {
+			log.Printf("在线更新任务 panic（已恢复）: %v", v)
+			s.updateMu.Lock()
+			s.updateState.Downloading = false
+			s.updateState.LastError = fmt.Sprintf("更新任务异常: %v", v)
+			s.updateState.Message = "更新失败"
+			s.updateMu.Unlock()
+		}
+	}()
 	setProgress := func(p int, msg string) {
-		updateMu.Lock()
-		updateState.Progress = p
-		updateState.Message = msg
-		updateMu.Unlock()
+		s.updateMu.Lock()
+		s.updateState.Progress = p
+		s.updateState.Message = msg
+		s.updateMu.Unlock()
 	}
 	fail := func(err error) {
-		updateMu.Lock()
-		updateState.Downloading = false
-		updateState.LastError = err.Error()
-		updateState.Message = "更新失败"
-		updateMu.Unlock()
+		s.updateMu.Lock()
+		s.updateState.Downloading = false
+		s.updateState.LastError = err.Error()
+		s.updateState.Message = "更新失败"
+		s.updateMu.Unlock()
 	}
 
 	var m releaseManifest
@@ -401,15 +426,15 @@ func (s *Server) runUpdateTask(ctx context.Context, force bool) {
 		fail(fmt.Errorf("获取更新信息失败: %w", err))
 		return
 	}
-	updateMu.Lock()
-	updateState.Latest = m.Version
-	updateState.Available = compareVersion(m.Version, Version) > 0
-	updateMu.Unlock()
+	s.updateMu.Lock()
+	s.updateState.Latest = m.Version
+	s.updateState.Available = compareVersion(m.Version, Version) > 0
+	s.updateMu.Unlock()
 	if !force && compareVersion(m.Version, Version) <= 0 {
 		setProgress(100, "已是最新版本")
-		updateMu.Lock()
-		updateState.Downloading = false
-		updateMu.Unlock()
+		s.updateMu.Lock()
+		s.updateState.Downloading = false
+		s.updateMu.Unlock()
 		return
 	}
 	f, ok := m.Files[goArchKey()]

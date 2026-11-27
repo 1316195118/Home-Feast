@@ -38,7 +38,13 @@ function resetRetry() {
   retry.value = 0
 }
 
-watch(candidates, () => {
+// candidates 每次重算都是新数组引用，但 URL 序列通常完全一样（例如收藏菜品
+// 导致 state.dishes 换新对象、或缩略图 blob 回填）。若按引用重置 loaded，
+// source 字符串没变 → <img> 不会重新 load → is-loaded 永远加不回来 → 图片永久透明。
+// 因此按「候选 URL 序列」比较，只有真正换了图才重置。
+const candidateKey = computed(() => candidates.value.join('\u0000'))
+watch(candidateKey, (next, prev) => {
+  if (next === prev) return
   attempt.value = 0
   loaded.value = false
   resetRetry()

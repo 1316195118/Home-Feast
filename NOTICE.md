@@ -11,8 +11,8 @@
 |---|---|---|
 | 全部源代码、样式、页面文案 | 本项目独立编写 | **MIT**（见 [LICENSE](LICENSE)） |
 | 菜品描述、标签、辣度、耗时、做法步骤 | 本项目独立编写 | MIT |
-| 184 道菜的精确用量数值（克/毫升） | 公共领域项目 HowToCook | **Unlicense**（公共领域） |
-| 其余 53 道菜的用量 | 本项目按家常份量自写 | MIT |
+| 由 HowToCook 提取的精确用量表（184 条，克/毫升） | 公共领域项目 HowToCook | **Unlicense**（公共领域） |
+| 151 道菜运行时使用该公共领域用量表；另 86 道菜的用量由本项目自写 | 公共领域表 + 本项目 | Unlicense + MIT |
 | 19 张菜系封面、55 张逐道验收菜品图、食材实物图 | 本项目用 AI 生成 | 随项目分发 |
 | 图标、音效、动效 | 浏览器原生 API + 自写 CSS/JS | MIT |
 | 第三方代码依赖 | Vue 3 / Vite / Go 标准库 | MIT / BSD-3-Clause |
@@ -55,7 +55,7 @@ View Transitions / Web Animations / Vibration API 与本项目自写的 CSS 动�
 | 菜名、菜系归属、地域归属 | 通用事实信息与公共领域饮食文化常识，不受著作权保护 |
 | 一句话描述、口味标签、辣度、建议耗时 | 本项目自行撰写，未摘录任何菜谱网站、图书或 App 的文字 |
 | 做法步骤 | 本项目自写（`web/src/howto-steps.json` 184 条 + 各菜自带步骤），按家庭灶具与份量改写 |
-| 精确用量（克 / 毫升） | **184 道**提取自 [Anduin2017/HowToCook](https://github.com/Anduin2017/HowToCook)（**Unlicense，公共领域**）；其余 53 道为本项目按家常份量自写 |
+| 精确用量（克 / 毫升） | 用量表共 **184 条**提取自 [Anduin2017/HowToCook](https://github.com/Anduin2017/HowToCook)（**Unlicense，公共领域**）；运行时 151 道菜使用该表，另 86 道菜的用量为本项目按家常份量自写 |
 
 关于 HowToCook 用量：
 

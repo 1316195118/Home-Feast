@@ -5,8 +5,10 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"html"
 	"io/fs"
+	"log"
 	"mime"
 	"net/http"
 	"os"
@@ -173,23 +175,31 @@ func (s *Server) serveFrontend(w http.ResponseWriter, r *http.Request) {
 	// 社交平台读取的是原始 HTML，不执行 Vue。服务端按当前访问域名和公开页
 	// 直接写入 canonical / OG / Twitter，因此同一镜像换域名部署也无需重构建。
 	if name == "index.html" && bytes.Contains(asset.data, []byte("__SITE_URL__")) {
-		data := renderIndexHTML(asset.data, requested, status, publicBaseURL(r))
-		rendered := &staticAsset{data: data, contentType: asset.contentType}
-		sum := sha256.Sum256(data)
-		rendered.etag = `"` + hex.EncodeToString(sum[:12]) + `"`
-		if len(data) >= 1024 && compressible(rendered.contentType) {
-			if br, err := brotliBody(data); err == nil {
-				rendered.brotli = br
-				brotliSum := sha256.Sum256(br)
-				rendered.brotliETag = `"` + hex.EncodeToString(brotliSum[:12]) + `-br"`
+		baseURL := publicBaseURL(r)
+		// baseURL + 路由 + 状态决定唯一渲染结果；同一镜像换域名时 key 自然不同。
+		key := baseURL + "\x00" + requested + "\x00" + strconv.Itoa(status)
+		if hit, ok := s.indexCache.Load(key); ok {
+			asset = hit.(*staticAsset)
+		} else {
+			data := renderIndexHTML(asset.data, requested, status, baseURL)
+			rendered := &staticAsset{data: data, contentType: asset.contentType}
+			sum := sha256.Sum256(data)
+			rendered.etag = `"` + hex.EncodeToString(sum[:12]) + `"`
+			if len(data) >= 1024 && compressible(rendered.contentType) {
+				if br, err := brotliBody(data); err == nil {
+					rendered.brotli = br
+					brotliSum := sha256.Sum256(br)
+					rendered.brotliETag = `"` + hex.EncodeToString(brotliSum[:12]) + `-br"`
+				}
+				if gz, err := gzipBody(data); err == nil {
+					rendered.gzip = gz
+					gzipSum := sha256.Sum256(gz)
+					rendered.gzipETag = `"` + hex.EncodeToString(gzipSum[:12]) + `-gzip"`
+				}
 			}
-			if gz, err := gzipBody(data); err == nil {
-				rendered.gzip = gz
-				gzipSum := sha256.Sum256(gz)
-				rendered.gzipETag = `"` + hex.EncodeToString(gzipSum[:12]) + `-gzip"`
-			}
+			actual, _ := s.indexCache.LoadOrStore(key, rendered)
+			asset = actual.(*staticAsset)
 		}
-		asset = rendered
 	}
 	w.Header().Set("Content-Type", asset.contentType)
 	w.Header().Set("X-Content-Type-Options", "nosniff")
@@ -345,7 +355,9 @@ func (s *Server) serveGeneratedThumb(w http.ResponseWriter, r *http.Request, nam
 		w.WriteHeader(http.StatusNotModified)
 		return true
 	}
-	http.ServeContent(w, r, name, time.Unix(thumb.modTime, 0), bytes.NewReader(thumb.data))
+	// modTime 存的是 UnixNano，ServeContent 需要 time.Time；用 (0, nano) 还原，
+	// 若误当秒传会变成公元五千万年，If-Modified-Since 永远不匹配。
+	http.ServeContent(w, r, name, time.Unix(0, thumb.modTime), bytes.NewReader(thumb.data))
 	return true
 }
 
@@ -373,33 +385,49 @@ func (s *Server) generatedUploadThumb(base string) (*generatedThumb, error) {
 	s.thumbLoads[base] = load
 	s.thumbMu.Unlock()
 
-	data, readErr := os.ReadFile(source)
-	var rendered []byte
-	if readErr == nil {
-		rendered, readErr = renderThumbJPEG(data)
-		if readErr == nil && len(rendered) == 0 {
-			readErr = errors.New("原图尺寸无效")
-		}
-	}
-
+	// 关键：无论正常返回还是 panic，都必须写回结果、移除 loading 条目并关闭 done。
+	// 否则解码一旦 panic，所有后续请求都会在 <-load.done 永久挂住，而 net/http
+	// 的 recover 只救得了当前 goroutine，其余等待者会被一起拖死。
 	var thumb *generatedThumb
-	if readErr == nil {
-		sum := sha256.Sum256(rendered)
-		thumb = &generatedThumb{
-			source: source, modTime: info.ModTime().UnixNano(), size: info.Size(),
-			data: rendered, etag: `"` + hex.EncodeToString(sum[:12]) + `-generated"`,
+	var readErr error
+	defer func() {
+		if v := recover(); v != nil {
+			log.Printf("生成缩略图 %s 时 panic: %v", base, v)
+			thumb = nil
+			readErr = fmt.Errorf("生成缩略图失败: %v", v)
 		}
-	}
+		s.thumbMu.Lock()
+		if thumb != nil && generation == s.thumbGeneration {
+			s.thumbCache[base] = thumb
+		}
+		load.thumb, load.err = thumb, readErr
+		if s.thumbLoads[base] == load {
+			delete(s.thumbLoads, base)
+		}
+		close(load.done)
+		s.thumbMu.Unlock()
+	}()
 
-	s.thumbMu.Lock()
-	if thumb != nil && generation == s.thumbGeneration {
-		s.thumbCache[base] = thumb
+	data, err := os.ReadFile(source)
+	if err != nil {
+		readErr = err
+		return nil, err
 	}
-	load.thumb, load.err = thumb, readErr
-	delete(s.thumbLoads, base)
-	close(load.done)
-	s.thumbMu.Unlock()
-	return thumb, readErr
+	rendered, err := renderThumbJPEG(data)
+	if err != nil {
+		readErr = err
+		return nil, err
+	}
+	if len(rendered) == 0 {
+		readErr = errors.New("原图尺寸无效")
+		return nil, readErr
+	}
+	sum := sha256.Sum256(rendered)
+	thumb = &generatedThumb{
+		source: source, modTime: info.ModTime().UnixNano(), size: info.Size(),
+		data: rendered, etag: `"` + hex.EncodeToString(sum[:12]) + `-generated"`,
+	}
+	return thumb, nil
 }
 
 func (s *Server) findThumbSource(base string) (string, os.FileInfo, error) {

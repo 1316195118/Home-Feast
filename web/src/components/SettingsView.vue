@@ -107,11 +107,14 @@ function attachSettingsListeners() {
   window.addEventListener('resize', queueActiveSettingsSync, { passive: true })
   queueActiveSettingsSync()
 }
+let autoCheckTimer = null
 function detachSettingsListeners() {
   window.removeEventListener('scroll', queueActiveSettingsSync)
   window.removeEventListener('resize', queueActiveSettingsSync)
   if (settingsScrollFrame) cancelAnimationFrame(settingsScrollFrame)
   settingsScrollFrame = 0
+  if (autoCheckTimer) clearTimeout(autoCheckTimer)
+  autoCheckTimer = null
 }
 onActivated(attachSettingsListeners)
 onDeactivated(detachSettingsListeners)
@@ -389,7 +392,7 @@ onMounted(() => {
   try { last = Number(localStorage.getItem(LAST_CHECK_KEY) || 0) } catch { /* 忽略 */ }
   // 每天自动检查一次（24 小时）
   if (Date.now() - last > 24 * 3600 * 1000) {
-    setTimeout(() => checkUpdate(true), 2000)
+    autoCheckTimer = setTimeout(() => { autoCheckTimer = null; checkUpdate(true) }, 2000)
   }
 })
 
@@ -474,10 +477,13 @@ async function moveCuisine(key, delta) {
   const [moved] = list.splice(i, 1)
   list.splice(j, 0, moved)
   const map = new Map(allCuisines.value.map((c) => [c.key, c]))
+  const previous = state.cuisines
   state.cuisines = list.map((k) => map.get(k)).filter(Boolean)
   try {
     await api.saveSettings({ cuisineOrder: list })
   } catch (err) {
+    // 保存失败必须回退本地顺序，否则 UI 与服务端不一致，刷新后又跳回去
+    state.cuisines = previous
     actions.toast(err.message, 'error')
   }
 }

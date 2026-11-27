@@ -3,6 +3,7 @@
 import { spawn } from 'node:child_process'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { killProcessTree } from './browser-cleanup.mjs'
+import { check, finishAssertions } from './_assert.mjs'
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8090'
 
@@ -30,27 +31,30 @@ try {
   await clearPin()
   // 1) 设置密码
   const set = await api('POST', `/api/members/${a.id}/pin`, { pin: '1234', oldPin: '' })
-  console.log('设置密码:', set.status, JSON.stringify(set.data))
+  check('设置密码成功', set.status === 200, `status=${set.status}`)
   const b1 = (await api('GET', '/api/bootstrap')).data
   const raw = JSON.stringify(b1)
-  console.log('  bootstrap hasPin:', b1.members.find((m) => m.id === a.id)?.hasPin,
-    '| 不含 hash/salt:', !raw.includes('"hash"') && !raw.includes('"salt"'),
-    '| 不含明文:', !raw.includes('1234'))
+  check('bootstrap 标记 hasPin', b1.members.find((m) => m.id === a.id)?.hasPin === true)
+  check('bootstrap 不含 hash/salt', !raw.includes('"hash"') && !raw.includes('"salt"'))
+  check('bootstrap 不含明文密码', !raw.includes('1234'))
 
   // 2) 备份 zip 不含密码文件
   const zip = Buffer.from((await api('GET', '/api/backup')).data)
-  console.log('  备份 zip 不含 pins.json:', !zip.includes(Buffer.from('pins.json')),
-    '| 不含 access.json:', !zip.includes(Buffer.from('access.json')))
+  check('备份不含 pins.json', !zip.includes(Buffer.from('pins.json')))
+  check('备份不含 access.json', !zip.includes(Buffer.from('access.json')))
 
   // 3) 校验接口：错误/正确；失败必须是 200 + ok:false（401 会误触发全局口令锁）
   const bad = await api('POST', `/api/members/${a.id}/verify`, { pin: '0000' })
   const good = await api('POST', `/api/members/${a.id}/verify`, { pin: '1234' })
-  console.log('  校验 错/对:', bad.status, bad.data.ok, '/', good.status, good.data.ok)
+  check('错误密码返回 200+false（不锁屏）', bad.status === 200 && bad.data.ok === false,
+    `status=${bad.status} ok=${bad.data.ok}`)
+  check('正确密码校验通过', good.status === 200 && good.data.ok === true)
 
   // 4) 修改必须带对旧密码
   const wrongOld = await api('POST', `/api/members/${a.id}/pin`, { pin: '5678', oldPin: '9999' })
   const rightOld = await api('POST', `/api/members/${a.id}/pin`, { pin: '5678', oldPin: '1234' })
-  console.log('  错误旧密码被拒:', wrongOld.status === 400, '| 正确旧密码可改:', rightOld.status === 200)
+  check('错误旧密码被拒', wrongOld.status === 400, `status=${wrongOld.status}`)
+  check('正确旧密码可改', rightOld.status === 200, `status=${rightOld.status}`)
   // 改回 1234 供 UI 测试
   await api('POST', `/api/members/${a.id}/pin`, { pin: '1234', oldPin: '5678' })
 
@@ -96,7 +100,8 @@ try {
       pinModal: !!document.querySelector('.pin-modal'),
       pickStillOpen: !!document.querySelector('.user-pick-backdrop'),
     }))())`))
-    console.log('首次选人 -> 弹密码框:', s.pinModal, '| 选人框仍在:', s.pickStillOpen)
+    check(`${tag} 首次选人弹密码框`, s.pinModal === true)
+    check(`${tag} 选人框保持打开`, s.pickStillOpen === true)
 
     // 错误密码：不切换
     await ev(`(()=>{const i=document.querySelector('.pin-input');i.value='0000';i.dispatchEvent(new Event('input',{bubbles:true}));})()`)
@@ -107,7 +112,8 @@ try {
       err: document.querySelector('.pin-error')?.textContent.trim() || '',
       pickStillOpen: !!document.querySelector('.user-pick-backdrop'),
     }))())`))
-    console.log('错误密码 -> 提示:', s.err, '| 身份未切换:', s.pickStillOpen)
+    check(`${tag} 错误密码有提示`, !!s.err, s.err)
+    check(`${tag} 错误密码不切换身份`, s.pickStillOpen === true)
 
     // 正确密码：切换成功
     await ev(`(()=>{const i=document.querySelector('.pin-input');i.value='1234';i.dispatchEvent(new Event('input',{bubbles:true}));})()`)
@@ -120,7 +126,9 @@ try {
       who: document.querySelector('.user-switch select')?.value || '',
       stored: localStorage.getItem('fm.user') || '',
     }))())`))
-    console.log('正确密码 -> 弹窗关闭:', !s.pinModal && !s.pickStillOpen, '| 当前身份是 A:', s.who === a.id, '| 已记住:', s.stored === a.id)
+    check(`${tag} 正确密码关闭弹窗`, !s.pinModal && !s.pickStillOpen)
+    check(`${tag} 当前身份是 A`, s.who === a.id)
+    check(`${tag} 已记住身份`, s.stored === a.id)
 
     // 顶部切到无密码成员 B，再切回 A 应弹密码框；取消后身份不变
     await ev(`(()=>{const s=document.querySelector('.user-switch select');s.value=${JSON.stringify(b.id)};s.dispatchEvent(new Event('change',{bubbles:true}));})()`)
@@ -132,7 +140,9 @@ try {
       pinModal: !!document.querySelector('.pin-modal'),
       who: document.querySelector('.user-switch select')?.value || '',
     }))())`))
-    console.log('切到 B 成功:', switchedB === b.id, '| 再切回 A 弹密码框:', s.pinModal, '| 取消前身份仍是 B:', s.who === b.id)
+    check(`${tag} 切到 B 成功`, switchedB === b.id)
+    check(`${tag} 切回 A 弹密码框`, s.pinModal === true)
+    check(`${tag} 取消前身份仍是 B`, s.who === b.id)
     await ev(`[...document.querySelectorAll('.pin-modal .btn')].find(b=>b.textContent.includes('取消'))?.click()`)
     await sleep(300)
 
@@ -147,8 +157,12 @@ try {
       overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
       smallBtns: [...document.querySelectorAll('.btn,.chip,.tab')].filter(e=>{const r=e.getBoundingClientRect();return r.width>0&&(r.width<40||r.height<36)}).length,
     }))())`))
-    console.log('家人页 卡片', s.cards, '| 已设密码标识', s.pinTag, '| 改密码按钮', s.changeBtn, '| 设密码按钮', s.setBtn)
-    console.log('  横向溢出', s.overflow, '| 过小控件', s.smallBtns, '| JS 异常', errors.length)
+    check(`${tag} 家人页有成员卡片`, s.cards > 0, `cards=${s.cards}`)
+    check(`${tag} 已设密码标识可见`, s.pinTag === true)
+    check(`${tag} 改密码入口存在`, s.changeBtn === true)
+    check(`${tag} 无横向溢出`, s.overflow === false)
+    check(`${tag} 无过小控件`, s.smallBtns === 0, `count=${s.smallBtns}`)
+    check(`${tag} 无 JS 异常`, errors.length === 0, `count=${errors.length}`)
     ws.close(); killProcessTree(proc)
   }
   await run(1280, 900, 'desktop', false)

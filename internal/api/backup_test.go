@@ -31,6 +31,28 @@ func TestSameOriginDoesNotTrustForwardedHost(t *testing.T) {
 	}
 }
 
+func TestSameOriginNormalizesDefaultPort(t *testing.T) {
+	t.Setenv("MENU_SITE_URL", "")
+	// 浏览器把 Origin 规范化为不带默认端口，Host 头可能仍带 :443 / :80。
+	for _, tc := range []struct{ scheme, origin, host string }{
+		{"https", "https://menu.example.com", "menu.example.com:443"},
+		{"http", "http://192.168.1.5", "192.168.1.5:80"},
+		{"http", "http://127.0.0.1:8090", "127.0.0.1:8090"}, // 非默认端口必须保留
+	} {
+		r := httptest.NewRequest("POST", tc.scheme+"://"+tc.host+"/api/dishes", nil)
+		r.Header.Set("Origin", tc.origin)
+		if !sameOrigin(r) {
+			t.Errorf("默认端口归一化后应同源：origin=%s host=%s", tc.origin, tc.host)
+		}
+	}
+	// 端口不同且非默认时仍须拒绝
+	r := httptest.NewRequest("POST", "http://127.0.0.1:8090/api/dishes", nil)
+	r.Header.Set("Origin", "http://127.0.0.1:8091")
+	if sameOrigin(r) {
+		t.Error("不同端口不应通过同源检查")
+	}
+}
+
 func TestSameOriginUsesConfiguredPublicSite(t *testing.T) {
 	t.Setenv("MENU_SITE_URL", "https://menu.example.com")
 	r := httptest.NewRequest("POST", "http://127.0.0.1:8090/api/dishes", nil)
