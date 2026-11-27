@@ -245,7 +245,9 @@ html.theme-switching :where(body, .card, .panel, .today-hero, .modal, .btn, .chi
 .page-enter-active { transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out); }
 .page-leave-active {
   position: absolute;
-  inset: 0;
+  /* 四边都缩进 .main 的内边距；inset:0 会相对 padding box 撑满并上移，
+     切页时离场页比正常页宽出一圈、位置偏移，看起来像画面突然变大。 */
+  inset: var(--main-pad-top) var(--main-pad-x) var(--main-pad-bottom);
   transition: opacity var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
 }
 .page-enter-from { opacity: 0; transform: translateX(26px); }
@@ -253,7 +255,7 @@ html.theme-switching :where(body, .card, .panel, .today-hero, .modal, .btn, .chi
 .page-back-enter-active { transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out); }
 .page-back-leave-active {
   position: absolute;
-  inset: 0;
+  inset: var(--main-pad-top) var(--main-pad-x) var(--main-pad-bottom);
   transition: opacity var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
 }
 .page-back-enter-from { opacity: 0; transform: translateX(-26px); }

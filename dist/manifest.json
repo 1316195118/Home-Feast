@@ -1,31 +1,31 @@
 {
-  "version": "1.0.5.4",
-  "publishedAt": "2026-11-28T00:41:30",
-  "note": "**优化**\n- 优化菜谱页菜系切换动画：由 460ms 逐卡错峰与整块 DOM 重建改为 160ms 容器淡入与节点复用，切换更跟手\n- 切换菜系时先回到顶部再重置分批数量，消除多批加载后的页面跳动\n- 将页签弹跳、设置入场、弹窗、换一批、骰子结果等切换动画统一收敛到 260ms 以内，触屏取消位移\n- 修复布局审计脚本无法量测真实动画时长的盲点，新增切换动画不超过 260ms 的断言",
+  "version": "1.0.5.5",
+  "publishedAt": "2026-11-28T01:58:39",
+  "note": "**修复**\n- 修复切换页签时画面突然变大的问题：离场页绝对定位改为四边对齐容器内边距，不再撑宽偏移\n- 修复点进菜单页闪一下的问题：网格淡入改为仅在切换菜系时触发，避免与页面过渡叠加出空帧\n- 修复搜索筛选、换一批、回顶按钮等切换时的跳动、翻转放大与定位错位\n\n**优化**\n- 布局审计新增离场页对齐断言，将画面变大问题纳入回归保护",
   "files": {
     "amd64": {
       "name": "menu-linux-amd64",
-      "sha256": "a2e67567ed88744fcbda65031351b6a362b056b120511fae3d956f42fed8848a",
+      "sha256": "22960bcdde63c80dca8fae01ee3158a6e901a2c56389a55d6159ded216c25116",
       "size": 20353184,
       "gz": "menu-linux-amd64.gz",
-      "gzSha256": "7b9ff25535a963d01ecfa111edf38d0690bfb8efec2c14e114a02a49983d449d",
-      "gzSize": 13974073
+      "gzSha256": "fe5bca79a635719907af64c270a2320e85032885932f1b1acc06527920fd872d",
+      "gzSize": 13973824
     },
     "arm64": {
       "name": "menu-linux-arm64",
-      "sha256": "910b256caff81a2c726ee6282ce32cb4cb5914955b7d36c966fb7491ae0938dc",
+      "sha256": "f7e92d4db93c6ae7084f638a21ac88f065e1ba73a9b7b469caca372c89fc802d",
       "size": 19595424,
       "gz": "menu-linux-arm64.gz",
-      "gzSha256": "d54023322a3c48b477fbe3331622d32ddac39eefbe79508dbb02cdd4515e6d02",
-      "gzSize": 13562182
+      "gzSha256": "0b68458fbb5a7addf041d4abff64a49f2f8e1e6b29e7787f9b97721b1758a738",
+      "gzSize": 13562351
     },
     "armv7": {
       "name": "menu-linux-armv7",
-      "sha256": "c15bd9c0acb60336ec2ead921b9726e427f4dba6d1cb7ada7dc0afe6055425d4",
+      "sha256": "a7e20d6ad9cfbeb011555d712f3cc352547f7af5091f8759024568dc1949f6d2",
       "size": 20054176,
       "gz": "menu-linux-armv7.gz",
-      "gzSha256": "e227ec7b33a8e60ba1e4af21294a20f9f409e5bc149e5070860f4360c4bafe31",
-      "gzSize": 13782748
+      "gzSha256": "4dad7786bb8a9529688643b40943b70b1fba44db6e6b402d794bc14422602598",
+      "gzSize": 13783832
     }
   }
 }

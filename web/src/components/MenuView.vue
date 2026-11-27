@@ -320,9 +320,11 @@ onUnmounted(() => {
   cancelThumbPrefetch()
 })
 
-// 切换分类时容器淡入一次：只切 class 重放动画，不再用 :key 销毁重建整片卡片。
-// 节点复用后，切菜系的卡顿感（460ms 错峰 + 48 张 DOM 重建）消失。
-const gridAnim = ref(true)
+// 容器淡入只在「切菜系」时按需触发，默认关闭。
+// 关键：不能默认 true —— 那样切进菜单页时组件首次挂载会从 opacity:0 播放网格淡入，
+// 与页面级 page-enter 过渡叠加，切换瞬间出现 grid=0 + view=0 的空帧（"闪一下"）。
+// 节点复用 + 仅切菜系时重放，既不重建 DOM，也不与切页动画打架。
+const gridAnim = ref(false)
 
 const visibleDishes = computed(() => filtered.value.slice(0, visibleCount.value))
 const hasMore = computed(() => visibleCount.value < filtered.value.length)
@@ -340,11 +342,11 @@ watch(
   () => [activeCuisine.value, debouncedKeyword.value, onlyFavorite.value, quickFilter.value, priorityPantry.value, state.hiddenCuisines],
   (next, prev) => {
     const cuisineChanged = next[0] !== prev[0]
+    // 任何筛选变化都会把 visibleCount 打回 48；若用户已加载多批并滚到中部，
+    // 文档高度骤减会让浏览器被动钳位 scrollY，画面"跳"一下。统一先回顶。
+    window.scrollTo({ top: 0, behavior: 'auto' })
     if (cuisineChanged) {
-      // 切菜系：先回到顶部，再重置分批数量。否则若用户已加载多批并滚到中部，
-      // visibleCount 打回 48 会让文档高度骤减，浏览器被动钳位 scrollY，画面"跳"一下。
-      window.scrollTo({ top: 0, behavior: 'auto' })
-      // 重放一次容器淡入：先摘掉 class，下一帧再加回（节点始终复用）。
+      // 切菜系额外重放一次容器淡入：先摘掉 class，下一帧再加回（节点始终复用）。
       gridAnim.value = false
       nextTick(() => { gridAnim.value = true })
     }
@@ -935,21 +937,25 @@ async function savePantry() {
 
     <OrderPanel v-if="orderPanelOpen" @close="orderPanelOpen = false" />
 
-    <Transition name="pop">
-      <button v-if="showTop" class="back-top" type="button" aria-label="回到顶部" @click="scrollTop">↑</button>
-    </Transition>
+    <!-- 这两个浮层都是 fixed，必须 Teleport 到 body：切页动画的 transform
+         会把 fixed 捕获成相对定位，导致回顶按钮/批量浮条在切页瞬间错位。 -->
+    <Teleport to="body">
+      <Transition name="pop">
+        <button v-if="showTop && state.tab === 'menu'" class="back-top" type="button" aria-label="回到顶部" @click="scrollTop">↑</button>
+      </Transition>
 
-    <!-- 批量点菜浮条 -->
-    <Transition name="sheet-up">
-      <div v-if="multiMode" class="multi-bar" role="toolbar" aria-label="批量点菜">
-        <span class="multi-count">已选 <b>{{ multiSet.size }}</b> 道</span>
-        <span class="grow"></span>
-        <button class="btn btn-sm" @click="toggleMulti">取消</button>
-        <button class="btn btn-primary btn-sm" :disabled="!multiSet.size || state.busy > 0" @click="addAllPicked">
-          {{ state.busy > 0 ? '点菜中…' : '＋ 加入今日菜单' }}
-        </button>
-      </div>
-    </Transition>
+      <!-- 批量点菜浮条 -->
+      <Transition name="sheet-up">
+        <div v-if="multiMode && state.tab === 'menu'" class="multi-bar" role="toolbar" aria-label="批量点菜">
+          <span class="multi-count">已选 <b>{{ multiSet.size }}</b> 道</span>
+          <span class="grow"></span>
+          <button class="btn btn-sm" @click="toggleMulti">取消</button>
+          <button class="btn btn-primary btn-sm" :disabled="!multiSet.size || state.busy > 0" @click="addAllPicked">
+            {{ state.busy > 0 ? '点菜中…' : '＋ 加入今日菜单' }}
+          </button>
+        </div>
+      </Transition>
+    </Teleport>
 
     <Transition name="modal">
       <div v-if="pantryOpen" class="modal-backdrop" @click.self="pantryOpen = false">

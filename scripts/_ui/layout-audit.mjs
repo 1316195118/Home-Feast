@@ -70,6 +70,29 @@ async function run(width, height, tag, mobile) {
   await sleep(450)
 
   console.log(`\n=== ${tag} ${width}x${height} ===`)
+  // 切页时离场页用绝对定位；四边必须等于 .main 的 padding，否则会撑宽/偏移，
+  // 视觉上像「画面突然变大」。用一次真实切页采样计算样式，纳入回归保护。
+  await ev(`window.location.hash='#today'`)
+  await sleep(400)
+  await ev(`window.location.hash='#menu'`)
+  let leave = null
+  for (let i = 0; i < 10; i++) {
+    leave = JSON.parse(await ev(`JSON.stringify((()=>{
+      const e=document.querySelector('.page-leave-active'),m=document.querySelector('.main');
+      if(!e)return null;const c=getComputedStyle(e),mc=getComputedStyle(m);
+      return {top:c.top,right:c.right,bottom:c.bottom,left:c.left,
+        pt:mc.paddingTop,pr:mc.paddingRight,pb:mc.paddingBottom,pl:mc.paddingLeft};
+    })())`))
+    if (leave) break
+    await sleep(8)
+  }
+  if (leave) {
+    const aligned = leave.top === leave.pt && leave.right === leave.pr &&
+      leave.bottom === leave.pb && leave.left === leave.pl
+    check(`${tag} 切页离场页四边与容器对齐`, aligned,
+      `inset=${leave.top}/${leave.right}/${leave.bottom}/${leave.left} pad=${leave.pt}/${leave.pr}/${leave.pb}/${leave.pl}`)
+  }
+  await sleep(400)
   for (const tab of TABS) {
     await ev(`window.location.hash='#${tab}'`)
     // 异步页签要先下载 chunk，再等 out-in 过渡彻底结束；过早采样会把 26px

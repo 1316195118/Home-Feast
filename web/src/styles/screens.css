@@ -1,6 +1,13 @@
 /* 页面版面：顶栏、导航、五个页签的布局 */
 
-.app-shell { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
+.app-shell {
+  min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column;
+  /* .main 的内边距集中成变量：页签切换时离场页用绝对定位，
+     必须四边都缩进同样的距离才不会撑满/偏移容器、看起来「画面变大」。各断点同步覆盖。 */
+  --main-pad-x: 22px;
+  --main-pad-top: 24px;
+  --main-pad-bottom: 40px;
+}
 
 /* 注意：这里不能用 backdrop-filter / transform / filter。
    它们会让本元素成为 fixed 后代的包含块，导致手机端 .tabs 的 bottom:0
@@ -68,7 +75,7 @@
 
 /* overflow-x: clip 只裁水平溢出、不创建滚动容器，也不影响 .topbar 的 sticky；
    配合 base.css 里页面切换的左右位移，切页签时不会出现横向滚动条。 */
-.main { position: relative; width: 100%; max-width: 1180px; margin: 0 auto; padding: 24px 22px 40px; flex: 1; overflow-x: clip; }
+.main { position: relative; width: 100%; max-width: 1180px; margin: 0 auto; padding: var(--main-pad-top) var(--main-pad-x) var(--main-pad-bottom); flex: 1; overflow-x: clip; }
 .footer { text-align: center; padding: 6px 20px 26px; font-size: 0.78rem; color: var(--muted); }
 
 .section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-gap); margin: var(--space-page) 0 var(--space-card); }
@@ -1286,7 +1293,7 @@
 /* ---------- 平板 / 窄桌面 ---------- */
 @media (max-width: 980px) {
   .today-cols { grid-template-columns: minmax(0, 1fr); }
-  .main { padding-left: 18px; padding-right: 18px; }
+  .app-shell { --main-pad-x: 18px; }
   .topbar-inner, .tabs { padding-left: 18px; padding-right: 18px; }
   .section-head { flex-wrap: wrap; align-items: flex-start; }
   .settings-category-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1364,7 +1371,12 @@
   }
   .tab.active::before { transform: translateX(-50%) scaleX(1); }
 
-  .main { padding: 14px 14px calc(86px + env(safe-area-inset-bottom)); }
+  .app-shell {
+    --main-pad-x: 14px;
+    --main-pad-top: 14px;
+    --main-pad-bottom: calc(86px + env(safe-area-inset-bottom));
+  }
+  .main { padding: var(--main-pad-top) var(--main-pad-x) var(--main-pad-bottom); }
   .footer { display: none; }
   .section-head { margin: 18px 0 12px; }
   .section-title { font-size: 1.05rem; }
@@ -1710,7 +1722,12 @@
   .tab.active { background: var(--brand-soft); }
   .tab-icon { font-size: 1.1rem; }
   .tab::before { display: none; }
-  .main { padding: 10px 14px calc(68px + env(safe-area-inset-bottom)); }
+  .app-shell {
+    --main-pad-x: 14px;
+    --main-pad-top: 10px;
+    --main-pad-bottom: calc(68px + env(safe-area-inset-bottom));
+  }
+  .main { padding: var(--main-pad-top) var(--main-pad-x) var(--main-pad-bottom); }
   .section-head { margin: 10px 0 8px; }
   .settings-head {
     padding: 10px 12px;
@@ -2126,18 +2143,13 @@
   70% { transform: rotate(650deg) scale(0.9); }
   100% { transform: rotate(720deg) scale(1); }
 }
-.suggest-grid { perspective: 900px; }
-.suggest-grid.is-swapping .suggest-card { animation: card-flip 0.38s var(--ease-out) backwards; }
-.suggest-grid.is-swapping .suggest-card:nth-child(2) { animation-delay: 0.05s; }
-.suggest-grid.is-swapping .suggest-card:nth-child(3) { animation-delay: 0.1s; }
-@keyframes card-flip {
-  from { opacity: 0; transform: rotateY(78deg) translateY(8px); }
-  to { opacity: 1; transform: rotateY(0) translateY(0); }
-}
+/* 换一批只做整块淡入（见 .suggest-grid.is-swapping 的 batch-fade）。
+   早先的逐卡 rotateY 翻转已移除：透视下卡片从很窄「涨」回正常，
+   三张一起播放像画面突然放大。 */
 .suggest-reasons { animation: reason-in 0.32s var(--ease-out) 0.1s backwards; }
 @keyframes reason-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) {
-  .is-rolling .dice-ico, .suggest-grid.is-swapping .suggest-card, .suggest-reasons { animation: none; }
+  .is-rolling .dice-ico, .suggest-reasons { animation: none; }
 }
 
 /* 骰子结果恭喜语 */

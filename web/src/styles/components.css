@@ -444,7 +444,8 @@
 .user-pick-empty p { font-size: 0.84rem; line-height: 1.6; margin: 0 0 12px; }
 
 /* 大字模式：三档根字号平滑切换 */
-html.font-changing { transition: font-size 0.24s var(--ease); }
+/* 大字模式整页 rem 连续缩放时观感接近「画面涨大」，缩短到 160ms 降低持续感。 */
+html.font-changing { transition: font-size var(--dur-fast) var(--ease); }
 .font-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
 .font-label { font-size: 0.76rem; font-weight: 700; color: var(--muted); }
 .font-choices { display: inline-flex; gap: 6px; flex: 1; }
