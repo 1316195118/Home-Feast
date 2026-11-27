@@ -1165,7 +1165,9 @@ onUnmounted(() => {
     </Transition>
 
     <main class="main" :class="{ 'legal-main': isPublicPage }">
-      <Transition v-if="isPublicPage" name="fade" mode="out-in">
+      <!-- 与主导航一致用并行过渡；当前 fade 无 CSS 定义，去掉 out-in
+           避免将来补上 fade 动画后变成串行白屏。 -->
+      <Transition v-if="isPublicPage" name="fade">
         <component
           :is="currentPublicView" :key="publicRoute"
           @home="goTab('today')" @menu="goTab('menu')" @family="goTab('family')"

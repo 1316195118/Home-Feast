@@ -97,7 +97,7 @@ a { color: var(--brand); }
 }
 @keyframes tab-pop {
   0% { transform: scale(1); }
-  45% { transform: scale(1.26) translateY(-2px); }
+  45% { transform: scale(1.12) translateY(-1px); }
   100% { transform: scale(1); }
 }
 @keyframes star-pop {
@@ -288,11 +288,11 @@ html.theme-switching :where(body, .card, .panel, .today-hero, .modal, .btn, .chi
 /* 成组入场：只给「进入页面时成组出现」的容器。
    菜谱/推荐网格已交给 TransitionGroup，这里不能再叠一套 fade-up，否则两套动画打架。 */
 .settings-category-nav > *,
-.settings-section { animation: fade-up var(--dur-slow) var(--ease) backwards; }
-.settings-category-nav > *:nth-child(1) { animation-delay: var(--dur-instant); }
-.settings-category-nav > *:nth-child(2) { animation-delay: 0.04s; }
-.settings-category-nav > *:nth-child(3) { animation-delay: 0.08s; }
-.settings-category-nav > *:nth-child(4) { animation-delay: 0.12s; }
+.settings-section { animation: fade-up var(--dur-base) var(--ease) backwards; }
+.settings-category-nav > *:nth-child(1) { animation-delay: 0; }
+.settings-category-nav > *:nth-child(2) { animation-delay: 0.03s; }
+.settings-category-nav > *:nth-child(3) { animation-delay: 0.06s; }
+.settings-category-nav > *:nth-child(n+4) { animation-delay: var(--dur-instant); }
 .settings-section:nth-child(1) { animation-delay: .06s; }
 .settings-section:nth-child(2) { animation-delay: .10s; }
 .settings-section:nth-child(3) { animation-delay: .14s; }
@@ -361,6 +361,12 @@ body.has-modal { overflow: hidden; }
   .snack-pick:hover,
   .back-top:hover,
   .meal-icon-option:hover {
+    transform: none;
+  }
+  /* 切换类动画的位移：触屏上横向/纵向位移既容易掉帧，也会让"切完了还在动"。
+     只保留透明度反馈，位置靠内容本身的变化表达。 */
+  .page-enter-from, .page-leave-to,
+  .page-back-enter-from, .page-back-leave-to {
     transform: none;
   }
 }

@@ -290,7 +290,9 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <Transition name="page" mode="out-in">
+      <!-- 结果面板只从无到有，没有并存的旧节点：用轻量 pop 淡入，
+           不用 page 的 26px 位移 + out-in 串行（160+260=420ms 才出结果）。 -->
+      <Transition name="pop">
         <div
           v-if="decided" key="done" class="pk-result"
           :class="{ 'is-fx': showResultFx, 'is-win': selfId === chef.id, 'is-lose': selfId === washer.id }"

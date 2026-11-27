@@ -320,8 +320,9 @@ onUnmounted(() => {
   cancelThumbPrefetch()
 })
 
-// 切换分类时让网格整体淡入一次（只按分类触发，搜索输入时列表保持不重建）
-const gridKey = computed(() => activeCuisine.value)
+// 切换分类时容器淡入一次：只切 class 重放动画，不再用 :key 销毁重建整片卡片。
+// 节点复用后，切菜系的卡顿感（460ms 错峰 + 48 张 DOM 重建）消失。
+const gridAnim = ref(true)
 
 const visibleDishes = computed(() => filtered.value.slice(0, visibleCount.value))
 const hasMore = computed(() => visibleCount.value < filtered.value.length)
@@ -337,7 +338,18 @@ function maybeLoadMore() {
 
 watch(
   () => [activeCuisine.value, debouncedKeyword.value, onlyFavorite.value, quickFilter.value, priorityPantry.value, state.hiddenCuisines],
-  () => { visibleCount.value = PAGE }
+  (next, prev) => {
+    const cuisineChanged = next[0] !== prev[0]
+    if (cuisineChanged) {
+      // 切菜系：先回到顶部，再重置分批数量。否则若用户已加载多批并滚到中部，
+      // visibleCount 打回 48 会让文档高度骤减，浏览器被动钳位 scrollY，画面"跳"一下。
+      window.scrollTo({ top: 0, behavior: 'auto' })
+      // 重放一次容器淡入：先摘掉 class，下一帧再加回（节点始终复用）。
+      gridAnim.value = false
+      nextTick(() => { gridAnim.value = true })
+    }
+    visibleCount.value = PAGE
+  }
 )
 watch([filtered, visibleCount], () => nextTick(maybeLoadMore))
 
@@ -875,9 +887,9 @@ async function savePantry() {
       </div>
     </div>
 
-    <!-- 不用 TransitionGroup：切换菜系时整片卡片进出场 + move 会让画面明显晃一下。
-         增删菜品是低频操作，稳定的静态网格比 0.3s 动画更重要。 -->
-    <div v-if="filtered.length" :key="gridKey" class="dish-grid grid-in">
+    <!-- 不用 TransitionGroup，也不用 :key 重建整片卡片：节点复用，切菜系只重放
+         一次容器级 160ms 淡入（见 gridAnim）。稳定的静态网格比逐卡动画更跟手。 -->
+    <div v-if="filtered.length" class="dish-grid" :class="{ 'grid-in': gridAnim }">
       <DishCard
         v-for="(d, i) in visibleDishes" :key="d.id" :dish="d" :highlight="debouncedKeyword"
         :multi="multiMode" :multi-picked="multiSet.has(d.id)"

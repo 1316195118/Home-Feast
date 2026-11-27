@@ -1,31 +1,31 @@
 {
-  "version": "1.0.5.3",
-  "publishedAt": "2026-11-28T00:11:59",
-  "note": "**修复**\n- 修复 1.0.5.2 更新说明在变更记录与在线更新弹窗中重复显示两遍的问题\n- 修复 --note 与 --publish 单命令发版时，待发布区有旧内容会导致说明重复追加的问题\n\n**优化**\n- 移除误提交进版本库的临时说明文件",
+  "version": "1.0.5.4",
+  "publishedAt": "2026-11-28T00:41:30",
+  "note": "**优化**\n- 优化菜谱页菜系切换动画：由 460ms 逐卡错峰与整块 DOM 重建改为 160ms 容器淡入与节点复用，切换更跟手\n- 切换菜系时先回到顶部再重置分批数量，消除多批加载后的页面跳动\n- 将页签弹跳、设置入场、弹窗、换一批、骰子结果等切换动画统一收敛到 260ms 以内，触屏取消位移\n- 修复布局审计脚本无法量测真实动画时长的盲点，新增切换动画不超过 260ms 的断言",
   "files": {
     "amd64": {
       "name": "menu-linux-amd64",
-      "sha256": "e036aaee4761fd1d1514c43ad75465cddf2d4965d326fe100a73159cf2f70167",
+      "sha256": "a2e67567ed88744fcbda65031351b6a362b056b120511fae3d956f42fed8848a",
       "size": 20353184,
       "gz": "menu-linux-amd64.gz",
-      "gzSha256": "b27fc8c5f76f12beb36fdd9d28e2fadf770e83b77dd11ba3a0768a01320c78c3",
-      "gzSize": 13973137
+      "gzSha256": "7b9ff25535a963d01ecfa111edf38d0690bfb8efec2c14e114a02a49983d449d",
+      "gzSize": 13974073
     },
     "arm64": {
       "name": "menu-linux-arm64",
-      "sha256": "d39c07a4561a90d9c36ea5f11d45b1794cebe61282506f9db9fb53fb0af85cb6",
+      "sha256": "910b256caff81a2c726ee6282ce32cb4cb5914955b7d36c966fb7491ae0938dc",
       "size": 19595424,
       "gz": "menu-linux-arm64.gz",
-      "gzSha256": "3e427a8ac93cc550e218f05d21462b9a9787239a5f163eea18658359ca44bc46",
-      "gzSize": 13561333
+      "gzSha256": "d54023322a3c48b477fbe3331622d32ddac39eefbe79508dbb02cdd4515e6d02",
+      "gzSize": 13562182
     },
     "armv7": {
       "name": "menu-linux-armv7",
-      "sha256": "52ef164e15769b583135a477f638742b4d0a74c224c94839c5dba4dc15a12570",
+      "sha256": "c15bd9c0acb60336ec2ead921b9726e427f4dba6d1cb7ada7dc0afe6055425d4",
       "size": 20054176,
       "gz": "menu-linux-armv7.gz",
-      "gzSha256": "f86d877413817b715b65219d5820450f3b01fdc5a2782f8c9559e20286f01a8c",
-      "gzSize": 13783102
+      "gzSha256": "e227ec7b33a8e60ba1e4af21294a20f9f409e5bc149e5070860f4360c4bafe31",
+      "gzSize": 13782748
     }
   }
 }

@@ -60,6 +60,9 @@ async function run(width, height, tag, mobile) {
   })
   const ev = async (x) => (await cdp('Runtime.evaluate', { expression: x, returnByValue: true }))?.result?.value
   await cdp('Page.enable')
+  // headless Chrome 默认 prefers-reduced-motion: reduce，会把动画压到 0.01ms，
+  // 那样量到的切换时长永远是 0，无法发现逐卡错峰回归。显式要求真实动效。
+  await cdp('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }] })
   await cdp('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile, screenWidth: width, screenHeight: height })
   await cdp('Page.navigate', { url: `${BASE}/?v=${Date.now()}#today` })
   await sleep(3000)
@@ -98,6 +101,18 @@ async function run(width, height, tag, mobile) {
   const after = JSON.parse(await ev(`(()=>{const g=document.querySelector('.dish-grid');const c=document.querySelector('.dish-card');return JSON.stringify({w:document.documentElement.clientWidth,top:g?Math.round(g.getBoundingClientRect().top):null,cardTop:c?Math.round(c.getBoundingClientRect().top):null,anim:document.querySelectorAll('[class*="grid-enter"],[class*="grid-leave"],[class*="grid-move"]').length})})()`))
   console.log(`菜系切换 前=${JSON.stringify(before)} 切换后60ms=${JSON.stringify(mid)} 稳定后=${JSON.stringify(after)}`)
   console.log(`  => 视口宽度变化 ${after.w - before.w}px | 网格起点变化 ${after.top - before.top}px | 卡片位移 ${(mid.cardTop != null && after.cardTop != null) ? after.cardTop - mid.cardTop : 'n/a'}px | 残留动画类 ${after.anim}`)
+  // 旧检查只看 TransitionGroup 类名（grid-enter/leave/move），当前实现是 grid-fade
+  // + animation，永远返回 0。改为实测最长动画结束时间，防止再退回逐卡错峰。
+  const animMs = JSON.parse(await ev(`JSON.stringify((()=>{
+    const nodes=[document.querySelector('.dish-grid'),...document.querySelectorAll('.dish-card')].filter(Boolean);
+    let max=0, names=[];
+    for(const n of nodes){const s=getComputedStyle(n);if(s.animationName==='none')continue;
+      const end=parseFloat(s.animationDuration)*1000+parseFloat(s.animationDelay)*1000;
+      if(end>max)max=end; names.push(s.animationName);}
+    return {maxMs:Math.round(max),names:[...new Set(names)]};
+  })())`))
+  console.log(`  切换动画最长 ${animMs.maxMs}ms（${animMs.names.join(',')||'无'}）`)
+  check('菜系切换动画不超过 260ms', animMs.maxMs <= 260, `${animMs.maxMs}ms`)
   const rail = JSON.parse(await ev(`(()=>{
     const el=document.querySelector('.menu-filter-rail');
     if(!el)return JSON.stringify({missing:true});

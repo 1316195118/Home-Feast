@@ -255,7 +255,7 @@
 .modal-leave-active { transition: opacity var(--dur-mid) var(--ease); }
 .modal-enter-from,
 .modal-leave-to { opacity: 0; }
-.modal-enter-active .modal { animation: pop-spring var(--dur-pop) var(--ease); }
+.modal-enter-active .modal { animation: pop-spring var(--dur-base) var(--ease); }
 .modal-leave-active .modal { animation: pop-out var(--dur-mid) var(--ease) forwards; }
 .modal-wide { width: min(660px, 100%); }
 /* 统一确认弹窗：窄一点、层级更高，压在其它窗口之上 */
